@@ -1,0 +1,183 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  courses       Course[]
+  quizAttempts  QuizAttempt[]
+  testAttempts  TestAttempt[]
+  examAttempts  ExamAttempt[]
+}
+
+model Course {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  authorId    String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  author    User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  units     Unit[]
+  finalExam FinalExam?
+}
+
+model Unit {
+  id       String @id @default(uuid())
+  title    String
+  order    Int
+  courseId String
+
+  course  Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  lessons Lesson[]
+  test    Test?
+}
+
+model Lesson {
+  id     String @id @default(uuid())
+  title  String
+  order  Int
+  unitId String
+
+  unit             Unit              @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  notes            Note[]
+  flashCards       FlashCard[]
+  practiceProblems PracticeProblem[]
+  quiz             Quiz?
+}
+
+model Note {
+  id       String @id @default(uuid())
+  content  String
+  order    Int
+  lessonId String
+
+  lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+}
+
+model FlashCard {
+  id       String @id @default(uuid())
+  front    String
+  back     String
+  order    Int
+  lessonId String
+
+  lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+}
+
+model PracticeProblem {
+  id       String @id @default(uuid())
+  question String
+  answer   String
+  order    Int
+  lessonId String
+
+  lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+}
+
+model Quiz {
+  id       String @id @default(uuid())
+  lessonId String @unique
+
+  lesson   Lesson        @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  questions QuizQuestion[]
+  attempts QuizAttempt[]
+}
+
+model QuizQuestion {
+  id           String @id @default(uuid())
+  question     String
+  options      Json
+  correctIndex Int
+  order        Int
+  quizId       String
+
+  quiz Quiz @relation(fields: [quizId], references: [id], onDelete: Cascade)
+}
+
+model QuizAttempt {
+  id        String   @id @default(uuid())
+  score     Float
+  passed    Boolean
+  userId    String
+  quizId    String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  quiz Quiz @relation(fields: [quizId], references: [id], onDelete: Cascade)
+}
+
+model Test {
+  id     String @id @default(uuid())
+  unitId String @unique
+
+  unit      Unit           @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  questions TestQuestion[]
+  attempts  TestAttempt[]
+}
+
+model TestQuestion {
+  id           String @id @default(uuid())
+  question     String
+  options      Json
+  correctIndex Int
+  order        Int
+  testId       String
+
+  test Test @relation(fields: [testId], references: [id], onDelete: Cascade)
+}
+
+model TestAttempt {
+  id        String   @id @default(uuid())
+  score     Float
+  passed    Boolean
+  userId    String
+  testId    String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  test Test @relation(fields: [testId], references: [id], onDelete: Cascade)
+}
+
+model FinalExam {
+  id       String @id @default(uuid())
+  courseId String @unique
+
+  course    Course            @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  questions FinalExamQuestion[]
+  attempts  ExamAttempt[]
+}
+
+model FinalExamQuestion {
+  id           String @id @default(uuid())
+  question     String
+  options      Json
+  correctIndex Int
+  order        Int
+  examId       String
+
+  exam FinalExam @relation(fields: [examId], references: [id], onDelete: Cascade)
+}
+
+model ExamAttempt {
+  id        String   @id @default(uuid())
+  score     Float
+  passed    Boolean
+  userId    String
+  examId    String
+  createdAt DateTime @default(now())
+
+  user User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  exam FinalExam @relation(fields: [examId], references: [id], onDelete: Cascade)
+}
