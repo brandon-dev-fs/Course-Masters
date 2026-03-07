@@ -9,10 +9,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 Course Masters is a self-directed learning application. Users create courses, organize them into units, and break units down into lessons. Each lesson holds notes, flash cards, and practice problems. Progress is assessed at three levels: a quiz at the end of each lesson, a test at the end of each unit, and a final exam at the end of each course. A progress API aggregates completion data across all levels.
 
 The project is a monorepo using npm workspaces with two workspaces:
-- `client` — React SPA served by Vite on port 5173
-- `server` — Express REST API running on port 3001
+- `client` — React SPA served by Vite on port 5000
+- `server` — Express REST API running on port 5002
 
-The Vite dev server proxies `/api` requests to `http://localhost:3001`, so the client never needs to know the server port.
+The Vite dev server proxies `/api` requests to `http://localhost:5002`, so the client never needs to know the server port.
 
 ---
 
@@ -80,7 +80,7 @@ All of the following are run from the **repository root** unless noted.
 
 | Command | Description |
 |---|---|
-| `npm run dev` | Start client (port 5173) and server (port 3001) concurrently |
+| `npm run dev` | Start client (port 5000) and server (port 5002) concurrently |
 | `npm run db:migrate` | Run Prisma migrations (`prisma migrate dev`) |
 | `npm run db:seed` | Seed the database using `node --env-file=.env --import=tsx/esm prisma/seed.ts` |
 | `npm run db:studio` | Open Prisma Studio UI |
@@ -95,7 +95,7 @@ Copy `.env.example` to `server/.env` and fill in the values:
 
 ```
 DATABASE_URL=postgresql://<user>:<password>@localhost:5432/<dbname>
-SERVER_PORT=3001
+SERVER_PORT=5002
 NODE_ENV=development
 ```
 

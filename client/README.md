@@ -15,7 +15,7 @@ React 19 + Vite + TypeScript frontend for the Course Masters self-directed learn
 ## Scripts
 
 ```bash
-npm run dev       # Start the Vite dev server on port 5173
+npm run dev       # Start the Vite dev server on port 5000
 npm run build     # Type-check with tsc, then produce a production build
 npm run preview   # Serve the production build locally for inspection
 ```
@@ -86,7 +86,7 @@ src/
 
 All HTTP communication goes through `src/api/client.ts`, a thin wrapper around the native `fetch` API. It:
 
-- Prefixes every request with `/api` (resolved to `http://localhost:3001` by the Vite proxy during development).
+- Prefixes every request with `/api` (resolved to `http://localhost:5002` by the Vite proxy during development).
 - Attaches `Content-Type: application/json` on requests with a body.
 - Parses non-OK responses and throws a typed `ApiError` (`{ code, message, details? }`) so components can branch on `error.code` rather than inspecting raw HTTP status codes.
 
@@ -116,12 +116,13 @@ Because the Tailwind tokens reference CSS custom properties at runtime rather th
 
 ## Dev Server and Proxy
 
-The Vite dev server runs on **port 5173**. Any request beginning with `/api` is proxied to `http://localhost:3001` (the Express server), so no CORS configuration is required during development. The proxy is defined in `vite.config.ts`:
+The Vite dev server runs on **port 5000**. Any request beginning with `/api` is proxied to `http://localhost:5002` (the Express server), so no CORS configuration is required during development. The proxy is defined in `vite.config.ts`:
 
 ```ts
 server: {
+  port: 5000,
   proxy: {
-    '/api': 'http://localhost:3001',
+    '/api': 'http://localhost:5002',
   },
 },
 ```

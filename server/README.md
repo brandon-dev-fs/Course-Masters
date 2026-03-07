@@ -55,7 +55,7 @@ server/
     seed.ts             # Database seed script
     migrations/         # Prisma migration history
   src/
-    index.ts            # Entry point — starts HTTP server on port 3001
+    index.ts            # Entry point — starts HTTP server on port 5002
     app.ts              # Express app setup (middleware, router, error handler)
     routes/             # Route definitions, one file per resource
     controllers/        # HTTP request/response handling
@@ -195,7 +195,7 @@ Run these from the `server/` directory, or from the project root using `npm run 
 | `db:seed` | `node --env-file=.env --import=tsx/esm prisma/seed.ts` | Seed the database |
 | `db:studio` | `prisma studio` | Open Prisma Studio GUI |
 
-The dev server starts on **port 3001**.
+The dev server starts on **port 5002**.
 
 ## Authentication
 

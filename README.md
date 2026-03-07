@@ -55,7 +55,7 @@ cp .env.example server/.env
 
 ```
 DATABASE_URL=postgresql://coursemasters:changeme@localhost:5432/coursemasters
-SERVER_PORT=3001
+SERVER_PORT=5002
 NODE_ENV=development
 ```
 
@@ -85,10 +85,10 @@ This starts both the Vite client dev server and the Express API server concurren
 
 | Service | URL |
 |---|---|
-| Client | http://localhost:5173 |
-| API | http://localhost:3001 |
+| Client | http://localhost:5000 |
+| API | http://localhost:5002 |
 
-The Vite dev server proxies all `/api` requests to `http://localhost:3001`, so no CORS configuration is needed during development.
+The Vite dev server proxies all `/api` requests to `http://localhost:5002`, so no CORS configuration is needed during development.
 
 ---
 
