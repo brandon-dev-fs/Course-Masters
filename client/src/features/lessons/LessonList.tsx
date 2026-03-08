@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { BookOpen } from 'lucide-react';
 import type { Lesson } from '../../api/types.js';
 import EmptyState from '../../components/EmptyState.js';
 
@@ -12,7 +13,7 @@ interface LessonListProps {
 
 export default function LessonList({ courseId, unitId, lessons, onEdit, onDelete }: LessonListProps) {
   if (lessons.length === 0) {
-    return <EmptyState icon="📖" title="No lessons yet" description="Add a lesson to start adding content." />;
+    return <EmptyState icon={<BookOpen className="w-8 h-8" />} title="No lessons yet" description="Add a lesson to start adding content." />;
   }
 
   const sorted = [...lessons].sort((a, b) => a.order - b.order);

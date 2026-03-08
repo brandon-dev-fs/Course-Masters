@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { BookOpen, Layers, GraduationCap } from 'lucide-react';
 import { progressApi } from '../../api/progress.js';
 import type { CourseProgress } from '../../api/types.js';
 import ProgressBar from './ProgressBar.js';
@@ -21,17 +22,17 @@ export default function CourseProgressCard({ courseId }: { courseId: string }) {
       <ProgressBar percent={progress.percentComplete} className="mb-4" />
       <div className="grid grid-cols-3 gap-3 text-center">
         <div className="bg-surface-raised rounded-xl border border-border p-3">
-          <p className="text-lg mb-1">📖</p>
+          <div className="flex justify-center mb-1"><BookOpen className="w-5 h-5 text-primary" /></div>
           <p className="text-xl font-bold text-foreground">{progress.completedLessons}/{progress.totalLessons}</p>
           <p className="text-xs text-muted-foreground">Lessons</p>
         </div>
         <div className="bg-surface-raised rounded-xl border border-border p-3">
-          <p className="text-lg mb-1">📦</p>
+          <div className="flex justify-center mb-1"><Layers className="w-5 h-5 text-primary" /></div>
           <p className="text-xl font-bold text-foreground">{progress.completedUnits}/{progress.totalUnits}</p>
           <p className="text-xs text-muted-foreground">Units</p>
         </div>
         <div className="bg-surface-raised rounded-xl border border-border p-3">
-          <p className="text-lg mb-1">🎓</p>
+          <div className="flex justify-center mb-1"><GraduationCap className="w-5 h-5 text-primary" /></div>
           <p className={`text-xl font-bold ${progress.examPassed ? 'text-accent' : 'text-muted-foreground'}`}>
             {progress.examPassed ? '✓' : '—'}
           </p>

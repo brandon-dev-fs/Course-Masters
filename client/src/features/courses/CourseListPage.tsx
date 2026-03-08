@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { BookOpen } from 'lucide-react';
 import { coursesApi } from '../../api/courses.js';
 import type { Course } from '../../api/types.js';
 import CourseCard from './CourseCard.js';
@@ -67,7 +68,7 @@ export default function CourseListPage() {
 
         {courses.length === 0 ? (
           <EmptyState
-            icon="📚"
+            icon={<BookOpen className="w-8 h-8" />}
             title="No courses yet"
             description="Create your first course to get started."
             action={{ label: '+ New Course', onClick: () => setShowCreate(true) }}

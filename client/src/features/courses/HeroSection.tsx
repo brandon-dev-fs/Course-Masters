@@ -1,3 +1,4 @@
+import { GraduationCap, BookOpen, Layers, NotebookPen, CreditCard, Brain, TrendingUp } from 'lucide-react';
 import Button from '../../components/Button.js';
 
 interface HeroSectionProps {
@@ -6,12 +7,12 @@ interface HeroSectionProps {
 }
 
 const features = [
-  { icon: '📚', label: 'Courses' },
-  { icon: '📦', label: 'Units' },
-  { icon: '📖', label: 'Lessons' },
-  { icon: '🃏', label: 'FlashCards' },
-  { icon: '🧠', label: 'Practice Problems' },
-  { icon: '📈', label: 'Progress Tracking' },
+  { icon: BookOpen, label: 'Courses' },
+  { icon: Layers, label: 'Units' },
+  { icon: NotebookPen, label: 'Lessons' },
+  { icon: CreditCard, label: 'FlashCards' },
+  { icon: Brain, label: 'Practice Problems' },
+  { icon: TrendingUp, label: 'Progress Tracking' },
 ];
 
 export default function HeroSection({ hasCourses, onCreateCourse }: HeroSectionProps) {
@@ -19,7 +20,7 @@ export default function HeroSection({ hasCourses, onCreateCourse }: HeroSectionP
     <div className="-mx-6 px-6 py-14 mb-10 bg-surface border-b border-border">
       <div className="max-w-2xl">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary-subtle text-primary text-sm font-semibold mb-5">
-          <span>🎓</span>
+          <GraduationCap className="w-4 h-4" />
           <span>Self-Directed Learning</span>
         </div>
 
@@ -38,7 +39,7 @@ export default function HeroSection({ hasCourses, onCreateCourse }: HeroSectionP
               key={f.label}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface-raised border border-border text-sm text-foreground shadow-warm-sm"
             >
-              <span>{f.icon}</span>
+              <f.icon className="w-4 h-4 text-primary" />
               <span>{f.label}</span>
             </span>
           ))}

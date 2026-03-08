@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { Layers } from 'lucide-react';
 import type { Unit } from '../../api/types.js';
 import EmptyState from '../../components/EmptyState.js';
 
@@ -11,7 +12,7 @@ interface UnitListProps {
 
 export default function UnitList({ courseId, units, onEdit, onDelete }: UnitListProps) {
   if (units.length === 0) {
-    return <EmptyState icon="📦" title="No units yet" description="Add a unit to organize your lessons." />;
+    return <EmptyState icon={<Layers className="w-8 h-8" />} title="No units yet" description="Add a unit to organize your lessons." />;
   }
 
   const sorted = [...units].sort((a, b) => a.order - b.order);

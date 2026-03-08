@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Brain } from 'lucide-react';
 import type { PracticeProblem } from '../../api/types.js';
 import Button from '../../components/Button.js';
 
@@ -29,7 +30,7 @@ export default function PracticeProblemCard({ problem, onEdit, onDelete }: Pract
     <div className="rounded-lg bg-surface border border-border p-4 group">
       <div className="flex items-start justify-between gap-2 mb-3">
         <div className="flex items-start gap-2">
-          <span className="text-lg shrink-0 mt-0.5">🧠</span>
+          <Brain className="w-5 h-5 text-accent shrink-0 mt-0.5" />
           <p className="text-foreground font-medium">{problem.question}</p>
         </div>
         <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">

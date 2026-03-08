@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { Pencil, X } from 'lucide-react';
 import type { Course } from '../../api/types.js';
 
 interface CourseCardProps {
@@ -24,14 +25,14 @@ export default function CourseCard({ course, onEdit, onDelete }: CourseCardProps
               className="text-muted-foreground hover:text-foreground w-7 h-7 flex items-center justify-center rounded-lg hover:bg-surface-raised transition-colors"
               aria-label="Edit course"
             >
-              ✏️
+              <Pencil className="w-3.5 h-3.5" />
             </button>
             <button
               onClick={onDelete}
               className="text-muted-foreground hover:text-destructive w-7 h-7 flex items-center justify-center rounded-lg hover:bg-surface-raised transition-colors"
               aria-label="Delete course"
             >
-              ✕
+              <X className="w-4 h-4" />
             </button>
           </div>
         </div>

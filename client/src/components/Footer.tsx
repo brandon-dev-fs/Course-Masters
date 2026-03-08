@@ -2,6 +2,7 @@ const techChips = [
   { label: 'React', href: 'https://react.dev' },
   { label: 'Tailwind CSS', href: 'https://tailwindcss.com' },
   { label: 'Prisma', href: 'https://prisma.io' },
+  { label: 'Lucide Icons', href: 'https://lucide.dev' },
   { label: 'Claude AI by Anthropic', href: 'https://anthropic.com' },
 ];
 

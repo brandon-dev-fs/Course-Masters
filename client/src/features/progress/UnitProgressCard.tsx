@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { BookOpen, ClipboardCheck } from 'lucide-react';
 import { progressApi } from '../../api/progress.js';
 import type { UnitProgress } from '../../api/types.js';
 import ProgressBar from './ProgressBar.js';
@@ -21,12 +22,12 @@ export default function UnitProgressCard({ courseId, unitId }: { courseId: strin
       <ProgressBar percent={progress.percentComplete} className="mb-4" />
       <div className="grid grid-cols-2 gap-3 text-center">
         <div className="bg-surface-raised rounded-xl border border-border p-3">
-          <p className="text-lg mb-1">📖</p>
+          <div className="flex justify-center mb-1"><BookOpen className="w-5 h-5 text-primary" /></div>
           <p className="text-xl font-bold text-foreground">{progress.completedLessons}/{progress.totalLessons}</p>
           <p className="text-xs text-muted-foreground">Lessons Passed</p>
         </div>
         <div className="bg-surface-raised rounded-xl border border-border p-3">
-          <p className="text-lg mb-1">📝</p>
+          <div className="flex justify-center mb-1"><ClipboardCheck className="w-5 h-5 text-primary" /></div>
           <p className={`text-xl font-bold ${progress.testPassed ? 'text-accent' : 'text-muted-foreground'}`}>
             {progress.testPassed ? '✓ Passed' : '— Pending'}
           </p>
