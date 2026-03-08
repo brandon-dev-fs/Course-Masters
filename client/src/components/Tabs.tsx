@@ -30,9 +30,9 @@ export function Tab({ id, children }: { id: string; children: ReactNode }) {
   return (
     <button
       onClick={() => setActiveTab(id)}
-      className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+      className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors rounded-t-lg ${
         isActive
-          ? 'border-primary text-primary'
+          ? 'border-primary text-primary bg-primary-subtle'
           : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
       }`}
     >

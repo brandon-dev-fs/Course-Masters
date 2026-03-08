@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { BookOpen, Layers, GraduationCap } from 'lucide-react';
 import { progressApi } from '../../api/progress.js';
 import type { CourseProgress } from '../../api/types.js';
 import ProgressBar from './ProgressBar.js';
@@ -13,22 +14,25 @@ export default function CourseProgressCard({ courseId }: { courseId: string }) {
   if (!progress) return null;
 
   return (
-    <div className="rounded-xl bg-surface border border-border p-5 mb-6">
+    <div className="rounded-2xl bg-surface border border-border p-5 mb-6 shadow-warm-md">
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Course Progress</h3>
         <span className="text-sm font-bold text-primary">{progress.percentComplete}%</span>
       </div>
       <ProgressBar percent={progress.percentComplete} className="mb-4" />
-      <div className="grid grid-cols-3 gap-4 text-center">
-        <div>
+      <div className="grid grid-cols-3 gap-3 text-center">
+        <div className="bg-surface-raised rounded-xl border border-border p-3">
+          <div className="flex justify-center mb-1"><BookOpen className="w-5 h-5 text-primary" /></div>
           <p className="text-xl font-bold text-foreground">{progress.completedLessons}/{progress.totalLessons}</p>
           <p className="text-xs text-muted-foreground">Lessons</p>
         </div>
-        <div>
+        <div className="bg-surface-raised rounded-xl border border-border p-3">
+          <div className="flex justify-center mb-1"><Layers className="w-5 h-5 text-primary" /></div>
           <p className="text-xl font-bold text-foreground">{progress.completedUnits}/{progress.totalUnits}</p>
           <p className="text-xs text-muted-foreground">Units</p>
         </div>
-        <div>
+        <div className="bg-surface-raised rounded-xl border border-border p-3">
+          <div className="flex justify-center mb-1"><GraduationCap className="w-5 h-5 text-primary" /></div>
           <p className={`text-xl font-bold ${progress.examPassed ? 'text-accent' : 'text-muted-foreground'}`}>
             {progress.examPassed ? '✓' : '—'}
           </p>
