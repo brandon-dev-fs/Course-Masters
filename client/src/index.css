@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300..800;1,300..800&display=swap');
 @import 'tailwindcss';
 
 /*
@@ -10,8 +11,12 @@
   /* Brand */
   --color-primary:            var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-primary-subtle:     var(--primary-subtle);
   --color-accent:             var(--accent);
   --color-accent-foreground:  var(--accent-foreground);
+  --color-accent-subtle:      var(--accent-subtle);
+  --color-charcoal:           var(--charcoal);
+  --color-charcoal-foreground: var(--charcoal-foreground);
 
   /* Semantic surface */
   --color-background:         var(--background);
@@ -27,6 +32,8 @@
   /* Status */
   --color-destructive:            var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
+  --color-success:                var(--success);
+  --color-warning:                var(--warning);
 }
 
 /* ─── Light theme (default) ─────────────────────────────────────────────── */
@@ -34,23 +41,34 @@
   /* Brand */
   --primary:            #138808;  /* India green */
   --primary-foreground: #ffffff;
+  --primary-subtle:     #e8f5e4;  /* Green wash for badges/active tabs */
   --accent:             #085287;  /* Ocean blue */
   --accent-foreground:  #ffffff;
+  --accent-subtle:      #e0eef8;  /* Blue wash */
+  --charcoal:           #2c2c35;  /* Third brand color */
+  --charcoal-foreground: #ffffff;
 
-  /* Surfaces */
-  --background:         #ffffff;
+  /* Surfaces — warm off-white tones */
+  --background:         #faf9f7;  /* Warm cream */
   --foreground:         #1e1e24;
-  --surface:            #ebebef;  /* Cards, sidebars */
+  --surface:            #f0ede8;  /* Cards, sidebars */
   --surface-raised:     #ffffff;  /* Elevated cards, modals */
-  --border:             #dddde2;
+  --border:             #e0dbd4;
 
   /* Text */
-  --muted:              #f4f4f6;
-  --muted-foreground:   #6b6b78;
+  --muted:              #f0ede8;
+  --muted-foreground:   #6e6860;  /* Warm mid-gray */
 
   /* Status */
   --destructive:            #dc2626;
   --destructive-foreground: #ffffff;
+  --success:                #16a34a;
+  --warning:                #d97706;
+
+  /* Shadows — warm-tinted */
+  --shadow-sm: 0 1px 3px rgba(44, 36, 28, 0.08), 0 1px 2px rgba(44, 36, 28, 0.04);
+  --shadow-md: 0 4px 12px rgba(44, 36, 28, 0.10), 0 2px 4px rgba(44, 36, 28, 0.06);
+  --shadow-lg: 0 10px 30px rgba(44, 36, 28, 0.12), 0 4px 10px rgba(44, 36, 28, 0.08);
 }
 
 /* ─── Dark theme ─────────────────────────────────────────────────────────── */
@@ -58,24 +76,45 @@
   /* Brand — slightly brightened for contrast on dark backgrounds */
   --primary:            #17a009;
   --primary-foreground: #ffffff;
+  --primary-subtle:     #1a3318;
   --accent:             #0a6db5;
   --accent-foreground:  #ffffff;
+  --accent-subtle:      #0f2a40;
+  --charcoal:           #4a4a56;
+  --charcoal-foreground: #ffffff;
 
-  /* Surfaces */
-  --background:         #1e1e24;  /* Base dark (charcoal) */
+  /* Surfaces — warm-tinted darks */
+  --background:         #1a1917;
   --foreground:         #f0f0f3;
-  --surface:            #27272e;  /* Cards, panels */
-  --surface-raised:     #2f2f38;  /* Modals, dropdowns */
-  --border:             #3a3a46;
+  --surface:            #242220;  /* Cards, panels */
+  --surface-raised:     #2e2c29;  /* Modals, dropdowns */
+  --border:             #3d3a36;
 
   /* Text */
-  --muted:              #27272e;
+  --muted:              #242220;
   --muted-foreground:   #9090a0;
 
   /* Status */
   --destructive:            #ef4444;
   --destructive-foreground: #ffffff;
+  --success:                #22c55e;
+  --warning:                #f59e0b;
+
+  /* Shadows — subtle on dark */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.35), 0 2px 4px rgba(0, 0, 0, 0.25);
+  --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.4), 0 4px 10px rgba(0, 0, 0, 0.3);
 }
+
+/* ─── Base typography ─────────────────────────────────────────────────────── */
+html {
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+}
+
+/* ─── Shadow utilities ────────────────────────────────────────────────────── */
+.shadow-warm-sm { box-shadow: var(--shadow-sm); }
+.shadow-warm-md { box-shadow: var(--shadow-md); }
+.shadow-warm-lg { box-shadow: var(--shadow-lg); }
 
 /* ─── Pencil underline animation ─────────────────────────────────────────── */
 @keyframes pencil-draw {
@@ -88,4 +127,13 @@
 .pencil-draw {
   animation: pencil-draw 1.6s ease-in-out infinite;
   transform-origin: left center;
+}
+
+/* ─── Accessibility ──────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

@@ -27,7 +27,7 @@ export default function FlashCard({ card, onEdit, onDelete, showActions = true }
       >
         {/* Front */}
         <div
-          className="absolute inset-0 flex flex-col justify-center rounded-xl bg-surface border border-border p-5"
+          className="absolute inset-0 flex flex-col justify-center rounded-2xl bg-surface border-2 border-border p-5"
           style={{ backfaceVisibility: 'hidden' }}
         >
           <p className="text-xs text-muted-foreground mb-2 uppercase tracking-wide">Front</p>
@@ -36,7 +36,7 @@ export default function FlashCard({ card, onEdit, onDelete, showActions = true }
         </div>
         {/* Back */}
         <div
-          className="absolute inset-0 flex flex-col justify-center rounded-xl bg-surface-raised border border-primary/30 p-5"
+          className="absolute inset-0 flex flex-col justify-center rounded-2xl bg-accent-subtle border-2 border-accent/30 p-5"
           style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
         >
           <p className="text-xs text-accent mb-2 uppercase tracking-wide">Back</p>

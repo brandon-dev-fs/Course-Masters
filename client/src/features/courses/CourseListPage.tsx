@@ -3,6 +3,7 @@ import { coursesApi } from '../../api/courses.js';
 import type { Course } from '../../api/types.js';
 import CourseCard from './CourseCard.js';
 import CourseForm from './CourseForm.js';
+import HeroSection from './HeroSection.js';
 import Modal from '../../components/Modal.js';
 import ConfirmDialog from '../../components/ConfirmDialog.js';
 import Button from '../../components/Button.js';
@@ -51,34 +52,39 @@ export default function CourseListPage() {
     setDeleting(null);
   }
 
-  if (loading) return <LoadingSpinner />;
+  if (loading) return <LoadingSpinner fullPage />;
   if (error) return <ErrorMessage message={error} />;
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-foreground">My Courses</h1>
-        <Button onClick={() => setShowCreate(true)}>+ New Course</Button>
-      </div>
+      <HeroSection hasCourses={courses.length > 0} onCreateCourse={() => setShowCreate(true)} />
 
-      {courses.length === 0 ? (
-        <EmptyState
-          title="No courses yet"
-          description="Create your first course to get started."
-          action={{ label: '+ New Course', onClick: () => setShowCreate(true) }}
-        />
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {courses.map(course => (
-            <CourseCard
-              key={course.id}
-              course={course}
-              onEdit={() => setEditing(course)}
-              onDelete={() => setDeleting(course)}
-            />
-          ))}
+      <div id="courses" className="scroll-mt-20">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-2xl font-bold text-foreground tracking-tight">My Courses</h2>
+          <Button onClick={() => setShowCreate(true)}>+ New Course</Button>
         </div>
-      )}
+
+        {courses.length === 0 ? (
+          <EmptyState
+            icon="📚"
+            title="No courses yet"
+            description="Create your first course to get started."
+            action={{ label: '+ New Course', onClick: () => setShowCreate(true) }}
+          />
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {courses.map(course => (
+              <CourseCard
+                key={course.id}
+                course={course}
+                onEdit={() => setEditing(course)}
+                onDelete={() => setDeleting(course)}
+              />
+            ))}
+          </div>
+        )}
+      </div>
 
       {showCreate && (
         <Modal title="New Course" onClose={() => setShowCreate(false)}>
