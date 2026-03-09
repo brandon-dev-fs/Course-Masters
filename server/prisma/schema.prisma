@@ -45,10 +45,11 @@ model Unit {
 }
 
 model Lesson {
-  id     String @id @default(uuid())
-  title  String
-  order  Int
-  unitId String
+  id          String  @id @default(uuid())
+  title       String
+  description String?
+  order       Int
+  unitId      String
 
   unit             Unit              @relation(fields: [unitId], references: [id], onDelete: Cascade)
   notes            Note[]

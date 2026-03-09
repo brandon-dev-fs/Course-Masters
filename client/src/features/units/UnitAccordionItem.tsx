@@ -8,7 +8,6 @@ import LessonList from '../lessons/LessonList.js';
 import LessonForm from '../lessons/LessonForm.js';
 import ProgressBar from '../progress/ProgressBar.js';
 import Modal from '../../components/Modal.js';
-import ConfirmDialog from '../../components/ConfirmDialog.js';
 import Button from '../../components/Button.js';
 import LoadingSpinner from '../../components/LoadingSpinner.js';
 
@@ -17,8 +16,6 @@ interface UnitAccordionItemProps {
   unit: Unit;
   isExpanded: boolean;
   onToggle: () => void;
-  onEditUnit: (unit: Unit) => void;
-  onDeleteUnit: (unit: Unit) => void;
 }
 
 export default function UnitAccordionItem({
@@ -26,8 +23,6 @@ export default function UnitAccordionItem({
   unit,
   isExpanded,
   onToggle,
-  onEditUnit,
-  onDeleteUnit,
 }: UnitAccordionItemProps) {
   const [loaded, setLoaded] = useState(false);
   const [loadingBody, setLoadingBody] = useState(false);
@@ -35,8 +30,6 @@ export default function UnitAccordionItem({
   const [lessonCount, setLessonCount] = useState(unit._count?.lessons ?? 0);
   const [progress, setProgress] = useState<UnitProgress | null>(null);
   const [showAddLesson, setShowAddLesson] = useState(false);
-  const [editingLesson, setEditingLesson] = useState<Lesson | null>(null);
-  const [deletingLesson, setDeletingLesson] = useState<Lesson | null>(null);
 
   useEffect(() => {
     if (isExpanded && !loaded) {
@@ -55,26 +48,22 @@ export default function UnitAccordionItem({
     }
   }, [isExpanded, courseId, unit.id, loaded]);
 
-  async function handleAddLesson(data: { title: string; order: number }) {
+  async function handleAddLesson(data: { title: string; description?: string; order: number }) {
     const lesson = await lessonsApi.create(unit.id, data);
     setLessons(prev => [...prev, lesson]);
     setLessonCount(prev => prev + 1);
     setShowAddLesson(false);
   }
 
-  async function handleUpdateLesson(data: { title: string; order: number }) {
-    if (!editingLesson) return;
-    const updated = await lessonsApi.update(unit.id, editingLesson.id, data);
+  async function handleUpdateLesson(lesson: Lesson, data: { title: string; description?: string; order: number }) {
+    const updated = await lessonsApi.update(unit.id, lesson.id, data);
     setLessons(prev => prev.map(l => l.id === updated.id ? updated : l));
-    setEditingLesson(null);
   }
 
-  async function handleDeleteLesson() {
-    if (!deletingLesson) return;
-    await lessonsApi.delete(unit.id, deletingLesson.id);
-    setLessons(prev => prev.filter(l => l.id !== deletingLesson.id));
+  async function handleDeleteLesson(lesson: Lesson) {
+    await lessonsApi.delete(unit.id, lesson.id);
+    setLessons(prev => prev.filter(l => l.id !== lesson.id));
     setLessonCount(prev => prev - 1);
-    setDeletingLesson(null);
   }
 
   return (
@@ -92,20 +81,6 @@ export default function UnitAccordionItem({
         </button>
         <div className="flex items-center gap-3 shrink-0">
           <span className="text-xs text-muted-foreground">{lessonCount} lessons</span>
-          <div className="flex gap-1">
-            <button
-              onClick={e => { e.stopPropagation(); onEditUnit(unit); }}
-              className="text-xs text-muted-foreground hover:text-foreground px-2 py-1 rounded hover:bg-surface-raised transition-colors"
-            >
-              Edit
-            </button>
-            <button
-              onClick={e => { e.stopPropagation(); onDeleteUnit(unit); }}
-              className="text-xs text-muted-foreground hover:text-destructive px-2 py-1 rounded hover:bg-surface-raised transition-colors"
-            >
-              Delete
-            </button>
-          </div>
           <button onClick={onToggle} className="text-muted-foreground hover:text-foreground transition-colors">
             {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
           </button>
@@ -143,9 +118,9 @@ export default function UnitAccordionItem({
                   courseId={courseId}
                   unitId={unit.id}
                   lessons={lessons}
-                  onEdit={setEditingLesson}
-                  onDelete={setDeletingLesson}
                   lessonProgress={progress?.lessons}
+                  onUpdateLesson={handleUpdateLesson}
+                  onDeleteLesson={handleDeleteLesson}
                 />
 
                 <div className="flex justify-end">
@@ -157,7 +132,6 @@ export default function UnitAccordionItem({
         </div>
       </div>
 
-      {/* Lesson CRUD modals */}
       {showAddLesson && (
         <Modal title="Add Lesson" onClose={() => setShowAddLesson(false)}>
           <LessonForm
@@ -166,23 +140,6 @@ export default function UnitAccordionItem({
             onCancel={() => setShowAddLesson(false)}
           />
         </Modal>
-      )}
-      {editingLesson && (
-        <Modal title="Edit Lesson" onClose={() => setEditingLesson(null)}>
-          <LessonForm
-            initial={editingLesson}
-            onSubmit={handleUpdateLesson}
-            onCancel={() => setEditingLesson(null)}
-          />
-        </Modal>
-      )}
-      {deletingLesson && (
-        <ConfirmDialog
-          title="Delete Lesson"
-          message={`Delete "${deletingLesson.title}"? All content inside will also be deleted.`}
-          onConfirm={handleDeleteLesson}
-          onClose={() => setDeletingLesson(null)}
-        />
       )}
     </div>
   );

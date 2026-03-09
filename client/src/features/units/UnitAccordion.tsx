@@ -7,11 +7,9 @@ import EmptyState from '../../components/EmptyState.js';
 interface UnitAccordionProps {
   courseId: string;
   units: Unit[];
-  onEditUnit: (unit: Unit) => void;
-  onDeleteUnit: (unit: Unit) => void;
 }
 
-export default function UnitAccordion({ courseId, units, onEditUnit, onDeleteUnit }: UnitAccordionProps) {
+export default function UnitAccordion({ courseId, units }: UnitAccordionProps) {
   const [expandedUnitId, setExpandedUnitId] = useState<string | null>(null);
 
   if (units.length === 0) {
@@ -33,8 +31,6 @@ export default function UnitAccordion({ courseId, units, onEditUnit, onDeleteUni
           unit={unit}
           isExpanded={expandedUnitId === unit.id}
           onToggle={() => handleToggle(unit.id)}
-          onEditUnit={onEditUnit}
-          onDeleteUnit={onDeleteUnit}
         />
       ))}
     </div>

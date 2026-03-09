@@ -1,15 +1,15 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { Settings } from 'lucide-react';
 import { coursesApi } from '../../api/courses.js';
 import { unitsApi } from '../../api/units.js';
 import type { Course, Unit } from '../../api/types.js';
 import UnitAccordion from '../units/UnitAccordion.js';
 import UnitForm from '../units/UnitForm.js';
-import CourseForm from './CourseForm.js';
 import ExamSection from '../exams/ExamSection.js';
 import CourseProgressCard from '../progress/CourseProgressCard.js';
+import CourseSettingsModal from './CourseSettingsModal.js';
 import Modal from '../../components/Modal.js';
-import ConfirmDialog from '../../components/ConfirmDialog.js';
 import Button from '../../components/Button.js';
 import LoadingSpinner from '../../components/LoadingSpinner.js';
 import ErrorMessage from '../../components/ErrorMessage.js';
@@ -20,11 +20,8 @@ export default function CourseDetailPage() {
   const [course, setCourse] = useState<Course | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [showEdit, setShowEdit] = useState(false);
-  const [showDelete, setShowDelete] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const [showAddUnit, setShowAddUnit] = useState(false);
-  const [editingUnit, setEditingUnit] = useState<Unit | null>(null);
-  const [deletingUnit, setDeletingUnit] = useState<Unit | null>(null);
 
   async function load() {
     if (!courseId) return;
@@ -44,7 +41,6 @@ export default function CourseDetailPage() {
     if (!courseId) return;
     const updated = await coursesApi.update(courseId, data);
     setCourse(prev => prev ? { ...prev, ...updated } : null);
-    setShowEdit(false);
   }
 
   async function handleCourseDelete() {
@@ -60,24 +56,22 @@ export default function CourseDetailPage() {
     setShowAddUnit(false);
   }
 
-  async function handleUpdateUnit(data: { title: string; order: number }) {
-    if (!courseId || !editingUnit) return;
-    const updated = await unitsApi.update(courseId, editingUnit.id, data);
+  async function handleUpdateUnit(unit: Unit, data: { title: string; order: number }) {
+    if (!courseId) return;
+    const updated = await unitsApi.update(courseId, unit.id, data);
     setCourse(prev => prev ? {
       ...prev,
       units: prev.units?.map(u => u.id === updated.id ? { ...u, ...updated } : u),
     } : null);
-    setEditingUnit(null);
   }
 
-  async function handleDeleteUnit() {
-    if (!courseId || !deletingUnit) return;
-    await unitsApi.delete(courseId, deletingUnit.id);
+  async function handleDeleteUnit(unit: Unit) {
+    if (!courseId) return;
+    await unitsApi.delete(courseId, unit.id);
     setCourse(prev => prev ? {
       ...prev,
-      units: prev.units?.filter(u => u.id !== deletingUnit.id),
+      units: prev.units?.filter(u => u.id !== unit.id),
     } : null);
-    setDeletingUnit(null);
   }
 
   if (loading) return <LoadingSpinner />;
@@ -99,10 +93,13 @@ export default function CourseDetailPage() {
             <p className="text-muted-foreground mt-1">{course.description}</p>
           )}
         </div>
-        <div className="flex gap-2 shrink-0">
-          <Button variant="secondary" size="sm" onClick={() => setShowEdit(true)}>Edit</Button>
-          <Button variant="danger" size="sm" onClick={() => setShowDelete(true)}>Delete</Button>
-        </div>
+        <button
+          onClick={() => setShowSettings(true)}
+          className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-surface-raised transition-colors"
+          aria-label="Course settings"
+        >
+          <Settings className="w-5 h-5" />
+        </button>
       </div>
 
       <CourseProgressCard courseId={courseId!} />
@@ -115,23 +112,18 @@ export default function CourseDetailPage() {
       <UnitAccordion
         courseId={courseId!}
         units={course.units ?? []}
-        onEditUnit={setEditingUnit}
-        onDeleteUnit={setDeletingUnit}
       />
 
       <ExamSection courseId={courseId!} />
 
-      {showEdit && (
-        <Modal title="Edit Course" onClose={() => setShowEdit(false)}>
-          <CourseForm initial={course} onSubmit={handleCourseUpdate} onCancel={() => setShowEdit(false)} />
-        </Modal>
-      )}
-      {showDelete && (
-        <ConfirmDialog
-          title="Delete Course"
-          message={`Delete "${course.title}"? This will also delete all units and lessons.`}
-          onConfirm={handleCourseDelete}
-          onClose={() => setShowDelete(false)}
+      {showSettings && (
+        <CourseSettingsModal
+          course={course}
+          onClose={() => setShowSettings(false)}
+          onUpdateCourse={handleCourseUpdate}
+          onDeleteCourse={handleCourseDelete}
+          onUpdateUnit={handleUpdateUnit}
+          onDeleteUnit={handleDeleteUnit}
         />
       )}
       {showAddUnit && (
@@ -142,19 +134,6 @@ export default function CourseDetailPage() {
             onCancel={() => setShowAddUnit(false)}
           />
         </Modal>
-      )}
-      {editingUnit && (
-        <Modal title="Edit Unit" onClose={() => setEditingUnit(null)}>
-          <UnitForm initial={editingUnit} onSubmit={handleUpdateUnit} onCancel={() => setEditingUnit(null)} />
-        </Modal>
-      )}
-      {deletingUnit && (
-        <ConfirmDialog
-          title="Delete Unit"
-          message={`Delete "${deletingUnit.title}"? All lessons inside will also be deleted.`}
-          onConfirm={handleDeleteUnit}
-          onClose={() => setDeletingUnit(null)}
-        />
       )}
     </div>
   );
