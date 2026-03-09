@@ -1,14 +1,11 @@
 import { useEffect, useState } from 'react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { unitsApi } from '../../api/units.js';
-import { lessonsApi } from '../../api/lessons.js';
 import { progressApi } from '../../api/progress.js';
 import type { Unit, Lesson, UnitProgress } from '../../api/types.js';
 import LessonList from '../lessons/LessonList.js';
-import LessonForm from '../lessons/LessonForm.js';
+import TestSection from '../tests/TestSection.js';
 import ProgressBar from '../progress/ProgressBar.js';
-import Modal from '../../components/Modal.js';
-import Button from '../../components/Button.js';
 import LoadingSpinner from '../../components/LoadingSpinner.js';
 
 interface UnitAccordionItemProps {
@@ -29,7 +26,15 @@ export default function UnitAccordionItem({
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [lessonCount, setLessonCount] = useState(unit._count?.lessons ?? 0);
   const [progress, setProgress] = useState<UnitProgress | null>(null);
-  const [showAddLesson, setShowAddLesson] = useState(false);
+
+  // Reset loaded when lesson count changes externally (e.g. added via settings modal)
+  useEffect(() => {
+    const newCount = unit._count?.lessons ?? 0;
+    if (newCount !== lessonCount) {
+      setLessonCount(newCount);
+      setLoaded(false);
+    }
+  }, [unit._count?.lessons]);
 
   useEffect(() => {
     if (isExpanded && !loaded) {
@@ -47,24 +52,6 @@ export default function UnitAccordionItem({
         .finally(() => setLoadingBody(false));
     }
   }, [isExpanded, courseId, unit.id, loaded]);
-
-  async function handleAddLesson(data: { title: string; description?: string; order: number }) {
-    const lesson = await lessonsApi.create(unit.id, data);
-    setLessons(prev => [...prev, lesson]);
-    setLessonCount(prev => prev + 1);
-    setShowAddLesson(false);
-  }
-
-  async function handleUpdateLesson(lesson: Lesson, data: { title: string; description?: string; order: number }) {
-    const updated = await lessonsApi.update(unit.id, lesson.id, data);
-    setLessons(prev => prev.map(l => l.id === updated.id ? updated : l));
-  }
-
-  async function handleDeleteLesson(lesson: Lesson) {
-    await lessonsApi.delete(unit.id, lesson.id);
-    setLessons(prev => prev.filter(l => l.id !== lesson.id));
-    setLessonCount(prev => prev - 1);
-  }
 
   return (
     <div className={`rounded-xl bg-surface border transition-all ${isExpanded ? 'border-primary/40 shadow-warm-md' : 'border-border shadow-warm-sm'}`}>
@@ -87,7 +74,7 @@ export default function UnitAccordionItem({
         </div>
       </div>
 
-      {/* Accordion body with grid animation */}
+      {/* Accordion body */}
       <div
         className="grid transition-[grid-template-rows] duration-300"
         style={{ gridTemplateRows: isExpanded ? '1fr' : '0fr' }}
@@ -100,7 +87,6 @@ export default function UnitAccordionItem({
               </div>
             ) : (
               <>
-                {/* Compact progress summary */}
                 {progress && (
                   <div className="flex flex-col gap-2">
                     <div className="flex items-center justify-between text-xs text-muted-foreground">
@@ -113,34 +99,19 @@ export default function UnitAccordionItem({
                   </div>
                 )}
 
-                {/* Lessons */}
                 <LessonList
                   courseId={courseId}
                   unitId={unit.id}
                   lessons={lessons}
                   lessonProgress={progress?.lessons}
-                  onUpdateLesson={handleUpdateLesson}
-                  onDeleteLesson={handleDeleteLesson}
                 />
 
-                <div className="flex justify-end">
-                  <Button size="sm" onClick={() => setShowAddLesson(true)}>+ Add Lesson</Button>
-                </div>
+                <TestSection unitId={unit.id} />
               </>
             )}
           </div>
         </div>
       </div>
-
-      {showAddLesson && (
-        <Modal title="Add Lesson" onClose={() => setShowAddLesson(false)}>
-          <LessonForm
-            nextOrder={lessons.length + 1}
-            onSubmit={handleAddLesson}
-            onCancel={() => setShowAddLesson(false)}
-          />
-        </Modal>
-      )}
     </div>
   );
 }

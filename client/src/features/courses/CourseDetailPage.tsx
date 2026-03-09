@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Settings } from 'lucide-react';
 import { coursesApi } from '../../api/courses.js';
 import { unitsApi } from '../../api/units.js';
+import { lessonsApi } from '../../api/lessons.js';
 import type { Course, Unit } from '../../api/types.js';
 import UnitAccordion from '../units/UnitAccordion.js';
 import UnitForm from '../units/UnitForm.js';
@@ -74,6 +75,16 @@ export default function CourseDetailPage() {
     } : null);
   }
 
+  async function handleAddLesson(unitId: string, data: { title: string; description?: string; order: number }) {
+    await lessonsApi.create(unitId, data);
+    setCourse(prev => prev ? {
+      ...prev,
+      units: prev.units?.map(u => u.id === unitId
+        ? { ...u, _count: { lessons: (u._count?.lessons ?? 0) + 1 } }
+        : u),
+    } : null);
+  }
+
   if (loading) return <LoadingSpinner />;
   if (error) return <ErrorMessage message={error} />;
   if (!course) return null;
@@ -124,6 +135,7 @@ export default function CourseDetailPage() {
           onDeleteCourse={handleCourseDelete}
           onUpdateUnit={handleUpdateUnit}
           onDeleteUnit={handleDeleteUnit}
+          onAddLesson={handleAddLesson}
         />
       )}
       {showAddUnit && (

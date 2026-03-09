@@ -5,6 +5,7 @@ import ConfirmDialog from '../../components/ConfirmDialog.js';
 import Button from '../../components/Button.js';
 import CourseForm from './CourseForm.js';
 import UnitForm from '../units/UnitForm.js';
+import LessonForm from '../lessons/LessonForm.js';
 
 interface CourseSettingsModalProps {
   course: Course;
@@ -13,6 +14,7 @@ interface CourseSettingsModalProps {
   onDeleteCourse: () => Promise<void>;
   onUpdateUnit: (unit: Unit, data: { title: string; order: number }) => Promise<void>;
   onDeleteUnit: (unit: Unit) => Promise<void>;
+  onAddLesson: (unitId: string, data: { title: string; description?: string; order: number }) => Promise<void>;
 }
 
 export default function CourseSettingsModal({
@@ -22,9 +24,11 @@ export default function CourseSettingsModal({
   onDeleteCourse,
   onUpdateUnit,
   onDeleteUnit,
+  onAddLesson,
 }: CourseSettingsModalProps) {
   const [editingUnit, setEditingUnit] = useState<Unit | null>(null);
   const [deletingUnit, setDeletingUnit] = useState<Unit | null>(null);
+  const [addingLessonUnit, setAddingLessonUnit] = useState<string | null>(null);
   const [showDeleteCourse, setShowDeleteCourse] = useState(false);
 
   const sorted = [...(course.units ?? [])].sort((a, b) => a.order - b.order);
@@ -58,7 +62,19 @@ export default function CourseSettingsModal({
                     <span className="flex-1 font-medium text-foreground text-sm truncate">{unit.title}</span>
                     <div className="flex gap-1 shrink-0">
                       <button
-                        onClick={() => setEditingUnit(prev => prev?.id === unit.id ? null : unit)}
+                        onClick={() => {
+                          setAddingLessonUnit(prev => prev === unit.id ? null : unit.id);
+                          setEditingUnit(null);
+                        }}
+                        className="text-xs text-muted-foreground hover:text-foreground px-2 py-1 rounded hover:bg-surface-raised transition-colors"
+                      >
+                        + Lesson
+                      </button>
+                      <button
+                        onClick={() => {
+                          setEditingUnit(prev => prev?.id === unit.id ? null : unit);
+                          setAddingLessonUnit(null);
+                        }}
                         className="text-xs text-muted-foreground hover:text-foreground px-2 py-1 rounded hover:bg-surface-raised transition-colors"
                       >
                         Edit
@@ -71,6 +87,20 @@ export default function CourseSettingsModal({
                       </button>
                     </div>
                   </div>
+
+                  {addingLessonUnit === unit.id && (
+                    <div className="mt-2 px-3 py-3 rounded-lg bg-surface-raised border border-border">
+                      <LessonForm
+                        nextOrder={(unit._count?.lessons ?? 0) + 1}
+                        onSubmit={async data => {
+                          await onAddLesson(unit.id, data);
+                          setAddingLessonUnit(null);
+                        }}
+                        onCancel={() => setAddingLessonUnit(null)}
+                      />
+                    </div>
+                  )}
+
                   {editingUnit?.id === unit.id && (
                     <div className="mt-2 px-3 py-3 rounded-lg bg-surface-raised border border-border">
                       <UnitForm
@@ -80,6 +110,7 @@ export default function CourseSettingsModal({
                       />
                     </div>
                   )}
+
                   {deletingUnit?.id === unit.id && (
                     <ConfirmDialog
                       title="Delete Unit"
