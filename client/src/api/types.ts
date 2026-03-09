@@ -122,5 +122,7 @@ export interface UnitProgress {
 
 export interface LessonProgress {
   lessonId: string;
+  hasQuiz: boolean;
+  attempted: boolean;
   quizPassed: boolean;
 }

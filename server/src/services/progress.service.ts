@@ -93,8 +93,9 @@ export const progressService = {
       percentComplete,
       lessons: unit.lessons.map(l => ({
         lessonId: l.id,
-        quizPassed: l.quiz?.attempts[0]?.passed === true,
         hasQuiz: l.quiz !== null,
+        attempted: (l.quiz?.attempts.length ?? 0) > 0,
+        quizPassed: l.quiz?.attempts[0]?.passed === true,
       })),
     };
   },

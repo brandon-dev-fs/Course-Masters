@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { coursesApi } from '../../api/courses.js';
 import { unitsApi } from '../../api/units.js';
 import type { Course, Unit } from '../../api/types.js';
-import UnitList from '../units/UnitList.js';
+import UnitAccordion from '../units/UnitAccordion.js';
 import UnitForm from '../units/UnitForm.js';
 import CourseForm from './CourseForm.js';
 import ExamSection from '../exams/ExamSection.js';
@@ -112,11 +112,11 @@ export default function CourseDetailPage() {
         <Button size="sm" onClick={() => setShowAddUnit(true)}>+ Add Unit</Button>
       </div>
 
-      <UnitList
+      <UnitAccordion
         courseId={courseId!}
         units={course.units ?? []}
-        onEdit={setEditingUnit}
-        onDelete={setDeletingUnit}
+        onEditUnit={setEditingUnit}
+        onDeleteUnit={setDeletingUnit}
       />
 
       <ExamSection courseId={courseId!} />
