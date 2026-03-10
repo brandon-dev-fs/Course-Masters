@@ -81,6 +81,7 @@ export interface Test {
   id: string;
   unitId: string;
   questions: TestQuestion[];
+  lastAttempt: { score: number; passed: boolean } | null;
 }
 
 export interface FinalExamQuestion {

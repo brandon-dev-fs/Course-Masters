@@ -80,7 +80,7 @@ export default function UnitAccordionItem({
         style={{ gridTemplateRows: isExpanded ? '1fr' : '0fr' }}
       >
         <div className="overflow-hidden min-h-0">
-          <div className="border-t border-border px-4 py-4 flex flex-col gap-4">
+          <div className="border-t border-border px-4 py-4 flex flex-col gap-3">
             {loadingBody ? (
               <div className="flex justify-center py-4">
                 <LoadingSpinner />
@@ -88,7 +88,7 @@ export default function UnitAccordionItem({
             ) : (
               <>
                 {progress && (
-                  <div className="flex flex-col gap-2">
+                  <div className="flex flex-col gap-1.5">
                     <div className="flex items-center justify-between text-xs text-muted-foreground">
                       <span>{progress.completedLessons}/{progress.totalLessons} lessons complete</span>
                       <span className={progress.testPassed ? 'text-accent font-medium' : ''}>
@@ -99,14 +99,22 @@ export default function UnitAccordionItem({
                   </div>
                 )}
 
-                <LessonList
-                  courseId={courseId}
-                  unitId={unit.id}
-                  lessons={lessons}
-                  lessonProgress={progress?.lessons}
-                />
-
-                <TestSection unitId={unit.id} />
+                <div className="flex gap-4 items-start">
+                  <div className="flex-1 min-w-0">
+                    <LessonList
+                      courseId={courseId}
+                      unitId={unit.id}
+                      lessons={lessons}
+                      lessonProgress={progress?.lessons}
+                    />
+                  </div>
+                  <TestSection
+                    unitId={unit.id}
+                    allLessonsComplete={progress ? progress.totalLessons > 0 && progress.completedLessons === progress.totalLessons : false}
+                    completedCount={progress?.completedLessons ?? 0}
+                    totalCount={progress?.totalLessons ?? 0}
+                  />
+                </div>
               </>
             )}
           </div>

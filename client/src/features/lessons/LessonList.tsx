@@ -12,12 +12,12 @@ interface LessonListProps {
 
 function LessonStatusIcon({ prog }: { prog?: LessonProgress }) {
   if (prog?.quizPassed) {
-    return <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0" />;
+    return <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />;
   }
   if (prog?.attempted) {
-    return <CircleDot className="w-5 h-5 text-warning shrink-0" />;
+    return <CircleDot className="w-4 h-4 text-warning shrink-0" />;
   }
-  return <Circle className="w-5 h-5 text-muted-foreground shrink-0" />;
+  return <Circle className="w-4 h-4 text-muted-foreground shrink-0" />;
 }
 
 export default function LessonList({ courseId, unitId, lessons, lessonProgress }: LessonListProps) {
@@ -28,16 +28,23 @@ export default function LessonList({ courseId, unitId, lessons, lessonProgress }
   const sorted = [...lessons].sort((a, b) => a.order - b.order);
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
       {sorted.map(lesson => {
         const prog = lessonProgress?.find(p => p.lessonId === lesson.id);
         return (
-          <div key={lesson.id} className="flex items-center rounded-xl bg-surface border border-border px-4 py-3 shadow-warm-sm hover:shadow-warm-md hover:-translate-y-px hover:border-primary/40 transition-all">
-            <LessonStatusIcon prog={prog} />
-            <Link to={`/courses/${courseId}/units/${unitId}/lessons/${lesson.id}`} className="ml-3 font-medium text-foreground hover:text-primary transition-colors">
-              {lesson.title}
-            </Link>
-          </div>
+          <Link
+            key={lesson.id}
+            to={`/courses/${courseId}/units/${unitId}/lessons/${lesson.id}`}
+            className="flex flex-col gap-1.5 rounded-xl bg-surface border border-border px-4 py-3 shadow-warm-sm hover:shadow-warm-md hover:-translate-y-px hover:border-primary/40 transition-all"
+          >
+            <div className="flex items-center justify-between gap-2">
+              <span className="font-medium text-foreground text-sm truncate">{lesson.title}</span>
+              <LessonStatusIcon prog={prog} />
+            </div>
+            {lesson.description && (
+              <p className="text-xs text-muted-foreground line-clamp-2">{lesson.description}</p>
+            )}
+          </Link>
         );
       })}
     </div>

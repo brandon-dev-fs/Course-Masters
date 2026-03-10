@@ -118,7 +118,7 @@ async function main() {
     data: {
       quizId: quiz1.id,
       userId: user.id,
-      score: 100,
+      score: 1,
       passed: true,
     },
   });
@@ -166,7 +166,7 @@ async function main() {
     data: {
       quizId: quiz2.id,
       userId: user.id,
-      score: 100,
+      score: 1,
       passed: true,
     },
   });
@@ -218,7 +218,7 @@ async function main() {
     data: {
       testId: test1.id,
       userId: user.id,
-      score: 100,
+      score: 1,
       passed: true,
     },
   });
@@ -265,7 +265,7 @@ async function main() {
     data: {
       quizId: quiz3.id,
       userId: user.id,
-      score: 100,
+      score: 1,
       passed: true,
     },
   });
