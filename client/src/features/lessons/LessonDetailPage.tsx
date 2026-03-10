@@ -68,13 +68,23 @@ export default function LessonDetailPage() {
 
       <div className="flex items-center justify-between mb-6 gap-4">
         <h1 className="text-2xl font-bold text-foreground">{lesson.order}. {lesson.title}</h1>
-        <button
-          onClick={() => setShowSettings(true)}
-          className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-surface-raised transition-colors shrink-0"
-          aria-label="Lesson settings"
-        >
-          <Settings className="w-5 h-5" />
-        </button>
+        <div className="flex items-center gap-1 shrink-0">
+          <button
+            onClick={() => setShowStudentNotes(prev => !prev)}
+            className={`p-2 rounded-lg transition-colors ${showStudentNotes ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground hover:bg-surface-raised'}`}
+            aria-label="My Notes"
+            title="My Notes"
+          >
+            <NotebookPen className="w-5 h-5" />
+          </button>
+          <button
+            onClick={() => setShowSettings(true)}
+            className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-surface-raised transition-colors"
+            aria-label="Lesson settings"
+          >
+            <Settings className="w-5 h-5" />
+          </button>
+        </div>
       </div>
 
       <Tabs defaultTab="notes">
@@ -101,16 +111,6 @@ export default function LessonDetailPage() {
           <QuizSection lessonId={lesson.id} />
         </TabPanel>
       </Tabs>
-
-      {/* Floating student notes button */}
-      <button
-        onClick={() => setShowStudentNotes(prev => !prev)}
-        className="fixed bottom-6 right-6 p-3 rounded-full bg-primary text-primary-foreground shadow-lg hover:bg-primary/90 transition-colors z-40"
-        aria-label="My Notes"
-        title="My Notes"
-      >
-        <NotebookPen className="w-5 h-5" />
-      </button>
 
       <StudentNotePanel
         lessonId={lesson.id}
