@@ -23,6 +23,7 @@ export default function CourseDetailPage() {
   const [error, setError] = useState('');
   const [showSettings, setShowSettings] = useState(false);
   const [showAddUnit, setShowAddUnit] = useState(false);
+  const [showExam, setShowExam] = useState(false);
 
   async function load() {
     if (!courseId) return;
@@ -113,7 +114,7 @@ export default function CourseDetailPage() {
         </button>
       </div>
 
-      <CourseProgressCard courseId={courseId!} />
+      <CourseProgressCard courseId={courseId!} onTakeExam={() => setShowExam(true)} />
 
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-semibold text-foreground">Units</h2>
@@ -125,7 +126,7 @@ export default function CourseDetailPage() {
         units={course.units ?? []}
       />
 
-      <ExamSection courseId={courseId!} />
+      <ExamSection courseId={courseId!} open={showExam} onClose={() => setShowExam(false)} />
 
       {showSettings && (
         <CourseSettingsModal

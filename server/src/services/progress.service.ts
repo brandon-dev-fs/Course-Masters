@@ -43,10 +43,13 @@ export const progressService = {
       return allLessonsPassed && testPassed;
     });
 
-    const examPassed = course.finalExam?.attempts[0]?.passed === true;
+    const lastExamAttempt = course.finalExam?.attempts[0] ?? null;
+    const examPassed = lastExamAttempt?.passed === true;
+    const examScore = lastExamAttempt != null ? lastExamAttempt.score : null;
     const totalLessons = allLessons.length;
     const totalUnits = course.units.length;
-    const percentComplete = totalLessons === 0 ? 0 : Math.round((completedLessons.length / totalLessons) * 100);
+    const lessonPercent = totalLessons === 0 ? 0 : Math.round((completedLessons.length / totalLessons) * 90);
+    const percentComplete = examPassed ? 100 : lessonPercent;
 
     return {
       totalUnits,
@@ -54,6 +57,7 @@ export const progressService = {
       totalLessons,
       completedLessons: completedLessons.length,
       examPassed,
+      examScore,
       percentComplete,
     };
   },

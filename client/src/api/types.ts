@@ -95,6 +95,7 @@ export interface FinalExam {
   id: string;
   courseId: string;
   questions: FinalExamQuestion[];
+  lastAttempt: { score: number; passed: boolean } | null;
 }
 
 export interface AttemptResult {
@@ -110,6 +111,7 @@ export interface CourseProgress {
   totalLessons: number;
   completedLessons: number;
   examPassed: boolean;
+  examScore: number | null;
   percentComplete: number;
 }
 
