@@ -50,7 +50,25 @@ export interface FlashCard {
 export interface PracticeProblem {
   id: string;
   question: string;
-  answer: string;
+  options: string[];
+  correctIndex: number;
+  order: number;
+  lessonId: string;
+}
+
+export interface StudentNote {
+  id: string;
+  content: string;
+  lessonId: string;
+  userId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Vocab {
+  id: string;
+  term: string;
+  definition: string;
   order: number;
   lessonId: string;
 }

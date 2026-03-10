@@ -2,7 +2,8 @@ import { z } from 'zod';
 
 export const createPracticeProblemSchema = z.object({
   question: z.string().min(1, 'Question is required'),
-  answer: z.string().min(1, 'Answer is required'),
+  options: z.array(z.string().min(1)).min(2, 'At least 2 options required'),
+  correctIndex: z.number().int().min(0),
   order: z.number().int().min(0),
 });
 

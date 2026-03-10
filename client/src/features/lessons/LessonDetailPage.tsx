@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { Settings } from 'lucide-react';
+import { Settings, NotebookPen } from 'lucide-react';
 import { lessonsApi } from '../../api/lessons.js';
 import { coursesApi } from '../../api/courses.js';
 import type { Lesson } from '../../api/types.js';
@@ -9,6 +9,8 @@ import NoteList from '../notes/NoteList.js';
 import FlashCardList from '../flashcards/FlashCardList.js';
 import PracticeProblemList from '../practice-problems/PracticeProblemList.js';
 import QuizSection from '../quizzes/QuizSection.js';
+import VocabList from '../vocab/VocabList.js';
+import StudentNotePanel from '../student-notes/StudentNotePanel.js';
 import LessonSettingsModal from './LessonSettingsModal.js';
 import LoadingSpinner from '../../components/LoadingSpinner.js';
 import ErrorMessage from '../../components/ErrorMessage.js';
@@ -21,6 +23,7 @@ export default function LessonDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showSettings, setShowSettings] = useState(false);
+  const [showStudentNotes, setShowStudentNotes] = useState(false);
 
   useEffect(() => {
     if (!unitId || !lessonId || !courseId) return;
@@ -76,13 +79,17 @@ export default function LessonDetailPage() {
 
       <Tabs defaultTab="notes">
         <TabList>
-          <Tab id="notes">Notes</Tab>
+          <Tab id="notes">Lecture Notes</Tab>
+          <Tab id="vocab">Vocabulary</Tab>
           <Tab id="flashcards">Flash Cards</Tab>
           <Tab id="practice">Practice Problems</Tab>
           <Tab id="quiz">Quiz</Tab>
         </TabList>
         <TabPanel id="notes">
           <NoteList lessonId={lesson.id} />
+        </TabPanel>
+        <TabPanel id="vocab">
+          <VocabList lessonId={lesson.id} />
         </TabPanel>
         <TabPanel id="flashcards">
           <FlashCardList lessonId={lesson.id} />
@@ -94,6 +101,22 @@ export default function LessonDetailPage() {
           <QuizSection lessonId={lesson.id} />
         </TabPanel>
       </Tabs>
+
+      {/* Floating student notes button */}
+      <button
+        onClick={() => setShowStudentNotes(prev => !prev)}
+        className="fixed bottom-6 right-6 p-3 rounded-full bg-primary text-primary-foreground shadow-lg hover:bg-primary/90 transition-colors z-40"
+        aria-label="My Notes"
+        title="My Notes"
+      >
+        <NotebookPen className="w-5 h-5" />
+      </button>
+
+      <StudentNotePanel
+        lessonId={lesson.id}
+        isOpen={showStudentNotes}
+        onClose={() => setShowStudentNotes(false)}
+      />
 
       {showSettings && (
         <LessonSettingsModal
