@@ -1,10 +1,4 @@
 import { GraduationCap, BookOpen, Layers, NotebookPen, CreditCard, Brain, TrendingUp } from 'lucide-react';
-import Button from '../../components/Button.js';
-
-interface HeroSectionProps {
-  hasCourses: boolean;
-  onCreateCourse: () => void;
-}
 
 const features = [
   { icon: BookOpen, label: 'Courses' },
@@ -15,7 +9,7 @@ const features = [
   { icon: TrendingUp, label: 'Progress Tracking' },
 ];
 
-export default function HeroSection({ hasCourses, onCreateCourse }: HeroSectionProps) {
+export default function HeroSection() {
   return (
     <div className="-mx-6 px-6 py-14 mb-10 bg-surface border-b border-border">
       <div className="max-w-2xl">
@@ -45,22 +39,6 @@ export default function HeroSection({ hasCourses, onCreateCourse }: HeroSectionP
           ))}
         </div>
 
-        <div className="flex flex-wrap gap-3">
-          <Button size="lg" onClick={onCreateCourse}>
-            + Create your first course
-          </Button>
-          {hasCourses && (
-            <Button
-              size="lg"
-              variant="accent"
-              onClick={() => {
-                document.getElementById('courses')?.scrollIntoView({ behavior: 'smooth' });
-              }}
-            >
-              View my courses
-            </Button>
-          )}
-        </div>
       </div>
     </div>
   );
