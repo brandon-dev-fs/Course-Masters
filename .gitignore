@@ -18,6 +18,7 @@ out/
 .env.*.local
 server/.env
 server/.env.*
+!server/.env.example
 
 # ── TypeScript ────────────────────────────────────────────────────────────────
 *.tsbuildinfo
