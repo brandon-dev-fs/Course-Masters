@@ -16,12 +16,19 @@ export const examService = {
     if (!course) throw new NotFoundError('Course not found');
     const exam = await prisma.finalExam.findUnique({
       where: { courseId },
-      include: { questions: { orderBy: { order: 'asc' } } },
+      include: {
+        questions: { orderBy: { order: 'asc' } },
+        attempts: { orderBy: { createdAt: 'desc' }, take: 1 },
+      },
     });
     if (!exam) return null;
+    const lastAttempt = exam.attempts[0] ?? null;
     return {
       ...exam,
       questions: exam.questions.map(({ correctIndex: _ci, ...q }) => q),
+      lastAttempt: lastAttempt
+        ? { score: lastAttempt.score, passed: lastAttempt.passed }
+        : null,
     };
   },
 

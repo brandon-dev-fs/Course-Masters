@@ -1,41 +1,52 @@
 import { Link } from 'react-router-dom';
-import { BookOpen } from 'lucide-react';
-import type { Lesson } from '../../api/types.js';
+import { BookOpen, Circle, CircleDot, CheckCircle2 } from 'lucide-react';
+import type { Lesson, LessonProgress } from '../../api/types.js';
 import EmptyState from '../../components/EmptyState.js';
 
 interface LessonListProps {
   courseId: string;
   unitId: string;
   lessons: Lesson[];
-  onEdit: (lesson: Lesson) => void;
-  onDelete: (lesson: Lesson) => void;
+  lessonProgress?: LessonProgress[];
 }
 
-export default function LessonList({ courseId, unitId, lessons, onEdit, onDelete }: LessonListProps) {
+function LessonStatusIcon({ prog }: { prog?: LessonProgress }) {
+  if (prog?.quizPassed) {
+    return <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />;
+  }
+  if (prog?.attempted) {
+    return <CircleDot className="w-4 h-4 text-warning shrink-0" />;
+  }
+  return <Circle className="w-4 h-4 text-muted-foreground shrink-0" />;
+}
+
+export default function LessonList({ courseId, unitId, lessons, lessonProgress }: LessonListProps) {
   if (lessons.length === 0) {
-    return <EmptyState icon={<BookOpen className="w-8 h-8" />} title="No lessons yet" description="Add a lesson to start adding content." />;
+    return <EmptyState icon={<BookOpen className="w-8 h-8" />} title="No lessons yet" description="Add a lesson via the course settings gear." />;
   }
 
   const sorted = [...lessons].sort((a, b) => a.order - b.order);
 
   return (
-    <div className="flex flex-col gap-2">
-      {sorted.map(lesson => (
-        <div key={lesson.id} className="flex items-center justify-between rounded-xl bg-surface border border-border px-4 py-3 shadow-warm-sm hover:shadow-warm-md hover:-translate-y-px hover:border-primary/40 transition-all">
-          <div className="flex items-center gap-3">
-            <span className="w-7 h-7 flex items-center justify-center rounded-lg bg-primary-subtle text-primary text-xs font-bold shrink-0">
-              {lesson.order}
-            </span>
-            <Link to={`/courses/${courseId}/units/${unitId}/lessons/${lesson.id}`} className="font-medium text-foreground hover:text-primary transition-colors">
-              {lesson.title}
-            </Link>
-          </div>
-          <div className="flex gap-1">
-            <button onClick={() => onEdit(lesson)} className="text-xs text-muted-foreground hover:text-foreground px-2 py-1 rounded hover:bg-surface-raised transition-colors">Edit</button>
-            <button onClick={() => onDelete(lesson)} className="text-xs text-muted-foreground hover:text-destructive px-2 py-1 rounded hover:bg-surface-raised transition-colors">Delete</button>
-          </div>
-        </div>
-      ))}
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+      {sorted.map(lesson => {
+        const prog = lessonProgress?.find(p => p.lessonId === lesson.id);
+        return (
+          <Link
+            key={lesson.id}
+            to={`/courses/${courseId}/units/${unitId}/lessons/${lesson.id}`}
+            className="flex flex-col gap-1.5 rounded-xl bg-surface border border-border px-4 py-3 shadow-warm-sm hover:shadow-warm-md hover:-translate-y-px hover:border-primary/40 transition-all"
+          >
+            <div className="flex items-center justify-between gap-2">
+              <span className="font-medium text-foreground text-sm truncate">{lesson.title}</span>
+              <LessonStatusIcon prog={prog} />
+            </div>
+            {lesson.description && (
+              <p className="text-xs text-muted-foreground line-clamp-2">{lesson.description}</p>
+            )}
+          </Link>
+        );
+      })}
     </div>
   );
 }

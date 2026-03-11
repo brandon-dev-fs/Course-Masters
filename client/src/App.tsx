@@ -3,7 +3,6 @@ import { ThemeProvider } from './context/ThemeContext.js';
 import Layout from './components/Layout.js';
 import CourseListPage from './features/courses/CourseListPage.js';
 import CourseDetailPage from './features/courses/CourseDetailPage.js';
-import UnitDetailPage from './features/units/UnitDetailPage.js';
 import LessonDetailPage from './features/lessons/LessonDetailPage.js';
 
 export default function App() {
@@ -13,7 +12,6 @@ export default function App() {
         <Route element={<Layout />}>
           <Route path="/" element={<CourseListPage />} />
           <Route path="/courses/:courseId" element={<CourseDetailPage />} />
-          <Route path="/courses/:courseId/units/:unitId" element={<UnitDetailPage />} />
           <Route path="/courses/:courseId/units/:unitId/lessons/:lessonId" element={<LessonDetailPage />} />
         </Route>
       </Routes>

@@ -10,20 +10,18 @@ interface PracticeProblemCardProps {
 }
 
 export default function PracticeProblemCard({ problem, onEdit, onDelete }: PracticeProblemCardProps) {
-  const [userAnswer, setUserAnswer] = useState('');
+  const [selected, setSelected] = useState<number | null>(null);
   const [checked, setChecked] = useState(false);
-  const [revealed, setRevealed] = useState(false);
 
-  const isCorrect = checked && userAnswer.trim().toLowerCase() === problem.answer.trim().toLowerCase();
+  const isCorrect = checked && selected === problem.correctIndex;
 
   function handleCheck() {
-    if (userAnswer.trim()) setChecked(true);
+    if (selected !== null) setChecked(true);
   }
 
   function handleReset() {
-    setUserAnswer('');
+    setSelected(null);
     setChecked(false);
-    setRevealed(false);
   }
 
   return (
@@ -39,35 +37,47 @@ export default function PracticeProblemCard({ problem, onEdit, onDelete }: Pract
         </div>
       </div>
 
+      <div className="flex flex-col gap-2 mb-3">
+        {problem.options.map((option, i) => {
+          let optionClass = 'flex items-center gap-2 rounded-lg border px-3 py-2 cursor-pointer text-sm transition-colors ';
+          if (!checked) {
+            optionClass += selected === i
+              ? 'border-primary bg-primary/10 text-foreground'
+              : 'border-border bg-surface-raised text-foreground hover:border-primary/50';
+          } else if (i === problem.correctIndex) {
+            optionClass += 'border-primary bg-primary-subtle text-primary';
+          } else if (i === selected && selected !== problem.correctIndex) {
+            optionClass += 'border-destructive bg-destructive/10 text-destructive';
+          } else {
+            optionClass += 'border-border bg-surface-raised text-muted-foreground';
+          }
+
+          return (
+            <label key={i} className={optionClass}>
+              <input
+                type="radio"
+                name={`practice-${problem.id}`}
+                checked={selected === i}
+                onChange={() => { if (!checked) setSelected(i); }}
+                disabled={checked}
+                className="accent-accent shrink-0"
+              />
+              <span>{option}</span>
+              {checked && i === problem.correctIndex && <span className="ml-auto text-xs font-medium">✓ Correct</span>}
+              {checked && i === selected && selected !== problem.correctIndex && <span className="ml-auto text-xs font-medium">✗ Your answer</span>}
+            </label>
+          );
+        })}
+      </div>
+
       {!checked ? (
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={userAnswer}
-            onChange={e => setUserAnswer(e.target.value)}
-            onKeyDown={e => { if (e.key === 'Enter') handleCheck(); }}
-            placeholder="Your answer..."
-            className="flex-1 rounded-xl border-2 border-border bg-surface-raised px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary"
-          />
-          <Button size="sm" onClick={handleCheck} disabled={!userAnswer.trim()}>Check</Button>
-        </div>
+        <Button size="sm" onClick={handleCheck} disabled={selected === null}>Check Answer</Button>
       ) : (
-        <div className={`rounded-xl p-3 flex items-start justify-between gap-2 ${isCorrect ? 'bg-primary-subtle border border-primary/30' : 'bg-destructive/10 border border-destructive/30'}`}>
-          <div>
-            {isCorrect ? (
-              <p className="text-primary text-sm font-medium">✓ Correct!</p>
-            ) : (
-              <div>
-                <p className="text-destructive text-sm">✗ Incorrect. Your answer: <span className="italic">{userAnswer}</span></p>
-                {revealed ? (
-                  <p className="text-foreground text-sm mt-1">Answer: <span className="font-medium text-accent">{problem.answer}</span></p>
-                ) : (
-                  <button onClick={() => setRevealed(true)} className="text-xs text-muted-foreground hover:text-foreground mt-1 underline">Reveal answer</button>
-                )}
-              </div>
-            )}
-          </div>
-          <button onClick={handleReset} className="text-xs text-muted-foreground hover:text-foreground shrink-0">Try again</button>
+        <div className="flex items-center justify-between">
+          <p className={`text-sm font-medium ${isCorrect ? 'text-primary' : 'text-destructive'}`}>
+            {isCorrect ? '✓ Correct!' : '✗ Incorrect'}
+          </p>
+          <button onClick={handleReset} className="text-xs text-muted-foreground hover:text-foreground underline">Try again</button>
         </div>
       )}
     </div>

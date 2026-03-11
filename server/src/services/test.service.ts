@@ -16,12 +16,19 @@ export const testService = {
     if (!unit) throw new NotFoundError('Unit not found');
     const test = await prisma.test.findUnique({
       where: { unitId },
-      include: { questions: { orderBy: { order: 'asc' } } },
+      include: {
+        questions: { orderBy: { order: 'asc' } },
+        attempts: { orderBy: { createdAt: 'desc' }, take: 1 },
+      },
     });
     if (!test) return null;
+    const lastAttempt = test.attempts[0] ?? null;
     return {
       ...test,
       questions: test.questions.map(({ correctIndex: _ci, ...q }) => q),
+      lastAttempt: lastAttempt
+        ? { score: lastAttempt.score, passed: lastAttempt.passed }
+        : null,
     };
   },
 

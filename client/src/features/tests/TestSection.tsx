@@ -12,12 +12,23 @@ import ErrorMessage from '../../components/ErrorMessage.js';
 
 type View = 'idle' | 'creating' | 'taking' | 'results';
 
-export default function TestSection({ unitId }: { unitId: string }) {
+interface TestSectionProps {
+  unitId: string;
+  allLessonsComplete?: boolean;
+  completedCount?: number;
+  totalCount?: number;
+}
+
+export default function TestSection({ unitId, allLessonsComplete = true, completedCount = 0, totalCount = 0 }: TestSectionProps) {
   const [test, setTest] = useState<Test | null | undefined>(undefined);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [view, setView] = useState<View>('idle');
   const [result, setResult] = useState<AttemptResult | null>(null);
+
+  const lastAttempt = result
+    ? { score: result.score, passed: result.passed }
+    : (test?.lastAttempt ?? null);
 
   useEffect(() => {
     testsApi.get(unitId)
@@ -43,20 +54,43 @@ export default function TestSection({ unitId }: { unitId: string }) {
   if (error) return <ErrorMessage message={error} />;
 
   return (
-    <div className="rounded-xl bg-surface border border-border p-6 mt-6">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-foreground">Unit Test</h3>
-        {test && <span className="text-xs text-muted-foreground">{test.questions.length} questions</span>}
+    <div className="rounded-xl bg-surface border border-border p-4 flex flex-col gap-3 w-44 shrink-0">
+      <div className="flex items-center justify-between">
+        <h3 className="text-xs font-semibold text-foreground uppercase tracking-wide">Unit Test</h3>
+        {test && <span className="text-xs text-muted-foreground">{test.questions.length}q</span>}
+      </div>
+
+      <div className="h-8 flex items-center justify-center">
+        {lastAttempt ? (
+          <span className={`text-xs font-medium ${lastAttempt.passed ? 'text-accent' : 'text-destructive'}`}>
+            {lastAttempt.passed ? '✓ Passed' : '✗ Failed'} · {Math.round(lastAttempt.score * 100)}%
+          </span>
+        ) : (
+          <span className="text-xs text-muted-foreground">No attempts yet</span>
+        )}
       </div>
 
       {!test ? (
-        <div className="text-center py-6">
-          <p className="text-muted-foreground text-sm mb-4">No test created yet.</p>
-          <Button onClick={() => setView('creating')}>Create Test</Button>
+        <div className="flex flex-col items-center gap-2">
+          <div className="relative group">
+            <Button size="sm" onClick={() => setView('creating')} disabled={!allLessonsComplete}>Create Test</Button>
+            {!allLessonsComplete && (
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 px-3 py-2 rounded-lg bg-surface-raised border border-border shadow-warm-md text-xs text-muted-foreground text-center pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                Complete all lessons first ({completedCount}/{totalCount})
+              </div>
+            )}
+          </div>
         </div>
       ) : (
-        <div className="flex gap-3">
-          <Button onClick={() => setView('taking')}>Take Test</Button>
+        <div className="flex justify-center">
+          <div className="relative group">
+            <Button size="sm" onClick={() => setView('taking')} disabled={!allLessonsComplete}>Take Test</Button>
+            {!allLessonsComplete && (
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 px-3 py-2 rounded-lg bg-surface-raised border border-border shadow-warm-md text-xs text-muted-foreground text-center pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                Complete all lessons first ({completedCount}/{totalCount})
+              </div>
+            )}
+          </div>
         </div>
       )}
 

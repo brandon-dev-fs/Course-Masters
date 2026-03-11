@@ -25,13 +25,13 @@ export default function PracticeProblemList({ lessonId }: { lessonId: string }) 
       .finally(() => setLoading(false));
   }, [lessonId]);
 
-  async function handleAdd(data: { question: string; answer: string; order: number }) {
+  async function handleAdd(data: { question: string; options: string[]; correctIndex: number; order: number }) {
     const prob = await practiceProblemsApi.create(lessonId, data);
     setProblems(prev => [...prev, prob].sort((a, b) => a.order - b.order));
     setShowAdd(false);
   }
 
-  async function handleUpdate(data: { question: string; answer: string; order: number }) {
+  async function handleUpdate(data: { question: string; options: string[]; correctIndex: number; order: number }) {
     if (!editing) return;
     const updated = await practiceProblemsApi.update(editing.id, data);
     setProblems(prev => prev.map(p => p.id === updated.id ? updated : p).sort((a, b) => a.order - b.order));

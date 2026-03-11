@@ -27,6 +27,7 @@ export interface Unit {
 export interface Lesson {
   id: string;
   title: string;
+  description?: string;
   order: number;
   unitId: string;
 }
@@ -49,7 +50,25 @@ export interface FlashCard {
 export interface PracticeProblem {
   id: string;
   question: string;
-  answer: string;
+  options: string[];
+  correctIndex: number;
+  order: number;
+  lessonId: string;
+}
+
+export interface StudentNote {
+  id: string;
+  content: string;
+  lessonId: string;
+  userId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Vocab {
+  id: string;
+  term: string;
+  definition: string;
   order: number;
   lessonId: string;
 }
@@ -80,6 +99,7 @@ export interface Test {
   id: string;
   unitId: string;
   questions: TestQuestion[];
+  lastAttempt: { score: number; passed: boolean } | null;
 }
 
 export interface FinalExamQuestion {
@@ -94,6 +114,7 @@ export interface FinalExam {
   id: string;
   courseId: string;
   questions: FinalExamQuestion[];
+  lastAttempt: { score: number; passed: boolean } | null;
 }
 
 export interface AttemptResult {
@@ -109,6 +130,7 @@ export interface CourseProgress {
   totalLessons: number;
   completedLessons: number;
   examPassed: boolean;
+  examScore: number | null;
   percentComplete: number;
 }
 
@@ -122,5 +144,7 @@ export interface UnitProgress {
 
 export interface LessonProgress {
   lessonId: string;
+  hasQuiz: boolean;
+  attempted: boolean;
   quizPassed: boolean;
 }

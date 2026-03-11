@@ -1,35 +1,46 @@
 import { useEffect, useState } from 'react';
 import { examsApi } from '../../api/exams.js';
-import type { FinalExam, AttemptResult } from '../../api/types.js';
+import type { FinalExam } from '../../api/types.js';
 import AssessmentForm from '../assessments/AssessmentForm.js';
 import AssessmentTaker from '../assessments/AssessmentTaker.js';
 import AssessmentResults from '../assessments/AssessmentResults.js';
 import { type QuestionDraft } from '../assessments/QuestionEditor.js';
 import Modal from '../../components/Modal.js';
-import Button from '../../components/Button.js';
-import LoadingSpinner from '../../components/LoadingSpinner.js';
-import ErrorMessage from '../../components/ErrorMessage.js';
 
 type View = 'idle' | 'creating' | 'taking' | 'results';
 
-export default function ExamSection({ courseId }: { courseId: string }) {
+interface ExamSectionProps {
+  courseId: string;
+  open: boolean;
+  onClose: () => void;
+}
+
+export default function ExamSection({ courseId, open, onClose }: ExamSectionProps) {
   const [exam, setExam] = useState<FinalExam | null | undefined>(undefined);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
   const [view, setView] = useState<View>('idle');
-  const [result, setResult] = useState<AttemptResult | null>(null);
+  const [result, setResult] = useState<{ score: number; passed: boolean; totalQuestions: number; correctCount: number } | null>(null);
 
   useEffect(() => {
     examsApi.get(courseId)
       .then(setExam)
-      .catch((err: unknown) => setError(err instanceof Error ? err.message : 'Failed to load exam'))
-      .finally(() => setLoading(false));
+      .catch(() => {});
   }, [courseId]);
+
+  useEffect(() => {
+    if (open) {
+      setView(exam === null ? 'creating' : 'taking');
+    }
+  }, [open, exam]);
+
+  function handleClose() {
+    setView('idle');
+    onClose();
+  }
 
   async function handleCreate(questions: QuestionDraft[]) {
     const created = await examsApi.create(courseId, { questions });
     setExam(created);
-    setView('idle');
+    setView('taking');
   }
 
   async function handleSubmit(answers: number[]) {
@@ -39,42 +50,25 @@ export default function ExamSection({ courseId }: { courseId: string }) {
     setView('results');
   }
 
-  if (loading) return <LoadingSpinner />;
-  if (error) return <ErrorMessage message={error} />;
+  if (!open && view === 'idle') return null;
 
   return (
-    <div className="rounded-xl bg-surface border border-primary/30 p-6 mt-6">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-foreground">Final Exam</h3>
-        {exam && <span className="text-xs text-muted-foreground">{exam.questions.length} questions</span>}
-      </div>
-
-      {!exam ? (
-        <div className="text-center py-6">
-          <p className="text-muted-foreground text-sm mb-4">No final exam created yet.</p>
-          <Button onClick={() => setView('creating')}>Create Final Exam</Button>
-        </div>
-      ) : (
-        <div className="flex gap-3">
-          <Button onClick={() => setView('taking')}>Take Final Exam</Button>
-        </div>
-      )}
-
+    <>
       {view === 'creating' && (
-        <Modal title="Create Final Exam" onClose={() => setView('idle')}>
-          <AssessmentForm onSubmit={handleCreate} onCancel={() => setView('idle')} />
+        <Modal title="Create Final Exam" onClose={handleClose}>
+          <AssessmentForm onSubmit={handleCreate} onCancel={handleClose} />
         </Modal>
       )}
       {view === 'taking' && exam && (
-        <Modal title="Final Exam" onClose={() => setView('idle')}>
-          <AssessmentTaker questions={exam.questions} onSubmit={handleSubmit} onCancel={() => setView('idle')} />
+        <Modal title="Final Exam" onClose={handleClose}>
+          <AssessmentTaker questions={exam.questions} onSubmit={handleSubmit} onCancel={handleClose} />
         </Modal>
       )}
       {view === 'results' && result && (
-        <Modal title="Final Exam Results" onClose={() => setView('idle')}>
-          <AssessmentResults result={result} onRetake={() => setView('taking')} onDismiss={() => setView('idle')} />
+        <Modal title="Final Exam Results" onClose={handleClose}>
+          <AssessmentResults result={result} onRetake={() => setView('taking')} onDismiss={handleClose} />
         </Modal>
       )}
-    </div>
+    </>
   );
 }

@@ -58,7 +58,7 @@ export default function CourseListPage() {
 
   return (
     <div>
-      <HeroSection hasCourses={courses.length > 0} onCreateCourse={() => setShowCreate(true)} />
+      <HeroSection />
 
       <div id="courses" className="scroll-mt-20">
         <div className="flex items-center justify-between mb-6">
