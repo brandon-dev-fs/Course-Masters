@@ -18,6 +18,7 @@ model User {
   quizAttempts  QuizAttempt[]
   testAttempts  TestAttempt[]
   examAttempts  ExamAttempt[]
+  studentNotes  StudentNote[]
 }
 
 model Course {
@@ -45,16 +46,19 @@ model Unit {
 }
 
 model Lesson {
-  id     String @id @default(uuid())
-  title  String
-  order  Int
-  unitId String
+  id          String  @id @default(uuid())
+  title       String
+  description String?
+  order       Int
+  unitId      String
 
   unit             Unit              @relation(fields: [unitId], references: [id], onDelete: Cascade)
   notes            Note[]
   flashCards       FlashCard[]
   practiceProblems PracticeProblem[]
   quiz             Quiz?
+  studentNotes     StudentNote[]
+  vocabs           Vocab[]
 }
 
 model Note {
@@ -77,11 +81,36 @@ model FlashCard {
 }
 
 model PracticeProblem {
-  id       String @id @default(uuid())
-  question String
-  answer   String
-  order    Int
-  lessonId String
+  id           String @id @default(uuid())
+  question     String
+  options      Json
+  correctIndex Int
+  order        Int
+  lessonId     String
+
+  lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+}
+
+model StudentNote {
+  id        String   @id @default(uuid())
+  content   String
+  lessonId  String
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([lessonId, userId])
+}
+
+model Vocab {
+  id         String @id @default(uuid())
+  term       String
+  definition String
+  order      Int
+  lessonId   String
 
   lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
 }
