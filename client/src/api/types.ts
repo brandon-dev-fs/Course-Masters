@@ -1,3 +1,23 @@
+export interface AuthUser {
+  id: string;
+  name: string;
+  email: string;
+  role: 'student' | 'teacher' | 'admin';
+  image?: string | null;
+  emailVerified: boolean;
+}
+
+export interface RegisterInput {
+  name: string;
+  email: string;
+  password: string;
+}
+
+export interface LoginInput {
+  email: string;
+  password: string;
+}
+
 export interface ApiError {
   code: string;
   message: string;
