@@ -5,10 +5,12 @@ import { createAccessControl } from 'better-auth/plugins/access';
 import prisma from './prisma.js';
 import { config } from '../config.js';
 
+// Must include all permissions the Better Auth admin plugin uses internally
+// (list, set-role, ban, unban, impersonate, delete, set-password) plus our custom ones
 const statement = {
 	course: ['create', 'update', 'delete'],
 	content: ['create', 'update', 'delete'],
-	user: ['manage', 'assign-role'],
+	user: ['list', 'create', 'update', 'delete', 'ban', 'unban', 'impersonate', 'set-role', 'set-password'],
 } as const;
 
 const ac = createAccessControl(statement);
@@ -28,7 +30,7 @@ const teacher = ac.newRole({
 const adminRole = ac.newRole({
 	course: ['create', 'update', 'delete'],
 	content: ['create', 'update', 'delete'],
-	user: ['manage', 'assign-role'],
+	user: ['list', 'create', 'update', 'delete', 'ban', 'unban', 'impersonate', 'set-role', 'set-password'],
 });
 
 export const auth = betterAuth({
