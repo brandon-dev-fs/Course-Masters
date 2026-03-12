@@ -5,6 +5,7 @@ import Layout from './components/Layout.js';
 import CourseListPage from './features/courses/CourseListPage.js';
 import CourseDetailPage from './features/courses/CourseDetailPage.js';
 import LessonDetailPage from './features/lessons/LessonDetailPage.js';
+import LoginPage from './features/auth/LoginPage.js';
 
 export default function App() {
   return (
@@ -16,6 +17,7 @@ export default function App() {
             <Route path="/courses/:courseId" element={<CourseDetailPage />} />
             <Route path="/courses/:courseId/units/:unitId/lessons/:lessonId" element={<LessonDetailPage />} />
           </Route>
+          <Route path="/login" element={<LoginPage />} />
         </Routes>
       </AuthProvider>
     </ThemeProvider>
