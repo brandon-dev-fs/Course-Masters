@@ -4,11 +4,12 @@ import type { Course } from '../../api/types.js';
 
 interface CourseCardProps {
   course: Course;
+  canEdit?: boolean;
   onEdit: () => void;
   onDelete: () => void;
 }
 
-export default function CourseCard({ course, onEdit, onDelete }: CourseCardProps) {
+export default function CourseCard({ course, canEdit = true, onEdit, onDelete }: CourseCardProps) {
   const unitCount = course._count?.units ?? 0;
 
   return (
@@ -19,22 +20,24 @@ export default function CourseCard({ course, onEdit, onDelete }: CourseCardProps
           <Link to={`/courses/${course.id}`} className="text-lg font-semibold text-foreground hover:text-primary transition-colors">
             {course.title}
           </Link>
-          <div className="flex gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-            <button
-              onClick={onEdit}
-              className="text-muted-foreground hover:text-foreground w-7 h-7 flex items-center justify-center rounded-lg hover:bg-surface-raised transition-colors"
-              aria-label="Edit course"
-            >
-              <Pencil className="w-3.5 h-3.5" />
-            </button>
-            <button
-              onClick={onDelete}
-              className="text-muted-foreground hover:text-destructive w-7 h-7 flex items-center justify-center rounded-lg hover:bg-surface-raised transition-colors"
-              aria-label="Delete course"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
+          {canEdit && (
+            <div className="flex gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+              <button
+                onClick={onEdit}
+                className="text-muted-foreground hover:text-foreground w-7 h-7 flex items-center justify-center rounded-lg hover:bg-surface-raised transition-colors"
+                aria-label="Edit course"
+              >
+                <Pencil className="w-3.5 h-3.5" />
+              </button>
+              <button
+                onClick={onDelete}
+                className="text-muted-foreground hover:text-destructive w-7 h-7 flex items-center justify-center rounded-lg hover:bg-surface-raised transition-colors"
+                aria-label="Delete course"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          )}
         </div>
         {course.description && (
           <p className="text-sm text-muted-foreground line-clamp-2">{course.description}</p>

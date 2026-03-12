@@ -15,8 +15,11 @@ import Modal from '../../components/Modal.js';
 import Button from '../../components/Button.js';
 import LoadingSpinner from '../../components/LoadingSpinner.js';
 import ErrorMessage from '../../components/ErrorMessage.js';
+import { useAuth } from '../../context/AuthContext.js';
 
 export default function CourseDetailPage() {
+	const { user } = useAuth();
+	const canEdit = user?.role === 'teacher' || user?.role === 'admin';
 	const { courseId } = useParams<{ courseId: string }>();
 	const navigate = useNavigate();
 	const [course, setCourse] = useState<Course | null>(null);
@@ -161,13 +164,15 @@ export default function CourseDetailPage() {
 						</p>
 					)}
 				</div>
-				<button
-					onClick={() => setShowSettings(true)}
-					className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-surface-raised transition-colors"
-					aria-label="Course settings"
-				>
-					<Settings className="w-5 h-5" />
-				</button>
+				{canEdit && (
+					<button
+						onClick={() => setShowSettings(true)}
+						className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-surface-raised transition-colors"
+						aria-label="Course settings"
+					>
+						<Settings className="w-5 h-5" />
+					</button>
+				)}
 			</div>
 
 			<CourseProgressCard
@@ -177,15 +182,17 @@ export default function CourseDetailPage() {
 
 			<div className="flex items-center justify-between mb-4">
 				<h2 className="text-lg font-semibold text-foreground">Units</h2>
-				<div className="flex items-center gap-2">
-					<button
-						onClick={() => setShowUnitSettings(true)}
-						className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-surface-raised transition-colors"
-						aria-label="Unit settings"
-					>
-						<Settings className="w-4 h-4" />
-					</button>
-				</div>
+				{canEdit && (
+					<div className="flex items-center gap-2">
+						<button
+							onClick={() => setShowUnitSettings(true)}
+							className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-surface-raised transition-colors"
+							aria-label="Unit settings"
+						>
+							<Settings className="w-4 h-4" />
+						</button>
+					</div>
+				)}
 			</div>
 
 			<UnitAccordion

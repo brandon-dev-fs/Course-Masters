@@ -4,6 +4,7 @@ import { Settings, NotebookPen } from 'lucide-react';
 import { lessonsApi } from '../../api/lessons.js';
 import { coursesApi } from '../../api/courses.js';
 import type { Lesson } from '../../api/types.js';
+import { useAuth } from '../../context/AuthContext.js';
 import { Tabs, TabList, Tab, TabPanel } from '../../components/Tabs.js';
 import NoteList from '../notes/NoteList.js';
 import FlashCardList from '../flashcards/FlashCardList.js';
@@ -18,6 +19,8 @@ import ErrorMessage from '../../components/ErrorMessage.js';
 export default function LessonDetailPage() {
   const { courseId, unitId, lessonId } = useParams<{ courseId: string; unitId: string; lessonId: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const canEdit = user?.role === 'teacher' || user?.role === 'admin';
   const [lesson, setLesson] = useState<Lesson | null>(null);
   const [courseTitle, setCourseTitle] = useState('');
   const [loading, setLoading] = useState(true);
@@ -77,13 +80,15 @@ export default function LessonDetailPage() {
           >
             <NotebookPen className="w-5 h-5" />
           </button>
-          <button
-            onClick={() => setShowSettings(true)}
-            className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-surface-raised transition-colors"
-            aria-label="Lesson settings"
-          >
-            <Settings className="w-5 h-5" />
-          </button>
+          {canEdit && (
+            <button
+              onClick={() => setShowSettings(true)}
+              className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-surface-raised transition-colors"
+              aria-label="Lesson settings"
+            >
+              <Settings className="w-5 h-5" />
+            </button>
+          )}
         </div>
       </div>
 
