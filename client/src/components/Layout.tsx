@@ -1,7 +1,7 @@
 import { Outlet, Link, useNavigate } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext.js';
 import { useAuth } from '../context/AuthContext.js';
-import { GraduationCap, Sun, Moon, UserCircle, LogOut } from 'lucide-react';
+import { GraduationCap, Sun, Moon, UserCircle, LogOut, ShieldCheck } from 'lucide-react';
 import Footer from './Footer.js';
 
 export default function Layout() {
@@ -34,6 +34,16 @@ export default function Layout() {
 					</button>
 					{user && (
 						<>
+							{user.role === 'admin' && (
+								<Link
+									to="/admin/users"
+									className="flex items-center gap-1.5 px-3 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors rounded-xl hover:bg-surface"
+									aria-label="Admin"
+								>
+									<ShieldCheck className="w-5 h-5" />
+									<span className="hidden sm:inline font-medium">Admin</span>
+								</Link>
+							)}
 							<Link
 								to="/profile"
 								className="flex items-center gap-1.5 px-3 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors rounded-xl hover:bg-surface"

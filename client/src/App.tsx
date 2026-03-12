@@ -9,6 +9,8 @@ import LoginPage from './features/auth/LoginPage.js';
 import RegisterPage from './features/auth/RegisterPage.js';
 import ProfilePage from './features/auth/ProfilePage.js';
 import RequireAuth from './features/auth/RequireAuth.js';
+import RequireRole from './features/auth/RequireRole.js';
+import AdminUsersPage from './features/auth/AdminUsersPage.js';
 
 export default function App() {
   return (
@@ -20,6 +22,7 @@ export default function App() {
             <Route path="/courses/:courseId" element={<RequireAuth><CourseDetailPage /></RequireAuth>} />
             <Route path="/courses/:courseId/units/:unitId/lessons/:lessonId" element={<RequireAuth><LessonDetailPage /></RequireAuth>} />
             <Route path="/profile" element={<RequireAuth><ProfilePage /></RequireAuth>} />
+            <Route path="/admin/users" element={<RequireAuth><RequireRole roles={['admin']}><AdminUsersPage /></RequireRole></RequireAuth>} />
           </Route>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
