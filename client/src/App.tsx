@@ -6,6 +6,7 @@ import CourseListPage from './features/courses/CourseListPage.js';
 import CourseDetailPage from './features/courses/CourseDetailPage.js';
 import LessonDetailPage from './features/lessons/LessonDetailPage.js';
 import LoginPage from './features/auth/LoginPage.js';
+import RegisterPage from './features/auth/RegisterPage.js';
 
 export default function App() {
   return (
@@ -18,6 +19,7 @@ export default function App() {
             <Route path="/courses/:courseId/units/:unitId/lessons/:lessonId" element={<LessonDetailPage />} />
           </Route>
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
         </Routes>
       </AuthProvider>
     </ThemeProvider>
