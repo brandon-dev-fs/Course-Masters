@@ -14,7 +14,7 @@ export const courseController = {
   }),
 
   create: asyncHandler(async (req: Request, res: Response) => {
-    const course = await courseService.create(req.body);
+    const course = await courseService.create(req.body, req.user!.id);
     res.status(201).json(course);
   }),
 

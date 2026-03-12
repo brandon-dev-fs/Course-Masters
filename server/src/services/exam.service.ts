@@ -4,12 +4,6 @@ import type { CreateAssessmentInput, SubmitAttemptInput } from '../schemas/asses
 
 const PASS_THRESHOLD = 0.8;
 
-async function getDefaultUserId(): Promise<string> {
-  const user = await prisma.user.findFirst();
-  if (!user) throw new NotFoundError('No users found — run seed first');
-  return user.id;
-}
-
 export const examService = {
   async findByCourse(courseId: string) {
     const course = await prisma.course.findUnique({ where: { id: courseId } });
@@ -41,7 +35,7 @@ export const examService = {
     });
   },
 
-  async submitAttempt(examId: string, data: SubmitAttemptInput) {
+  async submitAttempt(examId: string, data: SubmitAttemptInput, userId: string) {
     const exam = await prisma.finalExam.findUnique({
       where: { id: examId },
       include: { questions: { orderBy: { order: 'asc' } } },
@@ -56,7 +50,6 @@ export const examService = {
 
     const score = exam.questions.length > 0 ? correct / exam.questions.length : 0;
     const passed = score >= PASS_THRESHOLD;
-    const userId = await getDefaultUserId();
 
     const attempt = await prisma.examAttempt.create({
       data: { examId, userId, score, passed },

@@ -14,7 +14,7 @@ export const quizController = {
   }),
 
   submitAttempt: asyncHandler(async (req: Request, res: Response) => {
-    const result = await quizService.submitAttempt(req.params['quizId'] as string, req.body);
+    const result = await quizService.submitAttempt(req.params['quizId'] as string, req.body, req.user!.id);
     res.status(201).json(result);
   }),
 };
