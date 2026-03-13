@@ -6,6 +6,7 @@ const envSchema = z.object({
 	NODE_ENV: z
 		.enum(['development', 'production', 'test'])
 		.default('development'),
+	BETTER_AUTH_SECRET: z.string().min(32),
 });
 
 const parsed = envSchema.safeParse(process.env);

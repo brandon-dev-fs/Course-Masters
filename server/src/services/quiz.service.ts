@@ -4,12 +4,6 @@ import type { CreateAssessmentInput, SubmitAttemptInput } from '../schemas/asses
 
 const PASS_THRESHOLD = 0.8;
 
-async function getDefaultUserId(): Promise<string> {
-  const user = await prisma.user.findFirst();
-  if (!user) throw new NotFoundError('No users found — run seed first');
-  return user.id;
-}
-
 export const quizService = {
   async findByLesson(lessonId: string) {
     const lesson = await prisma.lesson.findUnique({ where: { id: lessonId } });
@@ -38,7 +32,7 @@ export const quizService = {
     });
   },
 
-  async submitAttempt(quizId: string, data: SubmitAttemptInput) {
+  async submitAttempt(quizId: string, data: SubmitAttemptInput, userId: string) {
     const quiz = await prisma.quiz.findUnique({
       where: { id: quizId },
       include: { questions: { orderBy: { order: 'asc' } } },
@@ -53,7 +47,6 @@ export const quizService = {
 
     const score = quiz.questions.length > 0 ? correct / quiz.questions.length : 0;
     const passed = score >= PASS_THRESHOLD;
-    const userId = await getDefaultUserId();
 
     const attempt = await prisma.quizAttempt.create({
       data: { quizId, userId, score, passed },

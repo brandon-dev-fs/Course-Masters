@@ -14,7 +14,7 @@ export const testController = {
   }),
 
   submitAttempt: asyncHandler(async (req: Request, res: Response) => {
-    const result = await testService.submitAttempt(req.params['testId'] as string, req.body);
+    const result = await testService.submitAttempt(req.params['testId'] as string, req.body, req.user!.id);
     res.status(201).json(result);
   }),
 };

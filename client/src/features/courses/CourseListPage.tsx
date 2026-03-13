@@ -11,8 +11,11 @@ import Button from '../../components/Button.js';
 import LoadingSpinner from '../../components/LoadingSpinner.js';
 import ErrorMessage from '../../components/ErrorMessage.js';
 import EmptyState from '../../components/EmptyState.js';
+import { useAuth } from '../../context/AuthContext.js';
 
 export default function CourseListPage() {
+  const { user } = useAuth();
+  const canEdit = user?.role === 'teacher' || user?.role === 'admin';
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -63,15 +66,15 @@ export default function CourseListPage() {
       <div id="courses" className="scroll-mt-20">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold text-foreground tracking-tight">My Courses</h2>
-          <Button onClick={() => setShowCreate(true)}>+ New Course</Button>
+          {canEdit && <Button onClick={() => setShowCreate(true)}>+ New Course</Button>}
         </div>
 
         {courses.length === 0 ? (
           <EmptyState
             icon={<BookOpen className="w-8 h-8" />}
             title="No courses yet"
-            description="Create your first course to get started."
-            action={{ label: '+ New Course', onClick: () => setShowCreate(true) }}
+            description={canEdit ? 'Create your first course to get started.' : 'No courses are available yet.'}
+            action={canEdit ? { label: '+ New Course', onClick: () => setShowCreate(true) } : undefined}
           />
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -79,6 +82,7 @@ export default function CourseListPage() {
               <CourseCard
                 key={course.id}
                 course={course}
+                canEdit={canEdit}
                 onEdit={() => setEditing(course)}
                 onDelete={() => setDeleting(course)}
               />

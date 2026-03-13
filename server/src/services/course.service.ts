@@ -2,14 +2,6 @@ import prisma from '../lib/prisma.js';
 import { NotFoundError } from '../errors/index.js';
 import type { CreateCourseInput, UpdateCourseInput } from '../schemas/course.schema.js';
 
-const DEFAULT_AUTHOR_ID = 'default-user-placeholder'; // replaced with req.user.id when auth added
-
-async function getDefaultUserId(): Promise<string> {
-  const user = await prisma.user.findFirst();
-  if (!user) throw new NotFoundError('No users found — run seed first');
-  return user.id;
-}
-
 export const courseService = {
   async findAll() {
     return prisma.course.findMany({
@@ -32,9 +24,8 @@ export const courseService = {
     return course;
   },
 
-  async create(data: CreateCourseInput) {
-    const authorId = await getDefaultUserId();
-    return prisma.course.create({ data: { ...data, authorId } });
+  async create(data: CreateCourseInput, userId: string) {
+    return prisma.course.create({ data: { ...data, authorId: userId } });
   },
 
   async update(id: string, data: UpdateCourseInput) {

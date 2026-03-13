@@ -14,7 +14,7 @@ export const examController = {
   }),
 
   submitAttempt: asyncHandler(async (req: Request, res: Response) => {
-    const result = await examService.submitAttempt(req.params['examId'] as string, req.body);
+    const result = await examService.submitAttempt(req.params['examId'] as string, req.body, req.user!.id);
     res.status(201).json(result);
   }),
 };

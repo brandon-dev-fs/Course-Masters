@@ -11,12 +11,16 @@ import { lessonQuizRouter, quizzesRouter } from './quiz.routes.js';
 import { unitTestRouter, testsRouter } from './test.routes.js';
 import { courseExamRouter, examsRouter } from './exam.routes.js';
 import { courseProgressRouter, unitProgressRouter } from './progress.routes.js';
+import { authenticate } from '../middleware/authenticate.js';
 
 const router = Router();
 
 router.get('/health', (_req, res) => {
   res.json({ status: 'ok' });
 });
+
+// All routes below require a valid session
+router.use(authenticate());
 
 // Core CRUD
 router.use('/courses', courseRouter);
