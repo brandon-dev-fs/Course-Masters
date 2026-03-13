@@ -1,5 +1,5 @@
 import prisma from '../lib/prisma.js';
-import { NotFoundError } from '../errors/index.js';
+import { NotFoundError, AppError } from '../errors/index.js';
 import type { CreateCourseInput, UpdateCourseInput } from '../schemas/course.schema.js';
 
 export const courseService = {
@@ -28,13 +28,19 @@ export const courseService = {
     return prisma.course.create({ data: { ...data, authorId: userId } });
   },
 
-  async update(id: string, data: UpdateCourseInput) {
-    await this.findById(id);
+  async update(id: string, data: UpdateCourseInput, userId: string, userRole: string) {
+    const course = await this.findById(id);
+    if (course.authorId !== userId && userRole !== 'admin') {
+      throw new AppError('FORBIDDEN', 'You can only modify your own courses', 403);
+    }
     return prisma.course.update({ where: { id }, data });
   },
 
-  async remove(id: string) {
-    await this.findById(id);
+  async remove(id: string, userId: string, userRole: string) {
+    const course = await this.findById(id);
+    if (course.authorId !== userId && userRole !== 'admin') {
+      throw new AppError('FORBIDDEN', 'You can only delete your own courses', 403);
+    }
     await prisma.course.delete({ where: { id } });
   },
 };

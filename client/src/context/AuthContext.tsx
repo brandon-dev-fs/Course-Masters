@@ -12,6 +12,7 @@ import type { AuthUser } from '../api/types.js';
 interface AuthContextValue {
   user: AuthUser | null;
   isLoading: boolean;
+  error: string | null;
   login: (email: string, password: string) => Promise<void>;
   register: (data: {
     name: string;
@@ -19,19 +20,23 @@ interface AuthContextValue {
     password: string;
   }) => Promise<void>;
   logout: () => Promise<void>;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue>({
   user: null,
   isLoading: true,
+  error: null,
   login: async () => {},
   register: async () => {},
   logout: async () => {},
+  refreshUser: async () => {},
 });
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     authClient
@@ -41,7 +46,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setUser(data.user as AuthUser);
         }
       })
+      .catch((err: unknown) => {
+        setError(err instanceof Error ? err.message : 'Failed to restore session');
+      })
       .finally(() => setIsLoading(false));
+  }, []);
+
+  // Listen for 401 responses dispatched by the API client
+  useEffect(() => {
+    const handler = () => setUser(null);
+    window.addEventListener('auth:unauthorized', handler);
+    return () => window.removeEventListener('auth:unauthorized', handler);
   }, []);
 
   const login = useCallback(async (email: string, password: string) => {
@@ -72,12 +87,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const logout = useCallback(async () => {
-    await authClient.signOut();
-    setUser(null);
+    try {
+      await authClient.signOut();
+    } finally {
+      setUser(null);
+    }
+  }, []);
+
+  const refreshUser = useCallback(async () => {
+    const { data } = await authClient.getSession();
+    if (data?.user) {
+      setUser(data.user as AuthUser);
+    }
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, isLoading, error, login, register, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

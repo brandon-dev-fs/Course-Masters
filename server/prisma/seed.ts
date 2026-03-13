@@ -435,9 +435,9 @@ async function main() {
 
   // No attempt for quiz4 — lesson not yet passed
 
-  // --- Unit 2 Test (no attempt — unit not yet completed) ---
+  // --- Unit 2 Test ---
 
-  await prisma.test.create({
+  const test2 = await prisma.test.create({
     data: {
       unitId: unit2.id,
       questions: {
@@ -512,10 +512,22 @@ async function main() {
     },
   });
 
-  // No exam attempt — course not yet completed
+  // Add passing attempts for quiz4 and unit2 test to complete all units
+  await prisma.quizAttempt.create({
+    data: { quizId: quiz4.id, userId: user.id, score: 1, passed: true },
+  });
+
+  await prisma.testAttempt.create({
+    data: { testId: test2.id, userId: user.id, score: 1, passed: true },
+  });
+
+  // Add passing exam attempt to mark course as complete
+  await prisma.examAttempt.create({
+    data: { examId: exam.id, userId: user.id, score: 1, passed: true },
+  });
 
   console.log(`Seeded assessments: ${quiz1.id}, ${quiz2.id}, ${quiz3.id}, ${quiz4.id}`);
-  console.log(`Seeded tests: ${test1.id}`);
+  console.log(`Seeded tests: ${test1.id}, ${test2.id}`);
   console.log(`Seeded exam: ${exam.id}`);
   console.log('Seed complete!');
 }

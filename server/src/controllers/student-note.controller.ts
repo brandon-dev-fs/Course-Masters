@@ -14,7 +14,7 @@ export const studentNoteController = {
   }),
 
   remove: asyncHandler(async (req: Request, res: Response) => {
-    await studentNoteService.remove(req.params['studentNoteId'] as string);
+    await studentNoteService.remove(req.params['studentNoteId'] as string, req.user!.id);
     res.status(204).send();
   }),
 };

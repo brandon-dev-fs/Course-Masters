@@ -37,7 +37,7 @@ export const auth = betterAuth({
 	secret: config.BETTER_AUTH_SECRET,
 	baseURL: `http://localhost:${config.SERVER_PORT}`,
 	basePath: '/api/auth',
-	trustedOrigins: ['http://localhost:5000'],
+	trustedOrigins: [config.CLIENT_URL],
 	database: prismaAdapter(prisma, { provider: 'postgresql' }),
 	emailAndPassword: { enabled: true },
 	plugins: [
