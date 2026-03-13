@@ -139,7 +139,9 @@ vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 
 # Claude Code
-.claude
+.claude/misc
 
 # Git
 .trees
+
+docs
