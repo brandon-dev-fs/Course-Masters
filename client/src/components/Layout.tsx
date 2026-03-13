@@ -2,6 +2,7 @@ import { Outlet, Link, useNavigate } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext.js';
 import { useAuth } from '../context/AuthContext.js';
 import { GraduationCap, Sun, Moon, UserCircle, LogOut, ShieldCheck } from 'lucide-react';
+import Button from './Button.js';
 import Footer from './Footer.js';
 
 export default function Layout() {
@@ -11,7 +12,7 @@ export default function Layout() {
 
 	async function handleLogout() {
 		await logout();
-		navigate('/login');
+		navigate('/');
 	}
 
 	return (
@@ -32,6 +33,16 @@ export default function Layout() {
 					>
 						{theme === 'dark' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
 					</button>
+					{!user && (
+						<>
+							<Link to="/login">
+								<Button variant="ghost" size="sm">Sign In</Button>
+							</Link>
+							<Link to="/register">
+								<Button variant="primary" size="sm">Sign Up</Button>
+							</Link>
+						</>
+					)}
 					{user && (
 						<>
 							{user.role === 'admin' && (

@@ -1,6 +1,6 @@
 import { Routes, Route } from 'react-router-dom';
 import { ThemeProvider } from './context/ThemeContext.js';
-import { AuthProvider } from './context/AuthContext.js';
+import { AuthProvider, useAuth } from './context/AuthContext.js';
 import Layout from './components/Layout.js';
 import CourseListPage from './features/courses/CourseListPage.js';
 import CourseDetailPage from './features/courses/CourseDetailPage.js';
@@ -11,6 +11,14 @@ import ProfilePage from './features/auth/ProfilePage.js';
 import RequireAuth from './features/auth/RequireAuth.js';
 import RequireRole from './features/auth/RequireRole.js';
 import AdminUsersPage from './features/auth/AdminUsersPage.js';
+import LandingPage from './features/landing/LandingPage.js';
+import LoadingSpinner from './components/LoadingSpinner.js';
+
+function HomePage() {
+  const { user, isLoading } = useAuth();
+  if (isLoading) return <LoadingSpinner />;
+  return user ? <CourseListPage /> : <LandingPage />;
+}
 
 export default function App() {
   return (
@@ -18,7 +26,7 @@ export default function App() {
       <AuthProvider>
         <Routes>
           <Route element={<Layout />}>
-            <Route path="/" element={<RequireAuth><CourseListPage /></RequireAuth>} />
+            <Route path="/" element={<HomePage />} />
             <Route path="/courses/:courseId" element={<RequireAuth><CourseDetailPage /></RequireAuth>} />
             <Route path="/courses/:courseId/units/:unitId/lessons/:lessonId" element={<RequireAuth><LessonDetailPage /></RequireAuth>} />
             <Route path="/profile" element={<RequireAuth><ProfilePage /></RequireAuth>} />
