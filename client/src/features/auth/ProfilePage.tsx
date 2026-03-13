@@ -17,7 +17,7 @@ const roleBadge: Record<string, string> = {
 };
 
 export default function ProfilePage() {
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
 
   // Name editing
   const [editingName, setEditingName] = useState(false);
@@ -59,6 +59,7 @@ export default function ProfilePage() {
     try {
       const { error } = await authClient.updateUser({ name: nameValue.trim() });
       if (error) throw new Error(error.message);
+      await refreshUser();
       setEditingName(false);
       setNameSuccess(true);
       setTimeout(() => setNameSuccess(false), 3000);

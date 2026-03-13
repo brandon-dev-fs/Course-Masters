@@ -4,12 +4,12 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 
 export const progressController = {
   getCourseProgress: asyncHandler(async (req: Request, res: Response) => {
-    const progress = await progressService.getCourseProgress(req.params['courseId'] as string);
+    const progress = await progressService.getCourseProgress(req.params['courseId'] as string, req.user!.id);
     res.json(progress);
   }),
 
   getUnitProgress: asyncHandler(async (req: Request, res: Response) => {
-    const progress = await progressService.getUnitProgress(req.params['unitId'] as string);
+    const progress = await progressService.getUnitProgress(req.params['unitId'] as string, req.user!.id);
     res.json(progress);
   }),
 };

@@ -1,5 +1,5 @@
 import prisma from '../lib/prisma.js';
-import { NotFoundError } from '../errors/index.js';
+import { NotFoundError, AppError } from '../errors/index.js';
 import type { UpsertStudentNoteInput } from '../schemas/student-note.schema.js';
 
 export const studentNoteService = {
@@ -19,9 +19,10 @@ export const studentNoteService = {
     });
   },
 
-  async remove(id: string) {
+  async remove(id: string, userId: string) {
     const note = await prisma.studentNote.findUnique({ where: { id } });
     if (!note) throw new NotFoundError('Student note not found');
+    if (note.userId !== userId) throw new AppError('FORBIDDEN', 'You can only delete your own notes', 403);
     await prisma.studentNote.delete({ where: { id } });
   },
 };

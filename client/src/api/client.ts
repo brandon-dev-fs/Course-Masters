@@ -21,6 +21,9 @@ async function request<T>(url: string, options?: RequestInit): Promise<T> {
   });
 
   if (!res.ok) {
+    if (res.status === 401) {
+      window.dispatchEvent(new CustomEvent('auth:unauthorized'));
+    }
     const body = await res.json().catch(() => ({ error: { code: 'UNKNOWN', message: 'Request failed' } }));
     const err = body.error as ApiError;
     throw new ApiClientError(err.code, err.message, err.details);
