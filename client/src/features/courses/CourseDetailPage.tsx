@@ -194,6 +194,7 @@ export default function CourseDetailPage() {
 			<UnitAccordion
 				courseId={courseId!}
 				units={course.units ?? []}
+				onAddLesson={handleAddLesson}
 			/>
 
 			<ExamSection

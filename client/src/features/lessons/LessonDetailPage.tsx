@@ -60,77 +60,81 @@ export default function LessonDetailPage() {
   if (!lesson) return null;
 
   return (
-    <div>
-      <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
-        <Link to="/" className="hover:text-foreground">Courses</Link>
-        <span>/</span>
-        <Link to={`/courses/${courseId}`} className="hover:text-foreground">{courseTitle}</Link>
-        <span>/</span>
-        <span className="text-foreground">{lesson.title}</span>
-      </div>
-
-      <div className="flex items-center justify-between mb-6 gap-4">
-        <h1 className="text-2xl font-bold text-foreground">{lesson.order}. {lesson.title}</h1>
-        <div className="flex items-center gap-1 shrink-0">
-          <button
-            onClick={() => setShowStudentNotes(prev => !prev)}
-            className={`p-2 rounded-lg transition-colors ${showStudentNotes ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground hover:bg-surface-raised'}`}
-            aria-label="My Notes"
-            title="My Notes"
-          >
-            <NotebookPen className="w-5 h-5" />
-          </button>
-          {canEdit && (
-            <button
-              onClick={() => setShowSettings(true)}
-              className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-surface-raised transition-colors"
-              aria-label="Lesson settings"
-            >
-              <Settings className="w-5 h-5" />
-            </button>
-          )}
+    <div className="flex gap-0 -mr-6">
+      {/* Main content */}
+      <div className="flex-1 min-w-0 pr-6">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
+          <Link to="/" className="hover:text-foreground">Courses</Link>
+          <span>/</span>
+          <Link to={`/courses/${courseId}`} className="hover:text-foreground">{courseTitle}</Link>
+          <span>/</span>
+          <span className="text-foreground">{lesson.title}</span>
         </div>
+
+        <div className="flex items-center justify-between mb-6 gap-4">
+          <h1 className="text-2xl font-bold text-foreground">{lesson.order}. {lesson.title}</h1>
+          <div className="flex items-center gap-1 shrink-0">
+            <button
+              onClick={() => setShowStudentNotes(prev => !prev)}
+              className={`p-2 rounded-lg transition-colors ${showStudentNotes ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-foreground hover:bg-surface-raised'}`}
+              aria-label="My Notes"
+              title="My Notes"
+            >
+              <NotebookPen className="w-5 h-5" />
+            </button>
+            {canEdit && (
+              <button
+                onClick={() => setShowSettings(true)}
+                className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-surface-raised transition-colors"
+                aria-label="Lesson settings"
+              >
+                <Settings className="w-5 h-5" />
+              </button>
+            )}
+          </div>
+        </div>
+
+        <Tabs defaultTab="notes">
+          <TabList>
+            <Tab id="notes">Lecture Notes</Tab>
+            <Tab id="vocab">Vocabulary</Tab>
+            <Tab id="flashcards">Flash Cards</Tab>
+            <Tab id="practice">Practice Problems</Tab>
+            <Tab id="quiz">Quiz</Tab>
+          </TabList>
+          <TabPanel id="notes">
+            <NoteList lessonId={lesson.id} />
+          </TabPanel>
+          <TabPanel id="vocab">
+            <VocabList lessonId={lesson.id} />
+          </TabPanel>
+          <TabPanel id="flashcards">
+            <FlashCardList lessonId={lesson.id} />
+          </TabPanel>
+          <TabPanel id="practice">
+            <PracticeProblemList lessonId={lesson.id} />
+          </TabPanel>
+          <TabPanel id="quiz">
+            <QuizSection lessonId={lesson.id} />
+          </TabPanel>
+        </Tabs>
+
+        {showSettings && (
+          <LessonSettingsModal
+            lesson={lesson}
+            onClose={() => setShowSettings(false)}
+            onUpdate={handleUpdate}
+            onDelete={handleDelete}
+          />
+        )}
       </div>
 
-      <Tabs defaultTab="notes">
-        <TabList>
-          <Tab id="notes">Lecture Notes</Tab>
-          <Tab id="vocab">Vocabulary</Tab>
-          <Tab id="flashcards">Flash Cards</Tab>
-          <Tab id="practice">Practice Problems</Tab>
-          <Tab id="quiz">Quiz</Tab>
-        </TabList>
-        <TabPanel id="notes">
-          <NoteList lessonId={lesson.id} />
-        </TabPanel>
-        <TabPanel id="vocab">
-          <VocabList lessonId={lesson.id} />
-        </TabPanel>
-        <TabPanel id="flashcards">
-          <FlashCardList lessonId={lesson.id} />
-        </TabPanel>
-        <TabPanel id="practice">
-          <PracticeProblemList lessonId={lesson.id} />
-        </TabPanel>
-        <TabPanel id="quiz">
-          <QuizSection lessonId={lesson.id} />
-        </TabPanel>
-      </Tabs>
-
+      {/* Student notes panel — pushes content aside */}
       <StudentNotePanel
         lessonId={lesson.id}
         isOpen={showStudentNotes}
         onClose={() => setShowStudentNotes(false)}
       />
-
-      {showSettings && (
-        <LessonSettingsModal
-          lesson={lesson}
-          onClose={() => setShowSettings(false)}
-          onUpdate={handleUpdate}
-          onDelete={handleDelete}
-        />
-      )}
     </div>
   );
 }
