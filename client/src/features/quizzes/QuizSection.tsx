@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { quizzesApi } from '../../api/quizzes.js';
-import type { Quiz, AttemptResult } from '../../api/types.js';
+import type { Quiz, AttemptResult, AttemptSummary } from '../../api/types.js';
 import AssessmentForm from '../assessments/AssessmentForm.js';
 import AssessmentTaker from '../assessments/AssessmentTaker.js';
 import AssessmentResults from '../assessments/AssessmentResults.js';
@@ -18,6 +18,7 @@ export default function QuizSection({ lessonId }: { lessonId: string }) {
   const [error, setError] = useState('');
   const [view, setView] = useState<View>('idle');
   const [result, setResult] = useState<AttemptResult | null>(null);
+  const [attempts, setAttempts] = useState<AttemptSummary[]>([]);
 
   useEffect(() => {
     quizzesApi.get(lessonId)
@@ -25,6 +26,13 @@ export default function QuizSection({ lessonId }: { lessonId: string }) {
       .catch((err: unknown) => setError(err instanceof Error ? err.message : 'Failed to load quiz'))
       .finally(() => setLoading(false));
   }, [lessonId]);
+
+  // Fetch attempts once quiz is loaded
+  useEffect(() => {
+    if (quiz) {
+      quizzesApi.getAttempts(quiz.id).then(setAttempts).catch(() => {});
+    }
+  }, [quiz]);
 
   async function handleCreate(questions: QuestionDraft[]) {
     const created = await quizzesApi.create(lessonId, { questions });
@@ -36,6 +44,8 @@ export default function QuizSection({ lessonId }: { lessonId: string }) {
     if (!quiz) return;
     const res = await quizzesApi.submitAttempt(quiz.id, answers);
     setResult(res);
+    // Refresh attempts list
+    quizzesApi.getAttempts(quiz.id).then(setAttempts).catch(() => {});
     setView('results');
   }
 
@@ -55,9 +65,42 @@ export default function QuizSection({ lessonId }: { lessonId: string }) {
           <Button onClick={() => setView('creating')}>Create Quiz</Button>
         </div>
       ) : (
-        <div className="flex gap-3">
-          <Button onClick={() => setView('taking')}>Take Quiz</Button>
-        </div>
+        <>
+          <div className="flex gap-3 mb-4">
+            <Button onClick={() => setView('taking')}>Take Quiz</Button>
+          </div>
+
+          {/* Previous attempts */}
+          {attempts.length > 0 && (
+            <div className="flex flex-col gap-2">
+              <h4 className="text-sm font-medium text-muted-foreground">Previous Attempts</h4>
+              <div className="flex flex-col gap-1.5">
+                {attempts.map((a, i) => {
+                  const pct = Math.round(a.score * 100);
+                  return (
+                    <div
+                      key={a.id}
+                      className="flex items-center justify-between rounded-lg border border-border bg-surface-raised px-3 py-2 text-sm"
+                    >
+                      <span className="text-muted-foreground">
+                        #{attempts.length - i}
+                      </span>
+                      <span className={`font-medium ${a.passed ? 'text-accent' : 'text-red-400'}`}>
+                        {pct}%
+                      </span>
+                      <span className={`text-xs ${a.passed ? 'text-accent' : 'text-red-400'}`}>
+                        {a.passed ? 'Passed' : 'Failed'}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {new Date(a.createdAt).toLocaleDateString()}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </>
       )}
 
       {view === 'creating' && (

@@ -1,15 +1,98 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { X } from 'lucide-react';
 import type { FlashCard as FlashCardType } from '../../api/types.js';
 
 interface FlashCardProps {
   card: FlashCardType;
-  onEdit?: () => void;
+  editMode?: boolean;
+  onUpdate?: (id: string, data: { front?: string; back?: string }) => Promise<void>;
   onDelete?: () => void;
-  showActions?: boolean;
 }
 
-export default function FlashCard({ card, onEdit, onDelete, showActions = true }: FlashCardProps) {
+export default function FlashCard({ card, editMode = false, onUpdate, onDelete }: FlashCardProps) {
   const [flipped, setFlipped] = useState(false);
+  const [front, setFront] = useState(card.front);
+  const [back, setBack] = useState(card.back);
+  const [saving, setSaving] = useState(false);
+  const [frontError, setFrontError] = useState(false);
+  const [backError, setBackError] = useState(false);
+
+  useEffect(() => {
+    setFront(card.front);
+    setBack(card.back);
+  }, [card.front, card.back]);
+
+  // Reset flip state when leaving edit mode
+  useEffect(() => {
+    if (!editMode) setFlipped(false);
+  }, [editMode]);
+
+  async function handleBlur() {
+    const trimmedFront = front.trim();
+    const trimmedBack = back.trim();
+    const frontInvalid = !trimmedFront;
+    const backInvalid = !trimmedBack;
+
+    if (frontInvalid || backInvalid) {
+      setFrontError(frontInvalid);
+      setBackError(backInvalid);
+      if (frontInvalid) setFront(card.front);
+      if (backInvalid) setBack(card.back);
+      return;
+    }
+
+    setFrontError(false);
+    setBackError(false);
+
+    if (trimmedFront === card.front && trimmedBack === card.back) return;
+
+    setSaving(true);
+    try {
+      await onUpdate?.(card.id, { front: trimmedFront, back: trimmedBack });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const isDirty = front.trim() !== card.front || back.trim() !== card.back;
+
+  if (editMode) {
+    return (
+      <div className={`relative rounded-2xl bg-surface border-2 p-5 flex flex-col gap-3 transition-colors ${isDirty ? 'border-accent' : 'border-border'} ${saving ? 'opacity-60' : ''}`}>
+        <button
+          onClick={onDelete}
+          className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center rounded-full text-destructive hover:bg-destructive/10 transition-colors"
+          aria-label="Delete card"
+        >
+          <X className="w-3.5 h-3.5" />
+        </button>
+
+        <div className="flex flex-col gap-1 pr-6">
+          <p className={`text-xs uppercase tracking-wide ${frontError ? 'text-destructive' : 'text-muted-foreground'}`}>Front</p>
+          <textarea
+            className={`w-full bg-transparent border rounded-lg p-2 text-sm text-foreground resize-none focus:outline-none transition-colors ${frontError ? 'border-destructive' : 'border-border focus:border-primary'}`}
+            rows={2}
+            value={front}
+            onChange={e => { setFront(e.target.value); setFrontError(false); }}
+            onBlur={handleBlur}
+            disabled={saving}
+          />
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <p className={`text-xs uppercase tracking-wide ${backError ? 'text-destructive' : 'text-muted-foreground'}`}>Back</p>
+          <textarea
+            className={`w-full bg-transparent border rounded-lg p-2 text-sm text-foreground resize-none focus:outline-none transition-colors ${backError ? 'border-destructive' : 'border-border focus:border-primary'}`}
+            rows={2}
+            value={back}
+            onChange={e => { setBack(e.target.value); setBackError(false); }}
+            onBlur={handleBlur}
+            disabled={saving}
+          />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -44,13 +127,6 @@ export default function FlashCard({ card, onEdit, onDelete, showActions = true }
           <p className="text-xs text-muted-foreground mt-auto pt-2">Click to flip back</p>
         </div>
       </div>
-
-      {showActions && (
-        <div className="absolute top-2 right-2 flex gap-1 z-10" onClick={e => e.stopPropagation()}>
-          <button onClick={onEdit} className="text-xs text-muted-foreground hover:text-foreground px-2 py-1 rounded hover:bg-surface-raised bg-surface">Edit</button>
-          <button onClick={onDelete} className="text-xs text-muted-foreground hover:text-destructive px-2 py-1 rounded hover:bg-surface-raised bg-surface">Delete</button>
-        </div>
-      )}
     </div>
   );
 }

@@ -25,7 +25,6 @@ export default function CourseSettingsModal({
       <div className="flex flex-col gap-6">
         {/* Course Info */}
         <div>
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">Course Info</p>
           <CourseForm
             initial={course}
             onSubmit={onUpdateCourse}
@@ -35,7 +34,6 @@ export default function CourseSettingsModal({
 
         {/* Danger Zone */}
         <div className="border-t border-border pt-5">
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">Danger Zone</p>
           {showDeleteCourse ? (
             <ConfirmDialog
               title="Delete Course"

@@ -78,7 +78,7 @@ model Verification {
 model Course {
   id          String   @id @default(uuid())
   title       String
-  description String?
+  description String
   authorId    String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -89,10 +89,11 @@ model Course {
 }
 
 model Unit {
-  id       String @id @default(uuid())
-  title    String
-  order    Int
-  courseId String
+  id          String @id @default(uuid())
+  title       String
+  description String
+  order       Int
+  courseId    String
 
   course  Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
   lessons Lesson[]
@@ -100,9 +101,9 @@ model Unit {
 }
 
 model Lesson {
-  id          String  @id @default(uuid())
+  id          String @id @default(uuid())
   title       String
-  description String?
+  description String
   order       Int
   unitId      String
 

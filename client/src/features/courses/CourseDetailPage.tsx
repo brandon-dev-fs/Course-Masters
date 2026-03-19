@@ -6,12 +6,10 @@ import { unitsApi } from '../../api/units.js';
 import { lessonsApi } from '../../api/lessons.js';
 import type { Course, Unit } from '../../api/types.js';
 import UnitAccordion from '../units/UnitAccordion.js';
-import UnitForm from '../units/UnitForm.js';
 import UnitSettingsModal from '../units/UnitSettingsModal.js';
 import ExamSection from '../exams/ExamSection.js';
 import CourseProgressCard from '../progress/CourseProgressCard.js';
 import CourseSettingsModal from './CourseSettingsModal.js';
-import Modal from '../../components/Modal.js';
 import Button from '../../components/Button.js';
 import LoadingSpinner from '../../components/LoadingSpinner.js';
 import ErrorMessage from '../../components/ErrorMessage.js';
@@ -27,7 +25,6 @@ export default function CourseDetailPage() {
 	const [error, setError] = useState('');
 	const [showSettings, setShowSettings] = useState(false);
 	const [showUnitSettings, setShowUnitSettings] = useState(false);
-	const [showAddUnit, setShowAddUnit] = useState(false);
 	const [showExam, setShowExam] = useState(false);
 
 	async function load() {
@@ -77,7 +74,6 @@ export default function CourseDetailPage() {
 					}
 				: null,
 		);
-		setShowAddUnit(false);
 	}
 
 	async function handleUpdateUnit(
@@ -198,6 +194,7 @@ export default function CourseDetailPage() {
 			<UnitAccordion
 				courseId={courseId!}
 				units={course.units ?? []}
+				onAddLesson={handleAddLesson}
 			/>
 
 			<ExamSection
@@ -218,23 +215,12 @@ export default function CourseDetailPage() {
 				<UnitSettingsModal
 					course={course}
 					onClose={() => setShowUnitSettings(false)}
+					onAddUnit={handleAddUnit}
 					onUpdateUnit={handleUpdateUnit}
 					onDeleteUnit={handleDeleteUnit}
 					onAddLesson={handleAddLesson}
 				/>
 			)}
-			{showAddUnit && (
-				<Modal
-					title="Add Unit"
-					onClose={() => setShowAddUnit(false)}
-				>
-					<UnitForm
-						nextOrder={(course.units?.length ?? 0) + 1}
-						onSubmit={handleAddUnit}
-						onCancel={() => setShowAddUnit(false)}
-					/>
-				</Modal>
-			)}
-		</div>
+			</div>
 	);
 }

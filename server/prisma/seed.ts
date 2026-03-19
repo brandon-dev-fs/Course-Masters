@@ -100,21 +100,23 @@ async function main() {
         create: [
           {
             title: 'HTML & CSS Basics',
+            description: 'Learn how to structure web pages with HTML and style them with CSS, covering the essential building blocks of every website.',
             order: 1,
             lessons: {
               create: [
-                { title: 'HTML Structure', order: 1 },
-                { title: 'CSS Selectors', order: 2 },
+                { title: 'HTML Structure', description: 'Understand how HTML documents are structured using tags and elements, and learn the difference between block-level and inline elements.', order: 1 },
+                { title: 'CSS Selectors', description: 'Learn how to target HTML elements with CSS selectors and understand how specificity determines which styles take effect.', order: 2 },
               ],
             },
           },
           {
             title: 'JavaScript Fundamentals',
+            description: 'Explore the core concepts of JavaScript including variables, data types, functions, and scope to start writing dynamic web behavior.',
             order: 2,
             lessons: {
               create: [
-                { title: 'Variables and Types', order: 1 },
-                { title: 'Functions and Scope', order: 2 },
+                { title: 'Variables and Types', description: 'Discover how to declare variables with var, let, and const, and explore JavaScript\'s primitive data types including strings, numbers, and booleans.', order: 1 },
+                { title: 'Functions and Scope', description: 'Learn how to define and invoke functions, understand lexical scope, and explore closures and arrow function syntax.', order: 2 },
               ],
             },
           },

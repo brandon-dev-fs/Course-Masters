@@ -9,6 +9,7 @@ lessonQuizRouter.get('/', quizController.get);
 lessonQuizRouter.post('/', authorize('teacher', 'admin'), validate(createAssessmentSchema), quizController.create);
 
 const quizzesRouter = Router();
+quizzesRouter.get('/:quizId/attempts', quizController.getAttempts);
 quizzesRouter.post('/:quizId/attempts', validate(submitAttemptSchema), quizController.submitAttempt);
 
 export { lessonQuizRouter, quizzesRouter };
