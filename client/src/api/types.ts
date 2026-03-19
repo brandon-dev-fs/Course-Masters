@@ -27,7 +27,7 @@ export interface ApiError {
 export interface Course {
   id: string;
   title: string;
-  description: string | null;
+  description: string;
   authorId: string;
   createdAt: string;
   updatedAt: string;
@@ -38,6 +38,7 @@ export interface Course {
 export interface Unit {
   id: string;
   title: string;
+  description: string;
   order: number;
   courseId: string;
   lessons?: Lesson[];
@@ -47,7 +48,7 @@ export interface Unit {
 export interface Lesson {
   id: string;
   title: string;
-  description?: string;
+  description: string;
   order: number;
   unitId: string;
 }

@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { BookOpen, Circle, CircleDot, CheckCircle2 } from 'lucide-react';
 import type { Lesson, LessonProgress } from '../../api/types.js';
 import EmptyState from '../../components/EmptyState.js';
+import Tooltip from '../../components/Tooltip.js';
 
 interface LessonListProps {
   courseId: string;
@@ -42,7 +43,9 @@ export default function LessonList({ courseId, unitId, lessons, lessonProgress }
               <LessonStatusIcon prog={prog} />
             </div>
             {lesson.description && (
-              <p className="text-xs text-muted-foreground line-clamp-2">{lesson.description}</p>
+              <Tooltip content={lesson.description}>
+                <p className="text-xs text-muted-foreground line-clamp-2">{lesson.description}</p>
+              </Tooltip>
             )}
           </Link>
         );

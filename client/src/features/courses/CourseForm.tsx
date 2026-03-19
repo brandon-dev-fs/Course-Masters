@@ -6,7 +6,7 @@ import type { Course } from '../../api/types.js';
 
 interface CourseFormProps {
   initial?: Partial<Course>;
-  onSubmit: (data: { title: string; description?: string }) => Promise<void>;
+  onSubmit: (data: { title: string; description: string }) => Promise<void>;
   onCancel: () => void;
 }
 
@@ -19,10 +19,11 @@ export default function CourseForm({ initial, onSubmit, onCancel }: CourseFormPr
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     if (!title.trim()) { setError('Title is required'); return; }
+    if (!description.trim()) { setError('Description is required'); return; }
     setSubmitting(true);
     setError('');
     try {
-      await onSubmit({ title: title.trim(), description: description.trim() || undefined });
+      await onSubmit({ title: title.trim(), description: description.trim() });
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Something went wrong');
     } finally {
@@ -43,7 +44,7 @@ export default function CourseForm({ initial, onSubmit, onCancel }: CourseFormPr
       />
       <Textarea
         id="description"
-        label="Description (optional)"
+        label="Description"
         value={description}
         onChange={e => setDescription(e.target.value)}
         placeholder="What will students learn?"
