@@ -12,78 +12,165 @@ import ErrorMessage from '../../components/ErrorMessage.js';
 import EmptyState from '../../components/EmptyState.js';
 
 export default function FlashCardList({ lessonId }: { lessonId: string }) {
-  const [cards, setCards] = useState<FlashCard[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [showAdd, setShowAdd] = useState(false);
-  const [editing, setEditing] = useState<FlashCard | null>(null);
-  const [deleting, setDeleting] = useState<FlashCard | null>(null);
-  const [studying, setStudying] = useState(false);
+	const [cards, setCards] = useState<FlashCard[]>([]);
+	const [loading, setLoading] = useState(true);
+	const [error, setError] = useState('');
+	const [showAdd, setShowAdd] = useState(false);
+	const [deleting, setDeleting] = useState<FlashCard | null>(null);
+	const [studying, setStudying] = useState(false);
+	const [editMode, setEditMode] = useState(false);
 
-  useEffect(() => {
-    flashCardsApi.getAll(lessonId)
-      .then(setCards)
-      .catch((err: unknown) => setError(err instanceof Error ? err.message : 'Failed to load flash cards'))
-      .finally(() => setLoading(false));
-  }, [lessonId]);
+	useEffect(() => {
+		flashCardsApi
+			.getAll(lessonId)
+			.then(setCards)
+			.catch((err: unknown) =>
+				setError(
+					err instanceof Error
+						? err.message
+						: 'Failed to load flash cards',
+				),
+			)
+			.finally(() => setLoading(false));
+	}, [lessonId]);
 
-  async function handleAdd(data: { front: string; back: string; order: number }) {
-    const card = await flashCardsApi.create(lessonId, data);
-    setCards(prev => [...prev, card].sort((a, b) => a.order - b.order));
-    setShowAdd(false);
-  }
+	async function handleAdd(data: {
+		front: string;
+		back: string;
+		order: number;
+	}) {
+		const card = await flashCardsApi.create(lessonId, data);
+		setCards((prev) => [...prev, card].sort((a, b) => a.order - b.order));
+		setShowAdd(false);
+	}
 
-  async function handleUpdate(data: { front: string; back: string; order: number }) {
-    if (!editing) return;
-    const updated = await flashCardsApi.update(editing.id, data);
-    setCards(prev => prev.map(c => c.id === updated.id ? updated : c).sort((a, b) => a.order - b.order));
-    setEditing(null);
-  }
+	async function handleUpdate(
+		id: string,
+		data: { front?: string; back?: string },
+	) {
+		const updated = await flashCardsApi.update(id, data);
+		setCards((prev) =>
+			prev
+				.map((c) => (c.id === updated.id ? updated : c))
+				.sort((a, b) => a.order - b.order),
+		);
+	}
 
-  async function handleDelete() {
-    if (!deleting) return;
-    await flashCardsApi.delete(deleting.id);
-    setCards(prev => prev.filter(c => c.id !== deleting.id));
-    setDeleting(null);
-  }
+	async function handleDelete() {
+		if (!deleting) return;
+		await flashCardsApi.delete(deleting.id);
+		setCards((prev) => prev.filter((c) => c.id !== deleting.id));
+		setDeleting(null);
+	}
 
-  if (loading) return <LoadingSpinner />;
-  if (error) return <ErrorMessage message={error} />;
+	function handleToggleEdit() {
+		setEditMode((prev) => !prev);
+		setStudying(false);
+	}
 
-  return (
-    <div>
-      <div className="flex gap-2 justify-end mb-4">
-        {cards.length > 0 && (
-          <Button variant="secondary" size="sm" onClick={() => setStudying(true)}>Study Mode</Button>
-        )}
-        <Button size="sm" onClick={() => setShowAdd(true)}>+ Add Card</Button>
-      </div>
+	function handleStudyMode() {
+		setStudying(true);
+		setEditMode(false);
+	}
 
-      {cards.length === 0 ? (
-        <EmptyState title="No flash cards yet" description="Create flash cards to study key concepts." action={{ label: '+ Add Card', onClick: () => setShowAdd(true) }} />
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {cards.map(card => (
-            <FlashCardComponent key={card.id} card={card} onEdit={() => setEditing(card)} onDelete={() => setDeleting(card)} />
-          ))}
-        </div>
-      )}
+	if (loading) return <LoadingSpinner />;
+	if (error) return <ErrorMessage message={error} />;
 
-      {studying && <FlashCardStudyMode cards={cards} onExit={() => setStudying(false)} />}
+	return (
+		<div>
+			<div className="flex items-center gap-2 justify-end mb-4">
+				{cards.length > 0 && (
+					<>
+						<Button
+							variant="accent"
+							size="sm"
+							onClick={handleStudyMode}
+						>
+							Study Mode
+						</Button>
+						<span className="w-px h-4 bg-border" />
+						<Button
+							size="sm"
+							onClick={() => setShowAdd(true)}
+						>
+							+ Add Card
+						</Button>
 
-      {showAdd && (
-        <Modal title="Add Flash Card" onClose={() => setShowAdd(false)}>
-          <FlashCardForm nextOrder={cards.length + 1} onSubmit={handleAdd} onCancel={() => setShowAdd(false)} />
-        </Modal>
-      )}
-      {editing && (
-        <Modal title="Edit Flash Card" onClose={() => setEditing(null)}>
-          <FlashCardForm initial={editing} onSubmit={handleUpdate} onCancel={() => setEditing(null)} />
-        </Modal>
-      )}
-      {deleting && (
-        <ConfirmDialog title="Delete Card" message="Delete this flash card?" onConfirm={handleDelete} onClose={() => setDeleting(null)} />
-      )}
-    </div>
-  );
+						<Button
+							variant={editMode ? 'danger' : 'secondary'}
+							size="sm"
+							onClick={handleToggleEdit}
+						>
+							{editMode ? 'Done Editing' : 'Edit Cards'}
+						</Button>
+					</>
+				)}
+				{cards.length === 0 && (
+					<Button
+						size="sm"
+						onClick={() => setShowAdd(true)}
+					>
+						+ Add Card
+					</Button>
+				)}
+			</div>
+
+			{cards.length === 0 ? (
+				<EmptyState
+					title="No flash cards yet"
+					description="Create flash cards to study key concepts."
+					action={{
+						label: '+ Add Card',
+						onClick: () => setShowAdd(true),
+					}}
+				/>
+			) : (
+				<div
+					className={
+						editMode
+							? 'grid grid-cols-1 gap-4'
+							: 'grid grid-cols-1 sm:grid-cols-2 gap-4'
+					}
+				>
+					{cards.map((card) => (
+						<FlashCardComponent
+							key={card.id}
+							card={card}
+							editMode={editMode}
+							onUpdate={handleUpdate}
+							onDelete={() => setDeleting(card)}
+						/>
+					))}
+				</div>
+			)}
+
+			{studying && (
+				<FlashCardStudyMode
+					cards={cards}
+					onExit={() => setStudying(false)}
+				/>
+			)}
+
+			{showAdd && (
+				<Modal
+					title="Add Flash Card"
+					onClose={() => setShowAdd(false)}
+				>
+					<FlashCardForm
+						nextOrder={cards.length + 1}
+						onSubmit={handleAdd}
+						onCancel={() => setShowAdd(false)}
+					/>
+				</Modal>
+			)}
+			{deleting && (
+				<ConfirmDialog
+					title="Delete Card"
+					message="Delete this flash card?"
+					onConfirm={handleDelete}
+					onClose={() => setDeleting(null)}
+				/>
+			)}
+		</div>
+	);
 }

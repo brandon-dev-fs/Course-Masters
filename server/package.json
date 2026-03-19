@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "node --env-file=.env --watch --import=tsx/esm src/index.ts",
+    "dev": "tsx watch --env-file=.env src/index.ts",
     "build": "tsc",
     "db:migrate": "prisma migrate dev",
     "db:seed": "node --env-file=.env --import=tsx/esm prisma/seed.ts",
