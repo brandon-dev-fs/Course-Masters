@@ -55,6 +55,14 @@ export const quizService = {
     return { ...attempt, totalQuestions: quiz.questions.length, correctCount: correct };
   },
 
+  async getAttempts(quizId: string, userId: string) {
+    return prisma.quizAttempt.findMany({
+      where: { quizId, userId },
+      orderBy: { createdAt: 'desc' },
+      select: { id: true, score: true, passed: true, createdAt: true },
+    });
+  },
+
   async getLastAttempt(quizId: string) {
     return prisma.quizAttempt.findFirst({
       where: { quizId },

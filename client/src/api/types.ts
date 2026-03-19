@@ -144,6 +144,13 @@ export interface AttemptResult {
   correctCount: number;
 }
 
+export interface AttemptSummary {
+  id: string;
+  score: number;
+  passed: boolean;
+  createdAt: string;
+}
+
 export interface CourseProgress {
   totalUnits: number;
   completedUnits: number;
