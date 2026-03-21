@@ -12,12 +12,12 @@ export default function AssessmentResults({ result, onRetake, onDismiss }: Asses
 
   return (
     <div className="flex flex-col items-center gap-4 py-4 text-center">
-      <div className={`text-6xl font-bold ${result.passed ? 'text-accent' : 'text-red-400'}`}>
+      <div className={`text-6xl font-bold ${result.passed ? 'text-accent' : 'text-destructive'}`}>
         {pct}%
       </div>
 
       <div>
-        <p className={`text-lg font-semibold ${result.passed ? 'text-accent' : 'text-red-400'}`}>
+        <p className={`text-lg font-semibold ${result.passed ? 'text-accent' : 'text-destructive'}`}>
           {result.passed ? '✓ Passed!' : '✗ Not passed'}
         </p>
         <p className="text-sm text-muted-foreground mt-1">
@@ -27,7 +27,7 @@ export default function AssessmentResults({ result, onRetake, onDismiss }: Asses
 
       <div className="w-full bg-surface rounded-full h-2 mt-2">
         <div
-          className={`h-2 rounded-full transition-all ${result.passed ? 'bg-accent' : 'bg-red-500'}`}
+          className={`h-2 rounded-full transition-all ${result.passed ? 'bg-accent' : 'bg-destructive'}`}
           style={{ width: `${pct}%` }}
         />
       </div>

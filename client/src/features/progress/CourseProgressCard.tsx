@@ -4,6 +4,7 @@ import { progressApi } from '../../api/progress.js';
 import type { CourseProgress } from '../../api/types.js';
 import ProgressBar from './ProgressBar.js';
 import Button from '../../components/Button.js';
+import Tooltip from '../../components/Tooltip.js';
 
 interface CourseProgressCardProps {
 	courseId: string;
@@ -56,11 +57,11 @@ export default function CourseProgressCard({ courseId, onTakeExam }: CourseProgr
 					{hasAttempt ? (
 						<div className="flex items-center gap-1">
 							{progress.examPassed ? (
-								<CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0" />
+								<CheckCircle2 className="w-4 h-4 text-success flex-shrink-0" />
 							) : (
 								<XCircle className="w-4 h-4 text-destructive flex-shrink-0" />
 							)}
-							<span className={`text-sm font-semibold ${progress.examPassed ? 'text-green-600' : 'text-destructive'}`}>
+							<span className={`text-sm font-semibold ${progress.examPassed ? 'text-success' : 'text-destructive'}`}>
 								{progress.examPassed ? 'Passed' : 'Failed'} · {Math.round(progress.examScore! * 100)}%
 							</span>
 						</div>
@@ -68,19 +69,11 @@ export default function CourseProgressCard({ courseId, onTakeExam }: CourseProgr
 						<p className="text-xs text-muted-foreground">No attempts yet</p>
 					)}
 					{onTakeExam && (
-						<div
-							className="relative group"
-							title={!allUnitsMastered ? `Complete all units before taking the final exam (${progress.completedUnits}/${progress.totalUnits} mastered)` : undefined}
-						>
+						<Tooltip content={`Complete all units before taking the final exam (${progress.completedUnits}/${progress.totalUnits} mastered)`}>
 							<Button size="sm" variant="secondary" onClick={onTakeExam} disabled={!allUnitsMastered}>
 								{hasAttempt ? 'Retake Exam' : 'Take Exam'}
 							</Button>
-							{!allUnitsMastered && (
-								<div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-52 px-3 py-2 rounded-lg bg-surface-raised border border-border shadow-warm-md text-xs text-muted-foreground text-center pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity z-10">
-									Complete all units before taking the final exam ({progress.completedUnits}/{progress.totalUnits} mastered)
-								</div>
-							)}
-						</div>
+						</Tooltip>
 					)}
 				</div>
 			</div>

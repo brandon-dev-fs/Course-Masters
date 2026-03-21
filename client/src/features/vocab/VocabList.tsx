@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
 import { vocabApi } from '../../api/vocab.js';
 import type { Vocab } from '../../api/types.js';
+import useResourceList from '../../hooks/useResourceList.js';
 import VocabCard from './VocabCard.js';
 import VocabForm from './VocabForm.js';
 import Modal from '../../components/Modal.js';
@@ -10,40 +10,18 @@ import LoadingSpinner from '../../components/LoadingSpinner.js';
 import ErrorMessage from '../../components/ErrorMessage.js';
 import EmptyState from '../../components/EmptyState.js';
 
+const byOrder = (a: Vocab, b: Vocab) => a.order - b.order;
+
 export default function VocabList({ lessonId }: { lessonId: string }) {
-  const [vocabs, setVocabs] = useState<Vocab[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [showAdd, setShowAdd] = useState(false);
-  const [editing, setEditing] = useState<Vocab | null>(null);
-  const [deleting, setDeleting] = useState<Vocab | null>(null);
-
-  useEffect(() => {
-    vocabApi.getAll(lessonId)
-      .then(setVocabs)
-      .catch((err: unknown) => setError(err instanceof Error ? err.message : 'Failed to load vocabulary'))
-      .finally(() => setLoading(false));
-  }, [lessonId]);
-
-  async function handleAdd(data: { term: string; definition: string; order: number }) {
-    const vocab = await vocabApi.create(lessonId, data);
-    setVocabs(prev => [...prev, vocab].sort((a, b) => a.order - b.order));
-    setShowAdd(false);
-  }
-
-  async function handleUpdate(data: { term: string; definition: string; order: number }) {
-    if (!editing) return;
-    const updated = await vocabApi.update(editing.id, data);
-    setVocabs(prev => prev.map(v => v.id === updated.id ? updated : v).sort((a, b) => a.order - b.order));
-    setEditing(null);
-  }
-
-  async function handleDelete() {
-    if (!deleting) return;
-    await vocabApi.delete(deleting.id);
-    setVocabs(prev => prev.filter(v => v.id !== deleting.id));
-    setDeleting(null);
-  }
+  const {
+    items: vocabs, loading, error,
+    showAdd, setShowAdd, editing, setEditing, deleting, setDeleting,
+    handleAdd, handleUpdate, handleDelete,
+  } = useResourceList<Vocab, { term: string; definition: string; order: number }, { term?: string; definition?: string; order?: number }>(
+    () => vocabApi.getAll(lessonId),
+    { create: d => vocabApi.create(lessonId, d), update: vocabApi.update, delete: vocabApi.delete },
+    lessonId, byOrder,
+  );
 
   if (loading) return <LoadingSpinner />;
   if (error) return <ErrorMessage message={error} />;
