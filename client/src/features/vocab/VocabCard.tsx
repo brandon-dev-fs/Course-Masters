@@ -1,5 +1,6 @@
 import { BookOpen } from 'lucide-react';
 import type { Vocab } from '../../api/types.js';
+import CardActions from '../../components/CardActions.js';
 
 interface VocabCardProps {
   vocab: Vocab;
@@ -17,10 +18,7 @@ export default function VocabCard({ vocab, onEdit, onDelete }: VocabCardProps) {
             <p className="text-foreground font-semibold text-sm">{vocab.term}</p>
             <p className="text-muted-foreground text-sm mt-1">{vocab.definition}</p>
           </div>
-          <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-            <button onClick={onEdit} className="text-xs text-muted-foreground hover:text-foreground px-2 py-1 rounded hover:bg-surface-raised">Edit</button>
-            <button onClick={onDelete} className="text-xs text-muted-foreground hover:text-destructive px-2 py-1 rounded hover:bg-surface-raised">Delete</button>
-          </div>
+          <CardActions onEdit={onEdit} onDelete={onDelete} />
         </div>
       </div>
     </div>

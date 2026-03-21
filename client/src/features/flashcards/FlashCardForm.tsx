@@ -1,8 +1,9 @@
-import { FormEvent, useState } from 'react';
+import { useState } from 'react';
 import Input from '../../components/Input.js';
 import Textarea from '../../components/Textarea.js';
 import Button from '../../components/Button.js';
 import type { FlashCard } from '../../api/types.js';
+import useFormSubmit from '../../hooks/useFormSubmit.js';
 
 interface FlashCardFormProps {
   initial?: Partial<FlashCard>;
@@ -15,22 +16,10 @@ export default function FlashCardForm({ initial, nextOrder = 1, onSubmit, onCanc
   const [front, setFront] = useState(initial?.front ?? '');
   const [back, setBack] = useState(initial?.back ?? '');
   const [order, setOrder] = useState(initial?.order ?? nextOrder);
-  const [error, setError] = useState('');
-  const [submitting, setSubmitting] = useState(false);
-
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault();
-    if (!front.trim() || !back.trim()) { setError('Front and back are required'); return; }
-    setSubmitting(true);
-    setError('');
-    try {
-      await onSubmit({ front: front.trim(), back: back.trim(), order });
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Something went wrong');
-    } finally {
-      setSubmitting(false);
-    }
-  }
+  const { error, submitting, handleSubmit } = useFormSubmit(async () => {
+    if (!front.trim() || !back.trim()) throw new Error('Front and back are required');
+    await onSubmit({ front: front.trim(), back: back.trim(), order });
+  });
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -40,7 +29,7 @@ export default function FlashCardForm({ initial, nextOrder = 1, onSubmit, onCanc
       {error && <p className="text-sm text-destructive">{error}</p>}
       <div className="flex justify-end gap-3 pt-2">
         <Button type="button" variant="secondary" onClick={onCancel} disabled={submitting}>Cancel</Button>
-        <Button type="submit" disabled={submitting}>{submitting ? 'Saving…' : initial?.id ? 'Save Changes' : 'Add Card'}</Button>
+        <Button type="submit" disabled={submitting}>{submitting ? 'Saving...' : initial?.id ? 'Save Changes' : 'Add Card'}</Button>
       </div>
     </form>
   );

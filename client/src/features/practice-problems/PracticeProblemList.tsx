@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
 import { practiceProblemsApi } from '../../api/practice-problems.js';
 import type { PracticeProblem } from '../../api/types.js';
+import useResourceList from '../../hooks/useResourceList.js';
 import PracticeProblemCard from './PracticeProblemCard.js';
 import PracticeProblemForm from './PracticeProblemForm.js';
 import Modal from '../../components/Modal.js';
@@ -10,40 +10,18 @@ import LoadingSpinner from '../../components/LoadingSpinner.js';
 import ErrorMessage from '../../components/ErrorMessage.js';
 import EmptyState from '../../components/EmptyState.js';
 
+const byOrder = (a: PracticeProblem, b: PracticeProblem) => a.order - b.order;
+
 export default function PracticeProblemList({ lessonId }: { lessonId: string }) {
-  const [problems, setProblems] = useState<PracticeProblem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [showAdd, setShowAdd] = useState(false);
-  const [editing, setEditing] = useState<PracticeProblem | null>(null);
-  const [deleting, setDeleting] = useState<PracticeProblem | null>(null);
-
-  useEffect(() => {
-    practiceProblemsApi.getAll(lessonId)
-      .then(setProblems)
-      .catch((err: unknown) => setError(err instanceof Error ? err.message : 'Failed to load problems'))
-      .finally(() => setLoading(false));
-  }, [lessonId]);
-
-  async function handleAdd(data: { question: string; options: string[]; correctIndex: number; order: number }) {
-    const prob = await practiceProblemsApi.create(lessonId, data);
-    setProblems(prev => [...prev, prob].sort((a, b) => a.order - b.order));
-    setShowAdd(false);
-  }
-
-  async function handleUpdate(data: { question: string; options: string[]; correctIndex: number; order: number }) {
-    if (!editing) return;
-    const updated = await practiceProblemsApi.update(editing.id, data);
-    setProblems(prev => prev.map(p => p.id === updated.id ? updated : p).sort((a, b) => a.order - b.order));
-    setEditing(null);
-  }
-
-  async function handleDelete() {
-    if (!deleting) return;
-    await practiceProblemsApi.delete(deleting.id);
-    setProblems(prev => prev.filter(p => p.id !== deleting.id));
-    setDeleting(null);
-  }
+  const {
+    items: problems, loading, error,
+    showAdd, setShowAdd, editing, setEditing, deleting, setDeleting,
+    handleAdd, handleUpdate, handleDelete,
+  } = useResourceList<PracticeProblem, { question: string; options: string[]; correctIndex: number; order: number }, { question?: string; options?: string[]; correctIndex?: number; order?: number }>(
+    () => practiceProblemsApi.getAll(lessonId),
+    { create: d => practiceProblemsApi.create(lessonId, d), update: practiceProblemsApi.update, delete: practiceProblemsApi.delete },
+    lessonId, byOrder,
+  );
 
   if (loading) return <LoadingSpinner />;
   if (error) return <ErrorMessage message={error} />;

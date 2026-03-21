@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { BookOpen, Circle, CircleDot, CheckCircle2 } from 'lucide-react';
 import type { Lesson, LessonProgress } from '../../api/types.js';
 import EmptyState from '../../components/EmptyState.js';
+import Tooltip from '../../components/Tooltip.js';
 
 interface LessonListProps {
   courseId: string;
@@ -12,7 +13,7 @@ interface LessonListProps {
 
 function LessonStatusIcon({ prog }: { prog?: LessonProgress }) {
   if (prog?.quizPassed) {
-    return <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />;
+    return <CheckCircle2 className="w-4 h-4 text-success shrink-0" />;
   }
   if (prog?.attempted) {
     return <CircleDot className="w-4 h-4 text-warning shrink-0" />;
@@ -42,7 +43,9 @@ export default function LessonList({ courseId, unitId, lessons, lessonProgress }
               <LessonStatusIcon prog={prog} />
             </div>
             {lesson.description && (
-              <p className="text-xs text-muted-foreground line-clamp-2">{lesson.description}</p>
+              <Tooltip content={lesson.description}>
+                <p className="text-xs text-muted-foreground line-clamp-2">{lesson.description}</p>
+              </Tooltip>
             )}
           </Link>
         );

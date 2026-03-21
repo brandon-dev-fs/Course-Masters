@@ -15,11 +15,15 @@ const BASE_URL = '/api';
 
 async function request<T>(url: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE_URL}${url}`, {
+    credentials: 'include',
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     ...options,
   });
 
   if (!res.ok) {
+    if (res.status === 401) {
+      window.dispatchEvent(new CustomEvent('auth:unauthorized'));
+    }
     const body = await res.json().catch(() => ({ error: { code: 'UNKNOWN', message: 'Request failed' } }));
     const err = body.error as ApiError;
     throw new ApiClientError(err.code, err.message, err.details);

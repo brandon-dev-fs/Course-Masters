@@ -2,7 +2,7 @@ import prisma from '../lib/prisma.js';
 import { NotFoundError } from '../errors/index.js';
 
 export const progressService = {
-  async getCourseProgress(courseId: string) {
+  async getCourseProgress(courseId: string, userId: string) {
     const course = await prisma.course.findUnique({
       where: { id: courseId },
       include: {
@@ -12,18 +12,18 @@ export const progressService = {
               include: {
                 quiz: {
                   include: {
-                    attempts: { orderBy: { createdAt: 'desc' }, take: 1 },
+                    attempts: { where: { userId }, orderBy: { createdAt: 'desc' }, take: 1 },
                   },
                 },
               },
             },
             test: {
-              include: { attempts: { orderBy: { createdAt: 'desc' }, take: 1 } },
+              include: { attempts: { where: { userId }, orderBy: { createdAt: 'desc' }, take: 1 } },
             },
           },
         },
         finalExam: {
-          include: { attempts: { orderBy: { createdAt: 'desc' }, take: 1 } },
+          include: { attempts: { where: { userId }, orderBy: { createdAt: 'desc' }, take: 1 } },
         },
       },
     });
@@ -62,20 +62,20 @@ export const progressService = {
     };
   },
 
-  async getUnitProgress(unitId: string) {
+  async getUnitProgress(unitId: string, userId: string) {
     const unit = await prisma.unit.findUnique({
       where: { id: unitId },
       include: {
         lessons: {
           include: {
             quiz: {
-              include: { attempts: { orderBy: { createdAt: 'desc' }, take: 1 } },
+              include: { attempts: { where: { userId }, orderBy: { createdAt: 'desc' }, take: 1 } },
             },
           },
           orderBy: { order: 'asc' },
         },
         test: {
-          include: { attempts: { orderBy: { createdAt: 'desc' }, take: 1 } },
+          include: { attempts: { where: { userId }, orderBy: { createdAt: 'desc' }, take: 1 } },
         },
       },
     });

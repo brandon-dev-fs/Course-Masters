@@ -1,8 +1,9 @@
-import { FormEvent, useState } from 'react';
+import { useState } from 'react';
 import Textarea from '../../components/Textarea.js';
 import Input from '../../components/Input.js';
 import Button from '../../components/Button.js';
 import type { Note } from '../../api/types.js';
+import useFormSubmit from '../../hooks/useFormSubmit.js';
 
 interface NoteFormProps {
   initial?: Partial<Note>;
@@ -14,22 +15,10 @@ interface NoteFormProps {
 export default function NoteForm({ initial, nextOrder = 1, onSubmit, onCancel }: NoteFormProps) {
   const [content, setContent] = useState(initial?.content ?? '');
   const [order, setOrder] = useState(initial?.order ?? nextOrder);
-  const [error, setError] = useState('');
-  const [submitting, setSubmitting] = useState(false);
-
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault();
-    if (!content.trim()) { setError('Content is required'); return; }
-    setSubmitting(true);
-    setError('');
-    try {
-      await onSubmit({ content: content.trim(), order });
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Something went wrong');
-    } finally {
-      setSubmitting(false);
-    }
-  }
+  const { error, submitting, handleSubmit } = useFormSubmit(async () => {
+    if (!content.trim()) throw new Error('Content is required');
+    await onSubmit({ content: content.trim(), order });
+  });
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -38,7 +27,7 @@ export default function NoteForm({ initial, nextOrder = 1, onSubmit, onCancel }:
       {error && <p className="text-sm text-destructive">{error}</p>}
       <div className="flex justify-end gap-3 pt-2">
         <Button type="button" variant="secondary" onClick={onCancel} disabled={submitting}>Cancel</Button>
-        <Button type="submit" disabled={submitting}>{submitting ? 'Saving…' : initial?.id ? 'Save Changes' : 'Add Note'}</Button>
+        <Button type="submit" disabled={submitting}>{submitting ? 'Saving...' : initial?.id ? 'Save Changes' : 'Add Note'}</Button>
       </div>
     </form>
   );

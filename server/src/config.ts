@@ -6,6 +6,8 @@ const envSchema = z.object({
 	NODE_ENV: z
 		.enum(['development', 'production', 'test'])
 		.default('development'),
+	BETTER_AUTH_SECRET: z.string().min(32),
+	CLIENT_URL: z.string().url().default('http://localhost:5000'),
 });
 
 const parsed = envSchema.safeParse(process.env);

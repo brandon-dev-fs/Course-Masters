@@ -4,6 +4,7 @@ import { unitsApi } from '../../api/units.js';
 import { progressApi } from '../../api/progress.js';
 import type { Unit, Lesson, UnitProgress } from '../../api/types.js';
 import LessonList from '../lessons/LessonList.js';
+import LessonForm from '../lessons/LessonForm.js';
 import TestSection from '../tests/TestSection.js';
 import ProgressBar from '../progress/ProgressBar.js';
 import LoadingSpinner from '../../components/LoadingSpinner.js';
@@ -13,6 +14,7 @@ interface UnitAccordionItemProps {
   unit: Unit;
   isExpanded: boolean;
   onToggle: () => void;
+  onAddLesson: (unitId: string, data: { title: string; description?: string; order: number }) => Promise<void>;
 }
 
 export default function UnitAccordionItem({
@@ -20,12 +22,14 @@ export default function UnitAccordionItem({
   unit,
   isExpanded,
   onToggle,
+  onAddLesson,
 }: UnitAccordionItemProps) {
   const [loaded, setLoaded] = useState(false);
   const [loadingBody, setLoadingBody] = useState(false);
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [lessonCount, setLessonCount] = useState(unit._count?.lessons ?? 0);
   const [progress, setProgress] = useState<UnitProgress | null>(null);
+  const [showAddLesson, setShowAddLesson] = useState(false);
 
   // Reset loaded when lesson count changes externally (e.g. added via settings modal)
   useEffect(() => {
@@ -100,13 +104,33 @@ export default function UnitAccordionItem({
                 )}
 
                 <div className="flex gap-4 items-start">
-                  <div className="flex-1 min-w-0">
+                  <div className="flex-1 min-w-0 flex flex-col gap-3">
                     <LessonList
                       courseId={courseId}
                       unitId={unit.id}
                       lessons={lessons}
                       lessonProgress={progress?.lessons}
                     />
+                    {showAddLesson ? (
+                      <div className="px-3 py-3 rounded-lg bg-surface-raised border border-border">
+                        <LessonForm
+                          nextOrder={lessons.length + 1}
+                          onSubmit={async (data) => {
+                            await onAddLesson(unit.id, data);
+                            setShowAddLesson(false);
+                            setLoaded(false);
+                          }}
+                          onCancel={() => setShowAddLesson(false)}
+                        />
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => setShowAddLesson(true)}
+                        className="text-sm text-primary hover:text-primary/80 font-medium self-start"
+                      >
+                        + Add Lesson
+                      </button>
+                    )}
                   </div>
                   <TestSection
                     unitId={unit.id}

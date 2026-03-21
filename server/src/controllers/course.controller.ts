@@ -14,17 +14,17 @@ export const courseController = {
   }),
 
   create: asyncHandler(async (req: Request, res: Response) => {
-    const course = await courseService.create(req.body);
+    const course = await courseService.create(req.body, req.user!.id);
     res.status(201).json(course);
   }),
 
   update: asyncHandler(async (req: Request, res: Response) => {
-    const course = await courseService.update(req.params['courseId'] as string, req.body);
+    const course = await courseService.update(req.params['courseId'] as string, req.body, req.user!.id, req.user!.role);
     res.json(course);
   }),
 
   remove: asyncHandler(async (req: Request, res: Response) => {
-    await courseService.remove(req.params['courseId'] as string);
+    await courseService.remove(req.params['courseId'] as string, req.user!.id, req.user!.role);
     res.status(204).send();
   }),
 };

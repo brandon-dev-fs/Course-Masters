@@ -1,18 +1,31 @@
 import { PrismaClient } from '@prisma/client';
+import { hashPassword } from 'better-auth/crypto';
 
 const prisma = new PrismaClient();
 
-async function main() {
+async function seedUser(email: string, name: string, role: string) {
+  const id = crypto.randomUUID();
   const user = await prisma.user.upsert({
-    where: { email: 'default@course-masters.app' },
+    where: { email },
     update: {},
-    create: {
-      email: 'default@course-masters.app',
-      name: 'Default User',
-    },
+    create: { id, email, name, emailVerified: false, role },
   });
+  const hashed = await hashPassword('password123');
+  await prisma.account.upsert({
+    where: { id: `${user.id}-credential` },
+    update: {},
+    create: { id: `${user.id}-credential`, accountId: user.id, providerId: 'credential', userId: user.id, password: hashed },
+  });
+  return user;
+}
 
-  console.log(`Seeded user: ${user.email}`);
+async function main() {
+  const admin = await seedUser('admin@course-masters.app', 'Admin User', 'admin');
+  const teacher = await seedUser('teacher@course-masters.app', 'Teacher User', 'teacher');
+  const student = await seedUser('student@course-masters.app', 'Student User', 'student');
+
+  const user = admin;
+  console.log(`Seeded users: ${admin.email}, ${teacher.email}, ${student.email}`);
 
   // Clean up existing seed data
   await prisma.course.deleteMany({ where: { title: 'Introduction to Web Development' } });
@@ -26,21 +39,23 @@ async function main() {
         create: [
           {
             title: 'HTML & CSS Basics',
+            description: 'Learn how to structure web pages with HTML and style them with CSS, covering the essential building blocks of every website.',
             order: 1,
             lessons: {
               create: [
-                { title: 'HTML Structure', order: 1 },
-                { title: 'CSS Selectors', order: 2 },
+                { title: 'HTML Structure', description: 'Understand how HTML documents are structured using tags and elements, and learn the difference between block-level and inline elements.', order: 1 },
+                { title: 'CSS Selectors', description: 'Learn how to target HTML elements with CSS selectors and understand how specificity determines which styles take effect.', order: 2 },
               ],
             },
           },
           {
             title: 'JavaScript Fundamentals',
+            description: 'Explore the core concepts of JavaScript including variables, data types, functions, and scope to start writing dynamic web behavior.',
             order: 2,
             lessons: {
               create: [
-                { title: 'Variables and Types', order: 1 },
-                { title: 'Functions and Scope', order: 2 },
+                { title: 'Variables and Types', description: 'Discover how to declare variables with var, let, and const, and explore JavaScript\'s primitive data types including strings, numbers, and booleans.', order: 1 },
+                { title: 'Functions and Scope', description: 'Learn how to define and invoke functions, understand lexical scope, and explore closures and arrow function syntax.', order: 2 },
               ],
             },
           },
@@ -361,9 +376,9 @@ async function main() {
 
   // No attempt for quiz4 — lesson not yet passed
 
-  // --- Unit 2 Test (no attempt — unit not yet completed) ---
+  // --- Unit 2 Test ---
 
-  await prisma.test.create({
+  const test2 = await prisma.test.create({
     data: {
       unitId: unit2.id,
       questions: {
@@ -438,10 +453,22 @@ async function main() {
     },
   });
 
-  // No exam attempt — course not yet completed
+  // Add passing attempts for quiz4 and unit2 test to complete all units
+  await prisma.quizAttempt.create({
+    data: { quizId: quiz4.id, userId: user.id, score: 1, passed: true },
+  });
+
+  await prisma.testAttempt.create({
+    data: { testId: test2.id, userId: user.id, score: 1, passed: true },
+  });
+
+  // Add passing exam attempt to mark course as complete
+  await prisma.examAttempt.create({
+    data: { examId: exam.id, userId: user.id, score: 1, passed: true },
+  });
 
   console.log(`Seeded assessments: ${quiz1.id}, ${quiz2.id}, ${quiz3.id}, ${quiz4.id}`);
-  console.log(`Seeded tests: ${test1.id}`);
+  console.log(`Seeded tests: ${test1.id}, ${test2.id}`);
   console.log(`Seeded exam: ${exam.id}`);
   console.log('Seed complete!');
 }

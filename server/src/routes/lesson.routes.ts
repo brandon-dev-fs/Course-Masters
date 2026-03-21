@@ -2,13 +2,14 @@ import { Router } from 'express';
 import { lessonController } from '../controllers/lesson.controller.js';
 import { validate } from '../middleware/validate.js';
 import { createLessonSchema, updateLessonSchema } from '../schemas/lesson.schema.js';
+import { authorize } from '../middleware/authorize.js';
 
 const router = Router({ mergeParams: true });
 
 router.get('/', lessonController.getAll);
-router.post('/', validate(createLessonSchema), lessonController.create);
+router.post('/', authorize('teacher', 'admin'), validate(createLessonSchema), lessonController.create);
 router.get('/:lessonId', lessonController.getOne);
-router.put('/:lessonId', validate(updateLessonSchema), lessonController.update);
-router.delete('/:lessonId', lessonController.remove);
+router.put('/:lessonId', authorize('teacher', 'admin'), validate(updateLessonSchema), lessonController.update);
+router.delete('/:lessonId', authorize('teacher', 'admin'), lessonController.remove);
 
 export default router;

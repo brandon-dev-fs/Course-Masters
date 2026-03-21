@@ -1,3 +1,23 @@
+export interface AuthUser {
+  id: string;
+  name: string;
+  email: string;
+  role: 'student' | 'teacher' | 'admin';
+  image?: string | null;
+  emailVerified: boolean;
+}
+
+export interface RegisterInput {
+  name: string;
+  email: string;
+  password: string;
+}
+
+export interface LoginInput {
+  email: string;
+  password: string;
+}
+
 export interface ApiError {
   code: string;
   message: string;
@@ -7,7 +27,7 @@ export interface ApiError {
 export interface Course {
   id: string;
   title: string;
-  description: string | null;
+  description: string;
   authorId: string;
   createdAt: string;
   updatedAt: string;
@@ -18,6 +38,7 @@ export interface Course {
 export interface Unit {
   id: string;
   title: string;
+  description: string;
   order: number;
   courseId: string;
   lessons?: Lesson[];
@@ -27,7 +48,7 @@ export interface Unit {
 export interface Lesson {
   id: string;
   title: string;
-  description?: string;
+  description: string;
   order: number;
   unitId: string;
 }
@@ -73,55 +94,39 @@ export interface Vocab {
   lessonId: string;
 }
 
-export interface QuizQuestion {
+export interface AssessmentQuestion {
   id: string;
   question: string;
   options: string[];
   order: number;
-  quizId: string;
 }
 
-export interface Quiz {
+export interface Assessment {
   id: string;
-  lessonId: string;
-  questions: QuizQuestion[];
+  questions: AssessmentQuestion[];
+  lastAttempt?: { score: number; passed: boolean } | null;
 }
 
-export interface TestQuestion {
-  id: string;
-  question: string;
-  options: string[];
-  order: number;
-  testId: string;
-}
-
-export interface Test {
-  id: string;
-  unitId: string;
-  questions: TestQuestion[];
-  lastAttempt: { score: number; passed: boolean } | null;
-}
-
-export interface FinalExamQuestion {
-  id: string;
-  question: string;
-  options: string[];
-  order: number;
-  examId: string;
-}
-
-export interface FinalExam {
-  id: string;
-  courseId: string;
-  questions: FinalExamQuestion[];
-  lastAttempt: { score: number; passed: boolean } | null;
-}
+// Specific aliases for backward compatibility with API modules
+export type QuizQuestion = AssessmentQuestion & { quizId: string };
+export type Quiz = Assessment & { lessonId: string };
+export type TestQuestion = AssessmentQuestion & { testId: string };
+export type Test = Assessment & { unitId: string; lastAttempt: { score: number; passed: boolean } | null };
+export type FinalExamQuestion = AssessmentQuestion & { examId: string };
+export type FinalExam = Assessment & { courseId: string; lastAttempt: { score: number; passed: boolean } | null };
 
 export interface AttemptResult {
   score: number;
   passed: boolean;
   totalQuestions: number;
   correctCount: number;
+}
+
+export interface AttemptSummary {
+  id: string;
+  score: number;
+  passed: boolean;
+  createdAt: string;
 }
 
 export interface CourseProgress {

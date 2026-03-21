@@ -6,17 +6,18 @@ import { unitsApi } from '../../api/units.js';
 import { lessonsApi } from '../../api/lessons.js';
 import type { Course, Unit } from '../../api/types.js';
 import UnitAccordion from '../units/UnitAccordion.js';
-import UnitForm from '../units/UnitForm.js';
 import UnitSettingsModal from '../units/UnitSettingsModal.js';
 import ExamSection from '../exams/ExamSection.js';
 import CourseProgressCard from '../progress/CourseProgressCard.js';
 import CourseSettingsModal from './CourseSettingsModal.js';
-import Modal from '../../components/Modal.js';
 import Button from '../../components/Button.js';
 import LoadingSpinner from '../../components/LoadingSpinner.js';
 import ErrorMessage from '../../components/ErrorMessage.js';
+import { useAuth } from '../../context/AuthContext.js';
 
 export default function CourseDetailPage() {
+	const { user } = useAuth();
+	const canEdit = user?.role === 'teacher' || user?.role === 'admin';
 	const { courseId } = useParams<{ courseId: string }>();
 	const navigate = useNavigate();
 	const [course, setCourse] = useState<Course | null>(null);
@@ -24,7 +25,6 @@ export default function CourseDetailPage() {
 	const [error, setError] = useState('');
 	const [showSettings, setShowSettings] = useState(false);
 	const [showUnitSettings, setShowUnitSettings] = useState(false);
-	const [showAddUnit, setShowAddUnit] = useState(false);
 	const [showExam, setShowExam] = useState(false);
 
 	async function load() {
@@ -74,7 +74,6 @@ export default function CourseDetailPage() {
 					}
 				: null,
 		);
-		setShowAddUnit(false);
 	}
 
 	async function handleUpdateUnit(
@@ -161,13 +160,15 @@ export default function CourseDetailPage() {
 						</p>
 					)}
 				</div>
-				<button
-					onClick={() => setShowSettings(true)}
-					className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-surface-raised transition-colors"
-					aria-label="Course settings"
-				>
-					<Settings className="w-5 h-5" />
-				</button>
+				{canEdit && (
+					<button
+						onClick={() => setShowSettings(true)}
+						className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-surface-raised transition-colors"
+						aria-label="Course settings"
+					>
+						<Settings className="w-5 h-5" />
+					</button>
+				)}
 			</div>
 
 			<CourseProgressCard
@@ -177,20 +178,23 @@ export default function CourseDetailPage() {
 
 			<div className="flex items-center justify-between mb-4">
 				<h2 className="text-lg font-semibold text-foreground">Units</h2>
-				<div className="flex items-center gap-2">
-					<button
-						onClick={() => setShowUnitSettings(true)}
-						className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-surface-raised transition-colors"
-						aria-label="Unit settings"
-					>
-						<Settings className="w-4 h-4" />
-					</button>
-				</div>
+				{canEdit && (
+					<div className="flex items-center gap-2">
+						<button
+							onClick={() => setShowUnitSettings(true)}
+							className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-surface-raised transition-colors"
+							aria-label="Unit settings"
+						>
+							<Settings className="w-4 h-4" />
+						</button>
+					</div>
+				)}
 			</div>
 
 			<UnitAccordion
 				courseId={courseId!}
 				units={course.units ?? []}
+				onAddLesson={handleAddLesson}
 			/>
 
 			<ExamSection
@@ -211,23 +215,12 @@ export default function CourseDetailPage() {
 				<UnitSettingsModal
 					course={course}
 					onClose={() => setShowUnitSettings(false)}
+					onAddUnit={handleAddUnit}
 					onUpdateUnit={handleUpdateUnit}
 					onDeleteUnit={handleDeleteUnit}
 					onAddLesson={handleAddLesson}
 				/>
 			)}
-			{showAddUnit && (
-				<Modal
-					title="Add Unit"
-					onClose={() => setShowAddUnit(false)}
-				>
-					<UnitForm
-						nextOrder={(course.units?.length ?? 0) + 1}
-						onSubmit={handleAddUnit}
-						onCancel={() => setShowAddUnit(false)}
-					/>
-				</Modal>
-			)}
-		</div>
+			</div>
 	);
 }

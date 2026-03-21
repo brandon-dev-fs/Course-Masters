@@ -59,44 +59,33 @@ export default function StudentNotePanel({ lessonId, isOpen, onClose }: StudentN
   }
 
   return (
-    <>
-      {/* Backdrop */}
-      {isOpen && (
-        <div
-          className="fixed inset-0 bg-black/20 z-40"
-          onClick={onClose}
-        />
-      )}
-
-      {/* Panel */}
-      <div
-        className={`fixed inset-y-0 right-0 w-96 bg-surface border-l border-border shadow-lg flex flex-col z-50 transform transition-transform duration-300 ${
-          isOpen ? 'translate-x-0' : 'translate-x-full'
-        }`}
-      >
-        {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-          <h2 className="text-sm font-semibold text-foreground">My Notes</h2>
-          <div className="flex items-center gap-3">
-            {saveStatus === 'saving' && <span className="text-xs text-muted-foreground">Saving…</span>}
-            {saveStatus === 'saved' && <span className="text-xs text-primary">Saved</span>}
-            {note && saveStatus === 'idle' && (
-              <button onClick={handleDelete} className="text-xs text-muted-foreground hover:text-destructive">Clear</button>
-            )}
-            <button onClick={onClose} className="text-muted-foreground hover:text-foreground" aria-label="Close">
-              <X className="w-4 h-4" />
-            </button>
-          </div>
+    <div
+      className={`shrink-0 border-l border-border bg-surface flex flex-col overflow-hidden transition-all duration-300 ${
+        isOpen ? 'w-80 opacity-100' : 'w-0 opacity-0'
+      }`}
+    >
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
+        <h2 className="text-sm font-semibold text-foreground">My Notes</h2>
+        <div className="flex items-center gap-3">
+          {saveStatus === 'saving' && <span className="text-xs text-muted-foreground">Saving…</span>}
+          {saveStatus === 'saved' && <span className="text-xs text-primary">Saved</span>}
+          {note && saveStatus === 'idle' && (
+            <button onClick={handleDelete} className="text-xs text-muted-foreground hover:text-destructive">Clear</button>
+          )}
+          <button onClick={onClose} className="text-muted-foreground hover:text-foreground" aria-label="Close">
+            <X className="w-4 h-4" />
+          </button>
         </div>
-
-        {/* Textarea */}
-        <textarea
-          value={content}
-          onChange={e => handleChange(e.target.value)}
-          placeholder="Write your personal notes here... They save automatically."
-          className="flex-1 resize-none bg-surface p-4 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
-        />
       </div>
-    </>
+
+      {/* Textarea */}
+      <textarea
+        value={content}
+        onChange={e => handleChange(e.target.value)}
+        placeholder="Write your personal notes here... They save automatically."
+        className="flex-1 resize-none bg-surface p-4 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
+      />
+    </div>
   );
 }

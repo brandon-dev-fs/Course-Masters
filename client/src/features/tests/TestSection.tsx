@@ -1,16 +1,13 @@
-import { useEffect, useState } from 'react';
 import { testsApi } from '../../api/tests.js';
-import type { Test, AttemptResult } from '../../api/types.js';
+import useAssessment from '../../hooks/useAssessment.js';
 import AssessmentForm from '../assessments/AssessmentForm.js';
 import AssessmentTaker from '../assessments/AssessmentTaker.js';
 import AssessmentResults from '../assessments/AssessmentResults.js';
-import { type QuestionDraft } from '../assessments/QuestionEditor.js';
 import Modal from '../../components/Modal.js';
 import Button from '../../components/Button.js';
+import Tooltip from '../../components/Tooltip.js';
 import LoadingSpinner from '../../components/LoadingSpinner.js';
 import ErrorMessage from '../../components/ErrorMessage.js';
-
-type View = 'idle' | 'creating' | 'taking' | 'results';
 
 interface TestSectionProps {
   unitId: string;
@@ -20,35 +17,11 @@ interface TestSectionProps {
 }
 
 export default function TestSection({ unitId, allLessonsComplete = true, completedCount = 0, totalCount = 0 }: TestSectionProps) {
-  const [test, setTest] = useState<Test | null | undefined>(undefined);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [view, setView] = useState<View>('idle');
-  const [result, setResult] = useState<AttemptResult | null>(null);
-
-  const lastAttempt = result
-    ? { score: result.score, passed: result.passed }
-    : (test?.lastAttempt ?? null);
-
-  useEffect(() => {
-    testsApi.get(unitId)
-      .then(setTest)
-      .catch((err: unknown) => setError(err instanceof Error ? err.message : 'Failed to load test'))
-      .finally(() => setLoading(false));
-  }, [unitId]);
-
-  async function handleCreate(questions: QuestionDraft[]) {
-    const created = await testsApi.create(unitId, { questions });
-    setTest(created);
-    setView('idle');
-  }
-
-  async function handleSubmit(answers: number[]) {
-    if (!test) return;
-    const res = await testsApi.submitAttempt(test.id, answers);
-    setResult(res);
-    setView('results');
-  }
+  const {
+    assessment: test, loading, error,
+    view, setView, result, lastAttempt,
+    handleCreate, handleSubmit,
+  } = useAssessment(testsApi, unitId);
 
   if (loading) return <LoadingSpinner />;
   if (error) return <ErrorMessage message={error} />;
@@ -72,25 +45,15 @@ export default function TestSection({ unitId, allLessonsComplete = true, complet
 
       {!test ? (
         <div className="flex flex-col items-center gap-2">
-          <div className="relative group">
+          <Tooltip content={`Complete all lessons first (${completedCount}/${totalCount})`}>
             <Button size="sm" onClick={() => setView('creating')} disabled={!allLessonsComplete}>Create Test</Button>
-            {!allLessonsComplete && (
-              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 px-3 py-2 rounded-lg bg-surface-raised border border-border shadow-warm-md text-xs text-muted-foreground text-center pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                Complete all lessons first ({completedCount}/{totalCount})
-              </div>
-            )}
-          </div>
+          </Tooltip>
         </div>
       ) : (
         <div className="flex justify-center">
-          <div className="relative group">
+          <Tooltip content={`Complete all lessons first (${completedCount}/${totalCount})`}>
             <Button size="sm" onClick={() => setView('taking')} disabled={!allLessonsComplete}>Take Test</Button>
-            {!allLessonsComplete && (
-              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 px-3 py-2 rounded-lg bg-surface-raised border border-border shadow-warm-md text-xs text-muted-foreground text-center pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                Complete all lessons first ({completedCount}/{totalCount})
-              </div>
-            )}
-          </div>
+          </Tooltip>
         </div>
       )}
 
