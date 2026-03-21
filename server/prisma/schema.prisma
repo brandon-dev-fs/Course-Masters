@@ -42,6 +42,7 @@ model Session {
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([userId])
   @@map("session")
 }
 
@@ -61,6 +62,7 @@ model Account {
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
 
+  @@index([userId])
   @@map("account")
 }
 
@@ -86,6 +88,8 @@ model Course {
   author    User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
   units     Unit[]
   finalExam FinalExam?
+
+  @@index([authorId])
 }
 
 model Unit {
@@ -98,6 +102,8 @@ model Unit {
   course  Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
   lessons Lesson[]
   test    Test?
+
+  @@index([courseId])
 }
 
 model Lesson {
@@ -114,6 +120,8 @@ model Lesson {
   quiz             Quiz?
   studentNotes     StudentNote[]
   vocabs           Vocab[]
+
+  @@index([unitId])
 }
 
 model Note {
@@ -123,6 +131,8 @@ model Note {
   lessonId String
 
   lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@index([lessonId])
 }
 
 model FlashCard {
@@ -133,6 +143,8 @@ model FlashCard {
   lessonId String
 
   lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@index([lessonId])
 }
 
 model PracticeProblem {
@@ -144,6 +156,8 @@ model PracticeProblem {
   lessonId     String
 
   lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@index([lessonId])
 }
 
 model StudentNote {
@@ -158,6 +172,7 @@ model StudentNote {
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([lessonId, userId])
+  @@index([userId])
 }
 
 model Vocab {
@@ -168,6 +183,8 @@ model Vocab {
   lessonId   String
 
   lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@index([lessonId])
 }
 
 model Quiz {
@@ -188,6 +205,8 @@ model QuizQuestion {
   quizId       String
 
   quiz Quiz @relation(fields: [quizId], references: [id], onDelete: Cascade)
+
+  @@index([quizId])
 }
 
 model QuizAttempt {
@@ -200,6 +219,9 @@ model QuizAttempt {
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   quiz Quiz @relation(fields: [quizId], references: [id], onDelete: Cascade)
+
+  @@index([quizId])
+  @@index([userId])
 }
 
 model Test {
@@ -220,6 +242,8 @@ model TestQuestion {
   testId       String
 
   test Test @relation(fields: [testId], references: [id], onDelete: Cascade)
+
+  @@index([testId])
 }
 
 model TestAttempt {
@@ -232,6 +256,9 @@ model TestAttempt {
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   test Test @relation(fields: [testId], references: [id], onDelete: Cascade)
+
+  @@index([testId])
+  @@index([userId])
 }
 
 model FinalExam {
@@ -252,6 +279,8 @@ model FinalExamQuestion {
   examId       String
 
   exam FinalExam @relation(fields: [examId], references: [id], onDelete: Cascade)
+
+  @@index([examId])
 }
 
 model ExamAttempt {
@@ -264,4 +293,7 @@ model ExamAttempt {
 
   user User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   exam FinalExam @relation(fields: [examId], references: [id], onDelete: Cascade)
+
+  @@index([examId])
+  @@index([userId])
 }

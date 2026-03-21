@@ -13,7 +13,7 @@ interface LessonListProps {
 
 function LessonStatusIcon({ prog }: { prog?: LessonProgress }) {
   if (prog?.quizPassed) {
-    return <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />;
+    return <CheckCircle2 className="w-4 h-4 text-success shrink-0" />;
   }
   if (prog?.attempted) {
     return <CircleDot className="w-4 h-4 text-warning shrink-0" />;

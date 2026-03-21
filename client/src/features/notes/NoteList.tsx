@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
 import { notesApi } from '../../api/notes.js';
 import type { Note } from '../../api/types.js';
+import useResourceList from '../../hooks/useResourceList.js';
 import NoteCard from './NoteCard.js';
 import NoteForm from './NoteForm.js';
 import Modal from '../../components/Modal.js';
@@ -10,40 +10,18 @@ import LoadingSpinner from '../../components/LoadingSpinner.js';
 import ErrorMessage from '../../components/ErrorMessage.js';
 import EmptyState from '../../components/EmptyState.js';
 
+const byOrder = (a: Note, b: Note) => a.order - b.order;
+
 export default function NoteList({ lessonId }: { lessonId: string }) {
-  const [notes, setNotes] = useState<Note[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [showAdd, setShowAdd] = useState(false);
-  const [editing, setEditing] = useState<Note | null>(null);
-  const [deleting, setDeleting] = useState<Note | null>(null);
-
-  useEffect(() => {
-    notesApi.getAll(lessonId)
-      .then(setNotes)
-      .catch((err: unknown) => setError(err instanceof Error ? err.message : 'Failed to load notes'))
-      .finally(() => setLoading(false));
-  }, [lessonId]);
-
-  async function handleAdd(data: { content: string; order: number }) {
-    const note = await notesApi.create(lessonId, data);
-    setNotes(prev => [...prev, note].sort((a, b) => a.order - b.order));
-    setShowAdd(false);
-  }
-
-  async function handleUpdate(data: { content: string; order: number }) {
-    if (!editing) return;
-    const updated = await notesApi.update(editing.id, data);
-    setNotes(prev => prev.map(n => n.id === updated.id ? updated : n).sort((a, b) => a.order - b.order));
-    setEditing(null);
-  }
-
-  async function handleDelete() {
-    if (!deleting) return;
-    await notesApi.delete(deleting.id);
-    setNotes(prev => prev.filter(n => n.id !== deleting.id));
-    setDeleting(null);
-  }
+  const {
+    items: notes, loading, error,
+    showAdd, setShowAdd, editing, setEditing, deleting, setDeleting,
+    handleAdd, handleUpdate, handleDelete,
+  } = useResourceList<Note, { content: string; order: number }, { content?: string; order?: number }>(
+    () => notesApi.getAll(lessonId),
+    { create: d => notesApi.create(lessonId, d), update: notesApi.update, delete: notesApi.delete },
+    lessonId, byOrder,
+  );
 
   if (loading) return <LoadingSpinner />;
   if (error) return <ErrorMessage message={error} />;

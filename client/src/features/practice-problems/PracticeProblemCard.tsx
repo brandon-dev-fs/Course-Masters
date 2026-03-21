@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Brain } from 'lucide-react';
 import type { PracticeProblem } from '../../api/types.js';
 import Button from '../../components/Button.js';
+import CardActions from '../../components/CardActions.js';
 
 interface PracticeProblemCardProps {
   problem: PracticeProblem;
@@ -31,10 +32,7 @@ export default function PracticeProblemCard({ problem, onEdit, onDelete }: Pract
           <Brain className="w-5 h-5 text-accent shrink-0 mt-0.5" />
           <p className="text-foreground font-medium">{problem.question}</p>
         </div>
-        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-          <button onClick={onEdit} className="text-xs text-muted-foreground hover:text-foreground px-2 py-1 rounded hover:bg-surface-raised">Edit</button>
-          <button onClick={onDelete} className="text-xs text-muted-foreground hover:text-destructive px-2 py-1 rounded hover:bg-surface-raised">Delete</button>
-        </div>
+        <CardActions onEdit={onEdit} onDelete={onDelete} />
       </div>
 
       <div className="flex flex-col gap-2 mb-3">

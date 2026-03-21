@@ -1,16 +1,8 @@
-import { Router } from 'express';
 import { vocabController } from '../controllers/vocab.controller.js';
-import { validate } from '../middleware/validate.js';
 import { createVocabSchema, updateVocabSchema } from '../schemas/vocab.schema.js';
-import { authorize } from '../middleware/authorize.js';
+import { createLessonContentRoutes } from './factories/createLessonContentRoutes.js';
 
-// Mounted at /lessons/:lessonId/vocab and /vocab
-const lessonVocabRouter = Router({ mergeParams: true });
-lessonVocabRouter.get('/', vocabController.getAll);
-lessonVocabRouter.post('/', authorize('teacher', 'admin'), validate(createVocabSchema), vocabController.create);
-
-const vocabRouter = Router();
-vocabRouter.put('/:vocabId', authorize('teacher', 'admin'), validate(updateVocabSchema), vocabController.update);
-vocabRouter.delete('/:vocabId', authorize('teacher', 'admin'), vocabController.remove);
+const { lessonRouter: lessonVocabRouter, standaloneRouter: vocabRouter } =
+  createLessonContentRoutes(vocabController, createVocabSchema, updateVocabSchema, 'vocabId');
 
 export { lessonVocabRouter, vocabRouter };

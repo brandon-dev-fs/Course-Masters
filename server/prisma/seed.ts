@@ -3,87 +3,26 @@ import { hashPassword } from 'better-auth/crypto';
 
 const prisma = new PrismaClient();
 
+async function seedUser(email: string, name: string, role: string) {
+  const id = crypto.randomUUID();
+  const user = await prisma.user.upsert({
+    where: { email },
+    update: {},
+    create: { id, email, name, emailVerified: false, role },
+  });
+  const hashed = await hashPassword('password123');
+  await prisma.account.upsert({
+    where: { id: `${user.id}-credential` },
+    update: {},
+    create: { id: `${user.id}-credential`, accountId: user.id, providerId: 'credential', userId: user.id, password: hashed },
+  });
+  return user;
+}
+
 async function main() {
-  // Admin user
-  const adminId = crypto.randomUUID();
-  const admin = await prisma.user.upsert({
-    where: { email: 'admin@course-masters.app' },
-    update: {},
-    create: {
-      id: adminId,
-      email: 'admin@course-masters.app',
-      name: 'Admin User',
-      emailVerified: false,
-      role: 'admin',
-    },
-  });
-
-  const adminHashedPassword = await hashPassword('password123');
-  await prisma.account.upsert({
-    where: { id: `${admin.id}-credential` },
-    update: {},
-    create: {
-      id: `${admin.id}-credential`,
-      accountId: admin.id,
-      providerId: 'credential',
-      userId: admin.id,
-      password: adminHashedPassword,
-    },
-  });
-
-  // Teacher user
-  const teacherId = crypto.randomUUID();
-  const teacher = await prisma.user.upsert({
-    where: { email: 'teacher@course-masters.app' },
-    update: {},
-    create: {
-      id: teacherId,
-      email: 'teacher@course-masters.app',
-      name: 'Teacher User',
-      emailVerified: false,
-      role: 'teacher',
-    },
-  });
-
-  const teacherHashedPassword = await hashPassword('password123');
-  await prisma.account.upsert({
-    where: { id: `${teacher.id}-credential` },
-    update: {},
-    create: {
-      id: `${teacher.id}-credential`,
-      accountId: teacher.id,
-      providerId: 'credential',
-      userId: teacher.id,
-      password: teacherHashedPassword,
-    },
-  });
-
-  // Student user
-  const studentId = crypto.randomUUID();
-  const student = await prisma.user.upsert({
-    where: { email: 'student@course-masters.app' },
-    update: {},
-    create: {
-      id: studentId,
-      email: 'student@course-masters.app',
-      name: 'Student User',
-      emailVerified: false,
-      role: 'student',
-    },
-  });
-
-  const studentHashedPassword = await hashPassword('password123');
-  await prisma.account.upsert({
-    where: { id: `${student.id}-credential` },
-    update: {},
-    create: {
-      id: `${student.id}-credential`,
-      accountId: student.id,
-      providerId: 'credential',
-      userId: student.id,
-      password: studentHashedPassword,
-    },
-  });
+  const admin = await seedUser('admin@course-masters.app', 'Admin User', 'admin');
+  const teacher = await seedUser('teacher@course-masters.app', 'Teacher User', 'teacher');
+  const student = await seedUser('student@course-masters.app', 'Student User', 'student');
 
   const user = admin;
   console.log(`Seeded users: ${admin.email}, ${teacher.email}, ${student.email}`);

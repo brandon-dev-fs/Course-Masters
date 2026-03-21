@@ -94,49 +94,26 @@ export interface Vocab {
   lessonId: string;
 }
 
-export interface QuizQuestion {
+export interface AssessmentQuestion {
   id: string;
   question: string;
   options: string[];
   order: number;
-  quizId: string;
 }
 
-export interface Quiz {
+export interface Assessment {
   id: string;
-  lessonId: string;
-  questions: QuizQuestion[];
+  questions: AssessmentQuestion[];
+  lastAttempt?: { score: number; passed: boolean } | null;
 }
 
-export interface TestQuestion {
-  id: string;
-  question: string;
-  options: string[];
-  order: number;
-  testId: string;
-}
-
-export interface Test {
-  id: string;
-  unitId: string;
-  questions: TestQuestion[];
-  lastAttempt: { score: number; passed: boolean } | null;
-}
-
-export interface FinalExamQuestion {
-  id: string;
-  question: string;
-  options: string[];
-  order: number;
-  examId: string;
-}
-
-export interface FinalExam {
-  id: string;
-  courseId: string;
-  questions: FinalExamQuestion[];
-  lastAttempt: { score: number; passed: boolean } | null;
-}
+// Specific aliases for backward compatibility with API modules
+export type QuizQuestion = AssessmentQuestion & { quizId: string };
+export type Quiz = Assessment & { lessonId: string };
+export type TestQuestion = AssessmentQuestion & { testId: string };
+export type Test = Assessment & { unitId: string; lastAttempt: { score: number; passed: boolean } | null };
+export type FinalExamQuestion = AssessmentQuestion & { examId: string };
+export type FinalExam = Assessment & { courseId: string; lastAttempt: { score: number; passed: boolean } | null };
 
 export interface AttemptResult {
   score: number;

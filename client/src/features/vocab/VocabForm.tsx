@@ -1,8 +1,9 @@
-import { FormEvent, useState } from 'react';
+import { useState } from 'react';
 import Input from '../../components/Input.js';
 import Textarea from '../../components/Textarea.js';
 import Button from '../../components/Button.js';
 import type { Vocab } from '../../api/types.js';
+import useFormSubmit from '../../hooks/useFormSubmit.js';
 
 interface VocabFormProps {
   initial?: Partial<Vocab>;
@@ -15,22 +16,10 @@ export default function VocabForm({ initial, nextOrder = 1, onSubmit, onCancel }
   const [term, setTerm] = useState(initial?.term ?? '');
   const [definition, setDefinition] = useState(initial?.definition ?? '');
   const [order, setOrder] = useState(initial?.order ?? nextOrder);
-  const [error, setError] = useState('');
-  const [submitting, setSubmitting] = useState(false);
-
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault();
-    if (!term.trim() || !definition.trim()) { setError('Term and definition are required'); return; }
-    setSubmitting(true);
-    setError('');
-    try {
-      await onSubmit({ term: term.trim(), definition: definition.trim(), order });
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Something went wrong');
-    } finally {
-      setSubmitting(false);
-    }
-  }
+  const { error, submitting, handleSubmit } = useFormSubmit(async () => {
+    if (!term.trim() || !definition.trim()) throw new Error('Term and definition are required');
+    await onSubmit({ term: term.trim(), definition: definition.trim(), order });
+  });
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -40,7 +29,7 @@ export default function VocabForm({ initial, nextOrder = 1, onSubmit, onCancel }
       {error && <p className="text-sm text-destructive">{error}</p>}
       <div className="flex justify-end gap-3 pt-2">
         <Button type="button" variant="secondary" onClick={onCancel} disabled={submitting}>Cancel</Button>
-        <Button type="submit" disabled={submitting}>{submitting ? 'Saving…' : initial?.id ? 'Save Changes' : 'Add Term'}</Button>
+        <Button type="submit" disabled={submitting}>{submitting ? 'Saving...' : initial?.id ? 'Save Changes' : 'Add Term'}</Button>
       </div>
     </form>
   );

@@ -11,8 +11,8 @@ import ErrorMessage from '../../components/ErrorMessage.js';
 import LoadingSpinner from '../../components/LoadingSpinner.js';
 
 const roleBadge: Record<string, string> = {
-  admin: 'bg-green-100 text-green-800 border border-green-200',
-  teacher: 'bg-blue-100 text-blue-800 border border-blue-200',
+  admin: 'bg-success/10 text-success border border-success/20',
+  teacher: 'bg-accent-subtle text-accent border border-accent/20',
   student: 'bg-surface-raised text-muted-foreground border border-border',
 };
 
@@ -155,7 +155,7 @@ export default function ProfilePage() {
                 <Pencil className="w-4 h-4" />
               </button>
               {nameSuccess && (
-                <span className="text-xs text-green-600 font-medium">Saved!</span>
+                <span className="text-xs text-success font-medium">Saved!</span>
               )}
             </div>
           )}
@@ -185,7 +185,7 @@ export default function ProfilePage() {
 
         {passwordError && <ErrorMessage message={passwordError} />}
         {passwordSuccess && (
-          <div className="rounded-md bg-green-50 border border-green-200 px-4 py-3 text-green-800 text-sm">
+          <div className="rounded-md bg-success/10 border border-success/20 px-4 py-3 text-success text-sm">
             Password changed successfully.
           </div>
         )}

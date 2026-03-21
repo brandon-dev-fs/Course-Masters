@@ -1,12 +1,10 @@
 import { useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import type { QuizQuestion, TestQuestion, FinalExamQuestion } from '../../api/types.js';
+import type { AssessmentQuestion } from '../../api/types.js';
 import Button from '../../components/Button.js';
 
-type Question = QuizQuestion | TestQuestion | FinalExamQuestion;
-
 interface AssessmentTakerProps {
-  questions: Question[];
+  questions: AssessmentQuestion[];
   onSubmit: (answers: number[]) => Promise<void>;
   onCancel: () => void;
 }

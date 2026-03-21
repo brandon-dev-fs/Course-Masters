@@ -1,13 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { examsApi } from '../../api/exams.js';
-import type { FinalExam } from '../../api/types.js';
+import useAssessment from '../../hooks/useAssessment.js';
 import AssessmentForm from '../assessments/AssessmentForm.js';
 import AssessmentTaker from '../assessments/AssessmentTaker.js';
 import AssessmentResults from '../assessments/AssessmentResults.js';
-import { type QuestionDraft } from '../assessments/QuestionEditor.js';
 import Modal from '../../components/Modal.js';
-
-type View = 'idle' | 'creating' | 'taking' | 'results';
 
 interface ExamSectionProps {
   courseId: string;
@@ -16,38 +13,18 @@ interface ExamSectionProps {
 }
 
 export default function ExamSection({ courseId, open, onClose }: ExamSectionProps) {
-  const [exam, setExam] = useState<FinalExam | null | undefined>(undefined);
-  const [view, setView] = useState<View>('idle');
-  const [result, setResult] = useState<{ score: number; passed: boolean; totalQuestions: number; correctCount: number } | null>(null);
+  const {
+    assessment: exam, view, setView, result,
+    handleCreate, handleSubmit,
+  } = useAssessment(examsApi, courseId);
 
   useEffect(() => {
-    examsApi.get(courseId)
-      .then(setExam)
-      .catch(() => {});
-  }, [courseId]);
-
-  useEffect(() => {
-    if (open) {
-      setView(exam === null ? 'creating' : 'taking');
-    }
+    if (open) setView(exam === null ? 'creating' : 'taking');
   }, [open, exam]);
 
   function handleClose() {
     setView('idle');
     onClose();
-  }
-
-  async function handleCreate(questions: QuestionDraft[]) {
-    const created = await examsApi.create(courseId, { questions });
-    setExam(created);
-    setView('taking');
-  }
-
-  async function handleSubmit(answers: number[]) {
-    if (!exam) return;
-    const res = await examsApi.submitAttempt(exam.id, answers);
-    setResult(res);
-    setView('results');
   }
 
   if (!open && view === 'idle') return null;

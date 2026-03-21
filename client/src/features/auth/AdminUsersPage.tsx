@@ -8,8 +8,8 @@ const ROLES = ['student', 'teacher', 'admin'] as const;
 type Role = (typeof ROLES)[number];
 
 const roleBadge: Record<Role, string> = {
-  admin: 'bg-green-100 text-green-800 border border-green-200',
-  teacher: 'bg-blue-100 text-blue-800 border border-blue-200',
+  admin: 'bg-success/10 text-success border border-success/20',
+  teacher: 'bg-accent-subtle text-accent border border-accent/20',
   student: 'bg-surface-raised text-muted-foreground border border-border',
 };
 
