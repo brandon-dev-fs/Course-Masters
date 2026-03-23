@@ -77,12 +77,19 @@ async function main() {
 
   // --- Lesson 1: HTML Structure — Notes, FlashCards, Vocab, PracticeProblems, Quiz ---
 
-  await prisma.note.createMany({
-    data: [
-      { lessonId: lesson1.id, content: 'HTML stands for HyperText Markup Language. It defines the structure of web pages using elements represented by tags like `<html>`, `<head>`, and `<body>`.', order: 1 },
-      { lessonId: lesson1.id, content: 'Every HTML document should start with `<!DOCTYPE html>` to tell the browser which version of HTML is being used.', order: 2 },
-      { lessonId: lesson1.id, content: 'Block-level elements (like `<div>`, `<p>`, `<h1>`) start on a new line. Inline elements (like `<span>`, `<a>`, `<strong>`) flow within text.', order: 3 },
-    ],
+  await prisma.note.create({
+    data: {
+      lessonId: lesson1.id,
+      content: {
+        type: 'doc',
+        content: [
+          { type: 'heading', attrs: { level: 2 }, content: [{ type: 'text', text: 'HTML Fundamentals' }] },
+          { type: 'paragraph', content: [{ type: 'text', text: 'HTML stands for HyperText Markup Language. It defines the structure of web pages using elements represented by tags like <html>, <head>, and <body>.' }] },
+          { type: 'paragraph', content: [{ type: 'text', text: 'Every HTML document should start with <!DOCTYPE html> to tell the browser which version of HTML is being used.' }] },
+          { type: 'paragraph', content: [{ type: 'text', text: 'Block-level elements (like <div>, <p>, <h1>) start on a new line. Inline elements (like <span>, <a>, <strong>) flow within text.' }] },
+        ],
+      },
+    },
   });
 
   await prisma.flashCard.createMany({
@@ -179,11 +186,18 @@ async function main() {
 
   // --- Lesson 2: CSS Selectors — Notes, FlashCards, Vocab, Quiz ---
 
-  await prisma.note.createMany({
-    data: [
-      { lessonId: lesson2.id, content: 'CSS selectors target HTML elements to apply styles. The most common are element (`p`), class (`.btn`), and ID (`#header`) selectors.', order: 1 },
-      { lessonId: lesson2.id, content: 'Specificity determines which CSS rule wins when multiple rules target the same element. ID > class > element.', order: 2 },
-    ],
+  await prisma.note.create({
+    data: {
+      lessonId: lesson2.id,
+      content: {
+        type: 'doc',
+        content: [
+          { type: 'heading', attrs: { level: 2 }, content: [{ type: 'text', text: 'CSS Selectors' }] },
+          { type: 'paragraph', content: [{ type: 'text', text: 'CSS selectors target HTML elements to apply styles. The most common are element (p), class (.btn), and ID (#header) selectors.' }] },
+          { type: 'paragraph', content: [{ type: 'text', text: 'Specificity determines which CSS rule wins when multiple rules target the same element. ID > class > element.' }] },
+        ],
+      },
+    },
   });
 
   await prisma.flashCard.createMany({
@@ -288,11 +302,18 @@ async function main() {
 
   // --- Lesson 3: Variables and Types — Notes, FlashCards, Vocab, Quiz ---
 
-  await prisma.note.createMany({
-    data: [
-      { lessonId: lesson3.id, content: 'JavaScript has three variable keywords: `var` (function-scoped, hoisted), `let` (block-scoped, reassignable), and `const` (block-scoped, not reassignable).', order: 1 },
-      { lessonId: lesson3.id, content: 'JavaScript is dynamically typed. The main primitive types are: string, number, boolean, null, undefined, symbol, and bigint.', order: 2 },
-    ],
+  await prisma.note.create({
+    data: {
+      lessonId: lesson3.id,
+      content: {
+        type: 'doc',
+        content: [
+          { type: 'heading', attrs: { level: 2 }, content: [{ type: 'text', text: 'Variables and Types' }] },
+          { type: 'paragraph', content: [{ type: 'text', text: 'JavaScript has three variable keywords: var (function-scoped, hoisted), let (block-scoped, reassignable), and const (block-scoped, not reassignable).' }] },
+          { type: 'paragraph', content: [{ type: 'text', text: 'JavaScript is dynamically typed. The main primitive types are: string, number, boolean, null, undefined, symbol, and bigint.' }] },
+        ],
+      },
+    },
   });
 
   await prisma.flashCard.createMany({

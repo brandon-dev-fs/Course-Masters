@@ -55,8 +55,7 @@ export interface Lesson {
 
 export interface Note {
   id: string;
-  content: string;
-  order: number;
+  content: Record<string, unknown>;
   lessonId: string;
 }
 
