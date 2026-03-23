@@ -6,7 +6,7 @@ import { coursesApi } from '../../api/courses.js';
 import type { Lesson } from '../../api/types.js';
 import { useAuth } from '../../context/AuthContext.js';
 import { Tabs, TabList, Tab, TabPanel } from '../../components/Tabs.js';
-import NoteList from '../notes/NoteList.js';
+import NoteEditor from '../notes/NoteEditor.js';
 import FlashCardList from '../flashcards/FlashCardList.js';
 import PracticeProblemList from '../practice-problems/PracticeProblemList.js';
 import QuizSection from '../quizzes/QuizSection.js';
@@ -108,7 +108,7 @@ export default function LessonDetailPage() {
             <VideoList lessonId={lesson.id} />
           </TabPanel>
           <TabPanel id="notes">
-            <NoteList lessonId={lesson.id} />
+            <NoteEditor lessonId={lesson.id} />
           </TabPanel>
           <TabPanel id="vocab">
             <VocabList lessonId={lesson.id} />

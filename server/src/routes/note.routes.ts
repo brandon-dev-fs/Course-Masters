@@ -1,8 +1,11 @@
+import { Router } from 'express';
 import { noteController } from '../controllers/note.controller.js';
-import { createNoteSchema, updateNoteSchema } from '../schemas/note.schema.js';
-import { createLessonContentRoutes } from './factories/createLessonContentRoutes.js';
+import { upsertNoteSchema } from '../schemas/note.schema.js';
+import { validate } from '../middleware/validate.js';
+import { authorize } from '../middleware/authorize.js';
 
-const { lessonRouter: lessonNotesRouter, standaloneRouter: notesRouter } =
-  createLessonContentRoutes(noteController, createNoteSchema, updateNoteSchema, 'noteId');
+const lessonNotesRouter = Router({ mergeParams: true });
+lessonNotesRouter.get('/', noteController.get);
+lessonNotesRouter.put('/', authorize('teacher', 'admin'), validate(upsertNoteSchema), noteController.upsert);
 
-export { lessonNotesRouter, notesRouter };
+export { lessonNotesRouter };

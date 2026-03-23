@@ -114,7 +114,7 @@ model Lesson {
   unitId      String
 
   unit             Unit              @relation(fields: [unitId], references: [id], onDelete: Cascade)
-  notes            Note[]
+  note             Note?
   flashCards       FlashCard[]
   practiceProblems PracticeProblem[]
   quiz             Quiz?
@@ -127,13 +127,10 @@ model Lesson {
 
 model Note {
   id       String @id @default(uuid())
-  content  String
-  order    Int
-  lessonId String
+  content  Json
+  lessonId String @unique
 
   lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
-
-  @@index([lessonId])
 }
 
 model FlashCard {
