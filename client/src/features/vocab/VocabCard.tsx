@@ -4,8 +4,8 @@ import CardActions from '../../components/CardActions.js';
 
 interface VocabCardProps {
   vocab: Vocab;
-  onEdit: () => void;
-  onDelete: () => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
 }
 
 export default function VocabCard({ vocab, onEdit, onDelete }: VocabCardProps) {
@@ -18,7 +18,7 @@ export default function VocabCard({ vocab, onEdit, onDelete }: VocabCardProps) {
             <p className="text-foreground font-semibold text-sm">{vocab.term}</p>
             <p className="text-muted-foreground text-sm mt-1">{vocab.definition}</p>
           </div>
-          <CardActions onEdit={onEdit} onDelete={onDelete} />
+          {onEdit && onDelete && <CardActions onEdit={onEdit} onDelete={onDelete} />}
         </div>
       </div>
     </div>

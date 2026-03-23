@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { flashCardsApi } from '../../api/flashcards.js';
 import type { FlashCard } from '../../api/types.js';
+import { useAuth } from '../../context/AuthContext.js';
 import useResourceList from '../../hooks/useResourceList.js';
 import FlashCardComponent from './FlashCard.js';
 import FlashCardStudyMode from './FlashCardStudyMode.js';
@@ -15,6 +16,8 @@ import EmptyState from '../../components/EmptyState.js';
 const byOrder = (a: FlashCard, b: FlashCard) => a.order - b.order;
 
 export default function FlashCardList({ lessonId }: { lessonId: string }) {
+  const { user } = useAuth();
+  const canEdit = user?.role === 'teacher' || user?.role === 'admin';
   const {
     items: cards, loading, error,
     showAdd, setShowAdd, deleting, setDeleting,
@@ -51,24 +54,38 @@ export default function FlashCardList({ lessonId }: { lessonId: string }) {
         {cards.length > 0 && (
           <>
             <Button variant="accent" size="sm" onClick={handleStudyMode}>Study Mode</Button>
-            <span className="w-px h-4 bg-border" />
-            <Button size="sm" onClick={() => setShowAdd(true)}>+ Add Card</Button>
-            <Button variant={editMode ? 'danger' : 'secondary'} size="sm" onClick={handleToggleEdit}>
-              {editMode ? 'Done Editing' : 'Edit Cards'}
-            </Button>
+            {canEdit && (
+              <>
+                <span className="w-px h-4 bg-border" />
+                <Button size="sm" onClick={() => setShowAdd(true)}>+ Add Card</Button>
+                <Button variant={editMode ? 'danger' : 'secondary'} size="sm" onClick={handleToggleEdit}>
+                  {editMode ? 'Done Editing' : 'Edit Cards'}
+                </Button>
+              </>
+            )}
           </>
         )}
-        {cards.length === 0 && (
+        {cards.length === 0 && canEdit && (
           <Button size="sm" onClick={() => setShowAdd(true)}>+ Add Card</Button>
         )}
       </div>
 
       {cards.length === 0 ? (
-        <EmptyState title="No flash cards yet" description="Create flash cards to study key concepts." action={{ label: '+ Add Card', onClick: () => setShowAdd(true) }} />
+        <EmptyState
+          title="No flash cards yet"
+          description={canEdit ? 'Create flash cards to study key concepts.' : 'No flash cards have been added to this lesson yet.'}
+          action={canEdit ? { label: '+ Add Card', onClick: () => setShowAdd(true) } : undefined}
+        />
       ) : (
         <div className={editMode ? 'grid grid-cols-1 gap-4' : 'grid grid-cols-1 sm:grid-cols-2 gap-4'}>
           {cards.map(card => (
-            <FlashCardComponent key={card.id} card={card} editMode={editMode} onUpdate={handleUpdate} onDelete={() => setDeleting(card)} />
+            <FlashCardComponent
+              key={card.id}
+              card={card}
+              editMode={canEdit && editMode}
+              onUpdate={canEdit ? handleUpdate : undefined}
+              onDelete={canEdit ? () => setDeleting(card) : undefined}
+            />
           ))}
         </div>
       )}

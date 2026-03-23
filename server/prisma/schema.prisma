@@ -120,6 +120,7 @@ model Lesson {
   quiz             Quiz?
   studentNotes     StudentNote[]
   vocabs           Vocab[]
+  videos           Video[]
 
   @@index([unitId])
 }
@@ -180,6 +181,20 @@ model Vocab {
   term       String
   definition String
   order      Int
+  lessonId   String
+
+  lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@index([lessonId])
+}
+
+model Video {
+  id         String  @id @default(uuid())
+  title      String
+  url        String
+  order      Int
+  transcript String?
+  summary    String?
   lessonId   String
 
   lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)

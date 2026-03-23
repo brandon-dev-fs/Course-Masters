@@ -133,6 +133,12 @@ async function main() {
     ],
   });
 
+  await prisma.video.createMany({
+    data: [
+      { lessonId: lesson1.id, title: 'HTML Tutorial for Beginners', url: 'https://www.youtube.com/watch?v=vY2xUc4TVmY&t=69s', order: 1 },
+    ],
+  });
+
   const quiz1 = await prisma.quiz.create({
     data: {
       lessonId: lesson1.id,
