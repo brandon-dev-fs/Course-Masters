@@ -1,5 +1,6 @@
 import { practiceProblemsApi } from '../../api/practice-problems.js';
 import type { PracticeProblem } from '../../api/types.js';
+import { useAuth } from '../../context/AuthContext.js';
 import useResourceList from '../../hooks/useResourceList.js';
 import PracticeProblemCard from './PracticeProblemCard.js';
 import PracticeProblemForm from './PracticeProblemForm.js';
@@ -13,6 +14,8 @@ import EmptyState from '../../components/EmptyState.js';
 const byOrder = (a: PracticeProblem, b: PracticeProblem) => a.order - b.order;
 
 export default function PracticeProblemList({ lessonId }: { lessonId: string }) {
+  const { user } = useAuth();
+  const canEdit = user?.role === 'teacher' || user?.role === 'admin';
   const {
     items: problems, loading, error,
     showAdd, setShowAdd, editing, setEditing, deleting, setDeleting,
@@ -28,16 +31,27 @@ export default function PracticeProblemList({ lessonId }: { lessonId: string }) 
 
   return (
     <div>
-      <div className="flex justify-end mb-4">
-        <Button size="sm" onClick={() => setShowAdd(true)}>+ Add Problem</Button>
-      </div>
+      {canEdit && (
+        <div className="flex justify-end mb-4">
+          <Button size="sm" onClick={() => setShowAdd(true)}>+ Add Problem</Button>
+        </div>
+      )}
 
       {problems.length === 0 ? (
-        <EmptyState title="No practice problems yet" description="Add problems to test your understanding." action={{ label: '+ Add Problem', onClick: () => setShowAdd(true) }} />
+        <EmptyState
+          title="No practice problems yet"
+          description={canEdit ? 'Add problems to test your understanding.' : 'No practice problems have been added to this lesson yet.'}
+          action={canEdit ? { label: '+ Add Problem', onClick: () => setShowAdd(true) } : undefined}
+        />
       ) : (
         <div className="flex flex-col gap-3">
           {problems.map(prob => (
-            <PracticeProblemCard key={prob.id} problem={prob} onEdit={() => setEditing(prob)} onDelete={() => setDeleting(prob)} />
+            <PracticeProblemCard
+              key={prob.id}
+              problem={prob}
+              onEdit={canEdit ? () => setEditing(prob) : undefined}
+              onDelete={canEdit ? () => setDeleting(prob) : undefined}
+            />
           ))}
         </div>
       )}

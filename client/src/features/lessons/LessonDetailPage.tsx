@@ -11,6 +11,7 @@ import FlashCardList from '../flashcards/FlashCardList.js';
 import PracticeProblemList from '../practice-problems/PracticeProblemList.js';
 import QuizSection from '../quizzes/QuizSection.js';
 import VocabList from '../vocab/VocabList.js';
+import VideoList from '../videos/VideoList.js';
 import StudentNotePanel from '../student-notes/StudentNotePanel.js';
 import LessonSettingsModal from './LessonSettingsModal.js';
 import LoadingSpinner from '../../components/LoadingSpinner.js';
@@ -94,14 +95,18 @@ export default function LessonDetailPage() {
           </div>
         </div>
 
-        <Tabs defaultTab="notes">
+        <Tabs defaultTab="videos">
           <TabList>
+            <Tab id="videos">Videos</Tab>
             <Tab id="notes">Lecture Notes</Tab>
             <Tab id="vocab">Vocabulary</Tab>
             <Tab id="flashcards">Flash Cards</Tab>
             <Tab id="practice">Practice Problems</Tab>
             <Tab id="quiz">Quiz</Tab>
           </TabList>
+          <TabPanel id="videos">
+            <VideoList lessonId={lesson.id} />
+          </TabPanel>
           <TabPanel id="notes">
             <NoteList lessonId={lesson.id} />
           </TabPanel>

@@ -1,5 +1,6 @@
 import { notesApi } from '../../api/notes.js';
 import type { Note } from '../../api/types.js';
+import { useAuth } from '../../context/AuthContext.js';
 import useResourceList from '../../hooks/useResourceList.js';
 import NoteCard from './NoteCard.js';
 import NoteForm from './NoteForm.js';
@@ -13,6 +14,8 @@ import EmptyState from '../../components/EmptyState.js';
 const byOrder = (a: Note, b: Note) => a.order - b.order;
 
 export default function NoteList({ lessonId }: { lessonId: string }) {
+  const { user } = useAuth();
+  const canEdit = user?.role === 'teacher' || user?.role === 'admin';
   const {
     items: notes, loading, error,
     showAdd, setShowAdd, editing, setEditing, deleting, setDeleting,
@@ -28,16 +31,27 @@ export default function NoteList({ lessonId }: { lessonId: string }) {
 
   return (
     <div>
-      <div className="flex justify-end mb-4">
-        <Button size="sm" onClick={() => setShowAdd(true)}>+ Add Note</Button>
-      </div>
+      {canEdit && (
+        <div className="flex justify-end mb-4">
+          <Button size="sm" onClick={() => setShowAdd(true)}>+ Add Note</Button>
+        </div>
+      )}
 
       {notes.length === 0 ? (
-        <EmptyState title="No notes yet" description="Add notes to capture key concepts." action={{ label: '+ Add Note', onClick: () => setShowAdd(true) }} />
+        <EmptyState
+          title="No notes yet"
+          description={canEdit ? 'Add notes to capture key concepts.' : 'No lecture notes have been added to this lesson yet.'}
+          action={canEdit ? { label: '+ Add Note', onClick: () => setShowAdd(true) } : undefined}
+        />
       ) : (
         <div className="flex flex-col gap-3">
           {notes.map(note => (
-            <NoteCard key={note.id} note={note} onEdit={() => setEditing(note)} onDelete={() => setDeleting(note)} />
+            <NoteCard
+              key={note.id}
+              note={note}
+              onEdit={canEdit ? () => setEditing(note) : undefined}
+              onDelete={canEdit ? () => setDeleting(note) : undefined}
+            />
           ))}
         </div>
       )}

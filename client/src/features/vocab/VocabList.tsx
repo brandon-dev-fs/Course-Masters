@@ -1,5 +1,6 @@
 import { vocabApi } from '../../api/vocab.js';
 import type { Vocab } from '../../api/types.js';
+import { useAuth } from '../../context/AuthContext.js';
 import useResourceList from '../../hooks/useResourceList.js';
 import VocabCard from './VocabCard.js';
 import VocabForm from './VocabForm.js';
@@ -13,6 +14,8 @@ import EmptyState from '../../components/EmptyState.js';
 const byOrder = (a: Vocab, b: Vocab) => a.order - b.order;
 
 export default function VocabList({ lessonId }: { lessonId: string }) {
+  const { user } = useAuth();
+  const canEdit = user?.role === 'teacher' || user?.role === 'admin';
   const {
     items: vocabs, loading, error,
     showAdd, setShowAdd, editing, setEditing, deleting, setDeleting,
@@ -28,16 +31,27 @@ export default function VocabList({ lessonId }: { lessonId: string }) {
 
   return (
     <div>
-      <div className="flex justify-end mb-4">
-        <Button size="sm" onClick={() => setShowAdd(true)}>+ Add Term</Button>
-      </div>
+      {canEdit && (
+        <div className="flex justify-end mb-4">
+          <Button size="sm" onClick={() => setShowAdd(true)}>+ Add Term</Button>
+        </div>
+      )}
 
       {vocabs.length === 0 ? (
-        <EmptyState title="No vocabulary yet" description="Add key terms and definitions for this lesson." action={{ label: '+ Add Term', onClick: () => setShowAdd(true) }} />
+        <EmptyState
+          title="No vocabulary yet"
+          description={canEdit ? 'Add key terms and definitions for this lesson.' : 'No vocabulary terms have been added to this lesson yet.'}
+          action={canEdit ? { label: '+ Add Term', onClick: () => setShowAdd(true) } : undefined}
+        />
       ) : (
         <div className="flex flex-col gap-3">
           {vocabs.map(vocab => (
-            <VocabCard key={vocab.id} vocab={vocab} onEdit={() => setEditing(vocab)} onDelete={() => setDeleting(vocab)} />
+            <VocabCard
+              key={vocab.id}
+              vocab={vocab}
+              onEdit={canEdit ? () => setEditing(vocab) : undefined}
+              onDelete={canEdit ? () => setDeleting(vocab) : undefined}
+            />
           ))}
         </div>
       )}

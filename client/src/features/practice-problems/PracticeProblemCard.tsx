@@ -6,8 +6,8 @@ import CardActions from '../../components/CardActions.js';
 
 interface PracticeProblemCardProps {
   problem: PracticeProblem;
-  onEdit: () => void;
-  onDelete: () => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
 }
 
 export default function PracticeProblemCard({ problem, onEdit, onDelete }: PracticeProblemCardProps) {
@@ -32,7 +32,7 @@ export default function PracticeProblemCard({ problem, onEdit, onDelete }: Pract
           <Brain className="w-5 h-5 text-accent shrink-0 mt-0.5" />
           <p className="text-foreground font-medium">{problem.question}</p>
         </div>
-        <CardActions onEdit={onEdit} onDelete={onDelete} />
+        {onEdit && onDelete && <CardActions onEdit={onEdit} onDelete={onDelete} />}
       </div>
 
       <div className="flex flex-col gap-2 mb-3">

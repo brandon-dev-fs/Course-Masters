@@ -94,6 +94,16 @@ export interface Vocab {
   lessonId: string;
 }
 
+export interface Video {
+  id: string;
+  title: string;
+  url: string;
+  order: number;
+  transcript: string | null;
+  summary: string | null;
+  lessonId: string;
+}
+
 export interface AssessmentQuestion {
   id: string;
   question: string;
