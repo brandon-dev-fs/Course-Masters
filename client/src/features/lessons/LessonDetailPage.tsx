@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Settings } from 'lucide-react';
 import { lessonsApi } from '../../api/lessons.js';
 import { unitsApi } from '../../api/units.js';
+import { coursesApi } from '../../api/courses.js';
 import { videosApi } from '../../api/videos.js';
 import { notesApi } from '../../api/notes.js';
 import { resourceCompletionsApi } from '../../api/resource-completions.js';
@@ -32,6 +33,7 @@ export default function LessonDetailPage() {
   const canEdit = user?.role === 'teacher' || user?.role === 'admin';
 
   const [lesson, setLesson] = useState<Lesson | null>(null);
+  const [courseTitle, setCourseTitle] = useState('');
   const [unitTitle, setUnitTitle] = useState('');
   const [unitLessons, setUnitLessons] = useState<Lesson[]>([]);
   const [videos, setVideos] = useState<Video[]>([]);
@@ -49,13 +51,15 @@ export default function LessonDetailPage() {
     Promise.all([
       lessonsApi.getOne(unitId, lessonId),
       unitsApi.getOne(courseId, unitId),
+      coursesApi.getOne(courseId),
       lessonsApi.getAll(unitId),
       videosApi.getAll(lessonId),
       notesApi.getAll(lessonId),
       resourceCompletionsApi.get(lessonId),
     ])
-      .then(([lessonData, unitData, lessons, vids, nts, comp]) => {
+      .then(([lessonData, unitData, courseData, lessons, vids, nts, comp]) => {
         setLesson(lessonData);
+        setCourseTitle(courseData.title);
         setUnitTitle(unitData.title);
         setUnitLessons(lessons);
         setVideos(vids.sort((a, b) => a.order - b.order));
@@ -194,6 +198,7 @@ export default function LessonDetailPage() {
           currentLessonId={lesson.id}
           courseId={courseId!}
           unitId={unitId!}
+          courseTitle={courseTitle}
           unitTitle={unitTitle}
         />
 

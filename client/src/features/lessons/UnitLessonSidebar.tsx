@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { BookOpen, ChevronDown } from 'lucide-react';
+import { BookOpen, ChevronDown, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
 import type { Lesson } from '../../api/types.js';
 
@@ -8,10 +8,11 @@ interface UnitLessonSidebarProps {
   currentLessonId: string;
   courseId: string;
   unitId: string;
+  courseTitle: string;
   unitTitle: string;
 }
 
-export default function UnitLessonSidebar({ lessons, currentLessonId, courseId, unitId, unitTitle }: UnitLessonSidebarProps) {
+export default function UnitLessonSidebar({ lessons, currentLessonId, courseId, unitId, courseTitle, unitTitle }: UnitLessonSidebarProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const currentLesson = lessons.find(l => l.id === currentLessonId);
   const sorted = [...lessons].sort((a, b) => a.order - b.order);
@@ -63,8 +64,17 @@ export default function UnitLessonSidebar({ lessons, currentLessonId, courseId, 
         aria-label="Unit lessons"
         className="hidden lg:flex lg:flex-col lg:w-56 shrink-0 border-r border-border bg-surface py-3 overflow-y-auto"
       >
-        <div className="px-4 pb-2 mb-1 border-b border-border">
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide truncate">{unitTitle}</p>
+        <div className="px-4 pb-3 mb-1 border-b border-border flex flex-col gap-1">
+          <Link
+            to={`/courses/${courseId}`}
+            className="text-xs font-semibold text-primary hover:underline truncate"
+          >
+            {courseTitle}
+          </Link>
+          <div className="flex items-center gap-1 min-w-0">
+            <ChevronRight className="w-3 h-3 text-muted-foreground shrink-0" />
+            <span className="text-xs font-medium text-muted-foreground truncate">{unitTitle}</span>
+          </div>
         </div>
         <div className="flex flex-col gap-0.5 px-2 pt-1">
           {sorted.map(lesson => {
