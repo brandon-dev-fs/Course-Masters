@@ -51,12 +51,21 @@ export interface Lesson {
   description: string;
   order: number;
   unitId: string;
+  objective?: string | null;
+  planContent?: Record<string, unknown> | null;
 }
 
 export interface Note {
   id: string;
+  title: string;
   content: Record<string, unknown>;
+  order: number;
   lessonId: string;
+}
+
+export interface ResourceCompletionItem {
+  resourceType: string;
+  resourceId: string;
 }
 
 export interface FlashCard {

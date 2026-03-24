@@ -2,7 +2,10 @@ import { apiClient } from './client.js';
 import type { Note } from './types.js';
 
 export const notesApi = {
-  get: (lessonId: string) => apiClient.get<Note | null>(`/lessons/${lessonId}/notes`),
-  upsert: (lessonId: string, content: Record<string, unknown>) =>
-    apiClient.put<Note>(`/lessons/${lessonId}/notes`, { content }),
+  getAll: (lessonId: string) => apiClient.get<Note[]>(`/lessons/${lessonId}/notes`),
+  create: (lessonId: string, data: { title: string; content: Record<string, unknown>; order: number }) =>
+    apiClient.post<Note>(`/lessons/${lessonId}/notes`, data),
+  update: (id: string, data: { title?: string; content?: Record<string, unknown>; order?: number }) =>
+    apiClient.put<Note>(`/notes/${id}`, data),
+  delete: (id: string) => apiClient.delete<void>(`/notes/${id}`),
 };
