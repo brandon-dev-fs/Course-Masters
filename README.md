@@ -1,21 +1,21 @@
 # Course Masters
 
-A self-directed learning platform where you build and study your own courses. Organize content into units and lessons, add notes, flashcards, and practice problems, then test your knowledge with quizzes, unit tests, and final exams. Track progress across your entire curriculum.
-
-> **Note:** Authentication is not implemented in the current proof-of-concept. All requests are associated with a hardcoded default user (the first user in the database). The data model and service layer are designed to support a JWT-based auth layer in the future.
+A self-directed learning platform where you build and study your own courses. Organize content into units and lessons, add rich text notes, flashcards, vocabulary terms, practice problems, and YouTube videos, then test your knowledge with quizzes, unit tests, and final exams. Track progress across your entire curriculum.
 
 ---
 
 ## Tech Stack
 
-| Layer | Technology |
-|---|---|
-| Monorepo | npm workspaces |
-| Client | React 19, Vite 6, TypeScript, Tailwind CSS v4 |
-| Routing | React Router v7 |
-| Server | Express 5, TypeScript (ESM), tsx |
-| Database | PostgreSQL, Prisma 6 |
-| Validation | Zod |
+| Layer      | Technology                                      |
+| ---------- | ----------------------------------------------- |
+| Monorepo   | npm workspaces                                  |
+| Client     | React 19, Vite 6, TypeScript, Tailwind CSS v4   |
+| Routing    | React Router v7                                 |
+| Rich Text  | Tiptap 3 with KaTeX (LaTeX math)                |
+| Auth       | better-auth (email/password, role-based access) |
+| Server     | Express 5, TypeScript (ESM), tsx                |
+| Database   | PostgreSQL, Prisma 6                            |
+| Validation | Zod                                             |
 
 ---
 
@@ -57,6 +57,8 @@ cp .env.example server/.env
 DATABASE_URL=postgresql://coursemasters:changeme@localhost:5432/coursemasters
 SERVER_PORT=5002
 NODE_ENV=development
+BETTER_AUTH_SECRET=<random string, minimum 32 characters>
+CLIENT_URL=http://localhost:5000
 ```
 
 ### 4. Run database migrations
@@ -83,10 +85,10 @@ npm run dev
 
 This starts both the Vite client dev server and the Express API server concurrently.
 
-| Service | URL |
-|---|---|
-| Client | http://localhost:5000 |
-| API | http://localhost:5002 |
+| Service | URL                   |
+| ------- | --------------------- |
+| Client  | http://localhost:5000 |
+| API     | http://localhost:5002 |
 
 The Vite dev server proxies all `/api` requests to `http://localhost:5002`, so no CORS configuration is needed during development.
 
@@ -96,12 +98,12 @@ The Vite dev server proxies all `/api` requests to `http://localhost:5002`, so n
 
 All scripts are run from the repository root.
 
-| Script | Description |
-|---|---|
-| `npm run dev` | Start the client and server concurrently |
+| Script               | Description                                  |
+| -------------------- | -------------------------------------------- |
+| `npm run dev`        | Start the client and server concurrently     |
 | `npm run db:migrate` | Run Prisma migrations (`prisma migrate dev`) |
-| `npm run db:seed` | Seed the database with initial data |
-| `npm run db:studio` | Open Prisma Studio to inspect the database |
+| `npm run db:seed`    | Seed the database with initial data          |
+| `npm run db:studio`  | Open Prisma Studio to inspect the database   |
 
 ---
 
@@ -112,30 +114,51 @@ course-masters/
   client/               # React + Vite frontend (@course-masters/client)
     src/
       api/              # Typed fetch wrappers for the API
-      features/         # Feature-based component organization
-      ...
+      components/       # Shared UI primitives (Button, Modal, RichTextEditor, etc.)
+      context/          # ThemeContext, AuthContext
+      features/         # Feature-based component organization (17 feature dirs)
+      hooks/            # Reusable hooks (useResourceList, useAssessment, etc.)
   server/               # Express API backend (@course-masters/server)
     prisma/
-      schema.prisma     # Database schema (16 models)
+      schema.prisma     # Database schema (20 models)
       seed.ts           # Database seed script
       migrations/       # Prisma migration history
     src/
+      routes/           # Route definitions + factory generators
+      controllers/      # Request handling + factory generators
+      services/         # Business logic and Prisma queries + factories
+      schemas/          # Zod validation schemas
+      middleware/       # authenticate, authorize, validate, errorHandler
       errors/           # Typed error classes (AppError, NotFoundError, etc.)
-      middleware/       # Express middleware (error handler, etc.)
-      ...               # Service -> Controller -> Route modules per feature
+      lib/              # Prisma singleton, better-auth setup
   package.json          # Root workspace manifest and shared scripts
   .env.example          # Environment variable template
 ```
 
 ### Data Model Overview
 
-The schema defines 16 models organized around the core learning hierarchy:
+The schema defines 20 models organized around the core learning hierarchy:
 
-- **User** — owns courses and records assessment attempts
+- **User**, **Session**, **Account**, **Verification** — authentication and identity
 - **Course** > **Unit** > **Lesson** — the primary content hierarchy
-- **Note**, **FlashCard**, **PracticeProblem** — lesson-level study materials
-- **Quiz** / **QuizAttempt** — per-lesson assessments
-- **Test** / **TestAttempt** — per-unit assessments
-- **FinalExam** / **ExamAttempt** — per-course assessments
+- **Note** — rich text lesson notes (JSON, teacher-created)
+- **StudentNote** — plain text per-student notes (unique per user + lesson)
+- **FlashCard**, **PracticeProblem**, **Vocab** — lesson-level study materials
+- **Video** — YouTube video embeds with optional transcript/summary fields
+- **Quiz** / **QuizQuestion** / **QuizAttempt** — per-lesson assessments
+- **Test** / **TestQuestion** / **TestAttempt** — per-unit assessments
+- **FinalExam** / **FinalExamQuestion** / **ExamAttempt** — per-course assessments
 
 All cascade deletes are enforced at the database level via Prisma relations.
+
+---
+
+## Authentication & Roles
+
+Course Masters uses [better-auth](https://www.better-auth.com/) for session-based authentication with three roles:
+
+| Role        | Capabilities                                                                |
+| ----------- | --------------------------------------------------------------------------- |
+| **student** | Browse courses, take assessments, create personal notes                     |
+| **teacher** | All student capabilities + create/edit courses, units, lessons, and content |
+| **admin**   | All teacher capabilities + user management                                  |
