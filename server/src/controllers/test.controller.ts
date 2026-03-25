@@ -4,7 +4,7 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 
 export const testController = {
   get: asyncHandler(async (req: Request, res: Response) => {
-    const test = await testService.findByUnit(req.params['unitId'] as string);
+    const test = await testService.findByUnit(req.params['unitId'] as string, req.user!.id);
     res.json(test);
   }),
 

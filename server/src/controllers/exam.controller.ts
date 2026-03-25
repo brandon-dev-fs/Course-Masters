@@ -4,7 +4,7 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 
 export const examController = {
   get: asyncHandler(async (req: Request, res: Response) => {
-    const exam = await examService.findByCourse(req.params['courseId'] as string);
+    const exam = await examService.findByCourse(req.params['courseId'] as string, req.user!.id);
     res.json(exam);
   }),
 

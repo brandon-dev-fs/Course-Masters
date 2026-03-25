@@ -57,6 +57,173 @@ async function main() {
 			title: 'Introduction to Web Development',
 			description:
 				'Learn the fundamentals of modern web development from scratch.',
+			syllabus: {
+				type: 'doc',
+				content: [
+					{
+						type: 'heading',
+						attrs: { level: 1 },
+						content: [
+							{
+								type: 'text',
+								text: 'Course Syllabus',
+							},
+						],
+					},
+					{
+						type: 'paragraph',
+						content: [
+							{
+								type: 'text',
+								text: 'This course covers the core building blocks of web development: HTML for structure, CSS for styling, and JavaScript for interactivity. By the end, you will be able to build and style interactive web pages from scratch.',
+							},
+						],
+					},
+					{
+						type: 'heading',
+						attrs: { level: 2 },
+						content: [
+							{
+								type: 'text',
+								text: 'Learning Objectives',
+							},
+						],
+					},
+					{
+						type: 'bulletList',
+						content: [
+							{
+								type: 'listItem',
+								content: [
+									{
+										type: 'paragraph',
+										content: [
+											{
+												type: 'text',
+												text: 'Understand HTML document structure and semantic elements',
+											},
+										],
+									},
+								],
+							},
+							{
+								type: 'listItem',
+								content: [
+									{
+										type: 'paragraph',
+										content: [
+											{
+												type: 'text',
+												text: 'Write CSS selectors and understand specificity and the cascade',
+											},
+										],
+									},
+								],
+							},
+							{
+								type: 'listItem',
+								content: [
+									{
+										type: 'paragraph',
+										content: [
+											{
+												type: 'text',
+												text: 'Declare and use JavaScript variables, functions, and closures',
+											},
+										],
+									},
+								],
+							},
+							{
+								type: 'listItem',
+								content: [
+									{
+										type: 'paragraph',
+										content: [
+											{
+												type: 'text',
+												text: 'Apply best practices for writing clean, maintainable code',
+											},
+										],
+									},
+								],
+							},
+						],
+					},
+					{
+						type: 'heading',
+						attrs: { level: 2 },
+						content: [
+							{
+								type: 'text',
+								text: 'Course Outline',
+							},
+						],
+					},
+					{
+						type: 'orderedList',
+						content: [
+							{
+								type: 'listItem',
+								content: [
+									{
+										type: 'paragraph',
+										content: [
+											{
+												type: 'text',
+												marks: [{ type: 'bold' }],
+												text: 'Unit 1 — HTML & CSS Basics: ',
+											},
+											{
+												type: 'text',
+												text: 'HTML document structure, semantic tags, CSS selectors, and specificity.',
+											},
+										],
+									},
+								],
+							},
+							{
+								type: 'listItem',
+								content: [
+									{
+										type: 'paragraph',
+										content: [
+											{
+												type: 'text',
+												marks: [{ type: 'bold' }],
+												text: 'Unit 2 — JavaScript Fundamentals: ',
+											},
+											{
+												type: 'text',
+												text: 'Variables, data types, functions, scope, and closures.',
+											},
+										],
+									},
+								],
+							},
+						],
+					},
+					{
+						type: 'heading',
+						attrs: { level: 2 },
+						content: [
+							{
+								type: 'text',
+								text: 'Grading',
+							},
+						],
+					},
+					{
+						type: 'paragraph',
+						content: [
+							{
+								type: 'text',
+								text: 'Each lesson includes a quiz that must be passed with 80% or higher. Each unit has a cumulative test. A final exam covering all material must be passed to complete the course.',
+							},
+						],
+					},
+				],
+			},
 			authorId: user.id,
 			units: {
 				create: [

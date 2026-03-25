@@ -6,7 +6,7 @@ export const coursesApi = {
   getOne: (id: string) => apiClient.get<Course>(`/courses/${id}`),
   create: (data: { title: string; description?: string }) =>
     apiClient.post<Course>('/courses', data),
-  update: (id: string, data: { title?: string; description?: string }) =>
+  update: (id: string, data: { title?: string; description?: string; syllabus?: Record<string, unknown> | null }) =>
     apiClient.put<Course>(`/courses/${id}`, data),
   delete: (id: string) => apiClient.delete<void>(`/courses/${id}`),
 };
