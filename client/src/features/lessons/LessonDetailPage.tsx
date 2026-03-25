@@ -22,6 +22,7 @@ import PracticeProblemList from '../practice-problems/PracticeProblemList.js';
 import QuizSection from '../quizzes/QuizSection.js';
 import StudentNotePanel from '../student-notes/StudentNotePanel.js';
 import LessonSettingsModal from './LessonSettingsModal.js';
+import LessonPlanModal from './LessonPlanModal.js';
 import LoadingSpinner from '../../components/LoadingSpinner.js';
 import ErrorMessage from '../../components/ErrorMessage.js';
 import ResourceCompletionCheckbox from '../../components/ResourceCompletionCheckbox.js';
@@ -43,6 +44,7 @@ export default function LessonDetailPage() {
   const [error, setError] = useState('');
   const [activeResourceKey, setActiveResourceKey] = useState('lessonPlan');
   const [showSettings, setShowSettings] = useState(false);
+  const [showPlanEdit, setShowPlanEdit] = useState(false);
 
   useEffect(() => {
     if (!unitId || !lessonId || !courseId) return;
@@ -144,7 +146,7 @@ export default function LessonDetailPage() {
           isComplete={completedKeys.has('lessonPlan')}
           onToggleComplete={() => handleToggleCompletion('lessonPlan', lesson!.id)}
           canEdit={canEdit}
-          onEdit={() => setShowSettings(true)}
+          onEdit={() => setShowPlanEdit(true)}
         />
       );
     }
@@ -206,7 +208,12 @@ export default function LessonDetailPage() {
         <div className="flex-1 flex flex-col min-w-0">
           {/* Header */}
           <header className="flex items-center justify-between gap-4 px-4 py-3 border-b border-border">
-            <h1 className="text-xl font-bold text-foreground truncate">{lesson.order}. {lesson.title}</h1>
+            <div className="flex flex-col min-w-0">
+              <h1 className="text-xl font-bold text-foreground truncate">{lesson.order}. {lesson.title}</h1>
+              {lesson.description && (
+                <p className="text-sm text-muted-foreground truncate">{lesson.description}</p>
+              )}
+            </div>
             {canEdit && (
               <button
                 onClick={() => setShowSettings(true)}
@@ -256,6 +263,13 @@ export default function LessonDetailPage() {
           onClose={() => setShowSettings(false)}
           onUpdate={handleUpdate}
           onDelete={handleDelete}
+        />
+      )}
+      {showPlanEdit && (
+        <LessonPlanModal
+          lesson={lesson}
+          onClose={() => setShowPlanEdit(false)}
+          onUpdate={handleUpdate}
         />
       )}
     </>
