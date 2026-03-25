@@ -8,9 +8,19 @@ export const testController = {
     res.json(test);
   }),
 
+  getForEdit: asyncHandler(async (req: Request, res: Response) => {
+    const test = await testService.findForEdit(req.params['unitId'] as string);
+    res.json(test);
+  }),
+
   create: asyncHandler(async (req: Request, res: Response) => {
     const test = await testService.create(req.params['unitId'] as string, req.body);
     res.status(201).json(test);
+  }),
+
+  update: asyncHandler(async (req: Request, res: Response) => {
+    const test = await testService.update(req.params['unitId'] as string, req.body);
+    res.json(test);
   }),
 
   submitAttempt: asyncHandler(async (req: Request, res: Response) => {

@@ -13,6 +13,7 @@ interface UnitSettingsModalProps {
 		data: { title: string; order: number },
 	) => Promise<void>;
 	onDeleteUnit: (unit: Unit) => Promise<void>;
+	initialAdding?: boolean;
 }
 
 export default function UnitSettingsModal({
@@ -21,8 +22,9 @@ export default function UnitSettingsModal({
 	onAddUnit,
 	onUpdateUnit,
 	onDeleteUnit,
+	initialAdding = false,
 }: UnitSettingsModalProps) {
-	const [addingUnit, setAddingUnit] = useState(false);
+	const [addingUnit, setAddingUnit] = useState(initialAdding);
 	const [editingUnit, setEditingUnit] = useState<Unit | null>(null);
 	const [deletingUnit, setDeletingUnit] = useState<Unit | null>(null);
 

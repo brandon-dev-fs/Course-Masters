@@ -4,7 +4,6 @@ import Modal from '../../components/Modal.js';
 import ConfirmDialog from '../../components/ConfirmDialog.js';
 import Button from '../../components/Button.js';
 import CourseForm from './CourseForm.js';
-import RichTextEditor from '../../components/RichTextEditor.js';
 
 interface CourseSettingsModalProps {
   course: Course;
@@ -20,17 +19,6 @@ export default function CourseSettingsModal({
   onDeleteCourse,
 }: CourseSettingsModalProps) {
   const [showDeleteCourse, setShowDeleteCourse] = useState(false);
-  const [syllabus, setSyllabus] = useState<Record<string, unknown> | null>(course.syllabus ?? null);
-  const [savingSyllabus, setSavingSyllabus] = useState(false);
-
-  async function handleSaveSyllabus() {
-    setSavingSyllabus(true);
-    try {
-      await onUpdateCourse({ title: course.title, description: course.description, syllabus });
-    } finally {
-      setSavingSyllabus(false);
-    }
-  }
 
   return (
     <Modal title="Course Settings" onClose={onClose} size="lg">
@@ -39,26 +27,9 @@ export default function CourseSettingsModal({
         <div>
           <CourseForm
             initial={course}
-            onSubmit={async (data) => onUpdateCourse(data)}
+            onSubmit={async (data) => { await onUpdateCourse(data); onClose(); }}
             onCancel={onClose}
           />
-        </div>
-
-        {/* Syllabus */}
-        <div className="border-t border-border pt-5 flex flex-col gap-3">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-foreground">Syllabus</h3>
-          </div>
-          <RichTextEditor
-            content={syllabus}
-            onChange={setSyllabus}
-            editable={true}
-          />
-          <div className="flex justify-end">
-            <Button size="sm" onClick={handleSaveSyllabus} disabled={savingSyllabus}>
-              {savingSyllabus ? 'Saving...' : 'Save Syllabus'}
-            </Button>
-          </div>
         </div>
 
         {/* Danger Zone */}

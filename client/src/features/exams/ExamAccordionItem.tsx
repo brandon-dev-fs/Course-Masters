@@ -7,8 +7,8 @@ import AssessmentTaker from '../assessments/AssessmentTaker.js';
 import AssessmentResults from '../assessments/AssessmentResults.js';
 import Modal from '../../components/Modal.js';
 import Button from '../../components/Button.js';
-import Tooltip from '../../components/Tooltip.js';
 import type { CourseProgress } from '../../api/types.js';
+import type { QuestionDraft } from '../assessments/QuestionEditor.js';
 
 interface ExamAccordionItemProps {
   courseId: string;
@@ -24,17 +24,36 @@ export default function ExamAccordionItem({
   canEdit,
 }: ExamAccordionItemProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [editQuestions, setEditQuestions] = useState<QuestionDraft[] | null>(null);
   const {
     assessment: exam,
     view, setView, result, lastAttempt,
-    handleCreate, handleSubmit,
+    handleCreate, handleUpdate, handleSubmit,
   } = useAssessment(examsApi, courseId);
 
-  const locked = !allUnitsMastered;
+  const locked = !allUnitsMastered && !canEdit;
 
   function handleToggle() {
     if (locked) return;
     setIsExpanded(prev => !prev);
+  }
+
+  async function openEdit() {
+    const full = await examsApi.getForEdit(courseId);
+    if (full) {
+      setEditQuestions(full.questions.map(q => ({
+        question: q.question,
+        options: q.options,
+        correctIndex: q.correctIndex,
+        order: q.order,
+      })));
+    }
+    setView('creating');
+  }
+
+  function closeModal() {
+    setView('idle');
+    setEditQuestions(null);
   }
 
   return (
@@ -92,7 +111,7 @@ export default function ExamAccordionItem({
               <p className="text-sm text-muted-foreground">
                 {exam
                   ? `${exam.questions.length} question${exam.questions.length !== 1 ? 's' : ''} · Complete the final exam to finish this course.`
-                  : 'No exam created yet.'}
+                  : canEdit ? 'No exam created yet.' : 'Exam not yet available.'}
               </p>
               <div className="flex items-center gap-3">
                 {!exam ? (
@@ -100,13 +119,20 @@ export default function ExamAccordionItem({
                     <Button size="sm" onClick={() => setView('creating')}>
                       Create Exam
                     </Button>
-                  ) : (
-                    <span className="text-sm text-muted-foreground">Exam not yet available.</span>
-                  )
+                  ) : null
                 ) : (
-                  <Button size="sm" onClick={() => setView('taking')}>
-                    {lastAttempt ? 'Retake Exam' : 'Take Exam'}
-                  </Button>
+                  <>
+                    {canEdit && (
+                      <Button size="sm" variant="secondary" onClick={openEdit}>
+                        Edit Exam
+                      </Button>
+                    )}
+                    {allUnitsMastered && (
+                      <Button size="sm" onClick={() => setView('taking')}>
+                        {lastAttempt ? 'Retake Exam' : 'Take Exam'}
+                      </Button>
+                    )}
+                  </>
                 )}
               </div>
             </div>
@@ -116,8 +142,12 @@ export default function ExamAccordionItem({
 
       {/* Modals */}
       {view === 'creating' && (
-        <Modal title="Create Final Exam" onClose={() => setView('idle')}>
-          <AssessmentForm onSubmit={handleCreate} onCancel={() => setView('idle')} />
+        <Modal title={exam ? 'Edit Final Exam' : 'Create Final Exam'} onClose={closeModal}>
+          <AssessmentForm
+            initialQuestions={editQuestions ?? undefined}
+            onSubmit={exam ? handleUpdate : handleCreate}
+            onCancel={closeModal}
+          />
         </Modal>
       )}
       {view === 'taking' && exam && (
