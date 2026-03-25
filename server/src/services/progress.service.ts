@@ -51,6 +51,29 @@ export const progressService = {
     const lessonPercent = totalLessons === 0 ? 0 : Math.round((completedLessons.length / totalLessons) * 90);
     const percentComplete = examPassed ? 100 : lessonPercent;
 
+    const unitStatuses = [...course.units]
+      .sort((a, b) => a.order - b.order)
+      .map(u => {
+        const unitCompletedLessons = u.lessons.filter(
+          l => l.quiz?.attempts[0]?.passed === true,
+        );
+        return {
+          unitId: u.id,
+          title: u.title,
+          order: u.order,
+          isComplete: completedUnits.some(cu => cu.id === u.id),
+          totalLessons: u.lessons.length,
+          completedLessons: unitCompletedLessons.length,
+          testPassed: u.test?.attempts[0]?.passed === true,
+          lessons: u.lessons.map(l => ({
+            lessonId: l.id,
+            hasQuiz: l.quiz !== null,
+            attempted: (l.quiz?.attempts.length ?? 0) > 0,
+            quizPassed: l.quiz?.attempts[0]?.passed === true,
+          })),
+        };
+      });
+
     return {
       totalUnits,
       completedUnits: completedUnits.length,
@@ -59,6 +82,7 @@ export const progressService = {
       examPassed,
       examScore,
       percentComplete,
+      units: unitStatuses,
     };
   },
 

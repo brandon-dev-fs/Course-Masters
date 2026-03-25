@@ -23,12 +23,18 @@ export function createAssessmentService(config: AssessmentConfig) {
   const { parentDelegate, parentIdField, parentName, assessmentDelegate, assessmentName, attemptDelegate, attemptFkField, includeLastAttempt } = config;
 
   return {
-    async find(parentId: string) {
+    async find(parentId: string, userId?: string) {
       const parent = await parentDelegate.findUnique({ where: { id: parentId } });
       if (!parent) throw new NotFoundError(`${parentName} not found`);
 
       const include: any = { questions: { orderBy: { order: 'asc' } } };
-      if (includeLastAttempt) include.attempts = { orderBy: { createdAt: 'desc' }, take: 1 };
+      if (includeLastAttempt) {
+        include.attempts = {
+          ...(userId ? { where: { userId } } : {}),
+          orderBy: { createdAt: 'desc' as const },
+          take: 1,
+        };
+      }
 
       const assessment = await assessmentDelegate.findUnique({
         where: { [parentIdField]: parentId },

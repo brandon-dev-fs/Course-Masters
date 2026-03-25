@@ -4,7 +4,7 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 
 export const quizController = {
   get: asyncHandler(async (req: Request, res: Response) => {
-    const quiz = await quizService.findByLesson(req.params['lessonId'] as string);
+    const quiz = await quizService.findByLesson(req.params['lessonId'] as string, req.user!.id);
     res.json(quiz);
   }),
 

@@ -28,7 +28,9 @@ export interface Course {
   id: string;
   title: string;
   description: string;
+  syllabus?: Record<string, unknown> | null;
   authorId: string;
+  author?: { id: string; name: string };
   createdAt: string;
   updatedAt: string;
   units?: Unit[];
@@ -155,6 +157,16 @@ export interface CourseProgress {
   examPassed: boolean;
   examScore: number | null;
   percentComplete: number;
+  units: {
+    unitId: string;
+    title: string;
+    order: number;
+    isComplete: boolean;
+    totalLessons: number;
+    completedLessons: number;
+    testPassed: boolean;
+    lessons: LessonProgress[];
+  }[];
 }
 
 export interface UnitProgress {

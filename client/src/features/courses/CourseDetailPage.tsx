@@ -1,15 +1,16 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { Settings } from 'lucide-react';
 import { coursesApi } from '../../api/courses.js';
 import { unitsApi } from '../../api/units.js';
 import { lessonsApi } from '../../api/lessons.js';
-import type { Course, Unit } from '../../api/types.js';
+import { progressApi } from '../../api/progress.js';
+import type { Course, Unit, CourseProgress } from '../../api/types.js';
 import UnitAccordion from '../units/UnitAccordion.js';
 import UnitSettingsModal from '../units/UnitSettingsModal.js';
-import ExamSection from '../exams/ExamSection.js';
-import CourseProgressCard from '../progress/CourseProgressCard.js';
 import CourseSettingsModal from './CourseSettingsModal.js';
+import CourseHero from './CourseHero.js';
+import SyllabusSection from './SyllabusSection.js';
 import Button from '../../components/Button.js';
 import LoadingSpinner from '../../components/LoadingSpinner.js';
 import ErrorMessage from '../../components/ErrorMessage.js';
@@ -21,17 +22,24 @@ export default function CourseDetailPage() {
 	const { courseId } = useParams<{ courseId: string }>();
 	const navigate = useNavigate();
 	const [course, setCourse] = useState<Course | null>(null);
+	const [courses, setCourses] = useState<Course[]>([]);
+	const [progress, setProgress] = useState<CourseProgress | null>(null);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState('');
 	const [showSettings, setShowSettings] = useState(false);
 	const [showUnitSettings, setShowUnitSettings] = useState(false);
-	const [showExam, setShowExam] = useState(false);
 
 	async function load() {
 		if (!courseId) return;
 		try {
-			const data = await coursesApi.getOne(courseId);
+			const [data, allCourses, prog] = await Promise.all([
+				coursesApi.getOne(courseId),
+				coursesApi.getAll(),
+				progressApi.getCourse(courseId),
+			]);
 			setCourse(data);
+			setCourses(allCourses);
+			setProgress(prog);
 		} catch (err: unknown) {
 			setError(
 				err instanceof Error ? err.message : 'Failed to load course',
@@ -48,6 +56,7 @@ export default function CourseDetailPage() {
 	async function handleCourseUpdate(data: {
 		title: string;
 		description?: string;
+		syllabus?: Record<string, unknown> | null;
 	}) {
 		if (!courseId) return;
 		const updated = await coursesApi.update(courseId, data);
@@ -111,7 +120,7 @@ export default function CourseDetailPage() {
 		unitId: string,
 		data: { title: string; description?: string; order: number },
 	) {
-		await lessonsApi.create(unitId, data);
+		const lesson = await lessonsApi.create(unitId, data);
 		setCourse((prev) =>
 			prev
 				? {
@@ -120,6 +129,7 @@ export default function CourseDetailPage() {
 							u.id === unitId
 								? {
 										...u,
+										lessons: [...(u.lessons ?? []), lesson],
 										_count: {
 											lessons:
 												(u._count?.lessons ?? 0) + 1,
@@ -138,42 +148,18 @@ export default function CourseDetailPage() {
 
 	return (
 		<div>
-			<div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
-				<Link
-					to="/"
-					className="hover:text-foreground"
-				>
-					Courses
-				</Link>
-				<span>/</span>
-				<span className="text-foreground">{course.title}</span>
-			</div>
+			<CourseHero
+				course={course}
+				progress={progress}
+				courses={courses}
+				canEdit={canEdit}
+				onOpenSettings={() => setShowSettings(true)}
+			/>
 
-			<div className="flex items-start justify-between mb-6 gap-4">
-				<div>
-					<h1 className="text-2xl font-bold text-foreground">
-						{course.title}
-					</h1>
-					{course.description && (
-						<p className="text-muted-foreground mt-1">
-							{course.description}
-						</p>
-					)}
-				</div>
-				{canEdit && (
-					<button
-						onClick={() => setShowSettings(true)}
-						className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-surface-raised transition-colors"
-						aria-label="Course settings"
-					>
-						<Settings className="w-5 h-5" />
-					</button>
-				)}
-			</div>
-
-			<CourseProgressCard
-				courseId={courseId!}
-				onTakeExam={() => setShowExam(true)}
+			<SyllabusSection
+				syllabus={course.syllabus}
+				canEdit={canEdit}
+				onEditSyllabus={() => setShowSettings(true)}
 			/>
 
 			<div className="flex items-center justify-between mb-4">
@@ -194,13 +180,9 @@ export default function CourseDetailPage() {
 			<UnitAccordion
 				courseId={courseId!}
 				units={course.units ?? []}
+				canEdit={canEdit}
+				progress={progress}
 				onAddLesson={handleAddLesson}
-			/>
-
-			<ExamSection
-				courseId={courseId!}
-				open={showExam}
-				onClose={() => setShowExam(false)}
 			/>
 
 			{showSettings && (
@@ -218,9 +200,8 @@ export default function CourseDetailPage() {
 					onAddUnit={handleAddUnit}
 					onUpdateUnit={handleUpdateUnit}
 					onDeleteUnit={handleDeleteUnit}
-					onAddLesson={handleAddLesson}
 				/>
 			)}
-			</div>
+		</div>
 	);
 }
