@@ -6,7 +6,9 @@ import { authorize } from '../middleware/authorize.js';
 
 const unitTestRouter = Router({ mergeParams: true });
 unitTestRouter.get('/', testController.get);
+unitTestRouter.get('/edit', authorize('teacher', 'admin'), testController.getForEdit);
 unitTestRouter.post('/', authorize('teacher', 'admin'), validate(createAssessmentSchema), testController.create);
+unitTestRouter.put('/', authorize('teacher', 'admin'), validate(createAssessmentSchema), testController.update);
 
 const testsRouter = Router();
 testsRouter.post('/:testId/attempts', validate(submitAttemptSchema), testController.submitAttempt);

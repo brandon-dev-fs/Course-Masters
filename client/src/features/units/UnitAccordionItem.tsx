@@ -70,12 +70,14 @@ export default function UnitAccordionItem({
           <div className="border-t border-border px-4 py-4 flex flex-col gap-3">
             <div className="flex gap-4 items-start">
               <div className="flex-1 min-w-0 flex flex-col gap-3">
-                <LessonList
-                  courseId={courseId}
-                  unitId={unit.id}
-                  lessons={lessons}
-                  lessonProgress={unitProgress?.lessons}
-                />
+                {!(showAddLesson && lessons.length === 0) && (
+                  <LessonList
+                    courseId={courseId}
+                    unitId={unit.id}
+                    lessons={lessons}
+                    lessonProgress={unitProgress?.lessons}
+                  />
+                )}
                 {canEdit && (
                   showAddLesson ? (
                     <div className="px-3 py-3 rounded-lg bg-surface-raised border border-border">
@@ -100,6 +102,7 @@ export default function UnitAccordionItem({
               </div>
               <TestSection
                 unitId={unit.id}
+                canEdit={canEdit}
                 allLessonsComplete={unitProgress ? unitProgress.totalLessons > 0 && unitProgress.completedLessons === unitProgress.totalLessons : false}
                 completedCount={unitProgress?.completedLessons ?? 0}
                 totalCount={unitProgress?.totalLessons ?? 0}

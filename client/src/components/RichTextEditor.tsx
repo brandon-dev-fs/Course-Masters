@@ -18,6 +18,7 @@ interface RichTextEditorProps {
   content: Record<string, unknown> | null;
   onChange?: (content: Record<string, unknown>) => void;
   editable?: boolean;
+  className?: string;
 }
 
 interface MathEditState {
@@ -253,7 +254,7 @@ function Toolbar({ editor, onMathInsert }: {
   );
 }
 
-export default function RichTextEditor({ content, onChange, editable = true }: RichTextEditorProps) {
+export default function RichTextEditor({ content, onChange, editable = true, className }: RichTextEditorProps) {
   const [mathEdit, setMathEdit] = useState<MathEditState | null>(null);
 
   const editor = useEditor({
@@ -326,7 +327,7 @@ export default function RichTextEditor({ content, onChange, editable = true }: R
   }
 
   return (
-    <div className="rounded-xl border border-border bg-surface overflow-hidden shadow-warm-sm focus-within:border-primary/50 transition-colors">
+    <div className={`rounded-xl border border-border bg-surface overflow-hidden shadow-warm-sm focus-within:border-primary/50 transition-colors flex flex-col${className ? ` ${className}` : ''}`}>
       <Toolbar editor={editor} onMathInsert={() => setMathEdit({ latex: '' })} />
       {mathEdit !== null && (
         <MathPanel
@@ -335,7 +336,9 @@ export default function RichTextEditor({ content, onChange, editable = true }: R
           onCancel={handleMathCancel}
         />
       )}
-      <EditorContent editor={editor} />
+      <div className="overflow-y-auto flex-1 min-h-0">
+        <EditorContent editor={editor} />
+      </div>
     </div>
   );
 }

@@ -13,21 +13,25 @@ interface NoteEditorProps {
   note: Note;
   isComplete: boolean;
   onToggleComplete: () => void;
+  onUpdate?: (note: Note) => void;
+  initialEditing?: boolean;
 }
 
-export default function NoteEditor({ note, isComplete, onToggleComplete }: NoteEditorProps) {
+export default function NoteEditor({ note, isComplete, onToggleComplete, onUpdate, initialEditing }: NoteEditorProps) {
   const { user } = useAuth();
   const canEdit = user?.role === 'teacher' || user?.role === 'admin';
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [savedContent, setSavedContent] = useState<Record<string, unknown>>(note.content);
-  const [editing, setEditing] = useState(false);
+  const [editingTitle, setEditingTitle] = useState(note.title);
+  const [editing, setEditing] = useState(initialEditing ?? false);
   const pendingContent = useRef<Record<string, unknown>>(note.content);
 
   useEffect(() => {
     setSavedContent(note.content);
     pendingContent.current = note.content;
+    setEditingTitle(note.title);
     setEditing(false);
   }, [note.id]);
 
@@ -39,24 +43,40 @@ export default function NoteEditor({ note, isComplete, onToggleComplete }: NoteE
     setSaving(true);
     setError(null);
     try {
-      const updated = await notesApi.update(note.id, { content: pendingContent.current });
+      const updated = await notesApi.update(note.id, { title: editingTitle.trim() || 'Untitled', content: pendingContent.current });
       setSavedContent(updated.content);
+      setEditingTitle(updated.title);
       setEditing(false);
+      onUpdate?.(updated);
     } catch (err: any) {
       setError(err.message);
     } finally {
       setSaving(false);
     }
-  }, [note.id]);
+  }, [note.id, editingTitle, onUpdate]);
 
   const handleCancel = useCallback(() => {
     pendingContent.current = savedContent;
+    setEditingTitle(note.title);
     setEditing(false);
     setError(null);
-  }, [savedContent]);
+  }, [savedContent, note.title]);
 
   return (
     <div className="flex flex-col gap-3">
+      {/* Note title */}
+      {editing ? (
+        <input
+          type="text"
+          value={editingTitle}
+          onChange={e => setEditingTitle(e.target.value)}
+          placeholder="Note title"
+          className="text-xl font-bold bg-transparent border-b border-primary outline-none text-foreground placeholder:text-muted-foreground pb-1"
+        />
+      ) : (
+        <h2 className="text-xl font-bold text-foreground">{note.title}</h2>
+      )}
+
       {canEdit && (
         <div className="flex justify-end gap-2">
           {editing ? (

@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Settings } from 'lucide-react';
 import { coursesApi } from '../../api/courses.js';
 import { unitsApi } from '../../api/units.js';
 import { lessonsApi } from '../../api/lessons.js';
@@ -9,6 +8,7 @@ import type { Course, Unit, CourseProgress } from '../../api/types.js';
 import UnitAccordion from '../units/UnitAccordion.js';
 import UnitSettingsModal from '../units/UnitSettingsModal.js';
 import CourseSettingsModal from './CourseSettingsModal.js';
+import SyllabusEditModal from './SyllabusEditModal.js';
 import CourseHero from './CourseHero.js';
 import SyllabusSection from './SyllabusSection.js';
 import Button from '../../components/Button.js';
@@ -27,6 +27,7 @@ export default function CourseDetailPage() {
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState('');
 	const [showSettings, setShowSettings] = useState(false);
+	const [showSyllabusEdit, setShowSyllabusEdit] = useState(false);
 	const [showUnitSettings, setShowUnitSettings] = useState(false);
 
 	async function load() {
@@ -159,21 +160,15 @@ export default function CourseDetailPage() {
 			<SyllabusSection
 				syllabus={course.syllabus}
 				canEdit={canEdit}
-				onEditSyllabus={() => setShowSettings(true)}
+				onEditSyllabus={() => setShowSyllabusEdit(true)}
 			/>
 
 			<div className="flex items-center justify-between mb-4">
 				<h2 className="text-lg font-semibold text-foreground">Units</h2>
 				{canEdit && (
-					<div className="flex items-center gap-2">
-						<button
-							onClick={() => setShowUnitSettings(true)}
-							className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-surface-raised transition-colors"
-							aria-label="Unit settings"
-						>
-							<Settings className="w-4 h-4" />
-						</button>
-					</div>
+					<Button size="sm" variant="secondary" onClick={() => setShowUnitSettings(true)}>
+						+ Add Unit
+					</Button>
 				)}
 			</div>
 
@@ -193,6 +188,13 @@ export default function CourseDetailPage() {
 					onDeleteCourse={handleCourseDelete}
 				/>
 			)}
+			{showSyllabusEdit && (
+				<SyllabusEditModal
+					course={course}
+					onClose={() => setShowSyllabusEdit(false)}
+					onUpdateCourse={handleCourseUpdate}
+				/>
+			)}
 			{showUnitSettings && (
 				<UnitSettingsModal
 					course={course}
@@ -200,6 +202,7 @@ export default function CourseDetailPage() {
 					onAddUnit={handleAddUnit}
 					onUpdateUnit={handleUpdateUnit}
 					onDeleteUnit={handleDeleteUnit}
+					initialAdding={true}
 				/>
 			)}
 		</div>

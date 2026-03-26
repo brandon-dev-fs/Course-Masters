@@ -29,9 +29,9 @@ export default function Modal({
 				onClick={onClose}
 			/>
 			<div
-				className={`relative max-h-3/4 z-10 w-full ${size === 'lg' ? 'max-w-xl' : 'max-w-md'} rounded-2xl bg-surface-raised border border-border p-7 shadow-warm-lg mx-4`}
+				className={`relative flex flex-col max-h-[85vh] z-10 w-full ${size === 'lg' ? 'max-w-xl' : 'max-w-md'} rounded-2xl bg-surface-raised border border-border shadow-warm-lg mx-4`}
 			>
-				<div className="flex items-center justify-between mb-4">
+				<div className="flex items-center justify-between px-7 pt-7 pb-4 shrink-0">
 					<h2 className="text-lg font-semibold text-foreground">
 						{title}
 					</h2>
@@ -44,7 +44,9 @@ export default function Modal({
 						✕
 					</Button>
 				</div>
-				{children}
+				<div className="flex flex-col flex-1 min-h-0 overflow-hidden px-7 pb-7">
+					{children}
+				</div>
 			</div>
 		</div>
 	);

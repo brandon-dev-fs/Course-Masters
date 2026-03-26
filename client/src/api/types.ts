@@ -55,6 +55,7 @@ export interface Lesson {
   unitId: string;
   objective?: string | null;
   planContent?: Record<string, unknown> | null;
+  vocabOrder?: number | null;
 }
 
 export interface Note {

@@ -19,10 +19,6 @@ export default function UnitAccordion({ courseId, units, canEdit, progress, onAd
     sorted.length > 0 ? sorted[0].id : null,
   );
 
-  if (units.length === 0) {
-    return <EmptyState icon={<Layers className="w-8 h-8" />} title="No units yet" description="Add a unit to organize your lessons." />;
-  }
-
   function handleToggle(unitId: string) {
     setExpandedUnitId(prev => (prev === unitId ? null : unitId));
   }
@@ -35,18 +31,22 @@ export default function UnitAccordion({ courseId, units, canEdit, progress, onAd
 
   return (
     <div className="flex flex-col gap-2">
-      {sorted.map(unit => (
-        <UnitAccordionItem
-          key={unit.id}
-          courseId={courseId}
-          unit={unit}
-          canEdit={canEdit}
-          isExpanded={expandedUnitId === unit.id}
-          onToggle={() => handleToggle(unit.id)}
-          onAddLesson={onAddLesson}
-          unitProgress={progress?.units.find(u => u.unitId === unit.id) ?? null}
-        />
-      ))}
+      {units.length === 0 ? (
+        <EmptyState icon={<Layers className="w-8 h-8" />} title="No units yet" description="Add a unit to organize your lessons." />
+      ) : (
+        sorted.map(unit => (
+          <UnitAccordionItem
+            key={unit.id}
+            courseId={courseId}
+            unit={unit}
+            canEdit={canEdit}
+            isExpanded={expandedUnitId === unit.id}
+            onToggle={() => handleToggle(unit.id)}
+            onAddLesson={onAddLesson}
+            unitProgress={progress?.units.find(u => u.unitId === unit.id) ?? null}
+          />
+        ))
+      )}
       <ExamAccordionItem
         courseId={courseId}
         allUnitsMastered={allUnitsMastered}
