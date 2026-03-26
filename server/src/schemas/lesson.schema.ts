@@ -6,6 +6,7 @@ export const createLessonSchema = z.object({
   order: z.number().int().min(0),
   objective: z.string().optional(),
   planContent: z.record(z.any()).optional(),
+  vocabOrder: z.number().int().nullable().optional(),
 });
 
 export const updateLessonSchema = createLessonSchema.partial();

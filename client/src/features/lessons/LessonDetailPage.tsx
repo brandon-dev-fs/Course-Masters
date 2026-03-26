@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Settings } from 'lucide-react';
 import { lessonsApi } from '../../api/lessons.js';
@@ -6,6 +6,7 @@ import { unitsApi } from '../../api/units.js';
 import { coursesApi } from '../../api/courses.js';
 import { videosApi } from '../../api/videos.js';
 import { notesApi } from '../../api/notes.js';
+import { vocabApi } from '../../api/vocab.js';
 import { resourceCompletionsApi } from '../../api/resource-completions.js';
 import type { Lesson, Video, Note, ResourceCompletionItem } from '../../api/types.js';
 import { useAuth } from '../../context/AuthContext.js';
@@ -15,6 +16,7 @@ import type { LearningResource } from './LearningResourceNav.js';
 import PracticeResourceSidebar, { PracticeResourceMobileBar } from './PracticeResourceSidebar.js';
 import LessonPlanView from './LessonPlanView.js';
 import VideoCard from '../videos/VideoCard.js';
+import VideoForm from '../videos/VideoForm.js';
 import NoteEditor from '../notes/NoteEditor.js';
 import VocabList from '../vocab/VocabList.js';
 import FlashCardList from '../flashcards/FlashCardList.js';
@@ -40,11 +42,13 @@ export default function LessonDetailPage() {
   const [videos, setVideos] = useState<Video[]>([]);
   const [notes, setNotes] = useState<Note[]>([]);
   const [completions, setCompletions] = useState<ResourceCompletionItem[]>([]);
+  const [hasVocabSection, setHasVocabSection] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [activeResourceKey, setActiveResourceKey] = useState('lessonPlan');
   const [showSettings, setShowSettings] = useState(false);
   const [showPlanEdit, setShowPlanEdit] = useState(false);
+  const newNoteIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!unitId || !lessonId || !courseId) return;
@@ -57,15 +61,17 @@ export default function LessonDetailPage() {
       lessonsApi.getAll(unitId),
       videosApi.getAll(lessonId),
       notesApi.getAll(lessonId),
+      vocabApi.getAll(lessonId),
       resourceCompletionsApi.get(lessonId),
     ])
-      .then(([lessonData, unitData, courseData, lessons, vids, nts, comp]) => {
+      .then(([lessonData, unitData, courseData, lessons, vids, nts, voc, comp]) => {
         setLesson(lessonData);
         setCourseTitle(courseData.title);
         setUnitTitle(unitData.title);
         setUnitLessons(lessons);
         setVideos(vids.sort((a, b) => a.order - b.order));
         setNotes(nts.sort((a, b) => a.order - b.order));
+        setHasVocabSection(voc.length > 0);
         setCompletions(comp.completions);
         setActiveResourceKey('lessonPlan');
       })
@@ -78,20 +84,27 @@ export default function LessonDetailPage() {
     const resources: LearningResource[] = [];
     // Lesson Plan is always first
     resources.push({ key: 'lessonPlan', type: 'lessonPlan', title: 'Lesson Plan', id: lessonId ?? '' });
-    // Interleave videos and notes by order
+    // Interleave videos, notes, and vocab by order
     const interleaved: LearningResource[] = [
       ...videos.map(v => ({ key: `video:${v.id}`, type: 'video' as const, title: v.title, id: v.id })),
       ...notes.map(n => ({ key: `note:${n.id}`, type: 'note' as const, title: n.title, id: n.id })),
-    ].sort((a, b) => {
-      const aOrder = a.type === 'video' ? videos.find(v => v.id === a.id)!.order : notes.find(n => n.id === a.id)!.order;
-      const bOrder = b.type === 'video' ? videos.find(v => v.id === b.id)!.order : notes.find(n => n.id === b.id)!.order;
-      return aOrder - bOrder;
+    ];
+    if (hasVocabSection) {
+      interleaved.push({ key: 'vocab', type: 'vocab', title: 'Vocabulary', id: lessonId ?? '' });
+    }
+    const allOrders = [...videos.map(v => v.order), ...notes.map(n => n.order)];
+    const vocabEffectiveOrder = lesson?.vocabOrder ?? (allOrders.length > 0 ? Math.max(...allOrders) + 1 : 1);
+    interleaved.sort((a, b) => {
+      const getOrder = (r: LearningResource) => {
+        if (r.type === 'video') return videos.find(v => v.id === r.id)!.order;
+        if (r.type === 'note') return notes.find(n => n.id === r.id)!.order;
+        return vocabEffectiveOrder;
+      };
+      return getOrder(a) - getOrder(b);
     });
     resources.push(...interleaved);
-    // Vocab is always last
-    resources.push({ key: 'vocab', type: 'vocab', title: 'Vocabulary', id: lessonId ?? '' });
     return resources;
-  }, [videos, notes, lessonId]);
+  }, [videos, notes, lessonId, hasVocabSection, lesson?.vocabOrder]);
 
   const completedKeys = useMemo(() => {
     const keys = new Set<string>();
@@ -125,6 +138,70 @@ export default function LessonDetailPage() {
     if (!unitId || !lessonId) return;
     await lessonsApi.delete(unitId, lessonId);
     navigate(`/courses/${courseId}`);
+  }
+
+  async function handleDeleteResource(resource: LearningResource) {
+    if (resource.type === 'note') {
+      await notesApi.delete(resource.id);
+      setNotes(prev => prev.filter(n => n.id !== resource.id));
+    } else if (resource.type === 'video') {
+      await videosApi.delete(resource.id);
+      setVideos(prev => prev.filter(v => v.id !== resource.id));
+    } else if (resource.type === 'vocab') {
+      setHasVocabSection(false);
+    }
+    if (activeResourceKey === resource.key || activeResourceKey === `edit-video:${resource.id}`) {
+      setActiveResourceKey('lessonPlan');
+    }
+  }
+
+  async function handleMoveResource(resource: LearningResource, direction: 'left' | 'right') {
+    const reorderable = learningResources.filter(r => r.type !== 'lessonPlan');
+    const idx = reorderable.findIndex(r => r.key === resource.key);
+    const targetIdx = direction === 'left' ? idx - 1 : idx + 1;
+    if (targetIdx < 0 || targetIdx >= reorderable.length) return;
+
+    const other = reorderable[targetIdx];
+    const allOrders = [...videos.map(v => v.order), ...notes.map(n => n.order)];
+    const vocabEffectiveOrder = lesson!.vocabOrder ?? (allOrders.length > 0 ? Math.max(...allOrders) + 1 : 1);
+    const orderOf = (r: LearningResource): number => {
+      if (r.type === 'video') return videos.find(v => v.id === r.id)!.order;
+      if (r.type === 'note') return notes.find(n => n.id === r.id)!.order;
+      return vocabEffectiveOrder;
+    };
+    const orderA = orderOf(resource);
+    const orderB = orderOf(other);
+
+    const applyOrder = async (r: LearningResource, newOrder: number) => {
+      if (r.type === 'video') {
+        const updated = await videosApi.update(r.id, { order: newOrder });
+        setVideos(prev => prev.map(v => v.id === r.id ? updated : v).sort((a, b) => a.order - b.order));
+      } else if (r.type === 'note') {
+        const updated = await notesApi.update(r.id, { order: newOrder });
+        setNotes(prev => prev.map(n => n.id === r.id ? updated : n).sort((a, b) => a.order - b.order));
+      } else if (r.type === 'vocab') {
+        const updated = await lessonsApi.update(unitId!, lessonId!, { vocabOrder: newOrder });
+        setLesson(updated);
+      }
+    };
+
+    await Promise.all([applyOrder(resource, orderB), applyOrder(other, orderA)]);
+  }
+
+  async function handleAddResource(type: 'note' | 'video' | 'vocab') {
+    if (!lessonId) return;
+    if (type === 'note') {
+      const emptyDoc = { type: 'doc', content: [{ type: 'paragraph' }] };
+      const note = await notesApi.create(lessonId, { title: 'New Note', content: emptyDoc, order: videos.length + notes.length + 1 });
+      newNoteIdRef.current = note.id;
+      setNotes(prev => [...prev, note]);
+      setActiveResourceKey(`note:${note.id}`);
+    } else if (type === 'video') {
+      setActiveResourceKey('add-video');
+    } else {
+      setHasVocabSection(true);
+      setActiveResourceKey('vocab');
+    }
   }
 
   if (loading) return <LoadingSpinner />;
@@ -163,6 +240,19 @@ export default function LessonDetailPage() {
         </div>
       );
     }
+    if (activeResourceKey === 'add-video') {
+      return (
+        <VideoForm
+          nextOrder={videos.length + notes.length + 1}
+          onSubmit={async (data) => {
+            const video = await videosApi.create(lesson!.id, data);
+            setVideos(prev => [...prev, video].sort((a, b) => a.order - b.order));
+            setActiveResourceKey(`video:${video.id}`);
+          }}
+          onCancel={() => setActiveResourceKey('lessonPlan')}
+        />
+      );
+    }
     if (activeResourceKey.startsWith('video:')) {
       const videoId = activeResourceKey.slice(6);
       const video = videos.find(v => v.id === videoId);
@@ -172,6 +262,28 @@ export default function LessonDetailPage() {
           video={video}
           isComplete={completedKeys.has(activeResourceKey)}
           onToggleComplete={() => handleToggleCompletion('video', video.id)}
+          onEdit={canEdit ? () => setActiveResourceKey(`edit-video:${video.id}`) : undefined}
+          onDelete={canEdit ? async () => {
+            await videosApi.delete(video.id);
+            setVideos(prev => prev.filter(v => v.id !== video.id));
+            setActiveResourceKey('lessonPlan');
+          } : undefined}
+        />
+      );
+    }
+    if (activeResourceKey.startsWith('edit-video:')) {
+      const videoId = activeResourceKey.slice(11);
+      const video = videos.find(v => v.id === videoId);
+      if (!video) return null;
+      return (
+        <VideoForm
+          initial={video}
+          onSubmit={async (data) => {
+            const updated = await videosApi.update(video.id, data);
+            setVideos(prev => prev.map(v => v.id === video.id ? updated : v).sort((a, b) => a.order - b.order));
+            setActiveResourceKey(`video:${video.id}`);
+          }}
+          onCancel={() => setActiveResourceKey(`video:${video.id}`)}
         />
       );
     }
@@ -179,11 +291,16 @@ export default function LessonDetailPage() {
       const noteId = activeResourceKey.slice(5);
       const note = notes.find(n => n.id === noteId);
       if (!note) return null;
+      const isNew = newNoteIdRef.current === note.id;
+      if (isNew) newNoteIdRef.current = null;
       return (
         <NoteEditor
+          key={note.id}
           note={note}
           isComplete={completedKeys.has(activeResourceKey)}
           onToggleComplete={() => handleToggleCompletion('note', note.id)}
+          onUpdate={updated => setNotes(prev => prev.map(n => n.id === updated.id ? updated : n))}
+          initialEditing={isNew}
         />
       );
     }
@@ -232,6 +349,10 @@ export default function LessonDetailPage() {
             onResourceChange={setActiveResourceKey}
             completedKeys={completedKeys}
             quizUnlocked={allResourcesComplete}
+            canEdit={canEdit}
+            onAddResource={handleAddResource}
+            onDeleteResource={handleDeleteResource}
+            onMoveResource={handleMoveResource}
           />
 
           {/* Mobile practice resource row */}

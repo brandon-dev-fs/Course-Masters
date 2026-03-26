@@ -116,7 +116,7 @@ model Lesson {
   unitId      String
   objective   String?
   planContent Json?
-
+  vocabOrder  Int?
   unit                Unit                      @relation(fields: [unitId], references: [id], onDelete: Cascade)
   notes               Note[]
   flashCards          FlashCard[]
