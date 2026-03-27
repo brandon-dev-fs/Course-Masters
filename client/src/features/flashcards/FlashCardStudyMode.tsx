@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import type { FlashCard } from '../../api/types.js';
+import type { LessonTool } from '../../api/types.js';
 import FlashCardComponent from './FlashCard.js';
 import Button from '../../components/Button.js';
 
 interface FlashCardStudyModeProps {
-  cards: FlashCard[];
+  cards: LessonTool[];
   onExit: () => void;
 }
 
@@ -36,7 +36,7 @@ export default function FlashCardStudyMode({ cards, onExit }: FlashCardStudyMode
         </div>
 
         <div className="mb-6" style={{ minHeight: '200px' }}>
-          {current && <FlashCardComponent card={current} showActions={false} />}
+          {current && <FlashCardComponent card={current} />}
         </div>
 
         <div className="flex justify-center gap-4">

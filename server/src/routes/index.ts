@@ -2,15 +2,13 @@ import { Router } from 'express';
 import courseRouter from './course.routes.js';
 import unitRouter from './unit.routes.js';
 import lessonRouter from './lesson.routes.js';
-import { lessonNotesRouter, notesRouter } from './note.routes.js';
-import { lessonFlashCardsRouter, flashCardsRouter } from './flashcard.routes.js';
-import { lessonProblemsRouter, problemsRouter } from './practice-problem.routes.js';
-import { lessonVocabRouter, vocabRouter } from './vocab.routes.js';
+import { lessonResourcesRouter, resourcesRouter } from './lesson-resource.routes.js';
+import { lessonToolsRouter, toolsRouter } from './lesson-tool.routes.js';
 import { lessonStudentNotesRouter, studentNotesRouter } from './student-note.routes.js';
-import { lessonQuizRouter, quizzesRouter } from './quiz.routes.js';
-import { unitTestRouter, testsRouter } from './test.routes.js';
-import { courseExamRouter, examsRouter } from './exam.routes.js';
+import { lessonAssessmentRouter, unitAssessmentRouter, courseAssessmentRouter, assessmentsRouter } from './assessment.routes.js';
 import { courseProgressRouter, unitProgressRouter } from './progress.routes.js';
+import { lessonCompletionsRouter } from './resource-completion.routes.js';
+import youtubeRouter from './youtube.routes.js';
 import { authenticate } from '../middleware/authenticate.js';
 
 const router = Router();
@@ -28,24 +26,22 @@ router.use('/courses/:courseId/units', unitRouter);
 router.use('/units/:unitId/lessons', lessonRouter);
 
 // Lesson content
-router.use('/lessons/:lessonId/notes', lessonNotesRouter);
-router.use('/lessons/:lessonId/flashcards', lessonFlashCardsRouter);
-router.use('/lessons/:lessonId/practice-problems', lessonProblemsRouter);
-router.use('/lessons/:lessonId/vocab', lessonVocabRouter);
+router.use('/lessons/:lessonId/resources', lessonResourcesRouter);
+router.use('/lessons/:lessonId/tools', lessonToolsRouter);
 router.use('/lessons/:lessonId/student-notes', lessonStudentNotesRouter);
-router.use('/notes', notesRouter);
-router.use('/flashcards', flashCardsRouter);
-router.use('/practice-problems', problemsRouter);
-router.use('/vocab', vocabRouter);
+router.use('/lessons/:lessonId/completions', lessonCompletionsRouter);
+router.use('/resources', resourcesRouter);
+router.use('/tools', toolsRouter);
 router.use('/student-notes', studentNotesRouter);
 
 // Assessments
-router.use('/lessons/:lessonId/quiz', lessonQuizRouter);
-router.use('/units/:unitId/test', unitTestRouter);
-router.use('/courses/:courseId/final-exam', courseExamRouter);
-router.use('/quizzes', quizzesRouter);
-router.use('/tests', testsRouter);
-router.use('/exams', examsRouter);
+router.use('/lessons/:lessonId/assessment', lessonAssessmentRouter);
+router.use('/units/:unitId/assessment', unitAssessmentRouter);
+router.use('/courses/:courseId/assessment', courseAssessmentRouter);
+router.use('/assessments', assessmentsRouter);
+
+// Utilities
+router.use('/youtube', youtubeRouter);
 
 // Progress
 router.use('/courses/:courseId/progress', courseProgressRouter);

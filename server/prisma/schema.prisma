@@ -7,26 +7,58 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum UserRole {
+  student
+  teacher
+  admin
+}
+
+enum AssessmentType {
+  lesson_quiz
+  unit_quiz
+  course_exam
+}
+
+enum QuestionType {
+  multiple_choice
+  true_false
+  matching
+  fill_in_blank
+}
+
+enum ResourceType {
+  note
+  video
+  lecture
+}
+
+enum ToolType {
+  flash_card
+  practice_problem
+  vocab
+}
+
 model User {
   id            String    @id
   name          String
   email         String    @unique
   emailVerified Boolean   @default(false)
   image         String?
-  role          String    @default("student")
+  role          UserRole  @default(student)
   banned        Boolean?
   banReason     String?
   banExpires    DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  sessions      Session[]
-  accounts      Account[]
-  courses       Course[]
-  quizAttempts  QuizAttempt[]
-  testAttempts  TestAttempt[]
-  examAttempts  ExamAttempt[]
-  studentNotes  StudentNote[]
+  sessions            Session[]
+  accounts            Account[]
+  courses             Course[]
+  assessmentAttempts  AssessmentAttempt[]
+  studentNotes        StudentNote[]
+  resourceCompletions LessonResourceCompletion[]
+  lessonCompletions   LessonCompletion[]
+  unitCompletions     UnitCompletion[]
 
   @@map("user")
 }
@@ -81,13 +113,14 @@ model Course {
   id          String   @id @default(uuid())
   title       String
   description String
+  syllabus    Json?
   authorId    String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  author    User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  units     Unit[]
-  finalExam FinalExam?
+  author     User        @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  units      Unit[]
+  assessment Assessment?
 
   @@index([authorId])
 }
@@ -99,9 +132,10 @@ model Unit {
   order       Int
   courseId    String
 
-  course  Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  lessons Lesson[]
-  test    Test?
+  course     Course          @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  lessons    Lesson[]
+  assessment Assessment?
+  completions UnitCompletion[]
 
   @@index([courseId])
 }
@@ -112,52 +146,94 @@ model Lesson {
   description String
   order       Int
   unitId      String
+  objective   String
+  planContent Json
 
-  unit             Unit              @relation(fields: [unitId], references: [id], onDelete: Cascade)
-  notes            Note[]
-  flashCards       FlashCard[]
-  practiceProblems PracticeProblem[]
-  quiz             Quiz?
-  studentNotes     StudentNote[]
-  vocabs           Vocab[]
+  unit                Unit                      @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  resources           LessonResource[]
+  tools               LessonTool[]
+  assessment          Assessment?
+  studentNotes        StudentNote[]
+  resourceCompletions LessonResourceCompletion[]
+  completions         LessonCompletion[]
 
   @@index([unitId])
 }
 
-model Note {
-  id       String @id @default(uuid())
-  content  String
+model LessonResource {
+  id       String       @id @default(uuid())
+  type     ResourceType
+  title    String
+  content  Json
   order    Int
   lessonId String
 
   lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
 
   @@index([lessonId])
+  @@map("lesson_resource")
 }
 
-model FlashCard {
-  id       String @id @default(uuid())
-  front    String
-  back     String
+model LessonTool {
+  id       String   @id @default(uuid())
+  type     ToolType
+  title    String
+  content  Json
   order    Int
   lessonId String
 
   lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
 
   @@index([lessonId])
+  @@map("lesson_tool")
 }
 
-model PracticeProblem {
-  id           String @id @default(uuid())
+model Assessment {
+  id       String         @id @default(uuid())
+  type     AssessmentType
+  lessonId String?        @unique
+  unitId   String?        @unique
+  courseId String?        @unique
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  lesson    Lesson?    @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  unit      Unit?      @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  course    Course?    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  questions AssessmentQuestion[]
+  attempts  AssessmentAttempt[]
+
+  @@map("assessment")
+}
+
+model AssessmentQuestion {
+  id           String       @id @default(uuid())
+  type         QuestionType @default(multiple_choice)
   question     String
-  options      Json
-  correctIndex Int
+  content      Json
   order        Int
-  lessonId     String
+  assessmentId String
 
-  lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  assessment Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
 
-  @@index([lessonId])
+  @@index([assessmentId])
+  @@map("assessment_question")
+}
+
+model AssessmentAttempt {
+  id           String   @id @default(uuid())
+  score        Float
+  passed       Boolean
+  userId       String
+  assessmentId String
+  createdAt    DateTime @default(now())
+
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  assessment Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+
+  @@index([assessmentId])
+  @@index([userId])
+  @@map("assessment_attempt")
 }
 
 model StudentNote {
@@ -175,125 +251,46 @@ model StudentNote {
   @@index([userId])
 }
 
-model Vocab {
-  id         String @id @default(uuid())
-  term       String
-  definition String
-  order      Int
-  lessonId   String
+model LessonCompletion {
+  id          String   @id @default(uuid())
+  userId      String
+  lessonId    String
+  completedAt DateTime @default(now())
 
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
 
-  @@index([lessonId])
+  @@unique([userId, lessonId])
+  @@index([userId])
+  @@map("lesson_completion")
 }
 
-model Quiz {
-  id       String @id @default(uuid())
-  lessonId String @unique
-
-  lesson   Lesson        @relation(fields: [lessonId], references: [id], onDelete: Cascade)
-  questions QuizQuestion[]
-  attempts QuizAttempt[]
-}
-
-model QuizQuestion {
-  id           String @id @default(uuid())
-  question     String
-  options      Json
-  correctIndex Int
-  order        Int
-  quizId       String
-
-  quiz Quiz @relation(fields: [quizId], references: [id], onDelete: Cascade)
-
-  @@index([quizId])
-}
-
-model QuizAttempt {
-  id        String   @id @default(uuid())
-  score     Float
-  passed    Boolean
-  userId    String
-  quizId    String
-  createdAt DateTime @default(now())
+model UnitCompletion {
+  id          String   @id @default(uuid())
+  userId      String
+  unitId      String
+  completedAt DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  quiz Quiz @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  unit Unit @relation(fields: [unitId], references: [id], onDelete: Cascade)
 
-  @@index([quizId])
+  @@unique([userId, unitId])
   @@index([userId])
+  @@map("unit_completion")
 }
 
-model Test {
-  id     String @id @default(uuid())
-  unitId String @unique
+model LessonResourceCompletion {
+  id           String   @id @default(uuid())
+  userId       String
+  lessonId     String
+  resourceType String
+  resourceId   String
+  completedAt  DateTime @default(now())
 
-  unit      Unit           @relation(fields: [unitId], references: [id], onDelete: Cascade)
-  questions TestQuestion[]
-  attempts  TestAttempt[]
-}
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
 
-model TestQuestion {
-  id           String @id @default(uuid())
-  question     String
-  options      Json
-  correctIndex Int
-  order        Int
-  testId       String
-
-  test Test @relation(fields: [testId], references: [id], onDelete: Cascade)
-
-  @@index([testId])
-}
-
-model TestAttempt {
-  id        String   @id @default(uuid())
-  score     Float
-  passed    Boolean
-  userId    String
-  testId    String
-  createdAt DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  test Test @relation(fields: [testId], references: [id], onDelete: Cascade)
-
-  @@index([testId])
-  @@index([userId])
-}
-
-model FinalExam {
-  id       String @id @default(uuid())
-  courseId String @unique
-
-  course    Course            @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  questions FinalExamQuestion[]
-  attempts  ExamAttempt[]
-}
-
-model FinalExamQuestion {
-  id           String @id @default(uuid())
-  question     String
-  options      Json
-  correctIndex Int
-  order        Int
-  examId       String
-
-  exam FinalExam @relation(fields: [examId], references: [id], onDelete: Cascade)
-
-  @@index([examId])
-}
-
-model ExamAttempt {
-  id        String   @id @default(uuid())
-  score     Float
-  passed    Boolean
-  userId    String
-  examId    String
-  createdAt DateTime @default(now())
-
-  user User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  exam FinalExam @relation(fields: [examId], references: [id], onDelete: Cascade)
-
-  @@index([examId])
-  @@index([userId])
+  @@unique([userId, resourceType, resourceId])
+  @@index([userId, lessonId])
+  @@map("lesson_resource_completions")
 }

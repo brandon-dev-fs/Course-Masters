@@ -6,7 +6,10 @@ export const courseService = {
   async findAll() {
     return prisma.course.findMany({
       orderBy: { createdAt: 'desc' },
-      include: { _count: { select: { units: true } } },
+      include: {
+        author: { select: { id: true, name: true } },
+        _count: { select: { units: true } },
+      },
     });
   },
 
@@ -14,9 +17,13 @@ export const courseService = {
     const course = await prisma.course.findUnique({
       where: { id },
       include: {
+        author: { select: { id: true, name: true } },
         units: {
           orderBy: { order: 'asc' },
-          include: { _count: { select: { lessons: true } } },
+          include: {
+            lessons: { orderBy: { order: 'asc' } },
+            _count: { select: { lessons: true } },
+          },
         },
       },
     });

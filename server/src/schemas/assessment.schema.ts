@@ -1,9 +1,9 @@
 import { z } from 'zod';
 
 export const questionSchema = z.object({
+  type: z.enum(['multiple_choice', 'true_false', 'matching', 'fill_in_blank']).default('multiple_choice'),
   question: z.string().min(1, 'Question is required'),
-  options: z.array(z.string().min(1)).min(2, 'At least 2 options required'),
-  correctIndex: z.number().int().min(0),
+  content: z.record(z.any()),
   order: z.number().int().min(0),
 });
 
@@ -12,7 +12,7 @@ export const createAssessmentSchema = z.object({
 });
 
 export const submitAttemptSchema = z.object({
-  answers: z.array(z.number().int().min(0)),
+  answers: z.array(z.any()),
 });
 
 export type QuestionInput = z.infer<typeof questionSchema>;

@@ -1,4 +1,5 @@
-import { testsApi } from '../../api/tests.js';
+import { useState } from 'react';
+import { assessmentsApi } from '../../api/assessments.js';
 import useAssessment from '../../hooks/useAssessment.js';
 import AssessmentForm from '../assessments/AssessmentForm.js';
 import AssessmentTaker from '../assessments/AssessmentTaker.js';
@@ -8,20 +9,49 @@ import Button from '../../components/Button.js';
 import Tooltip from '../../components/Tooltip.js';
 import LoadingSpinner from '../../components/LoadingSpinner.js';
 import ErrorMessage from '../../components/ErrorMessage.js';
+import type { QuestionDraft } from '../assessments/QuestionEditor.js';
+
+const testApi = {
+  get: assessmentsApi.getUnitQuiz,
+  create: assessmentsApi.createUnitQuiz,
+  update: assessmentsApi.update,
+  submitAttempt: assessmentsApi.submitAttempt,
+  getAttempts: assessmentsApi.getAttempts,
+};
 
 interface TestSectionProps {
   unitId: string;
+  canEdit?: boolean;
   allLessonsComplete?: boolean;
   completedCount?: number;
   totalCount?: number;
 }
 
-export default function TestSection({ unitId, allLessonsComplete = true, completedCount = 0, totalCount = 0 }: TestSectionProps) {
+export default function TestSection({ unitId, canEdit = false, allLessonsComplete = true, completedCount = 0, totalCount = 0 }: TestSectionProps) {
+  const [editQuestions, setEditQuestions] = useState<QuestionDraft[] | null>(null);
   const {
     assessment: test, loading, error,
     view, setView, result, lastAttempt,
-    handleCreate, handleSubmit,
-  } = useAssessment(testsApi, unitId);
+    handleCreate, handleUpdate, handleSubmit,
+  } = useAssessment(testApi, unitId);
+
+  function openEdit() {
+    if (!test) return;
+    setEditQuestions(test.questions.map(q => ({
+      question: q.question,
+      content: {
+        options: (q.content.options as string[]) ?? [],
+        correctIndex: (q.content.correctIndex as number) ?? 0,
+      },
+      order: q.order,
+    })));
+    setView('creating');
+  }
+
+  function closeModal() {
+    setView('idle');
+    setEditQuestions(null);
+  }
 
   if (loading) return <LoadingSpinner />;
   if (error) return <ErrorMessage message={error} />;
@@ -45,12 +75,19 @@ export default function TestSection({ unitId, allLessonsComplete = true, complet
 
       {!test ? (
         <div className="flex flex-col items-center gap-2">
-          <Tooltip content={`Complete all lessons first (${completedCount}/${totalCount})`}>
-            <Button size="sm" onClick={() => setView('creating')} disabled={!allLessonsComplete}>Create Test</Button>
-          </Tooltip>
+          {canEdit ? (
+            <Button size="sm" onClick={() => setView('creating')}>Create Test</Button>
+          ) : (
+            <Tooltip content={`Complete all lessons first (${completedCount}/${totalCount})`}>
+              <Button size="sm" onClick={() => setView('creating')} disabled={!allLessonsComplete}>Create Test</Button>
+            </Tooltip>
+          )}
         </div>
       ) : (
-        <div className="flex justify-center">
+        <div className="flex flex-col items-center gap-2">
+          {canEdit && (
+            <Button size="sm" variant="secondary" onClick={openEdit}>Edit Test</Button>
+          )}
           <Tooltip content={`Complete all lessons first (${completedCount}/${totalCount})`}>
             <Button size="sm" onClick={() => setView('taking')} disabled={!allLessonsComplete}>Take Test</Button>
           </Tooltip>
@@ -58,8 +95,12 @@ export default function TestSection({ unitId, allLessonsComplete = true, complet
       )}
 
       {view === 'creating' && (
-        <Modal title="Create Unit Test" onClose={() => setView('idle')}>
-          <AssessmentForm onSubmit={handleCreate} onCancel={() => setView('idle')} />
+        <Modal title={test ? 'Edit Unit Test' : 'Create Unit Test'} onClose={closeModal}>
+          <AssessmentForm
+            initialQuestions={editQuestions ?? undefined}
+            onSubmit={test ? handleUpdate : handleCreate}
+            onCancel={closeModal}
+          />
         </Modal>
       )}
       {view === 'taking' && test && (

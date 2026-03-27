@@ -8,7 +8,13 @@ import LessonForm from './LessonForm.js';
 interface LessonSettingsModalProps {
   lesson: Lesson;
   onClose: () => void;
-  onUpdate: (data: { title: string; description?: string; order: number }) => Promise<void>;
+  onUpdate: (data: {
+    title: string;
+    description?: string;
+    order: number;
+    objective?: string;
+    planContent?: Record<string, unknown>;
+  }) => Promise<void>;
   onDelete: () => Promise<void>;
 }
 
@@ -19,14 +25,11 @@ export default function LessonSettingsModal({ lesson, onClose, onUpdate, onDelet
     <Modal title="Lesson Settings" onClose={onClose}>
       <div className="flex flex-col gap-6">
         {/* Lesson Info */}
-        <div>
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">Lesson Info</p>
-          <LessonForm
-            initial={lesson}
-            onSubmit={onUpdate}
-            onCancel={onClose}
-          />
-        </div>
+        <LessonForm
+          initial={lesson}
+          onSubmit={onUpdate}
+          onCancel={onClose}
+        />
 
         {/* Danger Zone */}
         <div className="border-t border-border pt-5">

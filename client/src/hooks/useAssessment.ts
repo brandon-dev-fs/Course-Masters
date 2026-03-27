@@ -7,7 +7,8 @@ type View = 'idle' | 'creating' | 'taking' | 'results';
 interface AssessmentApi {
   get: (parentId: string) => Promise<Assessment | null>;
   create: (parentId: string, data: { questions: QuestionDraft[] }) => Promise<Assessment>;
-  submitAttempt: (id: string, answers: number[]) => Promise<AttemptResult>;
+  update?: (assessmentId: string, data: { questions: QuestionDraft[] }) => Promise<Assessment>;
+  submitAttempt: (id: string, answers: unknown[]) => Promise<AttemptResult>;
   getAttempts?: (id: string) => Promise<AttemptSummary[]>;
 }
 
@@ -38,7 +39,14 @@ export default function useAssessment(api: AssessmentApi, parentId: string) {
     setView('idle');
   }
 
-  async function handleSubmit(answers: number[]) {
+  async function handleUpdate(questions: QuestionDraft[]) {
+    if (!api.update || !assessment) return;
+    const updated = await api.update(assessment.id, { questions });
+    setAssessment(updated);
+    setView('idle');
+  }
+
+  async function handleSubmit(answers: unknown[]) {
     if (!assessment) return;
     const res = await api.submitAttempt(assessment.id, answers);
     setResult(res);
@@ -56,6 +64,6 @@ export default function useAssessment(api: AssessmentApi, parentId: string) {
     assessment, loading, error,
     view, setView,
     result, attempts, lastAttempt,
-    handleCreate, handleSubmit,
+    handleCreate, handleUpdate, handleSubmit,
   };
 }

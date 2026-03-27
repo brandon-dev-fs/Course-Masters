@@ -2,27 +2,29 @@ import { useState } from 'react';
 import Input from '../../components/Input.js';
 import Button from '../../components/Button.js';
 import QuestionEditor, { type QuestionDraft } from '../assessments/QuestionEditor.js';
-import type { PracticeProblem } from '../../api/types.js';
+import type { LessonTool } from '../../api/types.js';
 import useFormSubmit from '../../hooks/useFormSubmit.js';
 
 interface PracticeProblemFormProps {
-  initial?: Partial<PracticeProblem>;
+  initial?: LessonTool;
   nextOrder?: number;
-  onSubmit: (data: { question: string; options: string[]; correctIndex: number; order: number }) => Promise<void>;
+  onSubmit: (draft: QuestionDraft) => Promise<void>;
   onCancel: () => void;
 }
 
 export default function PracticeProblemForm({ initial, nextOrder = 1, onSubmit, onCancel }: PracticeProblemFormProps) {
   const [draft, setDraft] = useState<QuestionDraft>({
-    question: initial?.question ?? '',
-    options: (initial?.options as string[]) ?? ['', ''],
-    correctIndex: initial?.correctIndex ?? 0,
+    question: (initial?.content?.question as string) ?? '',
+    content: {
+      options: (initial?.content?.options as string[]) ?? ['', ''],
+      correctIndex: (initial?.content?.correctIndex as number) ?? 0,
+    },
     order: initial?.order ?? nextOrder,
   });
   const { error, submitting, handleSubmit } = useFormSubmit(async () => {
     if (!draft.question.trim()) throw new Error('Question is required');
-    if (draft.options.some(o => !o.trim())) throw new Error('All options must have text');
-    await onSubmit({ question: draft.question.trim(), options: draft.options, correctIndex: draft.correctIndex, order: draft.order });
+    if (draft.content.options.some(o => !o.trim())) throw new Error('All options must have text');
+    await onSubmit(draft);
   });
 
   return (

@@ -8,7 +8,7 @@ import CourseForm from './CourseForm.js';
 interface CourseSettingsModalProps {
   course: Course;
   onClose: () => void;
-  onUpdateCourse: (data: { title: string; description?: string }) => Promise<void>;
+  onUpdateCourse: (data: { title: string; description?: string; syllabus?: Record<string, unknown> | null }) => Promise<void>;
   onDeleteCourse: () => Promise<void>;
 }
 
@@ -21,13 +21,13 @@ export default function CourseSettingsModal({
   const [showDeleteCourse, setShowDeleteCourse] = useState(false);
 
   return (
-    <Modal title="Course Settings" onClose={onClose}>
+    <Modal title="Course Settings" onClose={onClose} size="lg">
       <div className="flex flex-col gap-6">
         {/* Course Info */}
         <div>
           <CourseForm
             initial={course}
-            onSubmit={onUpdateCourse}
+            onSubmit={async (data) => { await onUpdateCourse(data); onClose(); }}
             onCancel={onClose}
           />
         </div>

@@ -5,7 +5,7 @@ import Button from '../../components/Button.js';
 
 interface AssessmentTakerProps {
   questions: AssessmentQuestion[];
-  onSubmit: (answers: number[]) => Promise<void>;
+  onSubmit: (answers: unknown[]) => Promise<void>;
   onCancel: () => void;
 }
 
@@ -19,6 +19,7 @@ export default function AssessmentTaker({ questions, onSubmit, onCancel }: Asses
   const isFirst = currentIdx === 0;
   const isLast = currentIdx === total - 1;
   const q = questions[currentIdx];
+  const options = (q.content?.options as string[]) ?? [];
 
   function selectAnswer(optIdx: number) {
     setAnswers(prev => prev.map((a, i) => i === currentIdx ? optIdx : a));
@@ -49,7 +50,7 @@ export default function AssessmentTaker({ questions, onSubmit, onCancel }: Asses
       <div className="flex flex-col gap-3">
         <p className="font-medium text-foreground">{currentIdx + 1}. {q.question}</p>
         <div className="flex flex-col gap-2">
-          {q.options.map((opt, optIdx) => (
+          {options.map((opt, optIdx) => (
             <label
               key={optIdx}
               className={`flex items-center gap-3 rounded-lg border px-4 py-3 cursor-pointer transition-colors ${
