@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { videosApi } from '../../api/videos.js';
-import type { Video } from '../../api/types.js';
+import { lessonResourcesApi } from '../../api/lesson-resources.js';
+import type { LessonResource } from '../../api/types.js';
 import { useAuth } from '../../context/AuthContext.js';
 import useResourceList from '../../hooks/useResourceList.js';
 import VideoCard from './VideoCard.js';
@@ -13,7 +13,10 @@ import LoadingSpinner from '../../components/LoadingSpinner.js';
 import ErrorMessage from '../../components/ErrorMessage.js';
 import EmptyState from '../../components/EmptyState.js';
 
-const byOrder = (a: Video, b: Video) => a.order - b.order;
+type VideoCreateInput = { type: 'video'; title: string; content: { url: string }; order: number };
+type VideoUpdateInput = { title?: string; content?: { url: string }; order?: number };
+
+const byOrder = (a: LessonResource, b: LessonResource) => a.order - b.order;
 
 export default function VideoList({ lessonId }: { lessonId: string }) {
   const { user } = useAuth();
@@ -23,13 +26,16 @@ export default function VideoList({ lessonId }: { lessonId: string }) {
     items: videos, loading, error,
     showAdd, setShowAdd, editing, setEditing, deleting, setDeleting,
     handleAdd, handleUpdate, handleDelete,
-  } = useResourceList<Video, { title: string; url: string; order: number }, { title?: string; url?: string; order?: number }>(
-    () => videosApi.getAll(lessonId),
-    { create: d => videosApi.create(lessonId, d), update: videosApi.update, delete: videosApi.delete },
+  } = useResourceList<LessonResource, VideoCreateInput, VideoUpdateInput>(
+    () => lessonResourcesApi.getAll(lessonId, 'video'),
+    {
+      create: d => lessonResourcesApi.create(lessonId, d),
+      update: lessonResourcesApi.update,
+      delete: lessonResourcesApi.delete,
+    },
     lessonId, byOrder,
   );
 
-  // Keep index in bounds when videos change (e.g. after delete)
   useEffect(() => {
     if (currentIndex >= videos.length && videos.length > 0) {
       setCurrentIndex(videos.length - 1);
@@ -91,12 +97,24 @@ export default function VideoList({ lessonId }: { lessonId: string }) {
 
       {showAdd && (
         <Modal title="Add Video" onClose={() => setShowAdd(false)}>
-          <VideoForm nextOrder={videos.length + 1} onSubmit={handleAdd} onCancel={() => setShowAdd(false)} />
+          <VideoForm
+            nextOrder={videos.length + 1}
+            onSubmit={async ({ title, url, order }) =>
+              handleAdd({ type: 'video', title, content: { url }, order })
+            }
+            onCancel={() => setShowAdd(false)}
+          />
         </Modal>
       )}
       {editing && (
         <Modal title="Edit Video" onClose={() => setEditing(null)}>
-          <VideoForm initial={editing} onSubmit={handleUpdate} onCancel={() => setEditing(null)} />
+          <VideoForm
+            initial={editing}
+            onSubmit={async ({ title, url, order }) =>
+              handleUpdate({ title, content: { url }, order })
+            }
+            onCancel={() => setEditing(null)}
+          />
         </Modal>
       )}
       {deleting && (

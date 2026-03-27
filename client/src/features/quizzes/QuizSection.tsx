@@ -1,4 +1,4 @@
-import { quizzesApi } from '../../api/quizzes.js';
+import { assessmentsApi } from '../../api/assessments.js';
 import useAssessment from '../../hooks/useAssessment.js';
 import AssessmentForm from '../assessments/AssessmentForm.js';
 import AssessmentTaker from '../assessments/AssessmentTaker.js';
@@ -8,12 +8,20 @@ import Button from '../../components/Button.js';
 import LoadingSpinner from '../../components/LoadingSpinner.js';
 import ErrorMessage from '../../components/ErrorMessage.js';
 
+const quizApi = {
+  get: assessmentsApi.getLessonQuiz,
+  create: assessmentsApi.createLessonQuiz,
+  update: assessmentsApi.update,
+  submitAttempt: assessmentsApi.submitAttempt,
+  getAttempts: assessmentsApi.getAttempts,
+};
+
 export default function QuizSection({ lessonId }: { lessonId: string }) {
   const {
     assessment: quiz, loading, error,
     view, setView, result, attempts,
     handleCreate, handleSubmit,
-  } = useAssessment(quizzesApi, lessonId);
+  } = useAssessment(quizApi, lessonId);
 
   if (loading) return <LoadingSpinner />;
   if (error) return <ErrorMessage message={error} />;

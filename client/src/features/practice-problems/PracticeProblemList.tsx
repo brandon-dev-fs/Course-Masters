@@ -1,5 +1,5 @@
-import { practiceProblemsApi } from '../../api/practice-problems.js';
-import type { PracticeProblem } from '../../api/types.js';
+import { lessonToolsApi } from '../../api/lesson-tools.js';
+import type { LessonTool } from '../../api/types.js';
 import { useAuth } from '../../context/AuthContext.js';
 import useResourceList from '../../hooks/useResourceList.js';
 import PracticeProblemCard from './PracticeProblemCard.js';
@@ -10,8 +10,12 @@ import Button from '../../components/Button.js';
 import LoadingSpinner from '../../components/LoadingSpinner.js';
 import ErrorMessage from '../../components/ErrorMessage.js';
 import EmptyState from '../../components/EmptyState.js';
+import type { QuestionDraft } from '../assessments/QuestionEditor.js';
 
-const byOrder = (a: PracticeProblem, b: PracticeProblem) => a.order - b.order;
+type ProblemCreateInput = { type: 'practice_problem'; title: string; content: Record<string, unknown>; order: number };
+type ProblemUpdateInput = { content?: Record<string, unknown>; order?: number };
+
+const byOrder = (a: LessonTool, b: LessonTool) => a.order - b.order;
 
 export default function PracticeProblemList({ lessonId }: { lessonId: string }) {
   const { user } = useAuth();
@@ -20,11 +24,24 @@ export default function PracticeProblemList({ lessonId }: { lessonId: string }) 
     items: problems, loading, error,
     showAdd, setShowAdd, editing, setEditing, deleting, setDeleting,
     handleAdd, handleUpdate, handleDelete,
-  } = useResourceList<PracticeProblem, { question: string; options: string[]; correctIndex: number; order: number }, { question?: string; options?: string[]; correctIndex?: number; order?: number }>(
-    () => practiceProblemsApi.getAll(lessonId),
-    { create: d => practiceProblemsApi.create(lessonId, d), update: practiceProblemsApi.update, delete: practiceProblemsApi.delete },
+  } = useResourceList<LessonTool, ProblemCreateInput, ProblemUpdateInput>(
+    () => lessonToolsApi.getAll(lessonId, 'practice_problem'),
+    {
+      create: d => lessonToolsApi.create(lessonId, d),
+      update: lessonToolsApi.update,
+      delete: lessonToolsApi.delete,
+    },
     lessonId, byOrder,
   );
+
+  function draftToCreateInput(draft: QuestionDraft): ProblemCreateInput {
+    return {
+      type: 'practice_problem',
+      title: draft.question.slice(0, 80),
+      content: { question: draft.question, ...draft.content },
+      order: draft.order,
+    };
+  }
 
   if (loading) return <LoadingSpinner />;
   if (error) return <ErrorMessage message={error} />;
@@ -58,12 +75,22 @@ export default function PracticeProblemList({ lessonId }: { lessonId: string }) 
 
       {showAdd && (
         <Modal title="Add Practice Problem" onClose={() => setShowAdd(false)}>
-          <PracticeProblemForm nextOrder={problems.length + 1} onSubmit={handleAdd} onCancel={() => setShowAdd(false)} />
+          <PracticeProblemForm
+            nextOrder={problems.length + 1}
+            onSubmit={async (draft) => handleAdd(draftToCreateInput(draft))}
+            onCancel={() => setShowAdd(false)}
+          />
         </Modal>
       )}
       {editing && (
         <Modal title="Edit Practice Problem" onClose={() => setEditing(null)}>
-          <PracticeProblemForm initial={editing} onSubmit={handleUpdate} onCancel={() => setEditing(null)} />
+          <PracticeProblemForm
+            initial={editing}
+            onSubmit={async (draft) =>
+              handleUpdate({ content: { question: draft.question, ...draft.content }, order: draft.order })
+            }
+            onCancel={() => setEditing(null)}
+          />
         </Modal>
       )}
       {deleting && (

@@ -10,11 +10,11 @@ interface AssessmentFormProps {
 }
 
 function newQuestion(order: number): QuestionDraft {
-  return { question: '', options: ['', ''], correctIndex: 0, order };
+  return { question: '', content: { options: ['', ''], correctIndex: 0 }, order };
 }
 
 function isComplete(q: QuestionDraft) {
-  return q.question.trim() !== '' && q.options.every(o => o.trim() !== '');
+  return q.question.trim() !== '' && q.content.options.every(o => o.trim() !== '');
 }
 
 export default function AssessmentForm({ initialQuestions, onSubmit, onCancel }: AssessmentFormProps) {

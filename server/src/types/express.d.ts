@@ -6,7 +6,7 @@ declare module 'express' {
 			id: string;
 			name: string;
 			email: string;
-			role: string;
+			role: 'student' | 'teacher' | 'admin';
 			image?: string | null;
 			emailVerified: boolean;
 		};

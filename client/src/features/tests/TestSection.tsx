@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { testsApi } from '../../api/tests.js';
+import { assessmentsApi } from '../../api/assessments.js';
 import useAssessment from '../../hooks/useAssessment.js';
 import AssessmentForm from '../assessments/AssessmentForm.js';
 import AssessmentTaker from '../assessments/AssessmentTaker.js';
@@ -10,6 +10,14 @@ import Tooltip from '../../components/Tooltip.js';
 import LoadingSpinner from '../../components/LoadingSpinner.js';
 import ErrorMessage from '../../components/ErrorMessage.js';
 import type { QuestionDraft } from '../assessments/QuestionEditor.js';
+
+const testApi = {
+  get: assessmentsApi.getUnitQuiz,
+  create: assessmentsApi.createUnitQuiz,
+  update: assessmentsApi.update,
+  submitAttempt: assessmentsApi.submitAttempt,
+  getAttempts: assessmentsApi.getAttempts,
+};
 
 interface TestSectionProps {
   unitId: string;
@@ -25,18 +33,18 @@ export default function TestSection({ unitId, canEdit = false, allLessonsComplet
     assessment: test, loading, error,
     view, setView, result, lastAttempt,
     handleCreate, handleUpdate, handleSubmit,
-  } = useAssessment(testsApi, unitId);
+  } = useAssessment(testApi, unitId);
 
-  async function openEdit() {
-    const full = await testsApi.getForEdit(unitId);
-    if (full) {
-      setEditQuestions(full.questions.map(q => ({
-        question: q.question,
-        options: q.options,
-        correctIndex: q.correctIndex,
-        order: q.order,
-      })));
-    }
+  function openEdit() {
+    if (!test) return;
+    setEditQuestions(test.questions.map(q => ({
+      question: q.question,
+      content: {
+        options: (q.content.options as string[]) ?? [],
+        correctIndex: (q.content.correctIndex as number) ?? 0,
+      },
+      order: q.order,
+    })));
     setView('creating');
   }
 

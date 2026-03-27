@@ -1,28 +1,30 @@
 import { useEffect, useState } from 'react';
 import { X } from 'lucide-react';
-import type { FlashCard as FlashCardType } from '../../api/types.js';
+import type { LessonTool } from '../../api/types.js';
 
 interface FlashCardProps {
-  card: FlashCardType;
+  card: LessonTool;
   editMode?: boolean;
-  onUpdate?: (id: string, data: { front?: string; back?: string }) => Promise<void>;
+  onUpdate?: (id: string, data: { front: string; back: string }) => Promise<void>;
   onDelete?: () => void;
 }
 
 export default function FlashCard({ card, editMode = false, onUpdate, onDelete }: FlashCardProps) {
+  const cardFront = (card.content.front as string) ?? '';
+  const cardBack = (card.content.back as string) ?? '';
+
   const [flipped, setFlipped] = useState(false);
-  const [front, setFront] = useState(card.front);
-  const [back, setBack] = useState(card.back);
+  const [front, setFront] = useState(cardFront);
+  const [back, setBack] = useState(cardBack);
   const [saving, setSaving] = useState(false);
   const [frontError, setFrontError] = useState(false);
   const [backError, setBackError] = useState(false);
 
   useEffect(() => {
-    setFront(card.front);
-    setBack(card.back);
-  }, [card.front, card.back]);
+    setFront(cardFront);
+    setBack(cardBack);
+  }, [cardFront, cardBack]);
 
-  // Reset flip state when leaving edit mode
   useEffect(() => {
     if (!editMode) setFlipped(false);
   }, [editMode]);
@@ -36,15 +38,15 @@ export default function FlashCard({ card, editMode = false, onUpdate, onDelete }
     if (frontInvalid || backInvalid) {
       setFrontError(frontInvalid);
       setBackError(backInvalid);
-      if (frontInvalid) setFront(card.front);
-      if (backInvalid) setBack(card.back);
+      if (frontInvalid) setFront(cardFront);
+      if (backInvalid) setBack(cardBack);
       return;
     }
 
     setFrontError(false);
     setBackError(false);
 
-    if (trimmedFront === card.front && trimmedBack === card.back) return;
+    if (trimmedFront === cardFront && trimmedBack === cardBack) return;
 
     setSaving(true);
     try {
@@ -54,7 +56,7 @@ export default function FlashCard({ card, editMode = false, onUpdate, onDelete }
     }
   }
 
-  const isDirty = front.trim() !== card.front || back.trim() !== card.back;
+  const isDirty = front.trim() !== cardFront || back.trim() !== cardBack;
 
   if (editMode) {
     return (
@@ -114,7 +116,7 @@ export default function FlashCard({ card, editMode = false, onUpdate, onDelete }
           style={{ backfaceVisibility: 'hidden' }}
         >
           <p className="text-xs text-muted-foreground mb-2 uppercase tracking-wide">Front</p>
-          <p className="text-foreground font-medium">{card.front}</p>
+          <p className="text-foreground font-medium">{cardFront}</p>
           <p className="text-xs text-muted-foreground mt-auto pt-2">Click to flip</p>
         </div>
         {/* Back */}
@@ -123,7 +125,7 @@ export default function FlashCard({ card, editMode = false, onUpdate, onDelete }
           style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
         >
           <p className="text-xs text-accent mb-2 uppercase tracking-wide">Back</p>
-          <p className="text-foreground">{card.back}</p>
+          <p className="text-foreground">{cardBack}</p>
           <p className="text-xs text-muted-foreground mt-auto pt-2">Click to flip back</p>
         </div>
       </div>

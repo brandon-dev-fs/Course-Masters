@@ -120,13 +120,12 @@ course-masters/
       hooks/            # Reusable hooks (useResourceList, useAssessment, etc.)
   server/               # Express API backend (@course-masters/server)
     prisma/
-      schema.prisma     # Database schema (20 models)
+      schema.prisma     # Database schema (15 models)
       seed.ts           # Database seed script
-      migrations/       # Prisma migration history
     src/
-      routes/           # Route definitions + factory generators
-      controllers/      # Request handling + factory generators
-      services/         # Business logic and Prisma queries + factories
+      routes/           # Route definitions
+      controllers/      # Request handling
+      services/         # Business logic and Prisma queries
       schemas/          # Zod validation schemas
       middleware/       # authenticate, authorize, validate, errorHandler
       errors/           # Typed error classes (AppError, NotFoundError, etc.)
@@ -137,17 +136,17 @@ course-masters/
 
 ### Data Model Overview
 
-The schema defines 20 models organized around the core learning hierarchy:
+The schema defines 15 models organized around the core learning hierarchy:
 
 - **User**, **Session**, **Account**, **Verification** — authentication and identity
 - **Course** > **Unit** > **Lesson** — the primary content hierarchy
-- **Note** — rich text lesson notes (JSON, teacher-created)
+- **LessonResource** — rich content attached to a lesson (types: `note`, `lecture`, `video`); content stored as Json with type-specific shape (e.g. `{body}` for notes/lectures, `{url}` for videos)
+- **LessonTool** — interactive study tools attached to a lesson (types: `flash_card`, `practice_problem`, `vocab`); content stored as Json (e.g. `{front, back}`, `{question, options, correctIndex}`, `{term, definition}`)
 - **StudentNote** — plain text per-student notes (unique per user + lesson)
-- **FlashCard**, **PracticeProblem**, **Vocab** — lesson-level study materials
-- **Video** — YouTube video embeds with optional transcript/summary fields
-- **Quiz** / **QuizQuestion** / **QuizAttempt** — per-lesson assessments
-- **Test** / **TestQuestion** / **TestAttempt** — per-unit assessments
-- **FinalExam** / **FinalExamQuestion** / **ExamAttempt** — per-course assessments
+- **Assessment** — unified assessment model with type `lesson_quiz`, `unit_quiz`, or `course_exam`
+- **AssessmentQuestion** — question with `question` text, `type` enum, and `content` Json for answer data
+- **AssessmentAttempt** — records score and pass/fail per user per assessment
+- **LessonCompletion**, **UnitCompletion** — completion tracking
 
 All cascade deletes are enforced at the database level via Prisma relations.
 

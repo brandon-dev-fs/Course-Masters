@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { GraduationCap, ChevronDown, ChevronRight, Lock, CheckCircle2, XCircle } from 'lucide-react';
-import { examsApi } from '../../api/exams.js';
+import { assessmentsApi } from '../../api/assessments.js';
 import useAssessment from '../../hooks/useAssessment.js';
 import AssessmentForm from '../assessments/AssessmentForm.js';
 import AssessmentTaker from '../assessments/AssessmentTaker.js';
@@ -9,6 +9,13 @@ import Modal from '../../components/Modal.js';
 import Button from '../../components/Button.js';
 import type { CourseProgress } from '../../api/types.js';
 import type { QuestionDraft } from '../assessments/QuestionEditor.js';
+
+const examApi = {
+  get: assessmentsApi.getCourseExam,
+  create: assessmentsApi.createCourseExam,
+  update: assessmentsApi.update,
+  submitAttempt: assessmentsApi.submitAttempt,
+};
 
 interface ExamAccordionItemProps {
   courseId: string;
@@ -29,7 +36,7 @@ export default function ExamAccordionItem({
     assessment: exam,
     view, setView, result, lastAttempt,
     handleCreate, handleUpdate, handleSubmit,
-  } = useAssessment(examsApi, courseId);
+  } = useAssessment(examApi, courseId);
 
   const locked = !allUnitsMastered && !canEdit;
 
@@ -38,16 +45,16 @@ export default function ExamAccordionItem({
     setIsExpanded(prev => !prev);
   }
 
-  async function openEdit() {
-    const full = await examsApi.getForEdit(courseId);
-    if (full) {
-      setEditQuestions(full.questions.map(q => ({
-        question: q.question,
-        options: q.options,
-        correctIndex: q.correctIndex,
-        order: q.order,
-      })));
-    }
+  function openEdit() {
+    if (!exam) return;
+    setEditQuestions(exam.questions.map(q => ({
+      question: q.question,
+      content: {
+        options: (q.content.options as string[]) ?? [],
+        correctIndex: (q.content.correctIndex as number) ?? 0,
+      },
+      order: q.order,
+    })));
     setView('creating');
   }
 

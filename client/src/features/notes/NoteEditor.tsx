@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { notesApi } from '../../api/notes.js';
-import type { Note } from '../../api/types.js';
+import { lessonResourcesApi } from '../../api/lesson-resources.js';
+import type { LessonResource } from '../../api/types.js';
 import { useAuth } from '../../context/AuthContext.js';
 import RichTextEditor from '../../components/RichTextEditor.js';
 import ResourceCompletionCheckbox from '../../components/ResourceCompletionCheckbox.js';
@@ -10,10 +10,10 @@ import ErrorMessage from '../../components/ErrorMessage.js';
 import { Pencil, Save, X } from 'lucide-react';
 
 interface NoteEditorProps {
-  note: Note;
+  note: LessonResource;
   isComplete: boolean;
   onToggleComplete: () => void;
-  onUpdate?: (note: Note) => void;
+  onUpdate?: (note: LessonResource) => void;
   initialEditing?: boolean;
 }
 
@@ -23,28 +23,34 @@ export default function NoteEditor({ note, isComplete, onToggleComplete, onUpdat
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [savedContent, setSavedContent] = useState<Record<string, unknown>>(note.content);
+  const [savedBody, setSavedBody] = useState<Record<string, unknown>>(
+    (note.content.body as Record<string, unknown>) ?? { type: 'doc', content: [] },
+  );
   const [editingTitle, setEditingTitle] = useState(note.title);
   const [editing, setEditing] = useState(initialEditing ?? false);
-  const pendingContent = useRef<Record<string, unknown>>(note.content);
+  const pendingBody = useRef<Record<string, unknown>>(savedBody);
 
   useEffect(() => {
-    setSavedContent(note.content);
-    pendingContent.current = note.content;
+    const body = (note.content.body as Record<string, unknown>) ?? { type: 'doc', content: [] };
+    setSavedBody(body);
+    pendingBody.current = body;
     setEditingTitle(note.title);
     setEditing(false);
   }, [note.id]);
 
   const handleChange = useCallback((content: Record<string, unknown>) => {
-    pendingContent.current = content;
+    pendingBody.current = content;
   }, []);
 
   const handleSave = useCallback(async () => {
     setSaving(true);
     setError(null);
     try {
-      const updated = await notesApi.update(note.id, { title: editingTitle.trim() || 'Untitled', content: pendingContent.current });
-      setSavedContent(updated.content);
+      const updated = await lessonResourcesApi.update(note.id, {
+        title: editingTitle.trim() || 'Untitled',
+        content: { body: pendingBody.current },
+      });
+      setSavedBody((updated.content.body as Record<string, unknown>) ?? { type: 'doc', content: [] });
       setEditingTitle(updated.title);
       setEditing(false);
       onUpdate?.(updated);
@@ -56,15 +62,14 @@ export default function NoteEditor({ note, isComplete, onToggleComplete, onUpdat
   }, [note.id, editingTitle, onUpdate]);
 
   const handleCancel = useCallback(() => {
-    pendingContent.current = savedContent;
+    pendingBody.current = savedBody;
     setEditingTitle(note.title);
     setEditing(false);
     setError(null);
-  }, [savedContent, note.title]);
+  }, [savedBody, note.title]);
 
   return (
     <div className="flex flex-col gap-3">
-      {/* Note title */}
       {editing ? (
         <input
           type="text"
@@ -100,7 +105,7 @@ export default function NoteEditor({ note, isComplete, onToggleComplete, onUpdat
       )}
       {error && <ErrorMessage message={error} />}
       <RichTextEditor
-        content={savedContent}
+        content={savedBody}
         onChange={handleChange}
         editable={editing}
       />

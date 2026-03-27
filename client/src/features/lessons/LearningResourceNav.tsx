@@ -1,10 +1,10 @@
 import { useRef, useEffect, useState } from 'react';
-import { BookOpen, Play, FileText, Languages, Check, ChevronLeft, ChevronRight, ClipboardCheck, Lock, Plus, X } from 'lucide-react';
+import { BookOpen, Play, FileText, Languages, BookMarked, Check, ChevronLeft, ChevronRight, ClipboardCheck, Lock, Plus, X } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 export interface LearningResource {
   key: string;
-  type: 'lessonPlan' | 'video' | 'note' | 'vocab';
+  type: 'lessonPlan' | 'video' | 'note' | 'lecture' | 'vocab';
   title: string;
   id: string;
 }
@@ -13,6 +13,7 @@ const typeIcons: Record<string, LucideIcon> = {
   lessonPlan: BookOpen,
   video: Play,
   note: FileText,
+  lecture: BookMarked,
   vocab: Languages,
 };
 
@@ -23,7 +24,7 @@ interface LearningResourceNavProps {
   completedKeys: Set<string>;
   quizUnlocked: boolean;
   canEdit?: boolean;
-  onAddResource?: (type: 'note' | 'video' | 'vocab') => void;
+  onAddResource?: (type: 'note' | 'lecture' | 'video' | 'vocab') => void;
   onDeleteResource?: (resource: LearningResource) => void;
   onMoveResource?: (resource: LearningResource, direction: 'left' | 'right') => void;
 }
@@ -128,9 +129,9 @@ export default function LearningResourceNav({ resources, activeResourceKey, onRe
           </button>
           {showMenu && (
             <div className="absolute top-full left-0 mt-1 z-50 bg-surface border border-border rounded-lg shadow-warm-md py-1 min-w-[140px]">
-              {(['note', 'video', 'vocab'] as const).map(type => {
+              {(['note', 'lecture', 'video', 'vocab'] as const).map(type => {
                 const Icon = typeIcons[type];
-                const label = type === 'note' ? 'Note' : type === 'video' ? 'Video' : 'Vocabulary';
+                const label = type === 'note' ? 'Note' : type === 'lecture' ? 'Lecture' : type === 'video' ? 'Video' : 'Vocabulary';
                 return (
                   <button
                     key={type}

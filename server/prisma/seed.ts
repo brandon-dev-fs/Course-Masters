@@ -3,7 +3,7 @@ import { hashPassword } from 'better-auth/crypto';
 
 const prisma = new PrismaClient();
 
-async function seedUser(email: string, name: string, role: string) {
+async function seedUser(email: string, name: string, role: 'student' | 'teacher' | 'admin') {
 	const id = crypto.randomUUID();
 	const user = await prisma.user.upsert({
 		where: { email },
@@ -26,26 +26,12 @@ async function seedUser(email: string, name: string, role: string) {
 }
 
 async function main() {
-	const admin = await seedUser(
-		'admin@course-masters.app',
-		'Admin User',
-		'admin',
-	);
-	const teacher = await seedUser(
-		'teacher@course-masters.app',
-		'Teacher User',
-		'teacher',
-	);
-	const student = await seedUser(
-		'student@course-masters.app',
-		'Student User',
-		'student',
-	);
+	const admin = await seedUser('admin@course-masters.app', 'Admin User', 'admin');
+	const teacher = await seedUser('teacher@course-masters.app', 'Teacher User', 'teacher');
+	const student = await seedUser('student@course-masters.app', 'Student User', 'student');
 
 	const user = admin;
-	console.log(
-		`Seeded users: ${admin.email}, ${teacher.email}, ${student.email}`,
-	);
+	console.log(`Seeded users: ${admin.email}, ${teacher.email}, ${student.email}`);
 
 	// Clean up existing seed data
 	await prisma.course.deleteMany({
@@ -55,20 +41,14 @@ async function main() {
 	const course = await prisma.course.create({
 		data: {
 			title: 'Introduction to Web Development',
-			description:
-				'Learn the fundamentals of modern web development from scratch.',
+			description: 'Learn the fundamentals of modern web development from scratch.',
 			syllabus: {
 				type: 'doc',
 				content: [
 					{
 						type: 'heading',
 						attrs: { level: 1 },
-						content: [
-							{
-								type: 'text',
-								text: 'Course Syllabus',
-							},
-						],
+						content: [{ type: 'text', text: 'Course Syllabus' }],
 					},
 					{
 						type: 'paragraph',
@@ -82,83 +62,33 @@ async function main() {
 					{
 						type: 'heading',
 						attrs: { level: 2 },
-						content: [
-							{
-								type: 'text',
-								text: 'Learning Objectives',
-							},
-						],
+						content: [{ type: 'text', text: 'Learning Objectives' }],
 					},
 					{
 						type: 'bulletList',
 						content: [
 							{
 								type: 'listItem',
-								content: [
-									{
-										type: 'paragraph',
-										content: [
-											{
-												type: 'text',
-												text: 'Understand HTML document structure and semantic elements',
-											},
-										],
-									},
-								],
+								content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Understand HTML document structure and semantic elements' }] }],
 							},
 							{
 								type: 'listItem',
-								content: [
-									{
-										type: 'paragraph',
-										content: [
-											{
-												type: 'text',
-												text: 'Write CSS selectors and understand specificity and the cascade',
-											},
-										],
-									},
-								],
+								content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Write CSS selectors and understand specificity and the cascade' }] }],
 							},
 							{
 								type: 'listItem',
-								content: [
-									{
-										type: 'paragraph',
-										content: [
-											{
-												type: 'text',
-												text: 'Declare and use JavaScript variables, functions, and closures',
-											},
-										],
-									},
-								],
+								content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Declare and use JavaScript variables, functions, and closures' }] }],
 							},
 							{
 								type: 'listItem',
-								content: [
-									{
-										type: 'paragraph',
-										content: [
-											{
-												type: 'text',
-												text: 'Apply best practices for writing clean, maintainable code',
-											},
-										],
-									},
-								],
+								content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Apply best practices for writing clean, maintainable code' }] }],
 							},
 						],
 					},
 					{
 						type: 'heading',
 						attrs: { level: 2 },
-						content: [
-							{
-								type: 'text',
-								text: 'Course Outline',
-							},
-						],
+						content: [{ type: 'text', text: 'Course Outline' }],
 					},
 					{
 						type: 'orderedList',
@@ -169,15 +99,8 @@ async function main() {
 									{
 										type: 'paragraph',
 										content: [
-											{
-												type: 'text',
-												marks: [{ type: 'bold' }],
-												text: 'Unit 1 — HTML & CSS Basics: ',
-											},
-											{
-												type: 'text',
-												text: 'HTML document structure, semantic tags, CSS selectors, and specificity.',
-											},
+											{ type: 'text', marks: [{ type: 'bold' }], text: 'Unit 1 — HTML & CSS Basics: ' },
+											{ type: 'text', text: 'HTML document structure, semantic tags, CSS selectors, and specificity.' },
 										],
 									},
 								],
@@ -188,15 +111,8 @@ async function main() {
 									{
 										type: 'paragraph',
 										content: [
-											{
-												type: 'text',
-												marks: [{ type: 'bold' }],
-												text: 'Unit 2 — JavaScript Fundamentals: ',
-											},
-											{
-												type: 'text',
-												text: 'Variables, data types, functions, scope, and closures.',
-											},
+											{ type: 'text', marks: [{ type: 'bold' }], text: 'Unit 2 — JavaScript Fundamentals: ' },
+											{ type: 'text', text: 'Variables, data types, functions, scope, and closures.' },
 										],
 									},
 								],
@@ -206,12 +122,7 @@ async function main() {
 					{
 						type: 'heading',
 						attrs: { level: 2 },
-						content: [
-							{
-								type: 'text',
-								text: 'Grading',
-							},
-						],
+						content: [{ type: 'text', text: 'Grading' }],
 					},
 					{
 						type: 'paragraph',
@@ -229,30 +140,22 @@ async function main() {
 				create: [
 					{
 						title: 'HTML & CSS Basics',
-						description:
-							'Learn how to structure web pages with HTML and style them with CSS, covering the essential building blocks of every website.',
+						description: 'Learn how to structure web pages with HTML and style them with CSS, covering the essential building blocks of every website.',
 						order: 1,
 						lessons: {
 							create: [
 								{
 									title: 'HTML Structure',
-									description:
-										'Understand how HTML documents are structured using tags and elements, and learn the difference between block-level and inline elements.',
+									description: 'Understand how HTML documents are structured using tags and elements, and learn the difference between block-level and inline elements.',
 									order: 1,
-									objective:
-										'Understand the anatomy of an HTML document and distinguish between block-level and inline elements.',
+									objective: 'Understand the anatomy of an HTML document and distinguish between block-level and inline elements.',
 									planContent: {
 										type: 'doc',
 										content: [
 											{
 												type: 'heading',
 												attrs: { level: 2 },
-												content: [
-													{
-														type: 'text',
-														text: 'Lesson Overview',
-													},
-												],
+												content: [{ type: 'text', text: 'Lesson Overview' }],
 											},
 											{
 												type: 'paragraph',
@@ -266,72 +169,15 @@ async function main() {
 											{
 												type: 'heading',
 												attrs: { level: 3 },
-												content: [
-													{
-														type: 'text',
-														text: 'Topics Covered',
-													},
-												],
+												content: [{ type: 'text', text: 'Topics Covered' }],
 											},
 											{
 												type: 'bulletList',
 												content: [
-													{
-														type: 'listItem',
-														content: [
-															{
-																type: 'paragraph',
-																content: [
-																	{
-																		type: 'text',
-																		text: 'DOCTYPE and the HTML skeleton',
-																	},
-																],
-															},
-														],
-													},
-													{
-														type: 'listItem',
-														content: [
-															{
-																type: 'paragraph',
-																content: [
-																	{
-																		type: 'text',
-																		text: 'Head vs. body sections',
-																	},
-																],
-															},
-														],
-													},
-													{
-														type: 'listItem',
-														content: [
-															{
-																type: 'paragraph',
-																content: [
-																	{
-																		type: 'text',
-																		text: 'Block-level vs. inline elements',
-																	},
-																],
-															},
-														],
-													},
-													{
-														type: 'listItem',
-														content: [
-															{
-																type: 'paragraph',
-																content: [
-																	{
-																		type: 'text',
-																		text: 'Semantic HTML tags',
-																	},
-																],
-															},
-														],
-													},
+													{ type: 'listItem', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'DOCTYPE and the HTML skeleton' }] }] },
+													{ type: 'listItem', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Head vs. body sections' }] }] },
+													{ type: 'listItem', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Block-level vs. inline elements' }] }] },
+													{ type: 'listItem', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Semantic HTML tags' }] }] },
 												],
 											},
 										],
@@ -339,23 +185,16 @@ async function main() {
 								},
 								{
 									title: 'CSS Selectors',
-									description:
-										'Learn how to target HTML elements with CSS selectors and understand how specificity determines which styles take effect.',
+									description: 'Learn how to target HTML elements with CSS selectors and understand how specificity determines which styles take effect.',
 									order: 2,
-									objective:
-										'Master CSS selector syntax and understand the specificity hierarchy.',
+									objective: 'Master CSS selector syntax and understand the specificity hierarchy.',
 									planContent: {
 										type: 'doc',
 										content: [
 											{
 												type: 'heading',
 												attrs: { level: 2 },
-												content: [
-													{
-														type: 'text',
-														text: 'Lesson Overview',
-													},
-												],
+												content: [{ type: 'text', text: 'Lesson Overview' }],
 											},
 											{
 												type: 'paragraph',
@@ -369,72 +208,15 @@ async function main() {
 											{
 												type: 'heading',
 												attrs: { level: 3 },
-												content: [
-													{
-														type: 'text',
-														text: 'Topics Covered',
-													},
-												],
+												content: [{ type: 'text', text: 'Topics Covered' }],
 											},
 											{
 												type: 'bulletList',
 												content: [
-													{
-														type: 'listItem',
-														content: [
-															{
-																type: 'paragraph',
-																content: [
-																	{
-																		type: 'text',
-																		text: 'Element, class, and ID selectors',
-																	},
-																],
-															},
-														],
-													},
-													{
-														type: 'listItem',
-														content: [
-															{
-																type: 'paragraph',
-																content: [
-																	{
-																		type: 'text',
-																		text: 'Combinators and pseudo-classes',
-																	},
-																],
-															},
-														],
-													},
-													{
-														type: 'listItem',
-														content: [
-															{
-																type: 'paragraph',
-																content: [
-																	{
-																		type: 'text',
-																		text: 'Specificity scoring',
-																	},
-																],
-															},
-														],
-													},
-													{
-														type: 'listItem',
-														content: [
-															{
-																type: 'paragraph',
-																content: [
-																	{
-																		type: 'text',
-																		text: 'The cascade and source order',
-																	},
-																],
-															},
-														],
-													},
+													{ type: 'listItem', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Element, class, and ID selectors' }] }] },
+													{ type: 'listItem', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Combinators and pseudo-classes' }] }] },
+													{ type: 'listItem', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Specificity scoring' }] }] },
+													{ type: 'listItem', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'The cascade and source order' }] }] },
 												],
 											},
 										],
@@ -445,30 +227,22 @@ async function main() {
 					},
 					{
 						title: 'JavaScript Fundamentals',
-						description:
-							'Explore the core concepts of JavaScript including variables, data types, functions, and scope to start writing dynamic web behavior.',
+						description: 'Explore the core concepts of JavaScript including variables, data types, functions, and scope to start writing dynamic web behavior.',
 						order: 2,
 						lessons: {
 							create: [
 								{
 									title: 'Variables and Types',
-									description:
-										"Discover how to declare variables with var, let, and const, and explore JavaScript's primitive data types including strings, numbers, and booleans.",
+									description: "Discover how to declare variables with var, let, and const, and explore JavaScript's primitive data types including strings, numbers, and booleans.",
 									order: 1,
-									objective:
-										"Declare variables using var, let, and const, and identify JavaScript's primitive data types.",
+									objective: "Declare variables using var, let, and const, and identify JavaScript's primitive data types.",
 									planContent: {
 										type: 'doc',
 										content: [
 											{
 												type: 'heading',
 												attrs: { level: 2 },
-												content: [
-													{
-														type: 'text',
-														text: 'Lesson Overview',
-													},
-												],
+												content: [{ type: 'text', text: 'Lesson Overview' }],
 											},
 											{
 												type: 'paragraph',
@@ -482,58 +256,14 @@ async function main() {
 											{
 												type: 'heading',
 												attrs: { level: 3 },
-												content: [
-													{
-														type: 'text',
-														text: 'Key Takeaways',
-													},
-												],
+												content: [{ type: 'text', text: 'Key Takeaways' }],
 											},
 											{
 												type: 'orderedList',
 												content: [
-													{
-														type: 'listItem',
-														content: [
-															{
-																type: 'paragraph',
-																content: [
-																	{
-																		type: 'text',
-																		text: 'Prefer const by default; use let only when reassignment is needed.',
-																	},
-																],
-															},
-														],
-													},
-													{
-														type: 'listItem',
-														content: [
-															{
-																type: 'paragraph',
-																content: [
-																	{
-																		type: 'text',
-																		text: 'Understand the difference between null (intentional absence) and undefined (not assigned).',
-																	},
-																],
-															},
-														],
-													},
-													{
-														type: 'listItem',
-														content: [
-															{
-																type: 'paragraph',
-																content: [
-																	{
-																		type: 'text',
-																		text: 'Use === instead of == to avoid type coercion surprises.',
-																	},
-																],
-															},
-														],
-													},
+													{ type: 'listItem', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Prefer const by default; use let only when reassignment is needed.' }] }] },
+													{ type: 'listItem', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Understand the difference between null (intentional absence) and undefined (not assigned).' }] }] },
+													{ type: 'listItem', content: [{ type: 'paragraph', content: [{ type: 'text', text: 'Use === instead of == to avoid type coercion surprises.' }] }] },
 												],
 											},
 										],
@@ -541,23 +271,16 @@ async function main() {
 								},
 								{
 									title: 'Functions and Scope',
-									description:
-										'Learn how to define and invoke functions, understand lexical scope, and explore closures and arrow function syntax.',
+									description: 'Learn how to define and invoke functions, understand lexical scope, and explore closures and arrow function syntax.',
 									order: 2,
-									objective:
-										'Define functions using declarations and arrow syntax, and explain how closures capture their enclosing scope.',
+									objective: 'Define functions using declarations and arrow syntax, and explain how closures capture their enclosing scope.',
 									planContent: {
 										type: 'doc',
 										content: [
 											{
 												type: 'heading',
 												attrs: { level: 2 },
-												content: [
-													{
-														type: 'text',
-														text: 'Lesson Overview',
-													},
-												],
+												content: [{ type: 'text', text: 'Lesson Overview' }],
 											},
 											{
 												type: 'paragraph',
@@ -578,9 +301,7 @@ async function main() {
 			},
 		},
 		include: {
-			units: {
-				include: { lessons: true },
-			},
+			units: { include: { lessons: true } },
 		},
 	});
 
@@ -591,213 +312,246 @@ async function main() {
 	const [lesson3, lesson4] = unit2.lessons;
 
 	// --- Lesson 1: HTML Structure ---
-	// Videos and Notes share the `order` namespace for interleaving in the nav bar
 
-	const video1 = await prisma.video.create({
+	const video1 = await prisma.lessonResource.create({
 		data: {
 			lessonId: lesson1.id,
+			type: 'video',
 			title: 'HTML Tags Explained',
-			url: 'https://www.youtube.com/watch?v=vY2xUc4TVmY&t=69s',
 			order: 1,
+			content: { url: 'https://www.youtube.com/watch?v=vY2xUc4TVmY&t=69s' },
 		},
 	});
 
-	const note1 = await prisma.note.create({
+	const note1 = await prisma.lessonResource.create({
 		data: {
 			lessonId: lesson1.id,
+			type: 'note',
 			title: 'HTML Fundamentals',
 			order: 2,
 			content: {
-				type: 'doc',
-				content: [
-					{
-						type: 'heading',
-						attrs: { level: 2 },
-						content: [{ type: 'text', text: 'HTML Fundamentals' }],
-					},
-					{
-						type: 'paragraph',
-						content: [
-							{
-								type: 'text',
-								text: 'HTML stands for HyperText Markup Language. It defines the structure of web pages using elements represented by tags like <html>, <head>, and <body>.',
-							},
-						],
-					},
-					{
-						type: 'paragraph',
-						content: [
-							{
-								type: 'text',
-								text: 'Every HTML document should start with <!DOCTYPE html> to tell the browser which version of HTML is being used.',
-							},
-						],
-					},
-					{
-						type: 'paragraph',
-						content: [
-							{
-								type: 'text',
-								text: 'Block-level elements (like <div>, <p>, <h1>) start on a new line. Inline elements (like <span>, <a>, <strong>) flow within text.',
-							},
-						],
-					},
-				],
+				body: {
+					type: 'doc',
+					content: [
+						{
+							type: 'heading',
+							attrs: { level: 2 },
+							content: [{ type: 'text', text: 'HTML Fundamentals' }],
+						},
+						{
+							type: 'paragraph',
+							content: [
+								{
+									type: 'text',
+									text: 'HTML stands for HyperText Markup Language. It defines the structure of web pages using elements represented by tags like <html>, <head>, and <body>.',
+								},
+							],
+						},
+						{
+							type: 'paragraph',
+							content: [
+								{
+									type: 'text',
+									text: 'Every HTML document should start with <!DOCTYPE html> to tell the browser which version of HTML is being used.',
+								},
+							],
+						},
+						{
+							type: 'paragraph',
+							content: [
+								{
+									type: 'text',
+									text: 'Block-level elements (like <div>, <p>, <h1>) start on a new line. Inline elements (like <span>, <a>, <strong>) flow within text.',
+								},
+							],
+						},
+					],
+				},
 			},
 		},
 	});
 
-	const note1b = await prisma.note.create({
+	const note1b = await prisma.lessonResource.create({
 		data: {
 			lessonId: lesson1.id,
+			type: 'note',
 			title: 'Semantic HTML',
 			order: 3,
 			content: {
-				type: 'doc',
-				content: [
-					{
-						type: 'heading',
-						attrs: { level: 2 },
-						content: [{ type: 'text', text: 'Semantic HTML' }],
-					},
-					{
-						type: 'paragraph',
-						content: [
-							{
-								type: 'text',
-								text: 'Semantic elements clearly describe their meaning: <header>, <nav>, <main>, <article>, <section>, <aside>, and <footer>. They improve accessibility and SEO compared to generic <div> containers.',
-							},
-						],
-					},
-					{
-						type: 'paragraph',
-						content: [
-							{
-								type: 'text',
-								text: 'Screen readers use semantic tags to help users navigate the page. Search engines also use them to understand the page structure and rank content more accurately.',
-							},
-						],
-					},
-				],
+				body: {
+					type: 'doc',
+					content: [
+						{
+							type: 'heading',
+							attrs: { level: 2 },
+							content: [{ type: 'text', text: 'Semantic HTML' }],
+						},
+						{
+							type: 'paragraph',
+							content: [
+								{
+									type: 'text',
+									text: 'Semantic elements clearly describe their meaning: <header>, <nav>, <main>, <article>, <section>, <aside>, and <footer>. They improve accessibility and SEO compared to generic <div> containers.',
+								},
+							],
+						},
+						{
+							type: 'paragraph',
+							content: [
+								{
+									type: 'text',
+									text: 'Screen readers use semantic tags to help users navigate the page. Search engines also use them to understand the page structure and rank content more accurately.',
+								},
+							],
+						},
+					],
+				},
 			},
 		},
 	});
 
-	await prisma.flashCard.createMany({
+	await prisma.lessonTool.createMany({
 		data: [
 			{
 				lessonId: lesson1.id,
-				front: 'What does HTML stand for?',
-				back: 'HyperText Markup Language',
+				type: 'flash_card',
+				title: 'What does HTML stand for?',
 				order: 1,
+				content: { front: 'What does HTML stand for?', back: 'HyperText Markup Language' },
 			},
 			{
 				lessonId: lesson1.id,
-				front: 'What tag wraps the visible content of a web page?',
-				back: '<body>',
+				type: 'flash_card',
+				title: 'What tag wraps the visible content?',
 				order: 2,
+				content: { front: 'What tag wraps the visible content of a web page?', back: '<body>' },
 			},
 			{
 				lessonId: lesson1.id,
-				front: 'What is a semantic HTML element?',
-				back: 'An element that clearly describes its meaning to both the browser and developer, e.g. <article>, <nav>, <header>.',
+				type: 'flash_card',
+				title: 'What is a semantic HTML element?',
 				order: 3,
+				content: {
+					front: 'What is a semantic HTML element?',
+					back: 'An element that clearly describes its meaning to both the browser and developer, e.g. <article>, <nav>, <header>.',
+				},
 			},
 		],
 	});
 
-	await prisma.vocab.createMany({
+	await prisma.lessonTool.createMany({
 		data: [
 			{
 				lessonId: lesson1.id,
-				term: 'Tag',
-				definition:
-					'An HTML keyword enclosed in angle brackets (e.g. <p>) that defines an element on a page.',
+				type: 'vocab',
+				title: 'Tag',
 				order: 1,
+				content: {
+					term: 'Tag',
+					definition: 'An HTML keyword enclosed in angle brackets (e.g. <p>) that defines an element on a page.',
+				},
 			},
 			{
 				lessonId: lesson1.id,
-				term: 'Element',
-				definition:
-					'A complete HTML component consisting of an opening tag, optional content, and a closing tag.',
+				type: 'vocab',
+				title: 'Element',
 				order: 2,
+				content: {
+					term: 'Element',
+					definition: 'A complete HTML component consisting of an opening tag, optional content, and a closing tag.',
+				},
 			},
 			{
 				lessonId: lesson1.id,
-				term: 'Attribute',
-				definition:
-					'Extra information added inside an opening tag to configure an element, e.g. class, id, src.',
+				type: 'vocab',
+				title: 'Attribute',
 				order: 3,
+				content: {
+					term: 'Attribute',
+					definition: 'Extra information added inside an opening tag to configure an element, e.g. class, id, src.',
+				},
 			},
 			{
 				lessonId: lesson1.id,
-				term: 'DOCTYPE',
-				definition:
-					'A declaration at the top of an HTML file that tells the browser which version of HTML the page uses.',
+				type: 'vocab',
+				title: 'DOCTYPE',
 				order: 4,
+				content: {
+					term: 'DOCTYPE',
+					definition: 'A declaration at the top of an HTML file that tells the browser which version of HTML the page uses.',
+				},
 			},
 		],
 	});
 
-	await prisma.practiceProblem.createMany({
+	await prisma.lessonTool.createMany({
 		data: [
 			{
 				lessonId: lesson1.id,
-				question:
-					'Which tag is used to define the main visible content of an HTML page?',
-				options: ['<head>', '<body>', '<main>', '<section>'],
-				correctIndex: 1,
+				type: 'practice_problem',
+				title: 'Main visible content tag',
 				order: 1,
+				content: {
+					question: 'Which tag is used to define the main visible content of an HTML page?',
+					options: ['<head>', '<body>', '<main>', '<section>'],
+					correctIndex: 1,
+				},
 			},
 			{
 				lessonId: lesson1.id,
-				question: 'Which of the following is a block-level element?',
-				options: ['<span>', '<a>', '<strong>', '<div>'],
-				correctIndex: 3,
+				type: 'practice_problem',
+				title: 'Block-level element',
 				order: 2,
+				content: {
+					question: 'Which of the following is a block-level element?',
+					options: ['<span>', '<a>', '<strong>', '<div>'],
+					correctIndex: 3,
+				},
 			},
 			{
 				lessonId: lesson1.id,
-				question: 'What does the <!DOCTYPE html> declaration do?',
-				options: [
-					'Links an external stylesheet',
-					'Sets the page language to English',
-					'Tells the browser the page uses HTML5',
-					'Creates a hidden comment',
-				],
-				correctIndex: 2,
+				type: 'practice_problem',
+				title: 'DOCTYPE declaration',
 				order: 3,
+				content: {
+					question: 'What does the <!DOCTYPE html> declaration do?',
+					options: [
+						'Links an external stylesheet',
+						'Sets the page language to English',
+						'Tells the browser the page uses HTML5',
+						'Creates a hidden comment',
+					],
+					correctIndex: 2,
+				},
 			},
 		],
 	});
 
-	const quiz1 = await prisma.quiz.create({
+	const quiz1 = await prisma.assessment.create({
 		data: {
+			type: 'lesson_quiz',
 			lessonId: lesson1.id,
 			questions: {
 				create: [
 					{
-						question:
-							'Which tag defines the main visible area of an HTML page?',
-						options: ['<head>', '<body>', '<html>', '<main>'],
-						correctIndex: 1,
+						type: 'multiple_choice',
+						question: 'Which tag defines the main visible area of an HTML page?',
+						content: { options: ['<head>', '<body>', '<html>', '<main>'], correctIndex: 1 },
 						order: 1,
 					},
 					{
+						type: 'multiple_choice',
 						question: 'What does DOCTYPE tell the browser?',
-						options: [
-							'The page language',
-							'The HTML version being used',
-							'The page encoding',
-							'The server type',
-						],
-						correctIndex: 1,
+						content: {
+							options: ['The page language', 'The HTML version being used', 'The page encoding', 'The server type'],
+							correctIndex: 1,
+						},
 						order: 2,
 					},
 					{
+						type: 'multiple_choice',
 						question: 'Which element is a block-level element?',
-						options: ['<span>', '<a>', '<strong>', '<p>'],
-						correctIndex: 3,
+						content: { options: ['<span>', '<a>', '<strong>', '<p>'], correctIndex: 3 },
 						order: 3,
 					},
 				],
@@ -805,203 +559,190 @@ async function main() {
 		},
 	});
 
-	// Add a passing attempt for lesson1 quiz
-	await prisma.quizAttempt.create({
-		data: {
-			quizId: quiz1.id,
-			userId: user.id,
-			score: 1,
-			passed: true,
-		},
+	await prisma.assessmentAttempt.create({
+		data: { assessmentId: quiz1.id, userId: user.id, score: 1, passed: true },
 	});
 
-	// Seed resource completions for lesson1 (admin has completed all resources)
 	await prisma.lessonResourceCompletion.createMany({
 		data: [
-			{
-				userId: user.id,
-				lessonId: lesson1.id,
-				resourceType: 'lessonPlan',
-				resourceId: lesson1.id,
-			},
-			{
-				userId: user.id,
-				lessonId: lesson1.id,
-				resourceType: 'video',
-				resourceId: video1.id,
-			},
-			{
-				userId: user.id,
-				lessonId: lesson1.id,
-				resourceType: 'note',
-				resourceId: note1.id,
-			},
-			{
-				userId: user.id,
-				lessonId: lesson1.id,
-				resourceType: 'note',
-				resourceId: note1b.id,
-			},
-			{
-				userId: user.id,
-				lessonId: lesson1.id,
-				resourceType: 'vocab',
-				resourceId: lesson1.id,
-			},
+			{ userId: user.id, lessonId: lesson1.id, resourceType: 'lessonPlan', resourceId: lesson1.id },
+			{ userId: user.id, lessonId: lesson1.id, resourceType: 'video', resourceId: video1.id },
+			{ userId: user.id, lessonId: lesson1.id, resourceType: 'note', resourceId: note1.id },
+			{ userId: user.id, lessonId: lesson1.id, resourceType: 'note', resourceId: note1b.id },
+			{ userId: user.id, lessonId: lesson1.id, resourceType: 'vocab', resourceId: lesson1.id },
 		],
 	});
 
 	// --- Lesson 2: CSS Selectors ---
 
-	const video2 = await prisma.video.create({
+	const video2 = await prisma.lessonResource.create({
 		data: {
 			lessonId: lesson2.id,
+			type: 'video',
 			title: 'CSS Selectors Crash Course',
-			url: 'https://www.youtube.com/watch?v=l1mER1bV0N0',
 			order: 1,
+			content: { url: 'https://www.youtube.com/watch?v=l1mER1bV0N0' },
 		},
 	});
 
-	await prisma.note.create({
+	await prisma.lessonResource.create({
 		data: {
 			lessonId: lesson2.id,
+			type: 'note',
 			title: 'Selector Types',
 			order: 2,
 			content: {
-				type: 'doc',
-				content: [
-					{
-						type: 'heading',
-						attrs: { level: 2 },
-						content: [{ type: 'text', text: 'CSS Selectors' }],
-					},
-					{
-						type: 'paragraph',
-						content: [
-							{
-								type: 'text',
-								text: 'CSS selectors target HTML elements to apply styles. The most common are element (p), class (.btn), and ID (#header) selectors.',
-							},
-						],
-					},
-					{
-						type: 'paragraph',
-						content: [
-							{
-								type: 'text',
-								text: 'Specificity determines which CSS rule wins when multiple rules target the same element. ID > class > element.',
-							},
-						],
-					},
-				],
+				body: {
+					type: 'doc',
+					content: [
+						{
+							type: 'heading',
+							attrs: { level: 2 },
+							content: [{ type: 'text', text: 'CSS Selectors' }],
+						},
+						{
+							type: 'paragraph',
+							content: [
+								{
+									type: 'text',
+									text: 'CSS selectors target HTML elements to apply styles. The most common are element (p), class (.btn), and ID (#header) selectors.',
+								},
+							],
+						},
+						{
+							type: 'paragraph',
+							content: [
+								{
+									type: 'text',
+									text: 'Specificity determines which CSS rule wins when multiple rules target the same element. ID > class > element.',
+								},
+							],
+						},
+					],
+				},
 			},
 		},
 	});
 
-	await prisma.note.create({
+	await prisma.lessonResource.create({
 		data: {
 			lessonId: lesson2.id,
+			type: 'note',
 			title: 'Specificity Deep Dive',
 			order: 3,
 			content: {
-				type: 'doc',
-				content: [
-					{
-						type: 'heading',
-						attrs: { level: 2 },
-						content: [
-							{ type: 'text', text: 'Understanding Specificity' },
-						],
-					},
-					{
-						type: 'paragraph',
-						content: [
-							{
-								type: 'text',
-								text: 'Specificity is calculated as a four-part score: inline styles (1,0,0,0), IDs (0,1,0,0), classes/pseudo-classes (0,0,1,0), and elements (0,0,0,1). The rule with the highest score wins.',
-							},
-						],
-					},
-					{
-						type: 'paragraph',
-						content: [
-							{
-								type: 'text',
-								text: 'When two rules have the same specificity, the one that appears later in the stylesheet takes effect — this is source order.',
-							},
-						],
-					},
-				],
+				body: {
+					type: 'doc',
+					content: [
+						{
+							type: 'heading',
+							attrs: { level: 2 },
+							content: [{ type: 'text', text: 'Understanding Specificity' }],
+						},
+						{
+							type: 'paragraph',
+							content: [
+								{
+									type: 'text',
+									text: 'Specificity is calculated as a four-part score: inline styles (1,0,0,0), IDs (0,1,0,0), classes/pseudo-classes (0,0,1,0), and elements (0,0,0,1). The rule with the highest score wins.',
+								},
+							],
+						},
+						{
+							type: 'paragraph',
+							content: [
+								{
+									type: 'text',
+									text: 'When two rules have the same specificity, the one that appears later in the stylesheet takes effect — this is source order.',
+								},
+							],
+						},
+					],
+				},
 			},
 		},
 	});
 
-	await prisma.flashCard.createMany({
+	await prisma.lessonTool.createMany({
 		data: [
 			{
 				lessonId: lesson2.id,
-				front: 'How do you select an element with class "btn"?',
-				back: '.btn { }',
+				type: 'flash_card',
+				title: 'Select by class "btn"',
 				order: 1,
+				content: { front: 'How do you select an element with class "btn"?', back: '.btn { }' },
 			},
 			{
 				lessonId: lesson2.id,
-				front: 'Which CSS selector has the highest specificity?',
-				back: 'ID selector (#id)',
+				type: 'flash_card',
+				title: 'Highest specificity selector',
 				order: 2,
+				content: { front: 'Which CSS selector has the highest specificity?', back: 'ID selector (#id)' },
 			},
 		],
 	});
 
-	await prisma.vocab.createMany({
+	await prisma.lessonTool.createMany({
 		data: [
 			{
 				lessonId: lesson2.id,
-				term: 'Selector',
-				definition:
-					'The part of a CSS rule that identifies which HTML elements the styles apply to.',
+				type: 'vocab',
+				title: 'Selector',
 				order: 1,
+				content: {
+					term: 'Selector',
+					definition: 'The part of a CSS rule that identifies which HTML elements the styles apply to.',
+				},
 			},
 			{
 				lessonId: lesson2.id,
-				term: 'Specificity',
-				definition:
-					'A weighting system that determines which CSS rule takes precedence when multiple rules target the same element.',
+				type: 'vocab',
+				title: 'Specificity',
 				order: 2,
+				content: {
+					term: 'Specificity',
+					definition: 'A weighting system that determines which CSS rule takes precedence when multiple rules target the same element.',
+				},
 			},
 			{
 				lessonId: lesson2.id,
-				term: 'Cascade',
-				definition:
-					'The process by which the browser resolves conflicting CSS rules based on specificity, source order, and importance.',
+				type: 'vocab',
+				title: 'Cascade',
 				order: 3,
+				content: {
+					term: 'Cascade',
+					definition: 'The process by which the browser resolves conflicting CSS rules based on specificity, source order, and importance.',
+				},
 			},
 			{
 				lessonId: lesson2.id,
-				term: 'Pseudo-class',
-				definition:
-					'A keyword added to a selector that specifies a special state, such as :hover or :focus.',
+				type: 'vocab',
+				title: 'Pseudo-class',
 				order: 4,
+				content: {
+					term: 'Pseudo-class',
+					definition: 'A keyword added to a selector that specifies a special state, such as :hover or :focus.',
+				},
 			},
 		],
 	});
 
-	const quiz2 = await prisma.quiz.create({
+	const quiz2 = await prisma.assessment.create({
 		data: {
+			type: 'lesson_quiz',
 			lessonId: lesson2.id,
 			questions: {
 				create: [
 					{
+						type: 'multiple_choice',
 						question: 'How do you select all <p> elements in CSS?',
-						options: ['#p', '.p', 'p', '*p'],
-						correctIndex: 2,
+						content: { options: ['#p', '.p', 'p', '*p'], correctIndex: 2 },
 						order: 1,
 					},
 					{
-						question:
-							'Which selector targets an element with id="header"?',
-						options: ['.header', '#header', 'header', '@header'],
-						correctIndex: 1,
+						type: 'multiple_choice',
+						question: 'Which selector targets an element with id="header"?',
+						content: { options: ['.header', '#header', 'header', '@header'], correctIndex: 1 },
 						order: 2,
 					},
 				],
@@ -1009,87 +750,59 @@ async function main() {
 		},
 	});
 
-	// Add a passing attempt for lesson2 quiz
-	await prisma.quizAttempt.create({
-		data: {
-			quizId: quiz2.id,
-			userId: user.id,
-			score: 1,
-			passed: true,
-		},
+	await prisma.assessmentAttempt.create({
+		data: { assessmentId: quiz2.id, userId: user.id, score: 1, passed: true },
 	});
 
-	// Partial completions for lesson2 (admin has done lesson plan + video, not notes/vocab)
 	await prisma.lessonResourceCompletion.createMany({
 		data: [
-			{
-				userId: user.id,
-				lessonId: lesson2.id,
-				resourceType: 'lessonPlan',
-				resourceId: lesson2.id,
-			},
-			{
-				userId: user.id,
-				lessonId: lesson2.id,
-				resourceType: 'video',
-				resourceId: video2.id,
-			},
+			{ userId: user.id, lessonId: lesson2.id, resourceType: 'lessonPlan', resourceId: lesson2.id },
+			{ userId: user.id, lessonId: lesson2.id, resourceType: 'video', resourceId: video2.id },
 		],
 	});
 
-	// --- Unit 1 Test ---
+	// --- Unit 1 Assessment (unit_quiz) ---
 
-	const test1 = await prisma.test.create({
+	const test1 = await prisma.assessment.create({
 		data: {
+			type: 'unit_quiz',
 			unitId: unit1.id,
 			questions: {
 				create: [
 					{
-						question:
-							'What is the correct HTML element for the largest heading?',
-						options: ['<h6>', '<heading>', '<h1>', '<head>'],
-						correctIndex: 2,
+						type: 'multiple_choice',
+						question: 'What is the correct HTML element for the largest heading?',
+						content: { options: ['<h6>', '<heading>', '<h1>', '<head>'], correctIndex: 2 },
 						order: 1,
 					},
 					{
+						type: 'multiple_choice',
 						question: 'Which CSS property changes the text color?',
-						options: [
-							'text-color',
-							'font-color',
-							'color',
-							'foreground',
-						],
-						correctIndex: 2,
+						content: { options: ['text-color', 'font-color', 'color', 'foreground'], correctIndex: 2 },
 						order: 2,
 					},
 					{
-						question:
-							'How do you apply multiple classes to an HTML element?',
-						options: [
-							'class="cls1" class="cls2"',
-							'class="cls1, cls2"',
-							'class="cls1 cls2"',
-							'classes="cls1 cls2"',
-						],
-						correctIndex: 2,
+						type: 'multiple_choice',
+						question: 'How do you apply multiple classes to an HTML element?',
+						content: {
+							options: ['class="cls1" class="cls2"', 'class="cls1, cls2"', 'class="cls1 cls2"', 'classes="cls1 cls2"'],
+							correctIndex: 2,
+						},
 						order: 3,
 					},
 					{
+						type: 'multiple_choice',
 						question: 'What does CSS stand for?',
-						options: [
-							'Creative Style Sheets',
-							'Cascading Style Sheets',
-							'Computer Style Sheets',
-							'Colorful Style Sheets',
-						],
-						correctIndex: 1,
+						content: {
+							options: ['Creative Style Sheets', 'Cascading Style Sheets', 'Computer Style Sheets', 'Colorful Style Sheets'],
+							correctIndex: 1,
+						},
 						order: 4,
 					},
 					{
-						question:
-							'Which HTML attribute specifies an alternate text for an image?',
-						options: ['title', 'src', 'alt', 'longdesc'],
-						correctIndex: 2,
+						type: 'multiple_choice',
+						question: 'Which HTML attribute specifies an alternate text for an image?',
+						content: { options: ['title', 'src', 'alt', 'longdesc'], correctIndex: 2 },
 						order: 5,
 					},
 				],
@@ -1097,136 +810,147 @@ async function main() {
 		},
 	});
 
-	// Add a passing attempt for unit1 test
-	await prisma.testAttempt.create({
-		data: {
-			testId: test1.id,
-			userId: user.id,
-			score: 1,
-			passed: true,
-		},
+	await prisma.assessmentAttempt.create({
+		data: { assessmentId: test1.id, userId: user.id, score: 1, passed: true },
 	});
 
 	// --- Lesson 3: Variables and Types ---
 
-	const video3 = await prisma.video.create({
+	const video3 = await prisma.lessonResource.create({
 		data: {
 			lessonId: lesson3.id,
+			type: 'video',
 			title: 'JavaScript Variables',
-			url: 'https://www.youtube.com/watch?v=9aGIAL16DL4',
 			order: 1,
+			content: { url: 'https://www.youtube.com/watch?v=9aGIAL16DL4' },
 		},
 	});
 
-	await prisma.note.create({
+	await prisma.lessonResource.create({
 		data: {
 			lessonId: lesson3.id,
+			type: 'note',
 			title: 'Variables and Types',
 			order: 2,
 			content: {
-				type: 'doc',
-				content: [
-					{
-						type: 'heading',
-						attrs: { level: 2 },
-						content: [
-							{ type: 'text', text: 'Variables and Types' },
-						],
-					},
-					{
-						type: 'paragraph',
-						content: [
-							{
-								type: 'text',
-								text: 'JavaScript has three variable keywords: var (function-scoped, hoisted), let (block-scoped, reassignable), and const (block-scoped, not reassignable).',
-							},
-						],
-					},
-					{
-						type: 'paragraph',
-						content: [
-							{
-								type: 'text',
-								text: 'JavaScript is dynamically typed. The main primitive types are: string, number, boolean, null, undefined, symbol, and bigint.',
-							},
-						],
-					},
-				],
+				body: {
+					type: 'doc',
+					content: [
+						{
+							type: 'heading',
+							attrs: { level: 2 },
+							content: [{ type: 'text', text: 'Variables and Types' }],
+						},
+						{
+							type: 'paragraph',
+							content: [
+								{
+									type: 'text',
+									text: 'JavaScript has three variable keywords: var (function-scoped, hoisted), let (block-scoped, reassignable), and const (block-scoped, not reassignable).',
+								},
+							],
+						},
+						{
+							type: 'paragraph',
+							content: [
+								{
+									type: 'text',
+									text: 'JavaScript is dynamically typed. The main primitive types are: string, number, boolean, null, undefined, symbol, and bigint.',
+								},
+							],
+						},
+					],
+				},
 			},
 		},
 	});
 
-	await prisma.flashCard.createMany({
+	await prisma.lessonTool.createMany({
 		data: [
 			{
 				lessonId: lesson3.id,
-				front: 'What is the difference between null and undefined?',
-				back: 'null is an intentional absence of value assigned by the developer. undefined means a variable has been declared but not assigned.',
+				type: 'flash_card',
+				title: 'null vs undefined',
 				order: 1,
+				content: {
+					front: 'What is the difference between null and undefined?',
+					back: 'null is an intentional absence of value assigned by the developer. undefined means a variable has been declared but not assigned.',
+				},
 			},
 			{
 				lessonId: lesson3.id,
-				front: "Which keyword should you prefer for variables that won't be reassigned?",
-				back: 'const',
+				type: 'flash_card',
+				title: 'Prefer const or let?',
 				order: 2,
+				content: {
+					front: "Which keyword should you prefer for variables that won't be reassigned?",
+					back: 'const',
+				},
 			},
 		],
 	});
 
-	await prisma.vocab.createMany({
+	await prisma.lessonTool.createMany({
 		data: [
 			{
 				lessonId: lesson3.id,
-				term: 'Variable',
-				definition:
-					'A named container for storing a value that can be referenced and manipulated throughout a program.',
+				type: 'vocab',
+				title: 'Variable',
 				order: 1,
+				content: {
+					term: 'Variable',
+					definition: 'A named container for storing a value that can be referenced and manipulated throughout a program.',
+				},
 			},
 			{
 				lessonId: lesson3.id,
-				term: 'Primitive',
-				definition:
-					'A basic data type that is not an object and has no methods. JavaScript primitives include string, number, boolean, null, undefined, symbol, and bigint.',
+				type: 'vocab',
+				title: 'Primitive',
 				order: 2,
+				content: {
+					term: 'Primitive',
+					definition: 'A basic data type that is not an object and has no methods. JavaScript primitives include string, number, boolean, null, undefined, symbol, and bigint.',
+				},
 			},
 			{
 				lessonId: lesson3.id,
-				term: 'Type Coercion',
-				definition:
-					"JavaScript's automatic conversion of one data type to another, e.g. converting a number to a string during concatenation.",
+				type: 'vocab',
+				title: 'Type Coercion',
 				order: 3,
+				content: {
+					term: 'Type Coercion',
+					definition: "JavaScript's automatic conversion of one data type to another, e.g. converting a number to a string during concatenation.",
+				},
 			},
 			{
 				lessonId: lesson3.id,
-				term: 'Hoisting',
-				definition:
-					"JavaScript's behavior of moving variable and function declarations to the top of their scope before code execution.",
+				type: 'vocab',
+				title: 'Hoisting',
 				order: 4,
+				content: {
+					term: 'Hoisting',
+					definition: "JavaScript's behavior of moving variable and function declarations to the top of their scope before code execution.",
+				},
 			},
 		],
 	});
 
-	const quiz3 = await prisma.quiz.create({
+	const quiz3 = await prisma.assessment.create({
 		data: {
+			type: 'lesson_quiz',
 			lessonId: lesson3.id,
 			questions: {
 				create: [
 					{
-						question:
-							'Which keyword declares a block-scoped variable that can be reassigned?',
-						options: ['var', 'let', 'const', 'def'],
-						correctIndex: 1,
+						type: 'multiple_choice',
+						question: 'Which keyword declares a block-scoped variable that can be reassigned?',
+						content: { options: ['var', 'let', 'const', 'def'], correctIndex: 1 },
 						order: 1,
 					},
 					{
+						type: 'multiple_choice',
 						question: 'What does typeof null return in JavaScript?',
-						options: [
-							'"null"',
-							'"undefined"',
-							'"object"',
-							'"boolean"',
-						],
-						correctIndex: 2,
+						content: { options: ['"null"', '"undefined"', '"object"', '"boolean"'], correctIndex: 2 },
 						order: 2,
 					},
 				],
@@ -1234,132 +958,127 @@ async function main() {
 		},
 	});
 
-	await prisma.quizAttempt.create({
-		data: {
-			quizId: quiz3.id,
-			userId: user.id,
-			score: 1,
-			passed: true,
-		},
+	await prisma.assessmentAttempt.create({
+		data: { assessmentId: quiz3.id, userId: user.id, score: 1, passed: true },
 	});
 
-	// Lesson 3 completions — all done
 	await prisma.lessonResourceCompletion.createMany({
 		data: [
-			{
-				userId: user.id,
-				lessonId: lesson3.id,
-				resourceType: 'lessonPlan',
-				resourceId: lesson3.id,
-			},
-			{
-				userId: user.id,
-				lessonId: lesson3.id,
-				resourceType: 'video',
-				resourceId: video3.id,
-			},
+			{ userId: user.id, lessonId: lesson3.id, resourceType: 'lessonPlan', resourceId: lesson3.id },
+			{ userId: user.id, lessonId: lesson3.id, resourceType: 'video', resourceId: video3.id },
 		],
 	});
 
 	// --- Lesson 4: Functions and Scope ---
 
-	await prisma.note.create({
+	await prisma.lessonResource.create({
 		data: {
 			lessonId: lesson4.id,
+			type: 'note',
 			title: 'Functions & Closures',
 			order: 1,
 			content: {
-				type: 'doc',
-				content: [
-					{
-						type: 'heading',
-						attrs: { level: 2 },
-						content: [
-							{ type: 'text', text: 'Functions and Closures' },
-						],
-					},
-					{
-						type: 'paragraph',
-						content: [
-							{
-								type: 'text',
-								text: 'A function declaration is hoisted, meaning it can be called before it appears in the code. Function expressions and arrow functions are not hoisted.',
-							},
-						],
-					},
-					{
-						type: 'paragraph',
-						content: [
-							{
-								type: 'text',
-								text: 'A closure is created when an inner function captures variables from its outer scope. This is the foundation of many JavaScript patterns including data privacy and factory functions.',
-							},
-						],
-					},
-				],
+				body: {
+					type: 'doc',
+					content: [
+						{
+							type: 'heading',
+							attrs: { level: 2 },
+							content: [{ type: 'text', text: 'Functions and Closures' }],
+						},
+						{
+							type: 'paragraph',
+							content: [
+								{
+									type: 'text',
+									text: 'A function declaration is hoisted, meaning it can be called before it appears in the code. Function expressions and arrow functions are not hoisted.',
+								},
+							],
+						},
+						{
+							type: 'paragraph',
+							content: [
+								{
+									type: 'text',
+									text: 'A closure is created when an inner function captures variables from its outer scope. This is the foundation of many JavaScript patterns including data privacy and factory functions.',
+								},
+							],
+						},
+					],
+				},
 			},
 		},
 	});
 
-	await prisma.vocab.createMany({
+	await prisma.lessonTool.createMany({
 		data: [
 			{
 				lessonId: lesson4.id,
-				term: 'Function',
-				definition:
-					'A reusable block of code designed to perform a specific task, defined with the function keyword or as an arrow function.',
+				type: 'vocab',
+				title: 'Function',
 				order: 1,
+				content: {
+					term: 'Function',
+					definition: 'A reusable block of code designed to perform a specific task, defined with the function keyword or as an arrow function.',
+				},
 			},
 			{
 				lessonId: lesson4.id,
-				term: 'Scope',
-				definition:
-					'The context in which variables are accessible. Variables declared inside a function are local (function scope); those declared outside are global.',
+				type: 'vocab',
+				title: 'Scope',
 				order: 2,
+				content: {
+					term: 'Scope',
+					definition: 'The context in which variables are accessible. Variables declared inside a function are local (function scope); those declared outside are global.',
+				},
 			},
 			{
 				lessonId: lesson4.id,
-				term: 'Closure',
-				definition:
-					'A function that retains access to variables from its outer (enclosing) scope even after the outer function has finished executing.',
+				type: 'vocab',
+				title: 'Closure',
 				order: 3,
+				content: {
+					term: 'Closure',
+					definition: 'A function that retains access to variables from its outer (enclosing) scope even after the outer function has finished executing.',
+				},
 			},
 			{
 				lessonId: lesson4.id,
-				term: 'Arrow Function',
-				definition:
-					'A concise syntax for writing functions using => that also lexically binds the this keyword.',
+				type: 'vocab',
+				title: 'Arrow Function',
 				order: 4,
+				content: {
+					term: 'Arrow Function',
+					definition: 'A concise syntax for writing functions using => that also lexically binds the this keyword.',
+				},
 			},
 		],
 	});
 
-	const quiz4 = await prisma.quiz.create({
+	const quiz4 = await prisma.assessment.create({
 		data: {
+			type: 'lesson_quiz',
 			lessonId: lesson4.id,
 			questions: {
 				create: [
 					{
+						type: 'multiple_choice',
 						question: 'What is a closure in JavaScript?',
-						options: [
-							'A function that closes the browser',
-							'A function that retains access to its outer scope even after the outer function has returned',
-							'A method that seals an object',
-							'A loop that terminates early',
-						],
-						correctIndex: 1,
+						content: {
+							options: [
+								'A function that closes the browser',
+								'A function that retains access to its outer scope even after the outer function has returned',
+								'A method that seals an object',
+								'A loop that terminates early',
+							],
+							correctIndex: 1,
+						},
 						order: 1,
 					},
 					{
-						question:
-							'What is the output of: console.log(typeof function(){})?',
-						options: [
-							'"object"',
-							'"function"',
-							'"undefined"',
-							'"method"',
-						],
-						correctIndex: 1,
+						type: 'multiple_choice',
+						question: 'What is the output of: console.log(typeof function(){})?',
+						content: { options: ['"object"', '"function"', '"undefined"', '"method"'], correctIndex: 1 },
 						order: 2,
 					},
 				],
@@ -1367,48 +1086,38 @@ async function main() {
 		},
 	});
 
-	// No attempt for quiz4 — lesson not yet passed
-	// No completions for lesson4 — student hasn't started yet
+	// --- Unit 2 Assessment (unit_quiz) ---
 
-	// --- Unit 2 Test ---
-
-	const test2 = await prisma.test.create({
+	const test2 = await prisma.assessment.create({
 		data: {
+			type: 'unit_quiz',
 			unitId: unit2.id,
 			questions: {
 				create: [
 					{
+						type: 'multiple_choice',
 						question: 'What does the "===" operator check?',
-						options: [
-							'Value only',
-							'Type only',
-							'Value and type',
-							'Reference equality',
-						],
-						correctIndex: 2,
+						content: { options: ['Value only', 'Type only', 'Value and type', 'Reference equality'], correctIndex: 2 },
 						order: 1,
 					},
 					{
-						question:
-							'Which method converts a string to an integer?',
-						options: [
-							'Number()',
-							'parseInt()',
-							'toInt()',
-							'String()',
-						],
-						correctIndex: 1,
+						type: 'multiple_choice',
+						question: 'Which method converts a string to an integer?',
+						content: { options: ['Number()', 'parseInt()', 'toInt()', 'String()'], correctIndex: 1 },
 						order: 2,
 					},
 					{
+						type: 'multiple_choice',
 						question: 'What is hoisting in JavaScript?',
-						options: [
-							'Moving elements up in the DOM',
-							"JavaScript's behavior of moving declarations to the top of their scope",
-							"Increasing a variable's value",
-							'Loading scripts asynchronously',
-						],
-						correctIndex: 1,
+						content: {
+							options: [
+								'Moving elements up in the DOM',
+								"JavaScript's behavior of moving declarations to the top of their scope",
+								"Increasing a variable's value",
+								'Loading scripts asynchronously',
+							],
+							correctIndex: 1,
+						},
 						order: 3,
 					},
 				],
@@ -1416,55 +1125,45 @@ async function main() {
 		},
 	});
 
-	// --- Final Exam ---
+	// --- Course Exam ---
 
-	const exam = await prisma.finalExam.create({
+	const exam = await prisma.assessment.create({
 		data: {
+			type: 'course_exam',
 			courseId: course.id,
 			questions: {
 				create: [
 					{
-						question:
-							'Which HTML tag is used to create a hyperlink?',
-						options: ['<link>', '<href>', '<a>', '<url>'],
-						correctIndex: 2,
+						type: 'multiple_choice',
+						question: 'Which HTML tag is used to create a hyperlink?',
+						content: { options: ['<link>', '<href>', '<a>', '<url>'], correctIndex: 2 },
 						order: 1,
 					},
 					{
+						type: 'multiple_choice',
 						question: 'How do you write a comment in CSS?',
-						options: [
-							'// comment',
-							'# comment',
-							'/* comment */',
-							'<!-- comment -->',
-						],
-						correctIndex: 2,
+						content: { options: ['// comment', '# comment', '/* comment */', '<!-- comment -->'], correctIndex: 2 },
 						order: 2,
 					},
 					{
-						question:
-							'Which of the following is NOT a JavaScript primitive type?',
-						options: ['string', 'boolean', 'array', 'number'],
-						correctIndex: 2,
+						type: 'multiple_choice',
+						question: 'Which of the following is NOT a JavaScript primitive type?',
+						content: { options: ['string', 'boolean', 'array', 'number'], correctIndex: 2 },
 						order: 3,
 					},
 					{
-						question:
-							'What will "2" + 2 evaluate to in JavaScript?',
-						options: ['4', '"22"', 'NaN', 'Error'],
-						correctIndex: 1,
+						type: 'multiple_choice',
+						question: 'What will "2" + 2 evaluate to in JavaScript?',
+						content: { options: ['4', '"22"', 'NaN', 'Error'], correctIndex: 1 },
 						order: 4,
 					},
 					{
-						question:
-							'What CSS property makes an element invisible but still occupies space?',
-						options: [
-							'display: none',
-							'visibility: hidden',
-							'opacity: 0',
-							'Both B and C',
-						],
-						correctIndex: 3,
+						type: 'multiple_choice',
+						question: 'What CSS property makes an element invisible but still occupies space?',
+						content: {
+							options: ['display: none', 'visibility: hidden', 'opacity: 0', 'Both B and C'],
+							correctIndex: 3,
+						},
 						order: 5,
 					},
 				],
@@ -1472,25 +1171,20 @@ async function main() {
 		},
 	});
 
-	// Add passing attempts for quiz4 and unit2 test to complete all units
-	await prisma.quizAttempt.create({
-		data: { quizId: quiz4.id, userId: user.id, score: 1, passed: true },
+	// Complete all units for admin user
+	await prisma.assessmentAttempt.create({
+		data: { assessmentId: quiz4.id, userId: user.id, score: 1, passed: true },
+	});
+	await prisma.assessmentAttempt.create({
+		data: { assessmentId: test2.id, userId: user.id, score: 1, passed: true },
+	});
+	await prisma.assessmentAttempt.create({
+		data: { assessmentId: exam.id, userId: user.id, score: 1, passed: true },
 	});
 
-	await prisma.testAttempt.create({
-		data: { testId: test2.id, userId: user.id, score: 1, passed: true },
-	});
-
-	// Add passing exam attempt to mark course as complete
-	await prisma.examAttempt.create({
-		data: { examId: exam.id, userId: user.id, score: 1, passed: true },
-	});
-
-	console.log(
-		`Seeded assessments: ${quiz1.id}, ${quiz2.id}, ${quiz3.id}, ${quiz4.id}`,
-	);
-	console.log(`Seeded tests: ${test1.id}, ${test2.id}`);
-	console.log(`Seeded exam: ${exam.id}`);
+	console.log(`Seeded assessments: ${quiz1.id}, ${quiz2.id}, ${quiz3.id}, ${quiz4.id}`);
+	console.log(`Seeded unit quizzes: ${test1.id}, ${test2.id}`);
+	console.log(`Seeded course exam: ${exam.id}`);
 	console.log('Seed complete!');
 }
 

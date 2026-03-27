@@ -2,19 +2,19 @@ import { useState } from 'react';
 import Input from '../../components/Input.js';
 import Textarea from '../../components/Textarea.js';
 import Button from '../../components/Button.js';
-import type { Vocab } from '../../api/types.js';
+import type { LessonTool } from '../../api/types.js';
 import useFormSubmit from '../../hooks/useFormSubmit.js';
 
 interface VocabFormProps {
-  initial?: Partial<Vocab>;
+  initial?: LessonTool;
   nextOrder?: number;
   onSubmit: (data: { term: string; definition: string; order: number }) => Promise<void>;
   onCancel: () => void;
 }
 
 export default function VocabForm({ initial, nextOrder = 1, onSubmit, onCancel }: VocabFormProps) {
-  const [term, setTerm] = useState(initial?.term ?? '');
-  const [definition, setDefinition] = useState(initial?.definition ?? '');
+  const [term, setTerm] = useState((initial?.content?.term as string) ?? '');
+  const [definition, setDefinition] = useState((initial?.content?.definition as string) ?? '');
   const [order, setOrder] = useState(initial?.order ?? nextOrder);
   const { error, submitting, handleSubmit } = useFormSubmit(async () => {
     if (!term.trim() || !definition.trim()) throw new Error('Term and definition are required');

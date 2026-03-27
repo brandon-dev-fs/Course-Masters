@@ -4,9 +4,12 @@ import Textarea from '../../components/Textarea.js';
 import Button from '../../components/Button.js';
 
 export interface QuestionDraft {
+  type?: string;
   question: string;
-  options: string[];
-  correctIndex: number;
+  content: {
+    options: string[];
+    correctIndex: number;
+  };
   order: number;
 }
 
@@ -19,20 +22,20 @@ interface QuestionEditorProps {
 
 export default function QuestionEditor({ index, value, onChange, onRemove }: QuestionEditorProps) {
   function setOption(i: number, text: string) {
-    const opts = [...value.options];
+    const opts = [...value.content.options];
     opts[i] = text;
-    onChange({ ...value, options: opts });
+    onChange({ ...value, content: { ...value.content, options: opts } });
   }
 
   function addOption() {
-    onChange({ ...value, options: [...value.options, ''] });
+    onChange({ ...value, content: { ...value.content, options: [...value.content.options, ''] } });
   }
 
   function removeOption(i: number) {
-    if (value.options.length <= 2) return;
-    const opts = value.options.filter((_, idx) => idx !== i);
-    const correctIndex = value.correctIndex >= opts.length ? opts.length - 1 : value.correctIndex;
-    onChange({ ...value, options: opts, correctIndex });
+    if (value.content.options.length <= 2) return;
+    const opts = value.content.options.filter((_, idx) => idx !== i);
+    const correctIndex = value.content.correctIndex >= opts.length ? opts.length - 1 : value.content.correctIndex;
+    onChange({ ...value, content: { options: opts, correctIndex } });
   }
 
   return (
@@ -53,13 +56,13 @@ export default function QuestionEditor({ index, value, onChange, onRemove }: Que
       <div>
         <p className="text-sm font-medium text-foreground mb-2">Options</p>
         <div className="flex flex-col gap-2">
-          {value.options.map((opt, i) => (
+          {value.content.options.map((opt, i) => (
             <div key={i} className="flex items-center gap-2">
               <input
                 type="radio"
                 name={`correct-${index}`}
-                checked={value.correctIndex === i}
-                onChange={() => onChange({ ...value, correctIndex: i })}
+                checked={value.content.correctIndex === i}
+                onChange={() => onChange({ ...value, content: { ...value.content, correctIndex: i } })}
                 className="accent-accent shrink-0"
                 title="Mark as correct"
               />
@@ -70,14 +73,14 @@ export default function QuestionEditor({ index, value, onChange, onRemove }: Que
                 placeholder={`Option ${i + 1}`}
                 className="flex-1 rounded-md border border-border bg-surface-raised px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
               />
-              {value.options.length > 2 && (
+              {value.content.options.length > 2 && (
                 <button onClick={() => removeOption(i)} className="text-muted-foreground hover:text-destructive text-xs px-1">✕</button>
               )}
             </div>
           ))}
         </div>
         <p className="text-xs text-muted-foreground mt-1">Select the radio button next to the correct answer.</p>
-        {value.options.length < 6 && (
+        {value.content.options.length < 6 && (
           <button onClick={addOption} className="text-xs text-muted-foreground hover:text-foreground mt-2 underline">+ Add option</button>
         )}
       </div>

@@ -13,7 +13,6 @@ export const lessonsApi = {
     order?: number;
     objective?: string;
     planContent?: Record<string, unknown>;
-    vocabOrder?: number | null;
   }) =>
     apiClient.put<Lesson>(`/units/${unitId}/lessons/${lessonId}`, data),
   delete: (unitId: string, lessonId: string) =>

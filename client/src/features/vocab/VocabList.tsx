@@ -1,5 +1,5 @@
-import { vocabApi } from '../../api/vocab.js';
-import type { Vocab } from '../../api/types.js';
+import { lessonToolsApi } from '../../api/lesson-tools.js';
+import type { LessonTool } from '../../api/types.js';
 import { useAuth } from '../../context/AuthContext.js';
 import useResourceList from '../../hooks/useResourceList.js';
 import VocabCard from './VocabCard.js';
@@ -11,7 +11,10 @@ import LoadingSpinner from '../../components/LoadingSpinner.js';
 import ErrorMessage from '../../components/ErrorMessage.js';
 import EmptyState from '../../components/EmptyState.js';
 
-const byOrder = (a: Vocab, b: Vocab) => a.order - b.order;
+type VocabCreateInput = { type: 'vocab'; title: string; content: { term: string; definition: string }; order: number };
+type VocabUpdateInput = { content?: { term: string; definition: string }; order?: number };
+
+const byOrder = (a: LessonTool, b: LessonTool) => a.order - b.order;
 
 export default function VocabList({ lessonId }: { lessonId: string }) {
   const { user } = useAuth();
@@ -20,9 +23,13 @@ export default function VocabList({ lessonId }: { lessonId: string }) {
     items: vocabs, loading, error,
     showAdd, setShowAdd, editing, setEditing, deleting, setDeleting,
     handleAdd, handleUpdate, handleDelete,
-  } = useResourceList<Vocab, { term: string; definition: string; order: number }, { term?: string; definition?: string; order?: number }>(
-    () => vocabApi.getAll(lessonId),
-    { create: d => vocabApi.create(lessonId, d), update: vocabApi.update, delete: vocabApi.delete },
+  } = useResourceList<LessonTool, VocabCreateInput, VocabUpdateInput>(
+    () => lessonToolsApi.getAll(lessonId, 'vocab'),
+    {
+      create: d => lessonToolsApi.create(lessonId, d),
+      update: lessonToolsApi.update,
+      delete: lessonToolsApi.delete,
+    },
     lessonId, byOrder,
   );
 
@@ -58,16 +65,33 @@ export default function VocabList({ lessonId }: { lessonId: string }) {
 
       {showAdd && (
         <Modal title="Add Vocabulary Term" onClose={() => setShowAdd(false)}>
-          <VocabForm nextOrder={vocabs.length + 1} onSubmit={handleAdd} onCancel={() => setShowAdd(false)} />
+          <VocabForm
+            nextOrder={vocabs.length + 1}
+            onSubmit={async ({ term, definition, order }) =>
+              handleAdd({ type: 'vocab', title: term, content: { term, definition }, order })
+            }
+            onCancel={() => setShowAdd(false)}
+          />
         </Modal>
       )}
       {editing && (
         <Modal title="Edit Vocabulary Term" onClose={() => setEditing(null)}>
-          <VocabForm initial={editing} onSubmit={handleUpdate} onCancel={() => setEditing(null)} />
+          <VocabForm
+            initial={editing}
+            onSubmit={async ({ term, definition, order }) =>
+              handleUpdate({ content: { term, definition }, order })
+            }
+            onCancel={() => setEditing(null)}
+          />
         </Modal>
       )}
       {deleting && (
-        <ConfirmDialog title="Delete Term" message={`Delete "${deleting.term}"?`} onConfirm={handleDelete} onClose={() => setDeleting(null)} />
+        <ConfirmDialog
+          title="Delete Term"
+          message={`Delete "${(deleting.content?.term as string) ?? deleting.title}"?`}
+          onConfirm={handleDelete}
+          onClose={() => setDeleting(null)}
+        />
       )}
     </div>
   );
