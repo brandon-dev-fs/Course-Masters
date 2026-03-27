@@ -1,8 +1,14 @@
+export type UserRole = 'student' | 'teacher' | 'admin';
+export type AssessmentType = 'lesson_quiz' | 'unit_quiz' | 'course_exam';
+export type QuestionType = 'multiple_choice' | 'true_false' | 'matching' | 'fill_in_blank';
+export type ResourceType = 'note' | 'video' | 'lecture';
+export type ToolType = 'flash_card' | 'practice_problem' | 'vocab';
+
 export interface AuthUser {
   id: string;
   name: string;
   email: string;
-  role: 'student' | 'teacher' | 'admin';
+  role: UserRole;
   image?: string | null;
   emailVerified: boolean;
 }
@@ -53,13 +59,22 @@ export interface Lesson {
   description: string;
   order: number;
   unitId: string;
-  objective?: string | null;
-  planContent?: Record<string, unknown> | null;
-  vocabOrder?: number | null;
+  objective: string;
+  planContent: Record<string, unknown>;
 }
 
-export interface Note {
+export interface LessonResource {
   id: string;
+  type: ResourceType;
+  title: string;
+  content: Record<string, unknown>;
+  order: number;
+  lessonId: string;
+}
+
+export interface LessonTool {
+  id: string;
+  type: ToolType;
   title: string;
   content: Record<string, unknown>;
   order: number;
@@ -71,23 +86,6 @@ export interface ResourceCompletionItem {
   resourceId: string;
 }
 
-export interface FlashCard {
-  id: string;
-  front: string;
-  back: string;
-  order: number;
-  lessonId: string;
-}
-
-export interface PracticeProblem {
-  id: string;
-  question: string;
-  options: string[];
-  correctIndex: number;
-  order: number;
-  lessonId: string;
-}
-
 export interface StudentNote {
   id: string;
   content: string;
@@ -97,44 +95,20 @@ export interface StudentNote {
   updatedAt: string;
 }
 
-export interface Vocab {
-  id: string;
-  term: string;
-  definition: string;
-  order: number;
-  lessonId: string;
-}
-
-export interface Video {
-  id: string;
-  title: string;
-  url: string;
-  order: number;
-  transcript: string | null;
-  summary: string | null;
-  lessonId: string;
-}
-
 export interface AssessmentQuestion {
   id: string;
+  type: QuestionType;
   question: string;
-  options: string[];
+  content: Record<string, unknown>;
   order: number;
 }
 
 export interface Assessment {
   id: string;
+  type: AssessmentType;
   questions: AssessmentQuestion[];
   lastAttempt?: { score: number; passed: boolean } | null;
 }
-
-// Specific aliases for backward compatibility with API modules
-export type QuizQuestion = AssessmentQuestion & { quizId: string };
-export type Quiz = Assessment & { lessonId: string };
-export type TestQuestion = AssessmentQuestion & { testId: string };
-export type Test = Assessment & { unitId: string; lastAttempt: { score: number; passed: boolean } | null };
-export type FinalExamQuestion = AssessmentQuestion & { examId: string };
-export type FinalExam = Assessment & { courseId: string; lastAttempt: { score: number; passed: boolean } | null };
 
 export interface AttemptResult {
   score: number;

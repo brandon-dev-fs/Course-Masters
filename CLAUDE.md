@@ -34,12 +34,14 @@ CLIENT_URL=http://localhost:5000
 - Rate limiting on auth endpoints (20 reqs / 15 min)
 - Client uses `@better-auth/react` hooks; 401 triggers global `auth:unauthorized` event
 
-## Database Models (20 total)
+## Database Models (15 total)
 Core hierarchy (cascade deletes at every level): `User` → `Course` → `Unit` → `Lesson`
 - Auth: `User`, `Session`, `Account`, `Verification`
-- Lesson content: `Note` (JSON rich text, 1-to-1), `FlashCard`, `PracticeProblem`, `Vocab`, `Video`, `StudentNote` (unique per user+lesson)
-- Assessments: `Quiz`/`QuizQuestion`/`QuizAttempt`, `Test`/`TestQuestion`/`TestAttempt`, `FinalExam`/`FinalExamQuestion`/`ExamAttempt`
-- All IDs are UUIDs. Questions: multiple-choice, options as JSON array, `correctIndex` as Int.
+- Lesson content: `LessonResource` (type: `note | video | lecture`, content as Json), `LessonTool` (type: `flash_card | practice_problem | vocab`, content as Json), `StudentNote` (unique per user+lesson)
+- Assessments: `Assessment` (type: `lesson_quiz | unit_quiz | course_exam`) / `AssessmentQuestion` (type: `multiple_choice | true_false | matching | fill_in_blank`, content as Json) / `AssessmentAttempt`
+- Completions: `LessonCompletion`, `UnitCompletion`
+- All IDs are UUIDs. Question content Json holds type-specific answer data (e.g. `{options, correctIndex}` for multiple_choice).
+- Enums: `UserRole`, `AssessmentType`, `QuestionType`, `ResourceType`, `ToolType`
 
 ## API Routes (prefix: `/api`)
 ```
@@ -53,25 +55,23 @@ Units:            GET/POST /courses/:courseId/units
 Lessons:          GET/POST /units/:unitId/lessons
                   GET/PUT/DELETE /units/:unitId/lessons/:lessonId
 
-Notes:            GET/PUT /lessons/:lessonId/notes
+Resources:        GET/POST /lessons/:lessonId/resources  (?type=note|video|lecture)
+                  PUT/DELETE /resources/:resourceId
+Tools:            GET/POST /lessons/:lessonId/tools       (?type=flash_card|practice_problem|vocab)
+                  PUT/DELETE /tools/:toolId
 Student Notes:    GET/POST /lessons/:lessonId/student-notes
                   DELETE /student-notes/:studentNoteId
-Flashcards:       GET/POST /lessons/:lessonId/flashcards
-                  PUT/DELETE /flashcards/:flashcardId
-Practice:         GET/POST /lessons/:lessonId/practice-problems
-                  PUT/DELETE /practice-problems/:id
-Vocab:            GET/POST /lessons/:lessonId/vocab
-                  PUT/DELETE /vocab/:vocabId
-Videos:           GET/POST /lessons/:lessonId/videos
-                  PUT/DELETE /videos/:videoId
 YouTube:          GET /youtube/title
 
-Quizzes:          GET/POST /lessons/:lessonId/quiz
-                  POST /quizzes/:quizId/attempts
-Tests:            GET/POST /units/:unitId/test
-                  POST /tests/:testId/attempts
-Final Exams:      GET/POST /courses/:courseId/final-exam
-                  POST /exams/:examId/attempts
+Assessments:      GET/POST /lessons/:lessonId/assessment  (lesson_quiz)
+                  GET/POST /units/:unitId/assessment       (unit_quiz)
+                  GET/POST /courses/:courseId/assessment   (course_exam)
+                  PUT /assessments/:assessmentId
+                  GET/POST /assessments/:assessmentId/attempts
+
+Completions:      POST/DELETE /lessons/:lessonId/complete
+                  POST/DELETE /units/:unitId/complete
+Resource Completions: GET/POST /lessons/:lessonId/resource-completions
 
 Progress:         GET /courses/:courseId/progress
                   GET /courses/:courseId/units/:unitId/progress

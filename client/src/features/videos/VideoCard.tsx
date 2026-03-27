@@ -1,11 +1,11 @@
 import { Play } from 'lucide-react';
-import type { Video } from '../../api/types.js';
+import type { LessonResource } from '../../api/types.js';
 import { getEmbedUrl } from '../../utils/youtube.js';
 import CardActions from '../../components/CardActions.js';
 import ResourceCompletionCheckbox from '../../components/ResourceCompletionCheckbox.js';
 
 interface VideoCardProps {
-  video: Video;
+  video: LessonResource;
   onEdit?: () => void;
   onDelete?: () => void;
   isComplete?: boolean;
@@ -13,7 +13,8 @@ interface VideoCardProps {
 }
 
 export default function VideoCard({ video, onEdit, onDelete, isComplete, onToggleComplete }: VideoCardProps) {
-  const embedUrl = getEmbedUrl(video.url);
+  const url = video.content.url as string;
+  const embedUrl = url ? getEmbedUrl(url) : null;
 
   return (
     <div className="rounded-lg bg-surface border border-border p-4 group shadow-warm-sm hover:border-primary/30 transition-all">

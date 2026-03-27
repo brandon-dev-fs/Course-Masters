@@ -4,11 +4,10 @@ import { Settings } from 'lucide-react';
 import { lessonsApi } from '../../api/lessons.js';
 import { unitsApi } from '../../api/units.js';
 import { coursesApi } from '../../api/courses.js';
-import { videosApi } from '../../api/videos.js';
-import { notesApi } from '../../api/notes.js';
-import { vocabApi } from '../../api/vocab.js';
+import { lessonResourcesApi } from '../../api/lesson-resources.js';
+import { lessonToolsApi } from '../../api/lesson-tools.js';
 import { resourceCompletionsApi } from '../../api/resource-completions.js';
-import type { Lesson, Video, Note, ResourceCompletionItem } from '../../api/types.js';
+import type { Lesson, LessonResource, ResourceCompletionItem } from '../../api/types.js';
 import { useAuth } from '../../context/AuthContext.js';
 import UnitLessonSidebar from './UnitLessonSidebar.js';
 import LearningResourceNav from './LearningResourceNav.js';
@@ -39,8 +38,8 @@ export default function LessonDetailPage() {
   const [courseTitle, setCourseTitle] = useState('');
   const [unitTitle, setUnitTitle] = useState('');
   const [unitLessons, setUnitLessons] = useState<Lesson[]>([]);
-  const [videos, setVideos] = useState<Video[]>([]);
-  const [notes, setNotes] = useState<Note[]>([]);
+  const [videos, setVideos] = useState<LessonResource[]>([]);
+  const [notes, setNotes] = useState<LessonResource[]>([]);
   const [completions, setCompletions] = useState<ResourceCompletionItem[]>([]);
   const [hasVocabSection, setHasVocabSection] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -59,9 +58,9 @@ export default function LessonDetailPage() {
       unitsApi.getOne(courseId, unitId),
       coursesApi.getOne(courseId),
       lessonsApi.getAll(unitId),
-      videosApi.getAll(lessonId),
-      notesApi.getAll(lessonId),
-      vocabApi.getAll(lessonId),
+      lessonResourcesApi.getAll(lessonId, 'video'),
+      lessonResourcesApi.getAll(lessonId, 'note'),
+      lessonToolsApi.getAll(lessonId, 'vocab'),
       resourceCompletionsApi.get(lessonId),
     ])
       .then(([lessonData, unitData, courseData, lessons, vids, nts, voc, comp]) => {
@@ -82,29 +81,27 @@ export default function LessonDetailPage() {
   // Build learning resources array
   const learningResources = useMemo<LearningResource[]>(() => {
     const resources: LearningResource[] = [];
-    // Lesson Plan is always first
     resources.push({ key: 'lessonPlan', type: 'lessonPlan', title: 'Lesson Plan', id: lessonId ?? '' });
-    // Interleave videos, notes, and vocab by order
+
     const interleaved: LearningResource[] = [
       ...videos.map(v => ({ key: `video:${v.id}`, type: 'video' as const, title: v.title, id: v.id })),
       ...notes.map(n => ({ key: `note:${n.id}`, type: 'note' as const, title: n.title, id: n.id })),
     ];
-    if (hasVocabSection) {
-      interleaved.push({ key: 'vocab', type: 'vocab', title: 'Vocabulary', id: lessonId ?? '' });
-    }
-    const allOrders = [...videos.map(v => v.order), ...notes.map(n => n.order)];
-    const vocabEffectiveOrder = lesson?.vocabOrder ?? (allOrders.length > 0 ? Math.max(...allOrders) + 1 : 1);
     interleaved.sort((a, b) => {
-      const getOrder = (r: LearningResource) => {
+      const orderOf = (r: LearningResource): number => {
         if (r.type === 'video') return videos.find(v => v.id === r.id)!.order;
-        if (r.type === 'note') return notes.find(n => n.id === r.id)!.order;
-        return vocabEffectiveOrder;
+        return notes.find(n => n.id === r.id)!.order;
       };
-      return getOrder(a) - getOrder(b);
+      return orderOf(a) - orderOf(b);
     });
     resources.push(...interleaved);
+
+    if (hasVocabSection) {
+      resources.push({ key: 'vocab', type: 'vocab', title: 'Vocabulary', id: lessonId ?? '' });
+    }
+
     return resources;
-  }, [videos, notes, lessonId, hasVocabSection, lesson?.vocabOrder]);
+  }, [videos, notes, lessonId, hasVocabSection]);
 
   const completedKeys = useMemo(() => {
     const keys = new Set<string>();
@@ -142,10 +139,10 @@ export default function LessonDetailPage() {
 
   async function handleDeleteResource(resource: LearningResource) {
     if (resource.type === 'note') {
-      await notesApi.delete(resource.id);
+      await lessonResourcesApi.delete(resource.id);
       setNotes(prev => prev.filter(n => n.id !== resource.id));
     } else if (resource.type === 'video') {
-      await videosApi.delete(resource.id);
+      await lessonResourcesApi.delete(resource.id);
       setVideos(prev => prev.filter(v => v.id !== resource.id));
     } else if (resource.type === 'vocab') {
       setHasVocabSection(false);
@@ -156,43 +153,42 @@ export default function LessonDetailPage() {
   }
 
   async function handleMoveResource(resource: LearningResource, direction: 'left' | 'right') {
-    const reorderable = learningResources.filter(r => r.type !== 'lessonPlan');
+    const reorderable = learningResources.filter(r => r.type !== 'lessonPlan' && r.type !== 'vocab');
     const idx = reorderable.findIndex(r => r.key === resource.key);
     const targetIdx = direction === 'left' ? idx - 1 : idx + 1;
     if (targetIdx < 0 || targetIdx >= reorderable.length) return;
 
     const other = reorderable[targetIdx];
-    const allOrders = [...videos.map(v => v.order), ...notes.map(n => n.order)];
-    const vocabEffectiveOrder = lesson!.vocabOrder ?? (allOrders.length > 0 ? Math.max(...allOrders) + 1 : 1);
     const orderOf = (r: LearningResource): number => {
       if (r.type === 'video') return videos.find(v => v.id === r.id)!.order;
-      if (r.type === 'note') return notes.find(n => n.id === r.id)!.order;
-      return vocabEffectiveOrder;
+      return notes.find(n => n.id === r.id)!.order;
     };
     const orderA = orderOf(resource);
     const orderB = orderOf(other);
 
     const applyOrder = async (r: LearningResource, newOrder: number) => {
       if (r.type === 'video') {
-        const updated = await videosApi.update(r.id, { order: newOrder });
+        const updated = await lessonResourcesApi.update(r.id, { order: newOrder });
         setVideos(prev => prev.map(v => v.id === r.id ? updated : v).sort((a, b) => a.order - b.order));
       } else if (r.type === 'note') {
-        const updated = await notesApi.update(r.id, { order: newOrder });
+        const updated = await lessonResourcesApi.update(r.id, { order: newOrder });
         setNotes(prev => prev.map(n => n.id === r.id ? updated : n).sort((a, b) => a.order - b.order));
-      } else if (r.type === 'vocab') {
-        const updated = await lessonsApi.update(unitId!, lessonId!, { vocabOrder: newOrder });
-        setLesson(updated);
       }
     };
 
     await Promise.all([applyOrder(resource, orderB), applyOrder(other, orderA)]);
   }
 
-  async function handleAddResource(type: 'note' | 'video' | 'vocab') {
+  async function handleAddResource(type: 'note' | 'lecture' | 'video' | 'vocab') {
     if (!lessonId) return;
-    if (type === 'note') {
+    if (type === 'note' || type === 'lecture') {
       const emptyDoc = { type: 'doc', content: [{ type: 'paragraph' }] };
-      const note = await notesApi.create(lessonId, { title: 'New Note', content: emptyDoc, order: videos.length + notes.length + 1 });
+      const note = await lessonResourcesApi.create(lessonId, {
+        type,
+        title: type === 'lecture' ? 'New Lecture' : 'New Note',
+        content: { body: emptyDoc },
+        order: videos.length + notes.length + 1,
+      });
       newNoteIdRef.current = note.id;
       setNotes(prev => [...prev, note]);
       setActiveResourceKey(`note:${note.id}`);
@@ -208,7 +204,6 @@ export default function LessonDetailPage() {
   if (error) return <ErrorMessage message={error} />;
   if (!lesson) return null;
 
-  // Determine what to render in center content
   const practiceResource = activeResourceKey === 'flashcards' || activeResourceKey === 'practice' ? activeResourceKey : null;
   const isQuiz = activeResourceKey === 'quiz';
 
@@ -244,8 +239,13 @@ export default function LessonDetailPage() {
       return (
         <VideoForm
           nextOrder={videos.length + notes.length + 1}
-          onSubmit={async (data) => {
-            const video = await videosApi.create(lesson!.id, data);
+          onSubmit={async ({ title, url, order }) => {
+            const video = await lessonResourcesApi.create(lesson!.id, {
+              type: 'video',
+              title,
+              content: { url },
+              order,
+            });
             setVideos(prev => [...prev, video].sort((a, b) => a.order - b.order));
             setActiveResourceKey(`video:${video.id}`);
           }}
@@ -264,7 +264,7 @@ export default function LessonDetailPage() {
           onToggleComplete={() => handleToggleCompletion('video', video.id)}
           onEdit={canEdit ? () => setActiveResourceKey(`edit-video:${video.id}`) : undefined}
           onDelete={canEdit ? async () => {
-            await videosApi.delete(video.id);
+            await lessonResourcesApi.delete(video.id);
             setVideos(prev => prev.filter(v => v.id !== video.id));
             setActiveResourceKey('lessonPlan');
           } : undefined}
@@ -278,8 +278,8 @@ export default function LessonDetailPage() {
       return (
         <VideoForm
           initial={video}
-          onSubmit={async (data) => {
-            const updated = await videosApi.update(video.id, data);
+          onSubmit={async ({ title, url, order }) => {
+            const updated = await lessonResourcesApi.update(video.id, { title, content: { url }, order });
             setVideos(prev => prev.map(v => v.id === video.id ? updated : v).sort((a, b) => a.order - b.order));
             setActiveResourceKey(`video:${video.id}`);
           }}
@@ -309,9 +309,7 @@ export default function LessonDetailPage() {
 
   return (
     <>
-      {/* Break out of Layout's container to go edge-to-edge */}
       <div className="relative -mx-4 -mt-8 -mb-8 flex flex-col lg:flex-row min-h-[calc(100vh-4.5rem)]" style={{ width: '100vw', left: '50%', marginLeft: '-50vw' }}>
-        {/* Left sidebar: unit lesson navigation */}
         <UnitLessonSidebar
           lessons={unitLessons}
           currentLessonId={lesson.id}
@@ -321,9 +319,7 @@ export default function LessonDetailPage() {
           unitTitle={unitTitle}
         />
 
-        {/* Center content */}
         <div className="flex-1 flex flex-col min-w-0">
-          {/* Header */}
           <header className="flex items-center justify-between gap-4 px-4 py-3 border-b border-border">
             <div className="flex flex-col min-w-0">
               <h1 className="text-xl font-bold text-foreground truncate">{lesson.order}. {lesson.title}</h1>
@@ -342,7 +338,6 @@ export default function LessonDetailPage() {
             )}
           </header>
 
-          {/* Learning resource nav bar */}
           <LearningResourceNav
             resources={learningResources}
             activeResourceKey={activeResourceKey}
@@ -355,27 +350,22 @@ export default function LessonDetailPage() {
             onMoveResource={handleMoveResource}
           />
 
-          {/* Mobile practice resource row */}
           <PracticeResourceMobileBar
             activeResource={practiceResource}
             onResourceChange={setActiveResourceKey}
           />
 
-          {/* Main content area */}
           <main className="flex-1 overflow-y-auto px-4 py-4">
             {renderContent()}
           </main>
-
         </div>
 
-        {/* Right sidebar: practice resources */}
         <PracticeResourceSidebar
           activeResource={practiceResource}
           onResourceChange={setActiveResourceKey}
         />
       </div>
 
-      {/* Floating student notes drawer */}
       <StudentNotePanel lessonId={lesson.id} disabled={isQuiz} />
 
       {showSettings && (

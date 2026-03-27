@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 export const toggleCompletionSchema = z.object({
-  resourceType: z.enum(['lessonPlan', 'video', 'note', 'vocab']),
+  resourceType: z.enum(['lessonPlan', 'note', 'video', 'lecture', 'flash_card', 'practice_problem', 'vocab']),
   resourceId: z.string().uuid(),
 });
 

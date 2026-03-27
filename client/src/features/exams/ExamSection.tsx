@@ -1,10 +1,17 @@
 import { useEffect } from 'react';
-import { examsApi } from '../../api/exams.js';
+import { assessmentsApi } from '../../api/assessments.js';
 import useAssessment from '../../hooks/useAssessment.js';
 import AssessmentForm from '../assessments/AssessmentForm.js';
 import AssessmentTaker from '../assessments/AssessmentTaker.js';
 import AssessmentResults from '../assessments/AssessmentResults.js';
 import Modal from '../../components/Modal.js';
+
+const examApi = {
+  get: assessmentsApi.getCourseExam,
+  create: assessmentsApi.createCourseExam,
+  update: assessmentsApi.update,
+  submitAttempt: assessmentsApi.submitAttempt,
+};
 
 interface ExamSectionProps {
   courseId: string;
@@ -16,7 +23,7 @@ export default function ExamSection({ courseId, open, onClose }: ExamSectionProp
   const {
     assessment: exam, view, setView, result,
     handleCreate, handleSubmit,
-  } = useAssessment(examsApi, courseId);
+  } = useAssessment(examApi, courseId);
 
   useEffect(() => {
     if (open) setView(exam === null ? 'creating' : 'taking');

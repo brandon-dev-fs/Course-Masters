@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { flashCardsApi } from '../../api/flashcards.js';
-import type { FlashCard } from '../../api/types.js';
+import { lessonToolsApi } from '../../api/lesson-tools.js';
+import type { LessonTool } from '../../api/types.js';
 import { useAuth } from '../../context/AuthContext.js';
 import useResourceList from '../../hooks/useResourceList.js';
 import FlashCardComponent from './FlashCard.js';
@@ -13,7 +13,10 @@ import LoadingSpinner from '../../components/LoadingSpinner.js';
 import ErrorMessage from '../../components/ErrorMessage.js';
 import EmptyState from '../../components/EmptyState.js';
 
-const byOrder = (a: FlashCard, b: FlashCard) => a.order - b.order;
+type CardCreateInput = { type: 'flash_card'; title: string; content: { front: string; back: string }; order: number };
+type CardUpdateInput = { content?: { front: string; back: string }; order?: number };
+
+const byOrder = (a: LessonTool, b: LessonTool) => a.order - b.order;
 
 export default function FlashCardList({ lessonId }: { lessonId: string }) {
   const { user } = useAuth();
@@ -22,16 +25,20 @@ export default function FlashCardList({ lessonId }: { lessonId: string }) {
     items: cards, loading, error,
     showAdd, setShowAdd, deleting, setDeleting,
     setItems: setCards, handleAdd, handleDelete,
-  } = useResourceList<FlashCard, { front: string; back: string; order: number }, { front?: string; back?: string; order?: number }>(
-    () => flashCardsApi.getAll(lessonId),
-    { create: d => flashCardsApi.create(lessonId, d), update: flashCardsApi.update, delete: flashCardsApi.delete },
+  } = useResourceList<LessonTool, CardCreateInput, CardUpdateInput>(
+    () => lessonToolsApi.getAll(lessonId, 'flash_card'),
+    {
+      create: d => lessonToolsApi.create(lessonId, d),
+      update: lessonToolsApi.update,
+      delete: lessonToolsApi.delete,
+    },
     lessonId, byOrder,
   );
   const [studying, setStudying] = useState(false);
   const [editMode, setEditMode] = useState(false);
 
-  async function handleUpdate(id: string, data: { front?: string; back?: string }) {
-    const updated = await flashCardsApi.update(id, data);
+  async function handleUpdate(id: string, data: { front: string; back: string }) {
+    const updated = await lessonToolsApi.update(id, { content: data });
     setCards(prev => prev.map(c => (c.id === updated.id ? updated : c)).sort(byOrder));
   }
 
@@ -94,7 +101,13 @@ export default function FlashCardList({ lessonId }: { lessonId: string }) {
 
       {showAdd && (
         <Modal title="Add Flash Card" onClose={() => setShowAdd(false)}>
-          <FlashCardForm nextOrder={cards.length + 1} onSubmit={handleAdd} onCancel={() => setShowAdd(false)} />
+          <FlashCardForm
+            nextOrder={cards.length + 1}
+            onSubmit={async ({ front, back, order }) =>
+              handleAdd({ type: 'flash_card', title: front.slice(0, 60), content: { front, back }, order })
+            }
+            onCancel={() => setShowAdd(false)}
+          />
         </Modal>
       )}
       {deleting && (

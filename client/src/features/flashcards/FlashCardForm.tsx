@@ -2,19 +2,19 @@ import { useState } from 'react';
 import Input from '../../components/Input.js';
 import Textarea from '../../components/Textarea.js';
 import Button from '../../components/Button.js';
-import type { FlashCard } from '../../api/types.js';
+import type { LessonTool } from '../../api/types.js';
 import useFormSubmit from '../../hooks/useFormSubmit.js';
 
 interface FlashCardFormProps {
-  initial?: Partial<FlashCard>;
+  initial?: LessonTool;
   nextOrder?: number;
   onSubmit: (data: { front: string; back: string; order: number }) => Promise<void>;
   onCancel: () => void;
 }
 
 export default function FlashCardForm({ initial, nextOrder = 1, onSubmit, onCancel }: FlashCardFormProps) {
-  const [front, setFront] = useState(initial?.front ?? '');
-  const [back, setBack] = useState(initial?.back ?? '');
+  const [front, setFront] = useState((initial?.content?.front as string) ?? '');
+  const [back, setBack] = useState((initial?.content?.back as string) ?? '');
   const [order, setOrder] = useState(initial?.order ?? nextOrder);
   const { error, submitting, handleSubmit } = useFormSubmit(async () => {
     if (!front.trim() || !back.trim()) throw new Error('Front and back are required');

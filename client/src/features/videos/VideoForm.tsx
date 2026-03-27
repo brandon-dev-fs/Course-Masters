@@ -2,14 +2,14 @@ import { useState, useRef } from 'react';
 import { Loader2 } from 'lucide-react';
 import Input from '../../components/Input.js';
 import Button from '../../components/Button.js';
-import type { Video } from '../../api/types.js';
-import { videosApi } from '../../api/videos.js';
+import type { LessonResource } from '../../api/types.js';
+import { apiClient } from '../../api/client.js';
 import useFormSubmit from '../../hooks/useFormSubmit.js';
 
 const youtubeUrlRegex = /^https?:\/\/(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)[\w-]+/;
 
 interface VideoFormProps {
-  initial?: Partial<Video>;
+  initial?: LessonResource;
   nextOrder?: number;
   onSubmit: (data: { title: string; url: string; order: number }) => Promise<void>;
   onCancel: () => void;
@@ -17,7 +17,7 @@ interface VideoFormProps {
 
 export default function VideoForm({ initial, nextOrder = 1, onSubmit, onCancel }: VideoFormProps) {
   const [title, setTitle] = useState(initial?.title ?? '');
-  const [url, setUrl] = useState(initial?.url ?? '');
+  const [url, setUrl] = useState((initial?.content?.url as string) ?? '');
   const [order, setOrder] = useState(initial?.order ?? nextOrder);
   const [fetchingTitle, setFetchingTitle] = useState(false);
   const titleTouched = useRef(!!initial?.title);
@@ -33,7 +33,9 @@ export default function VideoForm({ initial, nextOrder = 1, onSubmit, onCancel }
 
     setFetchingTitle(true);
     try {
-      const { title: fetched } = await videosApi.fetchTitle(trimmed);
+      const { title: fetched } = await apiClient.get<{ title: string }>(
+        `/youtube/title?url=${encodeURIComponent(trimmed)}`,
+      );
       if (fetched && !titleTouched.current) setTitle(fetched);
     } catch {
       // Silently ignore — user can type the title manually
