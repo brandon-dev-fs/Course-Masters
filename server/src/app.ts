@@ -1,11 +1,13 @@
 import express from 'express';
 import cors from 'cors';
 import rateLimit from 'express-rate-limit';
+import swaggerUi from 'swagger-ui-express';
 import { toNodeHandler } from 'better-auth/node';
 import { auth } from './lib/auth.js';
 import router from './routes/index.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { config } from './config.js';
+import { swaggerDocument } from './swagger.js';
 
 const app = express();
 
@@ -29,6 +31,7 @@ const authLimiter = rateLimit({
 app.all('/api/auth/*splat', authLimiter, toNodeHandler(auth));
 
 app.use(express.json());
+app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 app.use('/api', router);
 app.use(errorHandler);
 
