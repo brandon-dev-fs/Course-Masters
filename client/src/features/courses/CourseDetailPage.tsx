@@ -9,8 +9,8 @@ import UnitAccordion from '../units/UnitAccordion.js';
 import UnitSettingsModal from '../units/UnitSettingsModal.js';
 import CourseSettingsModal from './CourseSettingsModal.js';
 import SyllabusEditModal from './SyllabusEditModal.js';
+import SyllabusViewModal from './SyllabusViewModal.js';
 import CourseHero from './CourseHero.js';
-import SyllabusSection from './SyllabusSection.js';
 import Button from '../../components/Button.js';
 import LoadingSpinner from '../../components/LoadingSpinner.js';
 import ErrorMessage from '../../components/ErrorMessage.js';
@@ -27,6 +27,7 @@ export default function CourseDetailPage() {
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState('');
 	const [showSettings, setShowSettings] = useState(false);
+	const [showSyllabusView, setShowSyllabusView] = useState(false);
 	const [showSyllabusEdit, setShowSyllabusEdit] = useState(false);
 	const [showUnitSettings, setShowUnitSettings] = useState(false);
 
@@ -157,19 +158,24 @@ export default function CourseDetailPage() {
 				onOpenSettings={() => setShowSettings(true)}
 			/>
 
-			<SyllabusSection
-				syllabus={course.syllabus}
-				canEdit={canEdit}
-				onEditSyllabus={() => setShowSyllabusEdit(true)}
-			/>
-
 			<div className="flex items-center justify-between mb-4">
 				<h2 className="text-lg font-semibold text-foreground">Units</h2>
-				{canEdit && (
-					<Button size="sm" variant="secondary" onClick={() => setShowUnitSettings(true)}>
-						+ Add Unit
-					</Button>
-				)}
+				<div className="flex items-center gap-2">
+					{(course.syllabus || canEdit) && (
+						<Button
+							size="sm"
+							variant="secondary"
+							onClick={() => course.syllabus ? setShowSyllabusView(true) : setShowSyllabusEdit(true)}
+						>
+							{course.syllabus ? 'View Syllabus' : '+ Add Syllabus'}
+						</Button>
+					)}
+					{canEdit && (
+						<Button size="sm" variant="secondary" onClick={() => setShowUnitSettings(true)}>
+							+ Add Unit
+						</Button>
+					)}
+				</div>
 			</div>
 
 			<UnitAccordion
@@ -186,6 +192,14 @@ export default function CourseDetailPage() {
 					onClose={() => setShowSettings(false)}
 					onUpdateCourse={handleCourseUpdate}
 					onDeleteCourse={handleCourseDelete}
+				/>
+			)}
+			{showSyllabusView && course.syllabus && (
+				<SyllabusViewModal
+					syllabus={course.syllabus as Record<string, unknown>}
+					canEdit={canEdit}
+					onClose={() => setShowSyllabusView(false)}
+					onEdit={() => { setShowSyllabusView(false); setShowSyllabusEdit(true); }}
 				/>
 			)}
 			{showSyllabusEdit && (

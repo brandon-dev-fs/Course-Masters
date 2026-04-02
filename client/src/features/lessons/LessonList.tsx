@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { BookOpen, Circle, CircleDot, CheckCircle2 } from 'lucide-react';
+import { BookOpen, Check } from 'lucide-react';
 import type { Lesson, LessonProgress } from '../../api/types.js';
 import EmptyState from '../../components/EmptyState.js';
 import Tooltip from '../../components/Tooltip.js';
@@ -13,12 +13,24 @@ interface LessonListProps {
 
 function LessonStatusIcon({ prog }: { prog?: LessonProgress }) {
   if (prog?.quizPassed) {
-    return <CheckCircle2 className="w-4 h-4 text-success shrink-0" />;
+    return (
+      <div className="w-4 h-4 rounded-[3px] bg-green-500 border border-green-500 flex items-center justify-center shrink-0">
+        <Check className="w-3 h-3 text-white" strokeWidth={3} />
+      </div>
+    );
   }
   if (prog?.attempted) {
-    return <CircleDot className="w-4 h-4 text-warning shrink-0" />;
+    return (
+      <div className="w-4 h-4 rounded-[3px] bg-warning/10 border border-warning flex items-center justify-center shrink-0">
+        <Check className="w-3 h-3 text-warning/70" strokeWidth={3} />
+      </div>
+    );
   }
-  return <Circle className="w-4 h-4 text-muted-foreground shrink-0" />;
+  return (
+    <div className="w-4 h-4 rounded-[3px] border border-border bg-surface-raised flex items-center justify-center shrink-0">
+      <Check className="w-3 h-3 text-muted-foreground/25" strokeWidth={3} />
+    </div>
+  );
 }
 
 export default function LessonList({ courseId, unitId, lessons, lessonProgress }: LessonListProps) {

@@ -48,7 +48,11 @@ export default function UnitAccordionItem({
           onClick={onToggle}
           className="flex items-center gap-3 flex-1 min-w-0 text-left"
         >
-          <span className="w-7 h-7 flex items-center justify-center rounded-lg bg-primary-subtle text-primary text-xs font-bold shrink-0">
+          <span className={`w-7 h-7 flex items-center justify-center rounded-lg text-xs font-bold shrink-0 transition-colors ${
+            unitProgress?.isComplete
+              ? 'bg-green-500 text-white'
+              : 'bg-surface-raised text-muted-foreground border border-border'
+          }`}>
             {unit.order}
           </span>
           <span className="font-medium text-foreground truncate">{unit.title}</span>

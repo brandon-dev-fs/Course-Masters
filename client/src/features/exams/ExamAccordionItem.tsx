@@ -78,7 +78,13 @@ export default function ExamAccordionItem({
           disabled={locked}
           className="flex items-center gap-3 flex-1 min-w-0 text-left disabled:cursor-not-allowed"
         >
-          <span className="w-7 h-7 flex items-center justify-center rounded-lg bg-primary-subtle text-primary shrink-0">
+          <span className={`w-7 h-7 flex items-center justify-center rounded-lg shrink-0 transition-colors ${
+            locked
+              ? 'bg-surface-raised text-muted-foreground border border-border'
+              : lastAttempt?.passed
+                ? 'bg-green-500 text-white'
+                : 'bg-surface-raised text-muted-foreground border border-border'
+          }`}>
             {locked ? <Lock className="w-3.5 h-3.5" /> : <GraduationCap className="w-4 h-4" />}
           </span>
           <span className="font-medium text-foreground truncate">Final Exam</span>
