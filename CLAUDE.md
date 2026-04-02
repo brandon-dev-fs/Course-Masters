@@ -2,7 +2,7 @@
 
 ## Overview
 Course Masters is a self-directed learning app (monorepo, npm workspaces):
-- `client` — React SPA, Vite dev server on port 5000, proxies `/api` to port 5002
+- `client` — React SPA, Vite dev server on port 5000, proxies `/api` to port 5000
 - `server` — Express REST API on port 5002
 
 ## Tech Stack

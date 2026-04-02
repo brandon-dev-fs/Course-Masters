@@ -4,12 +4,13 @@ import { coursesApi } from '../../api/courses.js';
 import { unitsApi } from '../../api/units.js';
 import { progressApi } from '../../api/progress.js';
 import type { Course, Unit, CourseProgress } from '../../api/types.js';
-import UnitAccordion from '../units/UnitAccordion.js';
 import UnitSettingsModal from '../units/UnitSettingsModal.js';
 import CourseSettingsModal from './CourseSettingsModal.js';
 import SyllabusEditModal from './SyllabusEditModal.js';
 import SyllabusViewModal from './SyllabusViewModal.js';
+import CalendarModal from './CalendarModal.js';
 import CourseHero from './CourseHero.js';
+import UnitCardStrip from '../units/UnitCardStrip.js';
 import Button from '../../components/Button.js';
 import LoadingSpinner from '../../components/LoadingSpinner.js';
 import ErrorMessage from '../../components/ErrorMessage.js';
@@ -29,6 +30,7 @@ export default function CourseDetailPage() {
 	const [showSyllabusView, setShowSyllabusView] = useState(false);
 	const [showSyllabusEdit, setShowSyllabusEdit] = useState(false);
 	const [showUnitSettings, setShowUnitSettings] = useState(false);
+	const [showCalendar, setShowCalendar] = useState(false);
 
 	async function load() {
 		if (!courseId) return;
@@ -129,8 +131,10 @@ export default function CourseDetailPage() {
 				courses={courses}
 				canEdit={canEdit}
 				onOpenSettings={() => setShowSettings(true)}
+				onOpenCalendar={() => setShowCalendar(true)}
 			/>
 
+			<div className="container mx-auto py-6">
 			<div className="flex items-center justify-between mb-4">
 				<h2 className="text-lg font-semibold text-foreground">Units</h2>
 				<div className="flex items-center gap-2">
@@ -138,25 +142,36 @@ export default function CourseDetailPage() {
 						<Button
 							size="sm"
 							variant="secondary"
-							onClick={() => course.syllabus ? setShowSyllabusView(true) : setShowSyllabusEdit(true)}
+							onClick={() =>
+								course.syllabus
+									? setShowSyllabusView(true)
+									: setShowSyllabusEdit(true)
+							}
 						>
-							{course.syllabus ? 'View Syllabus' : '+ Add Syllabus'}
+							{course.syllabus
+								? 'View Syllabus'
+								: '+ Add Syllabus'}
 						</Button>
 					)}
 					{canEdit && (
-						<Button size="sm" variant="secondary" onClick={() => setShowUnitSettings(true)}>
+						<Button
+							size="sm"
+							variant="secondary"
+							onClick={() => setShowUnitSettings(true)}
+						>
 							+ Add Unit
 						</Button>
 					)}
 				</div>
 			</div>
 
-			<UnitAccordion
+			<UnitCardStrip
 				courseId={courseId!}
 				units={course.units ?? []}
 				canEdit={canEdit}
 				progress={progress}
 			/>
+			</div>
 
 			{showSettings && (
 				<CourseSettingsModal
@@ -171,7 +186,10 @@ export default function CourseDetailPage() {
 					syllabus={course.syllabus as Record<string, unknown>}
 					canEdit={canEdit}
 					onClose={() => setShowSyllabusView(false)}
-					onEdit={() => { setShowSyllabusView(false); setShowSyllabusEdit(true); }}
+					onEdit={() => {
+						setShowSyllabusView(false);
+						setShowSyllabusEdit(true);
+					}}
 				/>
 			)}
 			{showSyllabusEdit && (
@@ -189,6 +207,13 @@ export default function CourseDetailPage() {
 					onUpdateUnit={handleUpdateUnit}
 					onDeleteUnit={handleDeleteUnit}
 					initialAdding={true}
+				/>
+			)}
+			{showCalendar && (
+				<CalendarModal
+					course={course}
+					progress={progress}
+					onClose={() => setShowCalendar(false)}
 				/>
 			)}
 		</div>

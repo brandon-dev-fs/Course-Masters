@@ -327,7 +327,7 @@ export default function LessonDetailPage() {
 
   return (
     <>
-      <div className="relative -mx-4 -mt-8 -mb-8 flex flex-col lg:flex-row min-h-[calc(100vh-4.5rem)]" style={{ width: '100vw', left: '50%', marginLeft: '-50vw' }}>
+      <div className="relative -mx-4 -mb-8 flex flex-col lg:flex-row min-h-[calc(100vh-4.5rem)]" style={{ width: '100vw', left: '50%', marginLeft: '-50vw' }}>
         <UnitLessonSidebar
           lessons={unitLessons}
           currentLessonId={lesson.id}
