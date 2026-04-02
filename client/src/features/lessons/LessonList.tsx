@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { BookOpen, Check } from 'lucide-react';
+import type { ReactNode } from 'react';
 import type { Lesson, LessonProgress } from '../../api/types.js';
 import EmptyState from '../../components/EmptyState.js';
 import Tooltip from '../../components/Tooltip.js';
@@ -9,6 +10,7 @@ interface LessonListProps {
   unitId: string;
   lessons: Lesson[];
   lessonProgress?: LessonProgress[];
+  trailingContent?: ReactNode;
 }
 
 function LessonStatusIcon({ prog }: { prog?: LessonProgress }) {
@@ -33,9 +35,9 @@ function LessonStatusIcon({ prog }: { prog?: LessonProgress }) {
   );
 }
 
-export default function LessonList({ courseId, unitId, lessons, lessonProgress }: LessonListProps) {
+export default function LessonList({ courseId, unitId, lessons, lessonProgress, trailingContent }: LessonListProps) {
   if (lessons.length === 0) {
-    return <EmptyState icon={<BookOpen className="w-8 h-8" />} title="No lessons yet" description="Add a lesson via the course settings gear." />;
+    return <EmptyState icon={<BookOpen className="w-8 h-8" />} title="No lessons yet" description="Add a lesson from within the lesson page." />;
   }
 
   const sorted = [...lessons].sort((a, b) => a.order - b.order);
@@ -45,10 +47,9 @@ export default function LessonList({ courseId, unitId, lessons, lessonProgress }
       {sorted.map(lesson => {
         const prog = lessonProgress?.find(p => p.lessonId === lesson.id);
         return (
-          <Link
+          <div
             key={lesson.id}
-            to={`/courses/${courseId}/units/${unitId}/lessons/${lesson.id}`}
-            className="flex flex-col gap-1.5 rounded-xl bg-surface border border-border px-4 py-3 shadow-warm-sm hover:shadow-warm-md hover:-translate-y-px hover:border-primary/40 transition-all"
+            className="flex flex-col gap-1.5 rounded-xl bg-surface border border-border px-4 py-3 shadow-warm-sm"
           >
             <div className="flex items-center justify-between gap-2">
               <span className="font-medium text-foreground text-sm truncate">{lesson.title}</span>
@@ -59,9 +60,16 @@ export default function LessonList({ courseId, unitId, lessons, lessonProgress }
                 <p className="text-xs text-muted-foreground line-clamp-2">{lesson.description}</p>
               </Tooltip>
             )}
-          </Link>
+            <Link
+              to={`/courses/${courseId}/units/${unitId}/lessons/${lesson.id}`}
+              className="mt-1 w-full text-center text-xs font-medium bg-primary text-primary-foreground hover:brightness-110 rounded-lg py-1.5 transition-all"
+            >
+              Go to Lesson
+            </Link>
+          </div>
         );
       })}
+      {trailingContent}
     </div>
   );
 }

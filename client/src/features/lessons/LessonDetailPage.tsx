@@ -7,7 +7,8 @@ import { coursesApi } from '../../api/courses.js';
 import { lessonResourcesApi } from '../../api/lesson-resources.js';
 import { lessonToolsApi } from '../../api/lesson-tools.js';
 import { resourceCompletionsApi } from '../../api/resource-completions.js';
-import type { Lesson, LessonResource, ResourceCompletionItem } from '../../api/types.js';
+import { progressApi } from '../../api/progress.js';
+import type { Lesson, LessonResource, ResourceCompletionItem, UnitProgress } from '../../api/types.js';
 import { useAuth } from '../../context/AuthContext.js';
 import UnitLessonSidebar from './UnitLessonSidebar.js';
 import LearningResourceNav from './LearningResourceNav.js';
@@ -21,6 +22,7 @@ import VocabList from '../vocab/VocabList.js';
 import FlashCardList from '../flashcards/FlashCardList.js';
 import PracticeProblemList from '../practice-problems/PracticeProblemList.js';
 import QuizSection from '../quizzes/QuizSection.js';
+import TestSection from '../tests/TestSection.js';
 import StudentNotePanel from '../student-notes/StudentNotePanel.js';
 import LessonSettingsModal from './LessonSettingsModal.js';
 import LessonPlanModal from './LessonPlanModal.js';
@@ -45,6 +47,7 @@ export default function LessonDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [activeResourceKey, setActiveResourceKey] = useState('lessonPlan');
+  const [unitProgress, setUnitProgress] = useState<UnitProgress | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [showPlanEdit, setShowPlanEdit] = useState(false);
   const newNoteIdRef = useRef<string | null>(null);
@@ -62,8 +65,9 @@ export default function LessonDetailPage() {
       lessonResourcesApi.getAll(lessonId, 'note'),
       lessonToolsApi.getAll(lessonId, 'vocab'),
       resourceCompletionsApi.get(lessonId),
+      progressApi.getUnit(courseId, unitId),
     ])
-      .then(([lessonData, unitData, courseData, lessons, vids, nts, voc, comp]) => {
+      .then(([lessonData, unitData, courseData, lessons, vids, nts, voc, comp, unitProg]) => {
         setLesson(lessonData);
         setCourseTitle(courseData.title);
         setUnitTitle(unitData.title);
@@ -72,6 +76,7 @@ export default function LessonDetailPage() {
         setNotes(nts.sort((a, b) => a.order - b.order));
         setHasVocabSection(voc.length > 0);
         setCompletions(comp.completions);
+        setUnitProgress(unitProg);
         setActiveResourceKey('lessonPlan');
       })
       .catch((err: unknown) => setError(err instanceof Error ? err.message : 'Failed to load lesson'))
@@ -123,6 +128,13 @@ export default function LessonDetailPage() {
     const result = await resourceCompletionsApi.toggle(lessonId, resourceType, resourceId);
     setCompletions(result.completions);
   }, [lessonId]);
+
+  async function handleAddLesson(data: { title: string; description: string; order: number }) {
+    if (!unitId || !courseId) return;
+    const lesson = await lessonsApi.create(unitId, data);
+    setUnitLessons(prev => [...prev, lesson]);
+    navigate(`/courses/${courseId}/units/${unitId}/lessons/${lesson.id}`);
+  }
 
   async function handleUpdate(data: { title: string; description?: string; order: number; objective?: string; planContent?: Record<string, unknown> }) {
     if (!unitId || !lessonId) return;
@@ -208,6 +220,12 @@ export default function LessonDetailPage() {
   const isQuiz = activeResourceKey === 'quiz';
 
   function renderContent() {
+    if (activeResourceKey === 'unit-test') {
+      const allLessonsComplete = unitProgress
+        ? unitProgress.totalLessons > 0 && unitProgress.completedLessons === unitProgress.totalLessons
+        : false;
+      return <TestSection unitId={unitId!} canEdit={canEdit} allLessonsComplete={allLessonsComplete} />;
+    }
     if (isQuiz) return <QuizSection lessonId={lesson!.id} />;
     if (activeResourceKey === 'flashcards') return <FlashCardList lessonId={lesson!.id} />;
     if (activeResourceKey === 'practice') return <PracticeProblemList lessonId={lesson!.id} />;
@@ -317,6 +335,11 @@ export default function LessonDetailPage() {
           unitId={unitId!}
           courseTitle={courseTitle}
           unitTitle={unitTitle}
+          canEdit={canEdit}
+          onAddLesson={handleAddLesson}
+          onUnitTestClick={() => setActiveResourceKey('unit-test')}
+          unitTestActive={activeResourceKey === 'unit-test'}
+          onLessonClick={() => setActiveResourceKey('lessonPlan')}
         />
 
         <div className="flex-1 flex flex-col min-w-0">

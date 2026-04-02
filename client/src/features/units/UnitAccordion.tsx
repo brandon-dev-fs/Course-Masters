@@ -10,10 +10,9 @@ interface UnitAccordionProps {
   units: Unit[];
   canEdit: boolean;
   progress: CourseProgress | null;
-  onAddLesson: (unitId: string, data: { title: string; description?: string; order: number }) => Promise<void>;
 }
 
-export default function UnitAccordion({ courseId, units, canEdit, progress, onAddLesson }: UnitAccordionProps) {
+export default function UnitAccordion({ courseId, units, canEdit, progress }: UnitAccordionProps) {
   const sorted = [...units].sort((a, b) => a.order - b.order);
   const [expandedUnitId, setExpandedUnitId] = useState<string | null>(
     sorted.length > 0 ? sorted[0].id : null,
@@ -42,7 +41,6 @@ export default function UnitAccordion({ courseId, units, canEdit, progress, onAd
             canEdit={canEdit}
             isExpanded={expandedUnitId === unit.id}
             onToggle={() => handleToggle(unit.id)}
-            onAddLesson={onAddLesson}
             unitProgress={progress?.units.find(u => u.unitId === unit.id) ?? null}
           />
         ))
