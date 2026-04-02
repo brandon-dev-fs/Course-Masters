@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react';
 import { BookOpen } from 'lucide-react';
 import { coursesApi } from '../../api/courses.js';
 import type { Course } from '../../api/types.js';
-import CourseCard from './CourseCard.js';
-import CourseForm from './CourseForm.js';
+import CourseCard from '../courses/CourseCard.js';
+import CourseForm from '../courses/CourseForm.js';
 import HeroSection from './HeroSection.js';
 import Modal from '../../components/Modal.js';
 import ConfirmDialog from '../../components/ConfirmDialog.js';
@@ -13,17 +13,19 @@ import ErrorMessage from '../../components/ErrorMessage.js';
 import EmptyState from '../../components/EmptyState.js';
 import { useAuth } from '../../context/AuthContext.js';
 
-export default function CourseListPage() {
+export default function HomePage() {
 	const { user } = useAuth();
+	const loggedIn = user !== null;
 	const canEdit = user?.role === 'teacher' || user?.role === 'admin';
 	const [courses, setCourses] = useState<Course[]>([]);
-	const [loading, setLoading] = useState(true);
+	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState('');
 	const [showCreate, setShowCreate] = useState(false);
 	const [editing, setEditing] = useState<Course | null>(null);
 	const [deleting, setDeleting] = useState<Course | null>(null);
 
 	async function load() {
+		setLoading(true);
 		try {
 			const data = await coursesApi.getAll();
 			setCourses(data);
@@ -37,8 +39,8 @@ export default function CourseListPage() {
 	}
 
 	useEffect(() => {
-		void load();
-	}, []);
+		if (loggedIn) void load();
+	}, [loggedIn]);
 
 	async function handleCreate(data: { title: string; description?: string }) {
 		const course = await coursesApi.create(data);
@@ -67,54 +69,57 @@ export default function CourseListPage() {
 
 	return (
 		<div>
-			<HeroSection />
-			<div
-				id="courses"
-				className="scroll-mt-20"
-			>
-				<div className="flex items-center justify-between mb-6">
-					<h2 className="text-2xl font-bold text-foreground tracking-tight">
-						My Courses
-					</h2>
-					{canEdit && (
-						<Button onClick={() => setShowCreate(true)}>
-							+ New Course
-						</Button>
+			<HeroSection loggedIn={loggedIn} />
+
+			{loggedIn && (
+				<div
+					id="courses"
+					className="px-6 scroll-mt-20"
+				>
+					<div className="flex items-center justify-between mb-6">
+						<h2 className="text-2xl font-bold text-foreground tracking-tight">
+							My Courses
+						</h2>
+						{canEdit && (
+							<Button onClick={() => setShowCreate(true)}>
+								+ New Course
+							</Button>
+						)}
+					</div>
+
+					{courses.length === 0 ? (
+						<EmptyState
+							icon={<BookOpen className="w-8 h-8" />}
+							title="No courses yet"
+							description={
+								canEdit
+									? 'Create your first course to get started.'
+									: 'No courses are available yet.'
+							}
+							action={
+								canEdit
+									? {
+											label: '+ New Course',
+											onClick: () => setShowCreate(true),
+										}
+									: undefined
+							}
+						/>
+					) : (
+						<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+							{courses.map((course) => (
+								<CourseCard
+									key={course.id}
+									course={course}
+									canEdit={canEdit}
+									onEdit={() => setEditing(course)}
+									onDelete={() => setDeleting(course)}
+								/>
+							))}
+						</div>
 					)}
 				</div>
-
-				{courses.length === 0 ? (
-					<EmptyState
-						icon={<BookOpen className="w-8 h-8" />}
-						title="No courses yet"
-						description={
-							canEdit
-								? 'Create your first course to get started.'
-								: 'No courses are available yet.'
-						}
-						action={
-							canEdit
-								? {
-										label: '+ New Course',
-										onClick: () => setShowCreate(true),
-									}
-								: undefined
-						}
-					/>
-				) : (
-					<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-						{courses.map((course) => (
-							<CourseCard
-								key={course.id}
-								course={course}
-								canEdit={canEdit}
-								onEdit={() => setEditing(course)}
-								onDelete={() => setDeleting(course)}
-							/>
-						))}
-					</div>
-				)}
-			</div>
+			)}
 
 			{showCreate && (
 				<Modal
