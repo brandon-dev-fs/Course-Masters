@@ -1,4 +1,4 @@
-import { ReactNode, useState, useRef, useEffect } from 'react';
+import { ReactNode, useState, useRef } from 'react';
 
 interface TooltipProps {
   content: string;
@@ -6,28 +6,32 @@ interface TooltipProps {
 }
 
 export default function Tooltip({ content, children }: TooltipProps) {
-  const [visible, setVisible] = useState(false);
-  const [above, setAbove] = useState(false);
+  const [pos, setPos] = useState<{ top: number; left: number; above: boolean } | null>(null);
   const triggerRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (visible && triggerRef.current) {
-      const rect = triggerRef.current.getBoundingClientRect();
-      setAbove(rect.bottom + 120 > window.innerHeight);
-    }
-  }, [visible]);
+  function show() {
+    if (!triggerRef.current) return;
+    const rect = triggerRef.current.getBoundingClientRect();
+    const above = window.innerHeight - rect.bottom < 120;
+    setPos({
+      top: above ? rect.top : rect.bottom + 8,
+      left: Math.min(rect.left, window.innerWidth - 264),
+      above,
+    });
+  }
 
   return (
-    <div
-      ref={triggerRef}
-      className="relative"
-      onMouseEnter={() => setVisible(true)}
-      onMouseLeave={() => setVisible(false)}
-    >
+    <div ref={triggerRef} onMouseEnter={show} onMouseLeave={() => setPos(null)}>
       {children}
-      {visible && (
+      {pos && (
         <div
-          className={`absolute z-50 left-0 w-64 px-3 py-2 rounded-lg bg-surface-raised border border-border shadow-warm-md text-xs text-foreground pointer-events-none ${above ? 'bottom-full mb-2' : 'top-full mt-2'}`}
+          style={{
+            position: 'fixed',
+            top: pos.top,
+            left: pos.left,
+            transform: pos.above ? 'translateY(calc(-100% - 8px))' : undefined,
+          }}
+          className="z-50 w-64 px-3 py-2 rounded-lg bg-surface-raised border border-border shadow-warm-md text-xs text-foreground pointer-events-none"
         >
           {content}
         </div>

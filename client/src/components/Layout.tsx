@@ -1,7 +1,14 @@
 import { Outlet, Link, useNavigate } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext.js';
 import { useAuth } from '../context/AuthContext.js';
-import { GraduationCap, Sun, Moon, UserCircle, LogOut, ShieldCheck } from 'lucide-react';
+import {
+	GraduationCap,
+	Sun,
+	Moon,
+	UserCircle,
+	LogOut,
+	ShieldCheck,
+} from 'lucide-react';
 import Button from './Button.js';
 import Footer from './Footer.js';
 
@@ -31,15 +38,29 @@ export default function Layout() {
 						className="w-10 h-10 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors rounded-xl hover:bg-surface"
 						aria-label="Toggle theme"
 					>
-						{theme === 'dark' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
+						{theme === 'dark' ? (
+							<Moon className="w-5 h-5" />
+						) : (
+							<Sun className="w-5 h-5" />
+						)}
 					</button>
 					{!user && (
 						<>
 							<Link to="/login">
-								<Button variant="ghost" size="sm">Sign In</Button>
+								<Button
+									variant="ghost"
+									size="sm"
+								>
+									Sign In
+								</Button>
 							</Link>
 							<Link to="/register">
-								<Button variant="primary" size="sm">Sign Up</Button>
+								<Button
+									variant="primary"
+									size="sm"
+								>
+									Sign Up
+								</Button>
 							</Link>
 						</>
 					)}
@@ -52,7 +73,9 @@ export default function Layout() {
 									aria-label="Admin"
 								>
 									<ShieldCheck className="w-5 h-5" />
-									<span className="hidden sm:inline font-medium">Admin</span>
+									<span className="hidden sm:inline font-medium">
+										Admin
+									</span>
 								</Link>
 							)}
 							<Link
@@ -61,7 +84,9 @@ export default function Layout() {
 								aria-label="Profile"
 							>
 								<UserCircle className="w-5 h-5" />
-								<span className="hidden sm:inline font-medium">{user.name}</span>
+								<span className="hidden sm:inline font-medium">
+									{user.name}
+								</span>
 							</Link>
 							<button
 								onClick={() => void handleLogout()}
@@ -74,7 +99,7 @@ export default function Layout() {
 					)}
 				</div>
 			</header>
-			<main className="container mx-auto px-4 py-8 max-w-7xl flex-1">
+			<main className="pb-8 flex-1">
 				<Outlet />
 			</main>
 			<Footer />

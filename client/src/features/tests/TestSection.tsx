@@ -6,7 +6,6 @@ import AssessmentTaker from '../assessments/AssessmentTaker.js';
 import AssessmentResults from '../assessments/AssessmentResults.js';
 import Modal from '../../components/Modal.js';
 import Button from '../../components/Button.js';
-import Tooltip from '../../components/Tooltip.js';
 import LoadingSpinner from '../../components/LoadingSpinner.js';
 import ErrorMessage from '../../components/ErrorMessage.js';
 import type { QuestionDraft } from '../assessments/QuestionEditor.js';
@@ -23,15 +22,13 @@ interface TestSectionProps {
   unitId: string;
   canEdit?: boolean;
   allLessonsComplete?: boolean;
-  completedCount?: number;
-  totalCount?: number;
 }
 
-export default function TestSection({ unitId, canEdit = false, allLessonsComplete = true, completedCount = 0, totalCount = 0 }: TestSectionProps) {
+export default function TestSection({ unitId, canEdit = false, allLessonsComplete = false }: TestSectionProps) {
   const [editQuestions, setEditQuestions] = useState<QuestionDraft[] | null>(null);
   const {
     assessment: test, loading, error,
-    view, setView, result, lastAttempt,
+    view, setView, result, attempts,
     handleCreate, handleUpdate, handleSubmit,
   } = useAssessment(testApi, unitId);
 
@@ -57,41 +54,53 @@ export default function TestSection({ unitId, canEdit = false, allLessonsComplet
   if (error) return <ErrorMessage message={error} />;
 
   return (
-    <div className="rounded-xl bg-surface border border-border p-4 flex flex-col gap-3 w-44 shrink-0">
-      <div className="flex items-center justify-between">
-        <h3 className="text-xs font-semibold text-foreground uppercase tracking-wide">Unit Test</h3>
-        {test && <span className="text-xs text-muted-foreground">{test.questions.length}q</span>}
-      </div>
-
-      <div className="h-8 flex items-center justify-center">
-        {lastAttempt ? (
-          <span className={`text-xs font-medium ${lastAttempt.passed ? 'text-accent' : 'text-destructive'}`}>
-            {lastAttempt.passed ? '✓ Passed' : '✗ Failed'} · {Math.round(lastAttempt.score * 100)}%
-          </span>
-        ) : (
-          <span className="text-xs text-muted-foreground">No attempts yet</span>
-        )}
+    <div className="rounded-xl bg-surface border border-border p-6">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-semibold text-foreground">Unit Test</h3>
+        {test && <span className="text-xs text-muted-foreground">{test.questions.length} questions</span>}
       </div>
 
       {!test ? (
-        <div className="flex flex-col items-center gap-2">
-          {canEdit ? (
-            <Button size="sm" onClick={() => setView('creating')}>Create Test</Button>
-          ) : (
-            <Tooltip content={`Complete all lessons first (${completedCount}/${totalCount})`}>
-              <Button size="sm" onClick={() => setView('creating')} disabled={!allLessonsComplete}>Create Test</Button>
-            </Tooltip>
-          )}
+        <div className="text-center py-6">
+          <p className="text-muted-foreground text-sm mb-4">
+            {canEdit ? 'No unit test created yet.' : 'Unit test not yet available.'}
+          </p>
+          {canEdit && <Button onClick={() => setView('creating')}>Create Test</Button>}
         </div>
       ) : (
-        <div className="flex flex-col items-center gap-2">
-          {canEdit && (
-            <Button size="sm" variant="secondary" onClick={openEdit}>Edit Test</Button>
+        <>
+          {!allLessonsComplete && !canEdit && (
+            <p className="text-sm text-muted-foreground mb-4">Complete all lessons to unlock the unit test.</p>
           )}
-          <Tooltip content={`Complete all lessons first (${completedCount}/${totalCount})`}>
-            <Button size="sm" onClick={() => setView('taking')} disabled={!allLessonsComplete}>Take Test</Button>
-          </Tooltip>
-        </div>
+          <div className="flex gap-3 mb-4">
+            {canEdit && (
+              <Button variant="secondary" size="sm" onClick={openEdit}>Edit Test</Button>
+            )}
+            <Button
+              size="sm"
+              onClick={() => setView('taking')}
+              disabled={!allLessonsComplete && !canEdit}
+            >
+              {attempts.length > 0 ? 'Retake Test' : 'Take Test'}
+            </Button>
+          </div>
+
+          {attempts.length > 0 && (
+            <div className="flex flex-col gap-2">
+              <h4 className="text-sm font-medium text-muted-foreground">Previous Attempts</h4>
+              <div className="flex flex-col gap-1.5">
+                {attempts.map((a, i) => (
+                  <div key={a.id} className="flex items-center justify-between rounded-lg border border-border bg-surface-raised px-3 py-2 text-sm">
+                    <span className="text-muted-foreground">#{attempts.length - i}</span>
+                    <span className={`font-medium ${a.passed ? 'text-accent' : 'text-destructive'}`}>{Math.round(a.score * 100)}%</span>
+                    <span className={`text-xs ${a.passed ? 'text-accent' : 'text-destructive'}`}>{a.passed ? 'Passed' : 'Failed'}</span>
+                    <span className="text-xs text-muted-foreground">{new Date(a.createdAt).toLocaleDateString()}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </>
       )}
 
       {view === 'creating' && (

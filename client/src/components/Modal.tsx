@@ -5,7 +5,7 @@ interface ModalProps {
 	title: string;
 	onClose: () => void;
 	children: ReactNode;
-	size?: 'md' | 'lg';
+	size?: 'md' | 'lg' | 'xl';
 }
 
 export default function Modal({
@@ -29,7 +29,7 @@ export default function Modal({
 				onClick={onClose}
 			/>
 			<div
-				className={`relative flex flex-col max-h-[85vh] z-10 w-full ${size === 'lg' ? 'max-w-xl' : 'max-w-md'} rounded-2xl bg-surface-raised border border-border shadow-warm-lg mx-4`}
+				className={`relative flex flex-col max-h-[85vh] z-10 w-full ${size === 'xl' ? 'max-w-4xl' : size === 'lg' ? 'max-w-xl' : 'max-w-md'} rounded-2xl bg-surface-raised border border-border shadow-warm-lg mx-4`}
 			>
 				<div className="flex items-center justify-between px-7 pt-7 pb-4 shrink-0">
 					<h2 className="text-lg font-semibold text-foreground">
