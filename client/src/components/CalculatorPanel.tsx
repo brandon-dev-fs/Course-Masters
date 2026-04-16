@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback, type MouseEvent, type RefObject } from 'react';
+import { useEffect, useRef, useCallback, type MouseEvent as ReactMouseEvent, type RefObject } from 'react';
 import { X } from 'lucide-react';
 import useCalculator from '../features/calculator/hooks/useCalculator.js';
 import type { Operator } from '../features/calculator/types.js';
@@ -221,7 +221,7 @@ export default function CalculatorPanel({
     origTop: number;
   } | null>(null);
 
-  const handleHeaderMouseDown = useCallback((e: MouseEvent<HTMLDivElement>) => {
+  const handleHeaderMouseDown = useCallback((e: ReactMouseEvent<HTMLDivElement>) => {
     const panel = panelRef.current;
     if (!panel) return;
     const rect = panel.getBoundingClientRect();
@@ -233,7 +233,7 @@ export default function CalculatorPanel({
       origTop: rect.top,
     };
 
-    function onMouseMove(ev: MouseEvent) {
+    function onMouseMove(ev: globalThis.MouseEvent) {
       if (!dragState.current || !panel) return;
       const dx = ev.clientX - dragState.current.startX;
       const dy = ev.clientY - dragState.current.startY;
