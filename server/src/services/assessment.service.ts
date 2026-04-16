@@ -1,7 +1,7 @@
 import { AssessmentType } from '@prisma/client';
 import prisma from '../lib/prisma.js';
 import { NotFoundError } from '../errors/index.js';
-import type { CreateAssessmentInput, SubmitAttemptInput } from '../schemas/assessment.schema.js';
+import type { CreateAssessmentInput, UpdateAssessmentInput, SubmitAttemptInput } from '../schemas/assessment.schema.js';
 
 const PASS_THRESHOLD = 0.8;
 
@@ -50,6 +50,7 @@ export const assessmentService = {
     return prisma.assessment.create({
       data: {
         type,
+        calculatorAllowed: data.calculatorAllowed ?? false,
         ...parentWhere(type, parentId),
         questions: { create: data.questions },
       },
@@ -57,14 +58,17 @@ export const assessmentService = {
     });
   },
 
-  async update(assessmentId: string, data: CreateAssessmentInput) {
+  async update(assessmentId: string, data: UpdateAssessmentInput) {
     const assessment = await prisma.assessment.findUnique({ where: { id: assessmentId } });
     if (!assessment) throw new NotFoundError('Assessment not found');
 
     await prisma.assessmentQuestion.deleteMany({ where: { assessmentId } });
     return prisma.assessment.update({
       where: { id: assessmentId },
-      data: { questions: { create: data.questions } },
+      data: {
+        calculatorAllowed: data.calculatorAllowed,
+        questions: { create: data.questions },
+      },
       include: { questions: { orderBy: { order: 'asc' } } },
     });
   },
