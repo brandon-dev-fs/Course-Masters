@@ -6,8 +6,8 @@ type View = 'idle' | 'creating' | 'taking' | 'results';
 
 interface AssessmentApi {
   get: (parentId: string) => Promise<Assessment | null>;
-  create: (parentId: string, data: { questions: QuestionDraft[] }) => Promise<Assessment>;
-  update?: (assessmentId: string, data: { questions: QuestionDraft[] }) => Promise<Assessment>;
+  create: (parentId: string, data: { questions: QuestionDraft[]; calculatorAllowed?: boolean }) => Promise<Assessment>;
+  update?: (assessmentId: string, data: { questions: QuestionDraft[]; calculatorAllowed?: boolean }) => Promise<Assessment>;
   submitAttempt: (id: string, answers: unknown[]) => Promise<AttemptResult>;
   getAttempts?: (id: string) => Promise<AttemptSummary[]>;
 }
@@ -33,15 +33,15 @@ export default function useAssessment(api: AssessmentApi, parentId: string) {
     }
   }, [assessment]);
 
-  async function handleCreate(questions: QuestionDraft[]) {
-    const created = await api.create(parentId, { questions });
+  async function handleCreate(questions: QuestionDraft[], calculatorAllowed?: boolean) {
+    const created = await api.create(parentId, { questions, calculatorAllowed });
     setAssessment(created);
     setView('idle');
   }
 
-  async function handleUpdate(questions: QuestionDraft[]) {
+  async function handleUpdate(questions: QuestionDraft[], calculatorAllowed?: boolean) {
     if (!api.update || !assessment) return;
-    const updated = await api.update(assessment.id, { questions });
+    const updated = await api.update(assessment.id, { questions, calculatorAllowed });
     setAssessment(updated);
     setView('idle');
   }

@@ -3,10 +3,18 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import QuestionEditor, { type QuestionDraft } from './QuestionEditor.js';
 import Button from '../../components/Button.js';
 
-interface AssessmentFormProps {
+export interface AssessmentFormProps {
   initialQuestions?: QuestionDraft[];
-  onSubmit: (questions: QuestionDraft[]) => Promise<void>;
+  /** Initial value of the calculator-allowed toggle. Defaults to false. */
+  initialCalculatorAllowed?: boolean;
+  /** Called on valid submit with all questions and the calculator flag. */
+  onSubmit: (questions: QuestionDraft[], calculatorAllowed: boolean) => Promise<void>;
   onCancel: () => void;
+  /**
+   * When true, renders the "Settings" section with the calculator toggle.
+   * Should be true for teacher/admin roles only.
+   */
+  showCalculatorToggle?: boolean;
 }
 
 function newQuestion(order: number): QuestionDraft {
@@ -17,13 +25,20 @@ function isComplete(q: QuestionDraft) {
   return q.question.trim() !== '' && q.content.options.every(o => o.trim() !== '');
 }
 
-export default function AssessmentForm({ initialQuestions, onSubmit, onCancel }: AssessmentFormProps) {
+export default function AssessmentForm({
+  initialQuestions,
+  initialCalculatorAllowed = false,
+  onSubmit,
+  onCancel,
+  showCalculatorToggle = false,
+}: AssessmentFormProps) {
   const [questions, setQuestions] = useState<QuestionDraft[]>(
-    initialQuestions && initialQuestions.length > 0 ? initialQuestions : [newQuestion(1)]
+    initialQuestions && initialQuestions.length > 0 ? initialQuestions : [newQuestion(1)],
   );
   const [current, setCurrent] = useState(0);
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [calculatorAllowed, setCalculatorAllowed] = useState(initialCalculatorAllowed);
 
   const currentComplete = isComplete(questions[current]);
 
@@ -34,7 +49,7 @@ export default function AssessmentForm({ initialQuestions, onSubmit, onCancel }:
   }
 
   function updateQuestion(draft: QuestionDraft) {
-    setQuestions(prev => prev.map((q, idx) => idx === current ? draft : q));
+    setQuestions(prev => prev.map((q, idx) => (idx === current ? draft : q)));
   }
 
   function removeQuestion() {
@@ -57,7 +72,7 @@ export default function AssessmentForm({ initialQuestions, onSubmit, onCancel }:
     setSubmitting(true);
     setError('');
     try {
-      await onSubmit(questions);
+      await onSubmit(questions, calculatorAllowed);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Something went wrong');
     } finally {
@@ -113,11 +128,58 @@ export default function AssessmentForm({ initialQuestions, onSubmit, onCancel }:
         )}
       </div>
 
+      {/* Settings section — only visible to teachers/admins */}
+      {showCalculatorToggle && (
+        <>
+          <div className="border-t border-border pt-4">
+            <h3 className="text-sm font-semibold text-foreground mb-3">Settings</h3>
+            <div className="flex items-center justify-between py-3">
+              <div>
+                <p className="text-sm font-medium text-foreground">Allow Calculator</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Students can open the calculator during this assessment
+                </p>
+              </div>
+              {/* Toggle switch — WCAG role="switch" */}
+              <button
+                type="button"
+                role="switch"
+                aria-checked={calculatorAllowed}
+                aria-label="Allow calculator"
+                onClick={() => setCalculatorAllowed(prev => !prev)}
+                className={[
+                  'relative inline-flex shrink-0 items-center',
+                  'w-10 h-6 rounded-full border transition-colors duration-200',
+                  'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary',
+                  'active:scale-95 transition-transform',
+                  calculatorAllowed
+                    ? 'bg-primary border-primary hover:bg-primary/90'
+                    : 'bg-muted border-border hover:border-muted-foreground',
+                ].join(' ')}
+              >
+                <span
+                  aria-hidden="true"
+                  className={[
+                    'inline-block w-4 h-4 rounded-full bg-surface-raised shadow-warm-sm',
+                    'transition-transform duration-200',
+                    calculatorAllowed ? 'translate-x-5' : 'translate-x-1',
+                  ].join(' ')}
+                />
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+
       {error && <p className="text-sm text-destructive">{error}</p>}
 
       <div className="flex justify-end gap-3 pt-2 border-t border-border">
-        <Button type="button" variant="secondary" onClick={onCancel} disabled={submitting}>Cancel</Button>
-        <Button type="submit" disabled={submitting}>{submitting ? 'Saving…' : 'Save Assessment'}</Button>
+        <Button type="button" variant="secondary" onClick={onCancel} disabled={submitting}>
+          Cancel
+        </Button>
+        <Button type="submit" disabled={submitting}>
+          {submitting ? 'Saving…' : 'Save Assessment'}
+        </Button>
       </div>
     </form>
   );

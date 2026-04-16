@@ -35,10 +35,16 @@
   --color-destructive-foreground: var(--destructive-foreground);
   --color-success:                var(--success);
   --color-warning:                var(--warning);
+
+  /* Calculator — cm-0001 */
+  --z-index-60: 60;                                        /* calculator panel above modal backdrop (z-50) */
+  --width-calc-panel-mobile: var(--calc-panel-width-mobile); /* calculator panel near-full-width on mobile */
 }
 
 /* ─── Light theme (default) ─────────────────────────────────────────────── */
 :root {
+  /* Calculator panel — cm-0001 */
+  --calc-panel-width-mobile: calc(100vw - 2rem);
   /* Brand */
   --primary:            #138808;  /* India green */
   --primary-foreground: #ffffff;

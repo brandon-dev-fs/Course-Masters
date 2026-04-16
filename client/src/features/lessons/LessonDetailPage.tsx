@@ -1,6 +1,8 @@
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Settings } from 'lucide-react';
+import CalculatorFAB from '../../components/CalculatorFAB.js';
+import CalculatorPanel from '../../components/CalculatorPanel.js';
 import { lessonsApi } from '../../api/lessons.js';
 import { unitsApi } from '../../api/units.js';
 import { coursesApi } from '../../api/courses.js';
@@ -51,6 +53,8 @@ export default function LessonDetailPage() {
   const [showSettings, setShowSettings] = useState(false);
   const [showPlanEdit, setShowPlanEdit] = useState(false);
   const newNoteIdRef = useRef<string | null>(null);
+  const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
+  const calcFabRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     if (!unitId || !lessonId || !courseId) return;
@@ -386,6 +390,19 @@ export default function LessonDetailPage() {
         <PracticeResourceSidebar
           activeResource={practiceResource}
           onResourceChange={setActiveResourceKey}
+        />
+      </div>
+
+      <CalculatorPanel
+        isOpen={isCalculatorOpen}
+        onClose={() => setIsCalculatorOpen(false)}
+        fabRef={calcFabRef}
+      />
+      <div className="fixed bottom-6 right-21 z-30">
+        <CalculatorFAB
+          ref={calcFabRef}
+          isOpen={isCalculatorOpen}
+          onToggle={() => setIsCalculatorOpen(prev => !prev)}
         />
       </div>
 
