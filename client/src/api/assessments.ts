@@ -10,6 +10,7 @@ interface QuestionInput {
 
 interface AssessmentInput {
   questions: QuestionInput[];
+  calculatorAllowed?: boolean;
 }
 
 export const assessmentsApi = {

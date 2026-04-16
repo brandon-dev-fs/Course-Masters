@@ -106,6 +106,7 @@ export interface AssessmentQuestion {
 export interface Assessment {
   id: string;
   type: AssessmentType;
+  calculatorAllowed: boolean;
   questions: AssessmentQuestion[];
   lastAttempt?: { score: number; passed: boolean } | null;
 }
