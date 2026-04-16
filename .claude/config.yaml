@@ -1,0 +1,28 @@
+# Agentic workflow configuration
+# Human-maintained. Read by commands and skills. Never modified by agents.
+
+# Prefix for spec IDs. Format: <prefix>-<####>, always 4 digits, zero-padded.
+# Examples: cm-0001, cm-0042, cm-9999.
+# /spec scans .claude/specs/ for the highest existing number with this prefix
+# and increments by one.
+project_prefix: cm
+
+# Branch that feature branches are created from and PRs target.
+# Agents are forbidden from checking out, merging to, or pushing to `main`
+# (enforced by rules.md). All workflow activity targets `develop`.
+default_branch: develop
+
+# Protected branches. Agents must never check out, merge to, or push to these.
+# Enforced by rules.md.
+protected_branches:
+    - main
+
+# Where /implement creates worktrees. `..` means the parent directory of the
+# repo, so worktrees become siblings of the main repo checkout:
+#   ../<repo>-cm-0042-frontend/
+#   ../<repo>-cm-0042-backend/
+#   ../<repo>-cm-0042-integration/
+worktree_root: ..
+
+# Minimum unit test coverage percentage required for /test to auto-approve.
+min_coverage: 70
