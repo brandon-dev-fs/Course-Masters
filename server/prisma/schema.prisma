@@ -189,13 +189,14 @@ model LessonTool {
 }
 
 model Assessment {
-  id       String         @id @default(uuid())
-  type     AssessmentType
-  lessonId String?        @unique
-  unitId   String?        @unique
-  courseId String?        @unique
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
+  id                String         @id @default(uuid())
+  type              AssessmentType
+  calculatorAllowed Boolean        @default(false)
+  lessonId          String?        @unique
+  unitId            String?        @unique
+  courseId          String?        @unique
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
 
   lesson    Lesson?    @relation(fields: [lessonId], references: [id], onDelete: Cascade)
   unit      Unit?      @relation(fields: [unitId], references: [id], onDelete: Cascade)
