@@ -1,7 +1,7 @@
 import { useEffect, useRef, useCallback, type MouseEvent, type RefObject } from 'react';
 import { X } from 'lucide-react';
-import useCalculator from '../features/calculator/hooks/useCalculator.js';
-import type { Operator } from '../features/calculator/types.js';
+import useCalculator from '../features/calculator/index.js';
+import type { Operator } from '../features/calculator/index.js';
 
 // ─── CalculatorDisplay (internal) ────────────────────────────────────────────
 
@@ -16,7 +16,7 @@ function CalculatorDisplay({ expression, displayValue, isError }: CalculatorDisp
     <div className="px-4 py-3 bg-background text-right">
       {/* Expression preview — screen readers skip this; the live result below is announced */}
       <p
-        className="text-xs text-muted-foreground min-h-[1.25rem] truncate"
+        className="text-xs text-muted-foreground min-h-5 truncate"
         aria-hidden="true"
       >
         {expression}
@@ -87,7 +87,7 @@ interface CalculatorButtonGridProps {
   onClear: () => void;
   onToggleSign: () => void;
   onPercent: () => void;
-  onBackspace: () => void;
+  // Note: backspace is keyboard-only (Backspace key), handled in CalculatorPanel's keyboard useEffect
   activeOperator: Operator | null;
   clearButtonRef: RefObject<HTMLButtonElement | null>;
 }
@@ -325,7 +325,7 @@ export default function CalculatorPanel({
         'overflow-hidden',
         'transition-all duration-200 origin-bottom-right',
         isOpen
-          ? 'max-h-[32rem] opacity-100 scale-100'
+          ? 'max-h-128 opacity-100 scale-100'
           : 'max-h-0 opacity-0 scale-95 pointer-events-none',
         zClass,
       ].join(' ')}
@@ -360,7 +360,6 @@ export default function CalculatorPanel({
         onClear={clear}
         onToggleSign={toggleSign}
         onPercent={applyPercent}
-        onBackspace={backspace}
         activeOperator={state.inputMode === 'operator-selected' ? state.operator : null}
         clearButtonRef={clearButtonRef}
       />
