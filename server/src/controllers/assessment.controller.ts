@@ -19,7 +19,14 @@ export function createAssessmentController(type: AssessmentType, parentParam: st
 
 export const assessmentController = {
   update: asyncHandler(async (req: Request, res: Response) => {
-    res.json(await assessmentService.update(req.params['assessmentId'] as string, req.body));
+    res.json(
+      await assessmentService.update(
+        req.params['assessmentId'] as string,
+        req.body,
+        req.user!.id,
+        req.user!.role,
+      ),
+    );
   }),
 
   submitAttempt: asyncHandler(async (req: Request, res: Response) => {
