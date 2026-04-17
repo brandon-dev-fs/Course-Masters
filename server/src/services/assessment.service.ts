@@ -1,6 +1,6 @@
 import { AssessmentType } from '@prisma/client';
 import prisma from '../lib/prisma.js';
-import { NotFoundError } from '../errors/index.js';
+import { ForbiddenError, NotFoundError } from '../errors/index.js';
 import type { CreateAssessmentInput, UpdateAssessmentInput, SubmitAttemptInput } from '../schemas/assessment.schema.js';
 
 const PASS_THRESHOLD = 0.8;
@@ -58,9 +58,38 @@ export const assessmentService = {
     });
   },
 
-  async update(assessmentId: string, data: UpdateAssessmentInput) {
+  async update(
+    assessmentId: string,
+    data: UpdateAssessmentInput,
+    requestingUserId: string,
+    requestingUserRole: string,
+  ) {
     const assessment = await prisma.assessment.findUnique({ where: { id: assessmentId } });
     if (!assessment) throw new NotFoundError('Assessment not found');
+
+    // Resolve the parent course's authorId to enforce ownership.
+    // FK constraints guarantee the parent record exists.
+    let courseAuthorId: string;
+    if (assessment.lessonId) {
+      const lesson = await prisma.lesson.findUnique({
+        where: { id: assessment.lessonId },
+        include: { unit: { include: { course: true } } },
+      });
+      courseAuthorId = lesson!.unit.course.authorId;
+    } else if (assessment.unitId) {
+      const unit = await prisma.unit.findUnique({
+        where: { id: assessment.unitId },
+        include: { course: true },
+      });
+      courseAuthorId = unit!.course.authorId;
+    } else {
+      const course = await prisma.course.findUnique({ where: { id: assessment.courseId! } });
+      courseAuthorId = course!.authorId;
+    }
+
+    if (requestingUserRole !== 'admin' && courseAuthorId !== requestingUserId) {
+      throw new ForbiddenError('You do not own this assessment');
+    }
 
     await prisma.assessmentQuestion.deleteMany({ where: { assessmentId } });
     return prisma.assessment.update({
