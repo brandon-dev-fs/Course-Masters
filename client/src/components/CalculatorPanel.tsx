@@ -1,6 +1,6 @@
 import { useEffect, useRef, useCallback, type MouseEvent as ReactMouseEvent, type RefObject } from 'react';
 import { X } from 'lucide-react';
-import useCalculator from '../features/calculator/index.js';
+import { useCalculator } from '../features/calculator/index.js';
 import type { Operator } from '../features/calculator/index.js';
 
 // ─── CalculatorDisplay (internal) ────────────────────────────────────────────
