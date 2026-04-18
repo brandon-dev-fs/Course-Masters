@@ -1,65 +1,64 @@
-# Design Rules
+---
+description: Run the design stage. Produces wireframe, plans, and api-contract based on the spec's Required Design Artifacts checklist.
+argument-hint: <spec id> [review.md]
+---
 
-Loaded by: `designer`, `frontend-architect`, `frontend-developer`.
+# /design
 
-## Approach
+You are running the **Design stage**. Read the approved spec, determine which design artifacts are needed, orchestrate the relevant agents and skills.
 
-- Desktop-first design. Default layouts target desktop viewports; adapt down to tablet and mobile via Tailwind's `max-*` breakpoints.
-- Minimum supported viewport: 360px width.
-- Follow Tailwind defaults unless a project-specific token is defined.
+## Arguments
 
-## Accessibility
+- Spec ID: $ARGUMENTS (first argument, required)
+- Review doc path: (optional second argument) — rejected review for revision
 
-- Target WCAG 2.1 Level AA.
-- Color contrast: 4.5:1 for normal text, 3:1 for large text (18pt+ or 14pt+ bold).
-- Never communicate state with color alone. Pair color with an icon, label, or shape.
-- All interactive elements must be reachable and operable by keyboard.
-- Focus states are required and must be visible against the background.
-- Form fields must have visible labels (not placeholder-only).
+If spec ID is empty, ask and stop.
 
-## Component behavior
+## Procedure
 
-- Loading states: every async action has a visible loading indicator.
-- Empty states: every list or collection view has an empty state with guidance on what to do next.
-- Error states: rendered via `<ErrorMessage>` (see `frontend.md`).
-- Disabled states: visually distinct from enabled, with reduced contrast and `cursor-not-allowed`.
+### 1. Verify environment
 
-## Layout
+- `CLAUDE.md` exists. If missing: `Run /init to generate CLAUDE.md first.`
+- `.claude/config.yaml` and `.claude/rules.md` exist.
+- Create `.claude/designs/<id>/` and `.claude/plans/<id>/` if missing.
 
-- Use Tailwind's spacing scale exclusively. Do not use arbitrary pixel values.
-- Maintain consistent rhythm: prefer `space-y-*` and `gap-*` over manual margins between siblings.
-- Container max-widths come from Tailwind's `max-w-*` scale.
+### 2. Read and verify spec
 
-## Typography
+- Load `.claude/specs/<id>/spec.md`. If not found, stop.
+- If not `approved`, stop with approval instructions.
 
-- Font sizes from Tailwind's type scale (`text-sm`, `text-base`, etc.). Do not use arbitrary sizes.
-- Limit font weight variations to two per surface (e.g., `font-normal` and `font-semibold`).
-- Line height pairs with font size via Tailwind's defaults.
+### 3. Parse Required Design Artifacts
 
-## Color
+Determine which skills to run from the checklist.
 
-- Use semantic Tailwind tokens where defined in `tailwind.config.js` (e.g., `bg-primary`, `text-danger`).
-- Never hardcode hex values in components.
-- When a needed semantic color does not exist, the designer adds it to the Tailwind config as part of the design artifact, not the developer ad hoc.
+### 4. Check review feedback
 
-## Iconography
+If review doc provided: verify `status: rejected` and `hand_back_to: design`. Extract issues for agents.
 
-- Single icon library across the app. Document the choice in `tailwind.config.js` or a top-level README.
-- Icons used decoratively get `aria-hidden="true"`. Icons that convey meaning get an `aria-label`.
+### 5. Orchestrate skills (order matters)
 
-## Wireframes
+**Step A: Backend plan + API contract** (if required)
+- `backend-architect` agent. Reads `CLAUDE.md` and scoped rules lazily.
+- Outputs: `.claude/plans/<id>/backend-plan.md`, `.claude/plans/<id>/api-contract.md`
 
-When `/design` produces a wireframe, it must include:
+**Step B: UI design** (if required, parallel with Step A)
+- `designer` agent. Reads `CLAUDE.md` and design rules.
+- Output: `.claude/designs/<id>/wireframe.md`
 
-- Layout at desktop viewport (≥1280px width).
-- Layout at mobile viewport (≤480px width).
-- All states for each interactive element: default, hover, focus, active, disabled, loading, error, empty.
-- Annotations referencing the design tokens used (color, spacing, type scale).
+**Step C: Frontend plan** (if required, after Step A)
+- `frontend-architect` agent. Reads api-contract from Step A.
+- Output: `.claude/plans/<id>/frontend-plan.md`
 
-Wireframes do not need to be high-fidelity mockups. ASCII, mermaid diagrams, or structured markdown describing layout and component composition is sufficient as long as it covers the above.
+### 6. Verify mechanically
 
-## Design token gaps
+Check each artifact has `status: pending` in frontmatter.
 
-If a design requires a token (color, spacing, font size, breakpoint) that does not exist in `tailwind.config.js`, the designer adds it to the wireframe doc as a "Required Token Additions" section. The frontend developer adds these to `tailwind.config.js` during implementation before using them.
+### 7. Report
 
-Never use arbitrary values (e.g., `text-[13px]`, `bg-[#ff5500]`) to work around a missing token. Add the token instead.
+List all produced artifacts awaiting approval with next steps.
+
+## Constraints
+
+- Write only to `.claude/designs/<id>/` and `.claude/plans/<id>/`.
+- Never set `status: approved` on design artifacts.
+- Overwrite existing artifacts on re-run.

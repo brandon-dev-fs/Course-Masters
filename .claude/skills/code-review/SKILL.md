@@ -1,63 +1,39 @@
 ---
 name: code-review
-description: Review the integration branch diff against project rules and produce a structured code review document. Use when /review runs. Auto-approves only if zero issues at severity medium or above.
+description: Review current branch diff against project rules. Split by file scope for token efficiency. Produces .claude/reviews/<id>/code-review.md.
 ---
 
 # code-review
 
 ## Purpose
 
-Diff `feature/<id>` against the default branch (`develop`) and produce a code review identifying violations of project rules. Each issue is classified by severity, located by file and line, and given a suggested fix.
+Diff current branch against the default branch and produce a code review checking project conventions.
 
 ## Inputs
 
-- The approved spec at `.claude/specs/<id>-spec.md`
-- The approved plans at `.claude/plans/<id>-*.md`
-- The diff between `feature/<id>` and `develop`
+- Approved spec at `.claude/specs/<id>/spec.md`
+- Approved plans at `.claude/plans/<id>/`
+- `CLAUDE.md` for project conventions
+- Diff: `git diff <default_branch>..HEAD`
 
 ## Output
 
-A single file at `.claude/reviews/<id>-code-review.md` matching `template.md` in this skill's directory.
+`.claude/reviews/<id>/code-review.md` matching `template.md`.
 
 ## Procedure
 
-1. **Read** `template.md` in this skill directory.
-
-2. **Get the diff**: `git diff develop..feature/<id>` from the integration worktree.
-
-3. **Run the checklist** from `review.md` against every changed file. The checklist covers:
-   - Direct error responses (`res.json({ error })`, `res.status(4xx)` outside `errorHandler`) → `medium`
-   - Missing `asyncHandler` on async routes → `medium`
-   - Hardcoded error code strings → `medium`
-   - Direct `fetch` outside `ApiClient` → `medium`
-   - Hardcoded design values (hex, arbitrary px, arbitrary font sizes) → `low`
-   - `console.log` in committed code → `low`
-   - `any` without comment → `low`
-   - Type assertions outside boundaries → `low`
-   - New unjustified dependencies → `medium`
-   - Cross-feature imports on frontend → `medium`
-   - Migration drops/renames combined with code changes → `high`
-   - Missing Zod validation on new endpoints → `high`
-   - New code without unit tests → `info` (downgraded until test framework exists; flip to `medium` once it does)
-   - Wrong-layer placement (business logic in controllers, Express types in services) → `medium`
-   - Naming convention violations → `low`
-   - Commit message format → `low`
-
-4. **For each issue found**, copy the issue block in the template and fill: severity, location (`file:line`), rule reference, description, suggested fix.
-
-5. **Determine status**:
-   - Zero issues at `medium` or above → frontmatter `status: approved`, `approver: agent`, `approved_at: <timestamp>`.
-   - Otherwise → `status: rejected`. Human re-runs `/implement <id> .claude/reviews/<id>-code-review.md`.
-
-6. **Write** to `.claude/reviews/<id>-code-review.md`.
-
-7. **Report** the file path and status.
+1. Read `template.md`.
+2. Read `CLAUDE.md` to understand project structure (which directories are backend vs frontend).
+3. Get the diff: `git diff <default_branch>..HEAD`.
+4. **Split by scope**: for each file group, load only the relevant scoped rules from `.claude/rules/`. Determine backend vs frontend directories from `CLAUDE.md`.
+5. Run the checklist from `.claude/rules/review.md` plus any project-specific checks.
+6. Create `.claude/reviews/<id>/` if missing.
+7. Merge issues from all passes into one review doc.
+8. Set `status: approved` if zero issues at `medium`+, otherwise `rejected`.
+9. Verify mechanically.
 
 ## Constraints
 
-- Never edit code. Produce the review doc only.
-- Never modify upstream artifacts (spec, designs, plans).
-- Never approve based on partial review. Cover the full diff.
-- Apply rules from `backend.md`, `frontend.md`, `data.md`, `api.md` based on which files appear in the diff.
-- Do not duplicate security checks — that's `security-review`'s job. If something is both a code quality issue and a security issue, flag the code-quality angle here and let the security review cover the rest.
-- Do not write outside `.claude/reviews/`.
+- Never edit code. Doc only.
+- Never modify upstream artifacts.
+- Write only to `.claude/reviews/<id>/`.

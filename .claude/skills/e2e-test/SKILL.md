@@ -1,44 +1,30 @@
 ---
 name: e2e-test
-description: Run the E2E test suite on the integration branch and report results. Use when /test runs. Currently a stub — E2E framework not yet bootstrapped in this project.
+description: Run E2E tests on the current branch and report results. Reads test tooling from CLAUDE.md.
 ---
 
 # e2e-test
 
 ## Purpose
 
-Run end-to-end tests against the integration branch and report pass/fail counts and failure details.
+Run end-to-end tests, report pass/fail counts and failure details.
 
 ## Inputs
 
-- The integration worktree at `<worktree_root>/<repo>-<id>-integration/`
+- Current working directory
+- `CLAUDE.md` for E2E framework and commands
 
 ## Output
 
-A section of the test report at `.claude/tests/<id>-test-report.md` covering E2E tests:
-
-- Total scenarios run
-- Passes / failures
-- Failure details (scenario, screenshot reference if applicable, error)
+Section of test report at `.claude/tests/<id>/test-report.md`.
 
 ## Procedure
 
-### Current state (no E2E framework bootstrapped)
-
-1. Check for an E2E framework config (`playwright.config.*`, `cypress.config.*`).
-2. If none found, write a section noting "No E2E framework configured. Skipping E2E test stage." Do not block approval on this.
-3. Return.
-
-### Future state (once a framework is in place)
-
-1. Start the application (or rely on a dev server config).
-2. Run the E2E suite.
-3. Parse results, write the report section.
-4. Pass criterion: all scenarios pass.
+1. Read `CLAUDE.md` for the project's E2E framework and command.
+2. If no E2E framework documented or configured: record "No E2E framework configured." Do not block approval.
+3. If exists: start app, run suite, parse results. Pass = all scenarios pass.
 
 ## Constraints
 
-- Never modify source code or the application's data.
-- Never commit anything.
-- Do not write outside `.claude/tests/`.
-- Stub until the project bootstraps an E2E framework. Expand this SKILL.md when that happens.
+- Never modify source code or application data. Never commit.
+- Write only to `.claude/tests/<id>/`.
