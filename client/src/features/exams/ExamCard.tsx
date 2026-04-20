@@ -38,12 +38,14 @@ export default function ExamCard({ courseId, allUnitsMastered, canEdit }: ExamCa
     if (!exam) return;
     setEditQuestions(
       exam.questions.map((q) => ({
+        id: q.id,
         question: q.question,
         content: {
           options: (q.content.options as string[]) ?? [],
           correctIndex: (q.content.correctIndex as number) ?? 0,
         },
         order: q.order,
+        calculatorEnabled: q.calculatorEnabled ?? false,
       })),
     );
     setView('creating');
@@ -133,6 +135,7 @@ export default function ExamCard({ courseId, allUnitsMastered, canEdit }: ExamCa
             initialQuestions={editQuestions ?? undefined}
             onSubmit={exam ? handleUpdate : handleCreate}
             onCancel={closeModal}
+            assessmentId={exam?.id}
           />
         </Modal>
       )}

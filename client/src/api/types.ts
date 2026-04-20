@@ -101,6 +101,7 @@ export interface AssessmentQuestion {
   question: string;
   content: Record<string, unknown>;
   order: number;
+  calculatorEnabled: boolean;
 }
 
 export interface Assessment {
