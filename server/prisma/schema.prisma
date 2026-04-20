@@ -207,12 +207,13 @@ model Assessment {
 }
 
 model AssessmentQuestion {
-  id           String       @id @default(uuid())
-  type         QuestionType @default(multiple_choice)
-  question     String
-  content      Json
-  order        Int
-  assessmentId String
+  id                String       @id @default(uuid())
+  type              QuestionType @default(multiple_choice)
+  question          String
+  content           Json
+  order             Int
+  assessmentId      String
+  calculatorEnabled Boolean      @default(false)
 
   assessment Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
 
