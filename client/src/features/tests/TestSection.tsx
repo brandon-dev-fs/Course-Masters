@@ -35,12 +35,14 @@ export default function TestSection({ unitId, canEdit = false, allLessonsComplet
   function openEdit() {
     if (!test) return;
     setEditQuestions(test.questions.map(q => ({
+      id: q.id,
       question: q.question,
       content: {
         options: (q.content.options as string[]) ?? [],
         correctIndex: (q.content.correctIndex as number) ?? 0,
       },
       order: q.order,
+      calculatorEnabled: q.calculatorEnabled ?? false,
     })));
     setView('creating');
   }
@@ -109,6 +111,7 @@ export default function TestSection({ unitId, canEdit = false, allLessonsComplet
             initialQuestions={editQuestions ?? undefined}
             onSubmit={test ? handleUpdate : handleCreate}
             onCancel={closeModal}
+            assessmentId={test?.id}
           />
         </Modal>
       )}
