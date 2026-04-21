@@ -34,4 +34,9 @@ export const assessmentController = {
   getAttempts: asyncHandler(async (req: Request, res: Response) => {
     res.json(await assessmentService.getAttempts(req.params['assessmentId'] as string, req.user!.id));
   }),
+
+  bulkUpdateCalculator: asyncHandler(async (req: Request, res: Response) => {
+    const assessmentId = req.params['assessmentId'] as string;
+    res.json(await assessmentService.bulkUpdateCalculator(assessmentId, req.body));
+  }),
 };

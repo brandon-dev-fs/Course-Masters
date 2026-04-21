@@ -1,7 +1,7 @@
 import { AssessmentType } from '@prisma/client';
 import prisma from '../lib/prisma.js';
-import { NotFoundError } from '../errors/index.js';
-import type { CreateAssessmentInput, SubmitAttemptInput } from '../schemas/assessment.schema.js';
+import { AppError, NotFoundError } from '../errors/index.js';
+import type { BulkUpdateCalculatorInput, CreateAssessmentInput, SubmitAttemptInput } from '../schemas/assessment.schema.js';
 
 const PASS_THRESHOLD = 0.8;
 
@@ -108,5 +108,34 @@ export const assessmentService = {
       orderBy: { createdAt: 'desc' },
       select: { id: true, score: true, passed: true, createdAt: true },
     });
+  },
+
+  async bulkUpdateCalculator(assessmentId: string, data: BulkUpdateCalculatorInput) {
+    const assessment = await prisma.assessment.findUnique({ where: { id: assessmentId } });
+    if (!assessment) throw new NotFoundError('Assessment not found');
+
+    const found = await prisma.assessmentQuestion.findMany({
+      where: { id: { in: data.questionIds }, assessmentId },
+      select: { id: true },
+    });
+    if (found.length !== data.questionIds.length) {
+      throw new AppError(
+        'QUESTION_NOT_IN_ASSESSMENT',
+        'One or more question IDs do not belong to this assessment',
+        422,
+      );
+    }
+
+    await prisma.assessmentQuestion.updateMany({
+      where: { id: { in: data.questionIds }, assessmentId },
+      data: { calculatorEnabled: data.calculatorEnabled },
+    });
+
+    const result = await prisma.assessment.findUnique({
+      where: { id: assessmentId },
+      include: { questions: { orderBy: { order: 'asc' } } },
+    });
+    if (!result) throw new NotFoundError('Assessment not found');
+    return result;
   },
 };

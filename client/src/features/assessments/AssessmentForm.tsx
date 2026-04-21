@@ -2,28 +2,53 @@ import { FormEvent, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import QuestionEditor, { type QuestionDraft } from './QuestionEditor.js';
 import Button from '../../components/Button.js';
+import ConfirmDialog from '../../components/ConfirmDialog.js';
+import { assessmentsApi } from '../../api/assessments.js';
+import type { AssessmentQuestion } from '../../api/types.js';
 
 interface AssessmentFormProps {
   initialQuestions?: QuestionDraft[];
   onSubmit: (questions: QuestionDraft[]) => Promise<void>;
   onCancel: () => void;
+  /** Present only in edit mode (assessment already persisted). Enables bulk toolbar. */
+  assessmentId?: string;
 }
 
 function newQuestion(order: number): QuestionDraft {
-  return { question: '', content: { options: ['', ''], correctIndex: 0 }, order };
+  return { question: '', content: { options: ['', ''], correctIndex: 0 }, order, calculatorEnabled: false };
 }
 
 function isComplete(q: QuestionDraft) {
   return q.question.trim() !== '' && q.content.options.every(o => o.trim() !== '');
 }
 
-export default function AssessmentForm({ initialQuestions, onSubmit, onCancel }: AssessmentFormProps) {
+/** Convert a persisted question to a local draft. */
+export function toQuestionDraft(q: AssessmentQuestion): QuestionDraft {
+  return {
+    id: q.id,
+    type: q.type,
+    question: q.question,
+    content: {
+      options: (q.content.options as string[]) ?? [],
+      correctIndex: (q.content.correctIndex as number) ?? 0,
+    },
+    order: q.order,
+    calculatorEnabled: q.calculatorEnabled ?? false,
+  };
+}
+
+export default function AssessmentForm({ initialQuestions, onSubmit, onCancel, assessmentId }: AssessmentFormProps) {
   const [questions, setQuestions] = useState<QuestionDraft[]>(
     initialQuestions && initialQuestions.length > 0 ? initialQuestions : [newQuestion(1)]
   );
   const [current, setCurrent] = useState(0);
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  // Bulk toolbar state
+  const [bulkConfirm, setBulkConfirm] = useState<{ target: boolean; open: boolean } | null>(null);
+  const [bulkLoading, setBulkLoading] = useState(false);
+  const [bulkError, setBulkError] = useState('');
 
   const currentComplete = isComplete(questions[current]);
 
@@ -65,60 +90,174 @@ export default function AssessmentForm({ initialQuestions, onSubmit, onCancel }:
     }
   }
 
+  // ── Bulk calculator helpers ────────────────────────────────────────────────
+
+  async function executeBulkApply(targetValue: boolean) {
+    if (!assessmentId) return;
+    if (questions.length === 0) return;
+
+    const questionIds = questions.map(q => q.id).filter((id): id is string => Boolean(id));
+    if (questionIds.length === 0) return;
+
+    // Snapshot for revert
+    const snapshot = questions.slice();
+
+    // Optimistic update
+    setQuestions(prev => prev.map(q => ({ ...q, calculatorEnabled: targetValue })));
+    setBulkLoading(true);
+    setBulkError('');
+
+    try {
+      const updated = await assessmentsApi.bulkUpdateCalculator(assessmentId, {
+        questionIds,
+        calculatorEnabled: targetValue,
+      });
+      setQuestions(updated.questions.map(toQuestionDraft));
+    } catch (err: unknown) {
+      setQuestions(snapshot);
+      setBulkError(err instanceof Error ? err.message : 'Bulk update failed');
+    } finally {
+      setBulkLoading(false);
+    }
+  }
+
+  function onBulkClick(targetValue: boolean) {
+    if (questions.length === 0) return;
+
+    const allMatch = questions.every(q => (q.calculatorEnabled ?? false) === targetValue);
+    if (allMatch) return; // no-op
+
+    const isMixed =
+      questions.some(q => q.calculatorEnabled) &&
+      questions.some(q => !q.calculatorEnabled);
+
+    if (isMixed) {
+      setBulkConfirm({ target: targetValue, open: true });
+      return;
+    }
+
+    // All are the opposite — no confirm needed
+    void executeBulkApply(targetValue);
+  }
+
+  function onBulkConfirm() {
+    if (!bulkConfirm) return;
+    const target = bulkConfirm.target;
+    setBulkConfirm(null);
+    void executeBulkApply(target);
+  }
+
+  function onBulkCancel() {
+    setBulkConfirm(null);
+  }
+
   const total = questions.length;
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-      {/* Progress label */}
-      <span className="text-sm font-medium text-foreground">
-        Question {current + 1} <span className="text-muted-foreground">of {total}</span>
-      </span>
+    <>
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        {/* Progress label */}
+        <span className="text-sm font-medium text-foreground">
+          Question {current + 1} <span className="text-muted-foreground">of {total}</span>
+        </span>
 
-      {/* Current question */}
-      <QuestionEditor
-        index={current}
-        value={questions[current]}
-        onChange={updateQuestion}
-        onRemove={removeQuestion}
-      />
-
-      {/* Navigation */}
-      <div className="flex items-center justify-between">
-        <button
-          type="button"
-          onClick={() => setCurrent(prev => prev - 1)}
-          disabled={current === 0}
-          className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-        >
-          <ChevronLeft className="w-4 h-4" /> Prev
-        </button>
-
-        {current === total - 1 ? (
-          <button
-            type="button"
-            onClick={addQuestion}
-            disabled={!currentComplete}
-            className="text-sm text-primary hover:text-primary/80 font-medium disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-          >
-            + Add Question
-          </button>
-        ) : (
-          <button
-            type="button"
-            onClick={() => setCurrent(prev => prev + 1)}
-            className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            Next <ChevronRight className="w-4 h-4" />
-          </button>
+        {/* Bulk calculator toolbar — edit mode only */}
+        {assessmentId && (
+          <div className="bg-surface rounded-xl border border-border px-3 py-2">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              <span className="text-xs text-muted-foreground flex items-center gap-1.5">
+                🧮 Calculator
+              </span>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  disabled={bulkLoading}
+                  aria-label="Enable calculator for all questions"
+                  onClick={() => onBulkClick(true)}
+                >
+                  Enable all
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  disabled={bulkLoading}
+                  aria-label="Disable calculator for all questions"
+                  onClick={() => onBulkClick(false)}
+                >
+                  Disable all
+                </Button>
+              </div>
+            </div>
+            {bulkError && (
+              <p className="text-xs text-destructive mt-1">{bulkError}</p>
+            )}
+          </div>
         )}
-      </div>
 
-      {error && <p className="text-sm text-destructive">{error}</p>}
+        {/* Current question */}
+        <QuestionEditor
+          index={current}
+          value={questions[current]}
+          onChange={updateQuestion}
+          onRemove={removeQuestion}
+        />
 
-      <div className="flex justify-end gap-3 pt-2 border-t border-border">
-        <Button type="button" variant="secondary" onClick={onCancel} disabled={submitting}>Cancel</Button>
-        <Button type="submit" disabled={submitting}>{submitting ? 'Saving…' : 'Save Assessment'}</Button>
-      </div>
-    </form>
+        {/* Navigation */}
+        <div className="flex items-center justify-between">
+          <button
+            type="button"
+            onClick={() => setCurrent(prev => prev - 1)}
+            disabled={current === 0}
+            className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+          >
+            <ChevronLeft className="w-4 h-4" /> Prev
+          </button>
+
+          {current === total - 1 ? (
+            <button
+              type="button"
+              onClick={addQuestion}
+              disabled={!currentComplete}
+              className="text-sm text-primary hover:text-primary/80 font-medium disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+            >
+              + Add Question
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setCurrent(prev => prev + 1)}
+              className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Next <ChevronRight className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+
+        {error && <p className="text-sm text-destructive">{error}</p>}
+
+        <div className="flex justify-end gap-3 pt-2 border-t border-border">
+          <Button type="button" variant="secondary" onClick={onCancel} disabled={submitting}>Cancel</Button>
+          <Button type="submit" disabled={submitting}>{submitting ? 'Saving…' : 'Save Assessment'}</Button>
+        </div>
+      </form>
+
+      {/* Bulk-apply confirmation dialog */}
+      {bulkConfirm?.open && (
+        <ConfirmDialog
+          title={bulkConfirm.target ? 'Enable calculator for all questions?' : 'Disable calculator for all questions?'}
+          message={
+            bulkConfirm.target
+              ? `Some questions currently have the calculator disabled. This will enable it for all ${questions.length} questions.`
+              : `Some questions currently have the calculator enabled. This will disable it for all ${questions.length} questions.`
+          }
+          confirmLabel={bulkConfirm.target ? 'Enable for all' : 'Disable for all'}
+          onConfirm={onBulkConfirm}
+          onClose={onBulkCancel}
+        />
+      )}
+    </>
   );
 }
