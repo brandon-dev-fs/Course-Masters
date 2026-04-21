@@ -131,9 +131,11 @@ export const assessmentService = {
       data: { calculatorEnabled: data.calculatorEnabled },
     });
 
-    return prisma.assessment.findUnique({
+    const result = await prisma.assessment.findUnique({
       where: { id: assessmentId },
       include: { questions: { orderBy: { order: 'asc' } } },
     });
+    if (!result) throw new NotFoundError('Assessment not found');
+    return result;
   },
 };
