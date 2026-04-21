@@ -11,6 +11,8 @@ export interface CalculatorPanelProps {
   onClose: () => void;
   /** Focus returns to this button when the panel closes. */
   triggerRef: React.RefObject<HTMLButtonElement | null>;
+  /** DOM id for the panel element; must be unique per instance. Defaults to "calculator-panel". */
+  panelId?: string;
 }
 
 // ── Internal: key variants ───────────────────────────────────────────────────
@@ -96,6 +98,7 @@ interface PanelContentProps {
   handleKey: (key: CalculatorKey) => void;
   onClose: () => void;
   clearRef: React.RefObject<HTMLButtonElement | null>;
+  panelId: string;
   dragHandleProps?: {
     onPointerDown: (e: React.PointerEvent<HTMLDivElement>) => void;
     onPointerMove: (e: React.PointerEvent<HTMLDivElement>) => void;
@@ -113,11 +116,12 @@ function PanelContent({
   handleKey,
   onClose,
   clearRef,
+  panelId,
   dragHandleProps,
 }: PanelContentProps) {
   return (
     <div
-      id="calculator-panel"
+      id={panelId}
       role="region"
       aria-label="Calculator"
       style={style}
@@ -183,7 +187,7 @@ function PanelContent({
 
 // ── CalculatorPanel ──────────────────────────────────────────────────────────
 
-export default function CalculatorPanel({ onClose, triggerRef }: CalculatorPanelProps) {
+export default function CalculatorPanel({ onClose, triggerRef, panelId = 'calculator-panel' }: CalculatorPanelProps) {
   const { expression, displayValue, isError, handleKey } = useCalculator();
   const isDesktop = useMediaQuery('(min-width: 640px)');
   const clearRef = useRef<HTMLButtonElement | null>(null);
@@ -252,6 +256,7 @@ export default function CalculatorPanel({ onClose, triggerRef }: CalculatorPanel
         handleKey={handleKey}
         onClose={handleClose}
         clearRef={clearRef}
+        panelId={panelId}
         dragHandleProps={dragHandleProps}
       />
     );
@@ -269,6 +274,7 @@ export default function CalculatorPanel({ onClose, triggerRef }: CalculatorPanel
       handleKey={handleKey}
       onClose={handleClose}
       clearRef={clearRef}
+      panelId={panelId}
     />
   );
 }
