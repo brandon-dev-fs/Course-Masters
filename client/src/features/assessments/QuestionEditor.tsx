@@ -56,7 +56,7 @@ export default function QuestionEditor({ index, value, onChange, onRemove }: Que
 
         <div className="flex items-center gap-3 flex-wrap justify-end">
           {/* Calculator toggle */}
-          <label className="flex items-center gap-1.5 cursor-pointer select-none">
+          <div className="flex items-center gap-1.5 select-none">
             <span className="text-xs text-muted-foreground flex items-center gap-1">
               🧮 Calculator
             </span>
@@ -67,19 +67,19 @@ export default function QuestionEditor({ index, value, onChange, onRemove }: Que
               aria-label="Allow calculator for this question"
               onClick={toggleCalculator}
               className={`
-                relative w-9 h-5 rounded-full transition-all duration-150
+                relative w-9 h-5 rounded-full transition-colors duration-150
                 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2
                 ${calculatorEnabled ? 'bg-primary' : 'bg-border'}
               `}
             >
               <span
                 className={`
-                  absolute top-0.5 w-4 h-4 rounded-full bg-surface-raised shadow transition-transform duration-150
-                  ${calculatorEnabled ? 'translate-x-4' : 'translate-x-0.5'}
+                  absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-sm transition-all duration-150
+                  ${calculatorEnabled ? 'left-[18px]' : 'left-0.5'}
                 `}
               />
             </button>
-          </label>
+          </div>
 
           {/* Remove */}
           <button

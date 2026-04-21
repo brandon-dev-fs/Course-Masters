@@ -36,6 +36,8 @@ interface State {
   isError: boolean;
   /** Set after sqrt so expression line can show e.g. "√(9) =" */
   sqrtExpression: string | null;
+  /** True immediately after an operator is pressed — next digit replaces instead of appends */
+  waitingForOperand: boolean;
 }
 
 const INITIAL_STATE: State = {
@@ -45,6 +47,7 @@ const INITIAL_STATE: State = {
   justEvaluated: false,
   isError: false,
   sqrtExpression: null,
+  waitingForOperand: false,
 };
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -88,6 +91,9 @@ function reducer(state: State, key: CalculatorKey): State {
     if (justEvaluated || isError) {
       return { ...INITIAL_STATE, currentInput: key === '0' ? '0' : key };
     }
+    if (state.waitingForOperand) {
+      return { ...state, currentInput: key === '0' ? '0' : key, waitingForOperand: false, sqrtExpression: null };
+    }
     if (currentInput === '0' && key !== '0') {
       return { ...state, currentInput: key, sqrtExpression: null };
     }
@@ -101,6 +107,9 @@ function reducer(state: State, key: CalculatorKey): State {
   if (key === '.') {
     if (justEvaluated || isError) {
       return { ...INITIAL_STATE, currentInput: '0.' };
+    }
+    if (state.waitingForOperand) {
+      return { ...state, currentInput: '0.', waitingForOperand: false, sqrtExpression: null };
     }
     if (currentInput.includes('.')) return state;
     return { ...state, currentInput: currentInput + '.', sqrtExpression: null };
@@ -154,6 +163,7 @@ function reducer(state: State, key: CalculatorKey): State {
         operand1: currentInput,
         operator: key,
         justEvaluated: false,
+        waitingForOperand: true,
         sqrtExpression: null,
       };
     }
@@ -171,12 +181,13 @@ function reducer(state: State, key: CalculatorKey): State {
         operator: key,
         currentInput: formatted,
         justEvaluated: false,
+        waitingForOperand: true,
         sqrtExpression: null,
       };
     }
 
     // Overwrite pending operator (operator pressed again without entering second operand)
-    return { ...state, operator: key, justEvaluated: false, sqrtExpression: null };
+    return { ...state, operator: key, justEvaluated: false, waitingForOperand: true, sqrtExpression: null };
   }
 
   // ── Equals ───────────────────────────────────────────────────────────────

@@ -38,7 +38,7 @@ export default function PracticeProblemList({ lessonId }: { lessonId: string }) 
     return {
       type: 'practice_problem',
       title: draft.question.slice(0, 80),
-      content: { question: draft.question, ...draft.content },
+      content: { question: draft.question, ...draft.content, calculatorEnabled: draft.calculatorEnabled ?? false },
       order: draft.order,
     };
   }
@@ -87,7 +87,7 @@ export default function PracticeProblemList({ lessonId }: { lessonId: string }) 
           <PracticeProblemForm
             initial={editing}
             onSubmit={async (draft) =>
-              handleUpdate({ content: { question: draft.question, ...draft.content }, order: draft.order })
+              handleUpdate({ content: { question: draft.question, ...draft.content, calculatorEnabled: draft.calculatorEnabled ?? false }, order: draft.order })
             }
             onCancel={() => setEditing(null)}
           />
