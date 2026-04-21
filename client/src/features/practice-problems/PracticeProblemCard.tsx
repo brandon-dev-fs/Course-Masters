@@ -49,7 +49,7 @@ export default function PracticeProblemCard({ problem, onEdit, onDelete }: Pract
             ref={calcTriggerRef}
             type="button"
             aria-expanded={isCalculatorOpen}
-            aria-controls="calculator-panel"
+            aria-controls={`calculator-panel-${problem.id}`}
             aria-label={isCalculatorOpen ? 'Close calculator' : 'Open calculator'}
             onClick={() => setIsCalculatorOpen(prev => !prev)}
             className="inline-flex items-center justify-center gap-2 font-semibold transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 bg-surface hover:bg-surface-raised text-foreground border border-border shadow-warm-sm px-3 py-1.5 text-sm rounded-xl self-start w-full sm:w-auto min-h-[44px] sm:min-h-0 mb-2"
@@ -57,7 +57,7 @@ export default function PracticeProblemCard({ problem, onEdit, onDelete }: Pract
             🧮 {isCalculatorOpen ? 'Close calculator' : 'Calculator'}
           </button>
           {isCalculatorOpen && (
-            <CalculatorPanel onClose={() => setIsCalculatorOpen(false)} triggerRef={calcTriggerRef} />
+            <CalculatorPanel onClose={() => setIsCalculatorOpen(false)} triggerRef={calcTriggerRef} panelId={`calculator-panel-${problem.id}`} />
           )}
         </>
       )}
