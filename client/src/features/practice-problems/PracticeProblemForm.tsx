@@ -20,6 +20,7 @@ export default function PracticeProblemForm({ initial, nextOrder = 1, onSubmit, 
       correctIndex: (initial?.content?.correctIndex as number) ?? 0,
     },
     order: initial?.order ?? nextOrder,
+    calculatorEnabled: (initial?.content?.calculatorEnabled as boolean) ?? false,
   });
   const { error, submitting, handleSubmit } = useFormSubmit(async () => {
     if (!draft.question.trim()) throw new Error('Question is required');
