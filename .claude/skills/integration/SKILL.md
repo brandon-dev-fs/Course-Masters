@@ -31,7 +31,11 @@ Coder branches merged, worktrees and branches deleted on success, everything pre
 6. If conflicts: stop, report, leave everything.
 7. Run build (using the project's build command from `CLAUDE.md`).
 8. Run unit tests (using the project's test command from `CLAUDE.md`, if configured).
-9. On success: remove worktrees, delete coder branches.
+9. On success:
+    - `git worktree remove worktrees/<id>-backend`
+    - `git worktree remove worktrees/<id>-frontend`
+    - `git branch -d <id>-backend`
+    - `git branch -d <id>-frontend`
 10. On failure: leave everything, report which step failed.
 
 ## Constraints

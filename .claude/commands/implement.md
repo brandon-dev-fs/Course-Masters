@@ -41,18 +41,36 @@ With review doc: reuse. Without: warn and ask.
 
 ### 6. Create worktrees
 
+Ensure the worktrees directory exists and is gitignored:
+
+```bash
+mkdir -p worktrees
+grep -qxF 'worktrees/' .gitignore 2>/dev/null || echo 'worktrees/' >> .gitignore
+```
+
 Branch off the **current branch**:
+
 ```bash
 CURRENT=$(git branch --show-current)
-git worktree add <worktree_root>/<repo>-<id>-backend -b <id>-backend $CURRENT
-git worktree add <worktree_root>/<repo>-<id>-frontend -b <id>-frontend $CURRENT
+git worktree add worktrees/<id>-backend -b <id>-backend $CURRENT
+git worktree add worktrees/<id>-frontend -b <id>-frontend $CURRENT
 ```
+
+If branch already exists (re-run): `git worktree add <path> <branch>` (no `-b`).
 
 ### 7. Dispatch coders
 
-Each coder agent reads `CLAUDE.md` and relevant scoped rules for stack conventions.
+**Backend** — `backend-developer` agent with `backend-code` skill:
 
-Single session: backend first, then frontend. Parallel across separate sessions.
+- Inputs: spec, backend plan, api-contract, optional review doc
+- Worktree: `worktrees/<id>-backend/`
+- Rules: lazy-load `backend.md`, `data.md`, `api.md`
+
+**Frontend** — `frontend-developer` agent with `frontend-code` skill:
+
+- Inputs: spec, frontend plan, api-contract, wireframe, optional review doc
+- Worktree: `worktrees/<id>-frontend/`
+- Rules: lazy-load `frontend.md`, `api.md`, `design.md`
 
 ### 8. Handle coder failures
 
@@ -67,7 +85,15 @@ Leave worktree, report. Contract conflicts escalate to `/design`.
 
 ### 10. Cleanup
 
-On success: remove worktrees, delete coder branches.
+On success: remove worktrees, delete coder branches:
+
+```bash
+git worktree remove worktrees/<id>-backend
+git worktree remove worktrees/<id>-frontend
+git branch -d <id>-backend
+git branch -d <id>-frontend
+```
+
 On failure: preserve everything.
 
 ### 11. Agent approval
