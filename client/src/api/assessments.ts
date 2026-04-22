@@ -6,6 +6,7 @@ interface QuestionInput {
   question: string;
   content: Record<string, unknown>;
   order: number;
+  calculatorEnabled?: boolean;
 }
 
 interface AssessmentInput {
@@ -35,4 +36,10 @@ export const assessmentsApi = {
     apiClient.get<AttemptSummary[]>(`/assessments/${assessmentId}/attempts`),
   submitAttempt: (assessmentId: string, answers: unknown[]) =>
     apiClient.post<AttemptResult>(`/assessments/${assessmentId}/attempts`, { answers }),
+
+  bulkUpdateCalculator: (
+    assessmentId: string,
+    data: { questionIds: string[]; calculatorEnabled: boolean },
+  ) =>
+    apiClient.patch<Assessment>(`/assessments/${assessmentId}/questions/calculator`, data),
 };

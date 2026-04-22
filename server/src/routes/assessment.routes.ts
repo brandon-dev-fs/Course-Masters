@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { createAssessmentController, assessmentController } from '../controllers/assessment.controller.js';
 import { validate } from '../middleware/validate.js';
 import { authorize } from '../middleware/authorize.js';
-import { createAssessmentSchema, submitAttemptSchema } from '../schemas/assessment.schema.js';
+import { bulkUpdateCalculatorSchema, createAssessmentSchema, submitAttemptSchema } from '../schemas/assessment.schema.js';
 
 const lessonAssessmentController = createAssessmentController('lesson_quiz', 'lessonId');
 const unitAssessmentController = createAssessmentController('unit_quiz', 'unitId');
@@ -22,5 +22,6 @@ courseAssessmentRouter.post('/', authorize('teacher', 'admin'), validate(createA
 
 export const assessmentsRouter = Router();
 assessmentsRouter.put('/:assessmentId', authorize('teacher', 'admin'), validate(createAssessmentSchema), assessmentController.update);
+assessmentsRouter.patch('/:assessmentId/questions/calculator', authorize('teacher', 'admin'), validate(bulkUpdateCalculatorSchema), assessmentController.bulkUpdateCalculator);
 assessmentsRouter.get('/:assessmentId/attempts', assessmentController.getAttempts);
 assessmentsRouter.post('/:assessmentId/attempts', validate(submitAttemptSchema), assessmentController.submitAttempt);
