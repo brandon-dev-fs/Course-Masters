@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { Lock, ChevronDown, ToggleLeft, ToggleRight } from 'lucide-react';
+import { Lock, ChevronDown, ToggleLeft, ToggleRight, ArrowUp, ArrowDown } from 'lucide-react';
 
 export type AssignmentKind = 'lessonPlan' | 'resource' | 'tool' | 'quiz';
 
@@ -24,13 +24,15 @@ interface AssignmentSectionProps {
   onVisible: (key: string) => void;
   onToggleCompletion: () => void;
   onToggleRequired: () => void;
+  onMoveUp?: () => void;
+  onMoveDown?: () => void;
   onNext: () => void;
   children: React.ReactNode;
 }
 
 export default function AssignmentSection({
   item, isComplete, isLocked, canEdit, isLast, incompleteRequired,
-  onVisible, onToggleCompletion, onToggleRequired, onNext, children,
+  onVisible, onToggleCompletion, onToggleRequired, onMoveUp, onMoveDown, onNext, children,
 }: AssignmentSectionProps) {
   const ref = useRef<HTMLElement>(null);
 
@@ -70,16 +72,38 @@ export default function AssignmentSection({
           )}
         </div>
         {canEdit && showRequired && (
-          <button
-            onClick={onToggleRequired}
-            title={item.isRequired ? 'Mark optional' : 'Mark required'}
-            className="text-muted-foreground hover:text-foreground transition-colors shrink-0"
-          >
-            {item.isRequired
-              ? <ToggleRight className="w-5 h-5 text-primary" />
-              : <ToggleLeft className="w-5 h-5" />
-            }
-          </button>
+          <div className="flex items-center gap-1 shrink-0">
+            <button
+              onClick={onToggleRequired}
+              title={item.isRequired ? 'Mark optional' : 'Mark required'}
+              className="text-muted-foreground hover:text-foreground transition-colors"
+            >
+              {item.isRequired
+                ? <ToggleRight className="w-5 h-5 text-primary" />
+                : <ToggleLeft className="w-5 h-5" />
+              }
+            </button>
+            {(onMoveUp || onMoveDown) && (
+              <div className="flex items-center">
+                <button
+                  onClick={onMoveUp}
+                  disabled={!onMoveUp}
+                  title="Move up"
+                  className="p-0.5 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                >
+                  <ArrowUp className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={onMoveDown}
+                  disabled={!onMoveDown}
+                  title="Move down"
+                  className="p-0.5 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                >
+                  <ArrowDown className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+          </div>
         )}
       </div>
 

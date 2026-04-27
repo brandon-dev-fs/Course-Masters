@@ -12,6 +12,14 @@ export default function StudentNotePanel({ lessonId }: StudentNotePanelProps) {
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Reset stale state immediately when lesson changes, before the fetch resolves
+  useEffect(() => {
+    setNote(null);
+    setContent('');
+    setSaveStatus('idle');
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+  }, [lessonId]);
+
   useEffect(() => {
     studentNotesApi.get(lessonId).then(existing => {
       if (existing) {
