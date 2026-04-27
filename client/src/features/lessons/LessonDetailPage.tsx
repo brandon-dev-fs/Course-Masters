@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Settings } from 'lucide-react';
+import { Settings, Plus } from 'lucide-react';
 import { lessonsApi } from '../../api/lessons.js';
 import { unitsApi } from '../../api/units.js';
 import { coursesApi } from '../../api/courses.js';
@@ -16,11 +16,13 @@ import VideoCard from '../videos/VideoCard.js';
 import VideoForm from '../videos/VideoForm.js';
 import NoteEditor from '../notes/NoteEditor.js';
 import FlashCard from '../flashcards/FlashCard.js';
+import FlashCardForm from '../flashcards/FlashCardForm.js';
 import PracticeProblemCard from '../practice-problems/PracticeProblemCard.js';
+import PracticeProblemForm from '../practice-problems/PracticeProblemForm.js';
 import VocabCard from '../vocab/VocabCard.js';
-import FlashCardList from '../flashcards/FlashCardList.js';
-import VocabList from '../vocab/VocabList.js';
+import VocabForm from '../vocab/VocabForm.js';
 import QuizSection from '../quizzes/QuizSection.js';
+import Modal from '../../components/Modal.js';
 import TestSection from '../tests/TestSection.js';
 import LessonSettingsModal from './LessonSettingsModal.js';
 import LessonPlanModal from './LessonPlanModal.js';
@@ -107,7 +109,8 @@ export default function LessonDetailPage() {
   const [showSettings, setShowSettings] = useState(false);
   const [showPlanEdit, setShowPlanEdit] = useState(false);
   const [editingVideoId, setEditingVideoId] = useState<string | null>(null);
-  const [showAddVideo, setShowAddVideo] = useState(false);
+  const [addingItemType, setAddingItemType] = useState<'video' | 'note' | 'lecture' | 'flash_card' | 'practice_problem' | 'vocab' | null>(null);
+  const [editingTool, setEditingTool] = useState<LessonTool | null>(null);
   const newNoteIdRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -214,6 +217,78 @@ export default function LessonDetailPage() {
     scrollToItem(key);
   }
 
+  async function handleAddNote(type: 'note' | 'lecture') {
+    if (!lessonId) return;
+    const resource = await lessonResourcesApi.create(lessonId, {
+      type,
+      title: type === 'lecture' ? 'New Lecture' : 'New Note',
+      content: { body: null },
+      order: resources.length + 1,
+    });
+    newNoteIdRef.current = resource.id;
+    setResources(prev => [...prev, resource].sort((a, b) => a.order - b.order));
+  }
+
+  async function handleMoveResource(id: string, direction: 'up' | 'down') {
+    const sorted = [...resources].sort((a, b) => a.order - b.order);
+    const idx = sorted.findIndex(r => r.id === id);
+    const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
+    if (swapIdx < 0 || swapIdx >= sorted.length) return;
+    const a = sorted[idx];
+    const b = sorted[swapIdx];
+    const orderA = a.order;
+    const orderB = b.order;
+    setResources(prev =>
+      prev.map(r =>
+        r.id === a.id ? { ...r, order: orderB } :
+        r.id === b.id ? { ...r, order: orderA } : r,
+      ).sort((x, y) => x.order - y.order),
+    );
+    try {
+      await Promise.all([
+        lessonResourcesApi.update(a.id, { order: orderB }),
+        lessonResourcesApi.update(b.id, { order: orderA }),
+      ]);
+    } catch {
+      setResources(prev =>
+        prev.map(r =>
+          r.id === a.id ? { ...r, order: orderA } :
+          r.id === b.id ? { ...r, order: orderB } : r,
+        ).sort((x, y) => x.order - y.order),
+      );
+    }
+  }
+
+  async function handleMoveTool(id: string, direction: 'up' | 'down') {
+    const sorted = [...tools].sort((a, b) => a.order - b.order);
+    const idx = sorted.findIndex(t => t.id === id);
+    const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
+    if (swapIdx < 0 || swapIdx >= sorted.length) return;
+    const a = sorted[idx];
+    const b = sorted[swapIdx];
+    const orderA = a.order;
+    const orderB = b.order;
+    setTools(prev =>
+      prev.map(t =>
+        t.id === a.id ? { ...t, order: orderB } :
+        t.id === b.id ? { ...t, order: orderA } : t,
+      ).sort((x, y) => x.order - y.order),
+    );
+    try {
+      await Promise.all([
+        lessonToolsApi.update(a.id, { order: orderB }),
+        lessonToolsApi.update(b.id, { order: orderA }),
+      ]);
+    } catch {
+      setTools(prev =>
+        prev.map(t =>
+          t.id === a.id ? { ...t, order: orderA } :
+          t.id === b.id ? { ...t, order: orderB } : t,
+        ).sort((x, y) => x.order - y.order),
+      );
+    }
+  }
+
   async function handleAddLesson(data: { title: string; description: string; order: number }) {
     if (!unitId || !courseId) return;
     const newLesson = await lessonsApi.create(unitId, data);
@@ -276,19 +351,6 @@ export default function LessonDetailPage() {
             />
           );
         }
-        if (showAddVideo && item === assignmentItems.find(i => i.kind === 'resource' && i.id === null)) {
-          return (
-            <VideoForm
-              nextOrder={resources.length + 1}
-              onSubmit={async ({ title, url, order }) => {
-                const video = await lessonResourcesApi.create(lesson!.id, { type: 'video', title, content: { url }, order });
-                setResources(prev => [...prev, video].sort((a, b) => a.order - b.order));
-                setShowAddVideo(false);
-              }}
-              onCancel={() => setShowAddVideo(false)}
-            />
-          );
-        }
         return (
           <VideoCard
             video={resource}
@@ -344,7 +406,7 @@ export default function LessonDetailPage() {
         return (
           <PracticeProblemCard
             problem={tool}
-            onEdit={canEdit ? () => {} : undefined}
+            onEdit={canEdit ? () => setEditingTool(tool) : undefined}
             onDelete={canEdit ? async () => {
               await lessonToolsApi.delete(tool.id);
               setTools(prev => prev.filter(t => t.id !== tool.id));
@@ -357,7 +419,7 @@ export default function LessonDetailPage() {
         return (
           <VocabCard
             vocab={tool}
-            onEdit={canEdit ? () => {} : undefined}
+            onEdit={canEdit ? () => setEditingTool(tool) : undefined}
             onDelete={canEdit ? async () => {
               await lessonToolsApi.delete(tool.id);
               setTools(prev => prev.filter(t => t.id !== tool.id));
@@ -457,26 +519,86 @@ export default function LessonDetailPage() {
                 onStepClick={handleStepClick}
               />
               <main className="flex-1 overflow-y-auto px-4 py-6 space-y-6">
-                {assignmentItems.map((item, idx) => (
-                  <AssignmentSection
-                    key={item.key}
-                    item={item}
-                    isComplete={item.kind === 'quiz' ? quizPassed : (item.id ? completedIds.has(item.id) : false)}
-                    isLocked={item.kind === 'quiz' && !quizUnlocked}
-                    canEdit={canEdit}
-                    isLast={idx === assignmentItems.length - 1}
-                    incompleteRequired={incompleteRequired}
-                    onVisible={setActiveStepKey}
-                    onToggleCompletion={() => handleToggleCompletion(item)}
-                    onToggleRequired={() => handleToggleRequired(item)}
-                    onNext={() => {
-                      const next = assignmentItems[idx + 1];
-                      if (next) scrollToItem(next.key);
-                    }}
-                  >
-                    {renderContent(item)}
-                  </AssignmentSection>
-                ))}
+                {(() => {
+                  const sortedResources = [...resources].sort((a, b) => a.order - b.order);
+                  const sortedTools = [...tools].sort((a, b) => a.order - b.order);
+                  return assignmentItems.map((item, idx) => {
+                    let onMoveUp: (() => void) | undefined;
+                    let onMoveDown: (() => void) | undefined;
+                    if (item.kind === 'resource') {
+                      const ri = sortedResources.findIndex(r => r.id === item.id);
+                      if (ri > 0) onMoveUp = () => handleMoveResource(item.id!, 'up');
+                      if (ri < sortedResources.length - 1) onMoveDown = () => handleMoveResource(item.id!, 'down');
+                    } else if (item.kind === 'tool') {
+                      const ti = sortedTools.findIndex(t => t.id === item.id);
+                      if (ti > 0) onMoveUp = () => handleMoveTool(item.id!, 'up');
+                      if (ti < sortedTools.length - 1) onMoveDown = () => handleMoveTool(item.id!, 'down');
+                    }
+                    return (
+                      <AssignmentSection
+                        key={item.key}
+                        item={item}
+                        isComplete={item.kind === 'quiz' ? quizPassed : (item.id ? completedIds.has(item.id) : false)}
+                        isLocked={item.kind === 'quiz' && !quizUnlocked}
+                        canEdit={canEdit}
+                        isLast={idx === assignmentItems.length - 1}
+                        incompleteRequired={incompleteRequired}
+                        onVisible={setActiveStepKey}
+                        onToggleCompletion={() => handleToggleCompletion(item)}
+                        onToggleRequired={() => handleToggleRequired(item)}
+                        onMoveUp={onMoveUp}
+                        onMoveDown={onMoveDown}
+                        onNext={() => {
+                          const next = assignmentItems[idx + 1];
+                          if (next) scrollToItem(next.key);
+                        }}
+                      >
+                        {renderContent(item)}
+                      </AssignmentSection>
+                    );
+                  });
+                })()}
+
+                {/* Add video form (inline at bottom of list) */}
+                {canEdit && addingItemType === 'video' && (
+                  <div className="rounded-xl border border-border bg-surface shadow-warm-sm px-5 py-5">
+                    <VideoForm
+                      nextOrder={resources.length + 1}
+                      onSubmit={async ({ title, url, order }) => {
+                        const video = await lessonResourcesApi.create(lessonId!, { type: 'video', title, content: { url }, order });
+                        setResources(prev => [...prev, video].sort((a, b) => a.order - b.order));
+                        setAddingItemType(null);
+                      }}
+                      onCancel={() => setAddingItemType(null)}
+                    />
+                  </div>
+                )}
+
+                {/* Add assignment buttons */}
+                {canEdit && addingItemType === null && (
+                  <div className="flex flex-wrap gap-2 pt-2 pb-4">
+                    {(['note', 'lecture', 'video'] as const).map(type => (
+                      <button
+                        key={type}
+                        onClick={() => type === 'note' || type === 'lecture' ? handleAddNote(type) : setAddingItemType(type)}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-dashed border-border text-sm text-muted-foreground hover:text-foreground hover:border-primary/50 hover:bg-surface-raised transition-colors"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        {type === 'note' ? 'Note' : type === 'lecture' ? 'Lecture' : 'Video'}
+                      </button>
+                    ))}
+                    {(['flash_card', 'practice_problem', 'vocab'] as const).map(type => (
+                      <button
+                        key={type}
+                        onClick={() => setAddingItemType(type)}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-dashed border-border text-sm text-muted-foreground hover:text-foreground hover:border-primary/50 hover:bg-surface-raised transition-colors"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        {type === 'flash_card' ? 'Flash Card' : type === 'practice_problem' ? 'Practice Problem' : 'Vocab'}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </main>
             </>
           )}
@@ -515,6 +637,97 @@ export default function LessonDetailPage() {
           onClose={() => setShowPlanEdit(false)}
           onUpdate={handleUpdate}
         />
+      )}
+
+      {/* Tool creation modals */}
+      {canEdit && addingItemType === 'flash_card' && (
+        <Modal title="Add Flash Card" onClose={() => setAddingItemType(null)}>
+          <FlashCardForm
+            nextOrder={tools.length + 1}
+            onSubmit={async ({ front, back, order }) => {
+              const tool = await lessonToolsApi.create(lessonId!, { type: 'flash_card', title: front, content: { front, back }, order });
+              setTools(prev => [...prev, tool].sort((a, b) => a.order - b.order));
+              setAddingItemType(null);
+            }}
+            onCancel={() => setAddingItemType(null)}
+          />
+        </Modal>
+      )}
+      {canEdit && addingItemType === 'practice_problem' && (
+        <Modal title="Add Practice Problem" onClose={() => setAddingItemType(null)}>
+          <PracticeProblemForm
+            nextOrder={tools.length + 1}
+            onSubmit={async (draft) => {
+              const tool = await lessonToolsApi.create(lessonId!, {
+                type: 'practice_problem',
+                title: draft.question,
+                content: { question: draft.question, options: draft.content.options, correctIndex: draft.content.correctIndex, calculatorEnabled: draft.calculatorEnabled ?? false },
+                order: draft.order,
+              });
+              setTools(prev => [...prev, tool].sort((a, b) => a.order - b.order));
+              setAddingItemType(null);
+            }}
+            onCancel={() => setAddingItemType(null)}
+          />
+        </Modal>
+      )}
+      {canEdit && addingItemType === 'vocab' && (
+        <Modal title="Add Vocab Term" onClose={() => setAddingItemType(null)}>
+          <VocabForm
+            nextOrder={tools.length + 1}
+            onSubmit={async ({ term, definition, order }) => {
+              const tool = await lessonToolsApi.create(lessonId!, { type: 'vocab', title: term, content: { term, definition }, order });
+              setTools(prev => [...prev, tool].sort((a, b) => a.order - b.order));
+              setAddingItemType(null);
+            }}
+            onCancel={() => setAddingItemType(null)}
+          />
+        </Modal>
+      )}
+
+      {/* Tool edit modals */}
+      {canEdit && editingTool?.type === 'flash_card' && (
+        <Modal title="Edit Flash Card" onClose={() => setEditingTool(null)}>
+          <FlashCardForm
+            initial={editingTool}
+            onSubmit={async ({ front, back, order }) => {
+              const updated = await lessonToolsApi.update(editingTool.id, { title: front, content: { front, back }, order });
+              setTools(prev => prev.map(t => t.id === updated.id ? updated : t).sort((a, b) => a.order - b.order));
+              setEditingTool(null);
+            }}
+            onCancel={() => setEditingTool(null)}
+          />
+        </Modal>
+      )}
+      {canEdit && editingTool?.type === 'practice_problem' && (
+        <Modal title="Edit Practice Problem" onClose={() => setEditingTool(null)}>
+          <PracticeProblemForm
+            initial={editingTool}
+            onSubmit={async (draft) => {
+              const updated = await lessonToolsApi.update(editingTool.id, {
+                title: draft.question,
+                content: { question: draft.question, options: draft.content.options, correctIndex: draft.content.correctIndex, calculatorEnabled: draft.calculatorEnabled ?? false },
+                order: draft.order,
+              });
+              setTools(prev => prev.map(t => t.id === updated.id ? updated : t).sort((a, b) => a.order - b.order));
+              setEditingTool(null);
+            }}
+            onCancel={() => setEditingTool(null)}
+          />
+        </Modal>
+      )}
+      {canEdit && editingTool?.type === 'vocab' && (
+        <Modal title="Edit Vocab Term" onClose={() => setEditingTool(null)}>
+          <VocabForm
+            initial={editingTool}
+            onSubmit={async ({ term, definition, order }) => {
+              const updated = await lessonToolsApi.update(editingTool.id, { title: term, content: { term, definition }, order });
+              setTools(prev => prev.map(t => t.id === updated.id ? updated : t).sort((a, b) => a.order - b.order));
+              setEditingTool(null);
+            }}
+            onCancel={() => setEditingTool(null)}
+          />
+        </Modal>
       )}
     </>
   );
