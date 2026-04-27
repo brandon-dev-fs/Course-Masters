@@ -7,7 +7,9 @@ export const createLessonToolSchema = z.object({
   order: z.number().int().min(0),
 });
 
-export const updateLessonToolSchema = createLessonToolSchema.partial();
+export const updateLessonToolSchema = createLessonToolSchema.partial().extend({
+  isRequired: z.boolean().optional(),
+});
 
 export type CreateLessonToolInput = z.infer<typeof createLessonToolSchema>;
 export type UpdateLessonToolInput = z.infer<typeof updateLessonToolSchema>;

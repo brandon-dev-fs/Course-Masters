@@ -76,6 +76,35 @@ export const assessmentService = {
     });
     if (!assessment) throw new NotFoundError('Assessment not found');
 
+    if (assessment.type === 'lesson_quiz' && assessment.lessonId) {
+      const lessonId = assessment.lessonId;
+      const [requiredResources, requiredTools] = await Promise.all([
+        prisma.lessonResource.findMany({ where: { lessonId, isRequired: true }, select: { id: true } }),
+        prisma.lessonTool.findMany({ where: { lessonId, isRequired: true }, select: { id: true } }),
+      ]);
+
+      const allRequiredIds = [
+        ...requiredResources.map(r => r.id),
+        ...requiredTools.map(t => t.id),
+      ];
+
+      if (allRequiredIds.length > 0) {
+        const completions = await prisma.lessonResourceCompletion.findMany({
+          where: { lessonId, userId },
+          select: { resourceId: true },
+        });
+        const completedIds = new Set(completions.map(c => c.resourceId));
+        const allComplete = allRequiredIds.every(id => completedIds.has(id));
+        if (!allComplete) {
+          throw new AppError(
+            'REQUIRED_ASSIGNMENTS_INCOMPLETE',
+            'All required assignments must be completed before taking the quiz',
+            400,
+          );
+        }
+      }
+    }
+
     const { answers } = data;
     let correct = 0;
     assessment.questions.forEach((q, i) => {

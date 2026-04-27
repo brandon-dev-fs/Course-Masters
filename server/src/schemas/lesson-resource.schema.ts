@@ -7,7 +7,9 @@ export const createLessonResourceSchema = z.object({
   order: z.number().int().min(0),
 });
 
-export const updateLessonResourceSchema = createLessonResourceSchema.partial();
+export const updateLessonResourceSchema = createLessonResourceSchema.partial().extend({
+  isRequired: z.boolean().optional(),
+});
 
 export type CreateLessonResourceInput = z.infer<typeof createLessonResourceSchema>;
 export type UpdateLessonResourceInput = z.infer<typeof updateLessonResourceSchema>;
