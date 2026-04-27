@@ -1,9 +1,10 @@
 import { Link } from 'react-router-dom';
 import { BookOpen, ChevronDown, ChevronRight, Plus, ClipboardCheck } from 'lucide-react';
 import { useState } from 'react';
-import type { Lesson } from '../../api/types.js';
+import type { Lesson, Unit } from '../../api/types.js';
 import LessonForm from './LessonForm.js';
 import Modal from '../../components/Modal.js';
+import UnitDropdown from './UnitDropdown.js';
 
 interface UnitLessonSidebarProps {
   lessons: Lesson[];
@@ -12,6 +13,7 @@ interface UnitLessonSidebarProps {
   unitId: string;
   courseTitle: string;
   unitTitle: string;
+  units?: Unit[];
   canEdit?: boolean;
   onAddLesson?: (data: { title: string; description: string; order: number }) => Promise<void>;
   onUnitTestClick?: () => void;
@@ -20,7 +22,7 @@ interface UnitLessonSidebarProps {
 }
 
 export default function UnitLessonSidebar({
-  lessons, currentLessonId, courseId, unitId, courseTitle, unitTitle,
+  lessons, currentLessonId, courseId, unitId, courseTitle, unitTitle, units = [],
   canEdit, onAddLesson, onUnitTestClick, unitTestActive, onLessonClick,
 }: UnitLessonSidebarProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -101,14 +103,18 @@ export default function UnitLessonSidebar({
         aria-label="Unit lessons"
         className="hidden lg:flex lg:flex-col lg:w-56 shrink-0 border-r border-border bg-surface py-3 overflow-y-auto"
       >
-        <div className="px-4 pb-3 mb-1 border-b border-border flex flex-col gap-1">
+        <div className="px-4 pb-3 mb-1 border-b border-border flex flex-col gap-2">
           <Link to={`/courses/${courseId}`} className="text-xs font-semibold text-primary hover:underline truncate">
             {courseTitle}
           </Link>
-          <div className="flex items-center gap-1 min-w-0">
-            <ChevronRight className="w-3 h-3 text-muted-foreground shrink-0" />
-            <span className="text-xs font-medium text-muted-foreground truncate">{unitTitle}</span>
-          </div>
+          {units.length > 0 ? (
+            <UnitDropdown units={units} currentUnitId={unitId} courseId={courseId} />
+          ) : (
+            <div className="flex items-center gap-1 min-w-0">
+              <ChevronRight className="w-3 h-3 text-muted-foreground shrink-0" />
+              <span className="text-xs font-medium text-muted-foreground truncate">{unitTitle}</span>
+            </div>
+          )}
         </div>
         <div className="flex flex-col gap-0.5 px-2 pt-1">
           {sorted.map(lesson => {

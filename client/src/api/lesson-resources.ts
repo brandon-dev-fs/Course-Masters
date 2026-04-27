@@ -13,6 +13,7 @@ interface UpdateResourceInput {
   title?: string;
   content?: Record<string, unknown>;
   order?: number;
+  isRequired?: boolean;
 }
 
 export const lessonResourcesApi = {
