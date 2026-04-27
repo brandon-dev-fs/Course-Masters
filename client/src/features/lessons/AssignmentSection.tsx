@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import { Lock, ChevronDown, ToggleLeft, ToggleRight, ArrowUp, ArrowDown } from 'lucide-react';
 
 export type AssignmentKind = 'lessonPlan' | 'resource' | 'tool' | 'quiz';
@@ -21,7 +21,7 @@ interface AssignmentSectionProps {
   canEdit: boolean;
   isLast: boolean;
   incompleteRequired: AssignmentItem[];
-  onVisible: (key: string) => void;
+  onVisible?: (key: string) => void;
   onToggleCompletion: () => void;
   onToggleRequired: () => void;
   onMoveUp?: () => void;
@@ -35,17 +35,19 @@ export default function AssignmentSection({
   onVisible, onToggleCompletion, onToggleRequired, onMoveUp, onMoveDown, onNext, children,
 }: AssignmentSectionProps) {
   const ref = useRef<HTMLElement>(null);
+  const stableOnVisible = useCallback((key: string) => onVisible?.(key), [onVisible]);
 
   useEffect(() => {
+    if (!onVisible) return;
     const el = ref.current;
     if (!el) return;
     const observer = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) onVisible(item.key); },
+      ([entry]) => { if (entry.isIntersecting) stableOnVisible(item.key); },
       { threshold: 0.3 },
     );
     observer.observe(el);
     return () => observer.disconnect();
-  }, [item.key, onVisible]);
+  }, [item.key, stableOnVisible, onVisible]);
 
   const isQuiz = item.kind === 'quiz';
   const showCompletion = !isQuiz;

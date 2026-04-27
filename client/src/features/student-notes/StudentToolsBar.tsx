@@ -14,57 +14,63 @@ interface StudentToolsBarProps {
   activeTool: StudentToolType | null;
   onOpenTool: (tool: StudentToolType) => void;
   isQuizActive: boolean;
+  /** Which layout to render. 'mobile' = horizontal bar only, 'desktop' = vertical strip only, 'both' = both (default) */
+  mode?: 'mobile' | 'desktop' | 'both';
 }
 
-export default function StudentToolsBar({ availableTools, activeTool, onOpenTool, isQuizActive }: StudentToolsBarProps) {
+export default function StudentToolsBar({ availableTools, activeTool, onOpenTool, isQuizActive, mode = 'both' }: StudentToolsBarProps) {
   if (isQuizActive || availableTools.length === 0) return null;
 
   return (
     <>
-      {/* Desktop: vertical strip */}
-      <aside className="hidden lg:flex lg:flex-col w-10 shrink-0 border-l border-border bg-surface items-center py-3 gap-2">
-        {availableTools.map(tool => {
-          const { label, Icon } = TOOL_META[tool];
-          const isActive = activeTool === tool;
-          return (
-            <button
-              key={tool}
-              onClick={() => onOpenTool(tool)}
-              title={label}
-              className={`w-8 h-8 flex items-center justify-center rounded-lg transition-colors ${
-                isActive
-                  ? 'bg-primary-subtle text-primary'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-surface-raised'
-              }`}
-              aria-label={label}
-            >
-              <Icon className="w-4 h-4" />
-            </button>
-          );
-        })}
-      </aside>
+      {/* Desktop: vertical strip on the right edge */}
+      {(mode === 'desktop' || mode === 'both') && (
+        <aside className="hidden lg:flex lg:flex-col w-10 shrink-0 border-l border-border bg-surface items-center py-3 gap-2">
+          {availableTools.map(tool => {
+            const { label, Icon } = TOOL_META[tool];
+            const isActive = activeTool === tool;
+            return (
+              <button
+                key={tool}
+                onClick={() => onOpenTool(tool)}
+                title={label}
+                className={`w-8 h-8 flex items-center justify-center rounded-lg transition-colors ${
+                  isActive
+                    ? 'bg-primary-subtle text-primary'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-surface-raised'
+                }`}
+                aria-label={label}
+              >
+                <Icon className="w-4 h-4" />
+              </button>
+            );
+          })}
+        </aside>
+      )}
 
       {/* Mobile: horizontal row above content */}
-      <div className="lg:hidden flex gap-2 px-4 py-2 border-b border-border bg-surface overflow-x-auto">
-        {availableTools.map(tool => {
-          const { label, Icon } = TOOL_META[tool];
-          const isActive = activeTool === tool;
-          return (
-            <button
-              key={tool}
-              onClick={() => onOpenTool(tool)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium shrink-0 transition-colors ${
-                isActive
-                  ? 'bg-primary-subtle text-primary'
-                  : 'bg-surface-raised text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              <Icon className="w-3.5 h-3.5" />
-              {label}
-            </button>
-          );
-        })}
-      </div>
+      {(mode === 'mobile' || mode === 'both') && (
+        <div className="lg:hidden flex gap-2 px-4 py-2 border-b border-border bg-surface overflow-x-auto">
+          {availableTools.map(tool => {
+            const { label, Icon } = TOOL_META[tool];
+            const isActive = activeTool === tool;
+            return (
+              <button
+                key={tool}
+                onClick={() => onOpenTool(tool)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium shrink-0 transition-colors ${
+                  isActive
+                    ? 'bg-primary-subtle text-primary'
+                    : 'bg-surface-raised text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                <Icon className="w-3.5 h-3.5" />
+                {label}
+              </button>
+            );
+          })}
+        </div>
+      )}
     </>
   );
 }

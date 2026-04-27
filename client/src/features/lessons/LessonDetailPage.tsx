@@ -36,6 +36,9 @@ import StudentToolsBar from '../student-notes/StudentToolsBar.js';
 import type { StudentToolType } from '../student-notes/StudentToolsBar.js';
 import StudentMaterialsModal from '../student-notes/StudentMaterialsModal.js';
 
+const nextOrder = (arr: { order: number }[]) =>
+  arr.length === 0 ? 1 : Math.max(...arr.map(r => r.order)) + 1;
+
 function buildAssignmentItems(
   lesson: Lesson,
   resources: LessonResource[],
@@ -196,7 +199,7 @@ export default function LessonDetailPage() {
   }, [lessonId]);
 
   const handleToggleRequired = useCallback(async (item: AssignmentItem) => {
-    if (!item.id) return;
+    if (!lessonId || !item.id) return;
     const newRequired = !item.isRequired;
     if (item.kind === 'resource') {
       const updated = await lessonResourcesApi.update(item.id, { isRequired: newRequired });
@@ -205,28 +208,21 @@ export default function LessonDetailPage() {
       const updated = await lessonToolsApi.update(item.id, { isRequired: newRequired });
       setTools(prev => prev.map(t => t.id === item.id ? updated : t));
     }
-    const fresh = await resourceCompletionsApi.get(lessonId!);
+    const fresh = await resourceCompletionsApi.get(lessonId);
     setCompletionsData(fresh);
   }, [lessonId]);
-
-  function scrollToItem(key: string) {
-    document.getElementById(`assignment-${key}`)?.scrollIntoView({ behavior: 'smooth' });
-  }
-
-  function handleStepClick(key: string) {
-    scrollToItem(key);
-  }
 
   async function handleAddNote(type: 'note' | 'lecture') {
     if (!lessonId) return;
     const resource = await lessonResourcesApi.create(lessonId, {
       type,
       title: type === 'lecture' ? 'New Lecture' : 'New Note',
-      content: { body: null },
-      order: resources.length + 1,
+      content: { body: { type: 'doc', content: [{ type: 'paragraph' }] } },
+      order: nextOrder(resources),
     });
     newNoteIdRef.current = resource.id;
     setResources(prev => [...prev, resource].sort((a, b) => a.order - b.order));
+    setActiveStepKey(`resource:${resource.id}`);
   }
 
   async function handleMoveResource(id: string, direction: 'up' | 'down') {
@@ -444,7 +440,54 @@ export default function LessonDetailPage() {
     title: item.title,
     kind: item.kind,
     completionId: completionKeyOf(item),
+    resourceType: item.resourceType,
+    toolType: item.toolType,
   }));
+
+  // Find the active assignment item for single-item rendering
+  const activeItem = assignmentItems.find(item => item.key === activeStepKey) ?? assignmentItems[0];
+  const activeIdx = assignmentItems.findIndex(item => item.key === activeItem?.key);
+
+  function renderActiveAssignment() {
+    if (!activeItem) return null;
+
+    const sortedResources = [...resources].sort((a, b) => a.order - b.order);
+    const sortedTools = [...tools].sort((a, b) => a.order - b.order);
+
+    let onMoveUp: (() => void) | undefined;
+    let onMoveDown: (() => void) | undefined;
+    if (activeItem.kind === 'resource') {
+      const ri = sortedResources.findIndex(r => r.id === activeItem.id);
+      if (ri > 0) onMoveUp = () => handleMoveResource(activeItem.id!, 'up');
+      if (ri < sortedResources.length - 1) onMoveDown = () => handleMoveResource(activeItem.id!, 'down');
+    } else if (activeItem.kind === 'tool') {
+      const ti = sortedTools.findIndex(t => t.id === activeItem.id);
+      if (ti > 0) onMoveUp = () => handleMoveTool(activeItem.id!, 'up');
+      if (ti < sortedTools.length - 1) onMoveDown = () => handleMoveTool(activeItem.id!, 'down');
+    }
+
+    const isLast = activeIdx === assignmentItems.length - 1;
+    const next = assignmentItems[activeIdx + 1];
+
+    return (
+      <AssignmentSection
+        key={activeItem.key}
+        item={activeItem}
+        isComplete={activeItem.kind === 'quiz' ? quizPassed : (activeItem.id ? completedIds.has(activeItem.id) : false)}
+        isLocked={activeItem.kind === 'quiz' && !quizUnlocked}
+        canEdit={canEdit}
+        isLast={isLast}
+        incompleteRequired={incompleteRequired}
+        onToggleCompletion={() => handleToggleCompletion(activeItem)}
+        onToggleRequired={() => handleToggleRequired(activeItem)}
+        onMoveUp={onMoveUp}
+        onMoveDown={onMoveDown}
+        onNext={() => { if (next) setActiveStepKey(next.key); }}
+      >
+        {renderContent(activeItem)}
+      </AssignmentSection>
+    );
+  }
 
   return (
     <>
@@ -468,7 +511,7 @@ export default function LessonDetailPage() {
           onLessonClick={() => setActiveStepKey('lessonPlan')}
         />
 
-        {/* Center: header + stepper + assignment scroll */}
+        {/* Center: header + stepper + single assignment view */}
         <div className="flex flex-col flex-1 min-w-0">
           <header className="flex items-center justify-between gap-4 px-4 py-3 border-b border-border shrink-0">
             <div className="flex flex-col min-w-0">
@@ -488,12 +531,13 @@ export default function LessonDetailPage() {
             )}
           </header>
 
-          {/* Mobile tool bar (above stepper) */}
+          {/* Mobile tool bar (above stepper, hidden on desktop) */}
           <StudentToolsBar
             availableTools={availableTools}
             activeTool={activeTool}
             onOpenTool={tool => setActiveTool(prev => prev === tool ? null : tool)}
             isQuizActive={isQuizActive}
+            mode="mobile"
           />
 
           {unitTestActive ? (
@@ -516,58 +560,21 @@ export default function LessonDetailPage() {
                 completedIds={completedIds}
                 quizUnlocked={quizUnlocked}
                 quizPassed={quizPassed}
-                onStepClick={handleStepClick}
+                onStepClick={setActiveStepKey}
               />
-              <main className="flex-1 overflow-y-auto px-4 py-6 space-y-6">
-                {(() => {
-                  const sortedResources = [...resources].sort((a, b) => a.order - b.order);
-                  const sortedTools = [...tools].sort((a, b) => a.order - b.order);
-                  return assignmentItems.map((item, idx) => {
-                    let onMoveUp: (() => void) | undefined;
-                    let onMoveDown: (() => void) | undefined;
-                    if (item.kind === 'resource') {
-                      const ri = sortedResources.findIndex(r => r.id === item.id);
-                      if (ri > 0) onMoveUp = () => handleMoveResource(item.id!, 'up');
-                      if (ri < sortedResources.length - 1) onMoveDown = () => handleMoveResource(item.id!, 'down');
-                    } else if (item.kind === 'tool') {
-                      const ti = sortedTools.findIndex(t => t.id === item.id);
-                      if (ti > 0) onMoveUp = () => handleMoveTool(item.id!, 'up');
-                      if (ti < sortedTools.length - 1) onMoveDown = () => handleMoveTool(item.id!, 'down');
-                    }
-                    return (
-                      <AssignmentSection
-                        key={item.key}
-                        item={item}
-                        isComplete={item.kind === 'quiz' ? quizPassed : (item.id ? completedIds.has(item.id) : false)}
-                        isLocked={item.kind === 'quiz' && !quizUnlocked}
-                        canEdit={canEdit}
-                        isLast={idx === assignmentItems.length - 1}
-                        incompleteRequired={incompleteRequired}
-                        onVisible={setActiveStepKey}
-                        onToggleCompletion={() => handleToggleCompletion(item)}
-                        onToggleRequired={() => handleToggleRequired(item)}
-                        onMoveUp={onMoveUp}
-                        onMoveDown={onMoveDown}
-                        onNext={() => {
-                          const next = assignmentItems[idx + 1];
-                          if (next) scrollToItem(next.key);
-                        }}
-                      >
-                        {renderContent(item)}
-                      </AssignmentSection>
-                    );
-                  });
-                })()}
+              <main className="flex-1 overflow-y-auto px-4 py-6">
+                {renderActiveAssignment()}
 
-                {/* Add video form (inline at bottom of list) */}
+                {/* Add video form (inline at bottom) */}
                 {canEdit && addingItemType === 'video' && (
-                  <div className="rounded-xl border border-border bg-surface shadow-warm-sm px-5 py-5">
+                  <div className="mt-4 rounded-xl border border-border bg-surface shadow-warm-sm px-5 py-5">
                     <VideoForm
-                      nextOrder={resources.length + 1}
+                      nextOrder={nextOrder(resources)}
                       onSubmit={async ({ title, url, order }) => {
                         const video = await lessonResourcesApi.create(lessonId!, { type: 'video', title, content: { url }, order });
                         setResources(prev => [...prev, video].sort((a, b) => a.order - b.order));
                         setAddingItemType(null);
+                        setActiveStepKey(`resource:${video.id}`);
                       }}
                       onCancel={() => setAddingItemType(null)}
                     />
@@ -576,7 +583,7 @@ export default function LessonDetailPage() {
 
                 {/* Add assignment buttons */}
                 {canEdit && addingItemType === null && (
-                  <div className="flex flex-wrap gap-2 pt-2 pb-4">
+                  <div className="flex flex-wrap gap-2 mt-4 pb-4">
                     {(['note', 'lecture', 'video'] as const).map(type => (
                       <button
                         key={type}
@@ -604,12 +611,13 @@ export default function LessonDetailPage() {
           )}
         </div>
 
-        {/* Right: desktop tool bar */}
+        {/* Right: desktop tool strip (vertical, hidden on mobile) */}
         <StudentToolsBar
           availableTools={availableTools}
           activeTool={activeTool}
           onOpenTool={tool => setActiveTool(prev => prev === tool ? null : tool)}
           isQuizActive={isQuizActive}
+          mode="desktop"
         />
       </div>
 
@@ -643,11 +651,12 @@ export default function LessonDetailPage() {
       {canEdit && addingItemType === 'flash_card' && (
         <Modal title="Add Flash Card" onClose={() => setAddingItemType(null)}>
           <FlashCardForm
-            nextOrder={tools.length + 1}
+            nextOrder={nextOrder(tools)}
             onSubmit={async ({ front, back, order }) => {
               const tool = await lessonToolsApi.create(lessonId!, { type: 'flash_card', title: front, content: { front, back }, order });
               setTools(prev => [...prev, tool].sort((a, b) => a.order - b.order));
               setAddingItemType(null);
+              setActiveStepKey(`tool:${tool.id}`);
             }}
             onCancel={() => setAddingItemType(null)}
           />
@@ -656,7 +665,7 @@ export default function LessonDetailPage() {
       {canEdit && addingItemType === 'practice_problem' && (
         <Modal title="Add Practice Problem" onClose={() => setAddingItemType(null)}>
           <PracticeProblemForm
-            nextOrder={tools.length + 1}
+            nextOrder={nextOrder(tools)}
             onSubmit={async (draft) => {
               const tool = await lessonToolsApi.create(lessonId!, {
                 type: 'practice_problem',
@@ -666,6 +675,7 @@ export default function LessonDetailPage() {
               });
               setTools(prev => [...prev, tool].sort((a, b) => a.order - b.order));
               setAddingItemType(null);
+              setActiveStepKey(`tool:${tool.id}`);
             }}
             onCancel={() => setAddingItemType(null)}
           />
@@ -674,11 +684,12 @@ export default function LessonDetailPage() {
       {canEdit && addingItemType === 'vocab' && (
         <Modal title="Add Vocab Term" onClose={() => setAddingItemType(null)}>
           <VocabForm
-            nextOrder={tools.length + 1}
+            nextOrder={nextOrder(tools)}
             onSubmit={async ({ term, definition, order }) => {
               const tool = await lessonToolsApi.create(lessonId!, { type: 'vocab', title: term, content: { term, definition }, order });
               setTools(prev => [...prev, tool].sort((a, b) => a.order - b.order));
               setAddingItemType(null);
+              setActiveStepKey(`tool:${tool.id}`);
             }}
             onCancel={() => setAddingItemType(null)}
           />
