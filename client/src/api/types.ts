@@ -70,6 +70,7 @@ export interface LessonResource {
   content: Record<string, unknown>;
   order: number;
   lessonId: string;
+  isRequired: boolean;
 }
 
 export interface LessonTool {
@@ -79,11 +80,18 @@ export interface LessonTool {
   content: Record<string, unknown>;
   order: number;
   lessonId: string;
+  isRequired: boolean;
 }
 
 export interface ResourceCompletionItem {
   resourceType: string;
   resourceId: string;
+  isRequired: boolean;
+}
+
+export interface CompletionsResponse {
+  completions: ResourceCompletionItem[];
+  requiredItems: ResourceCompletionItem[];
 }
 
 export interface StudentNote {
