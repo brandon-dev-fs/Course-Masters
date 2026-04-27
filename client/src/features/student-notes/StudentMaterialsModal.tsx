@@ -31,21 +31,26 @@ export default function StudentMaterialsModal({
   const dragOffset = useRef<{ dx: number; dy: number } | null>(null);
 
   function handleDragStart(e: React.MouseEvent) {
-    // TODO(human): implement drag start behavior here.
-    // This function is called when the user presses down on the drag handle (GripHorizontal icon area).
-    // You have access to:
-    //   - e.clientX / e.clientY  — current mouse position
-    //   - position               — the modal's current { x, y } top-left position
-    //   - setPosition            — to update the modal's position
-    //   - dragOffset.current     — a ref to store the initial offset (set it here, clear it on mouseup)
-    //
-    // Steps to implement:
-    //   1. Record the offset between mouse position and modal top-left corner in dragOffset.current
-    //   2. Add a 'mousemove' listener on window that computes the new position from clientX/Y minus offset,
-    //      clamped so the modal stays inside the viewport (use window.innerWidth/Height and modal size ~320×400)
-    //   3. Add a 'mouseup' listener (once: true) that removes the mousemove listener and clears dragOffset
-    //   4. Set document.body.style.userSelect = 'none' to prevent text selection while dragging
-    //      (the mouseup handler should restore it to '')
+    e.preventDefault();
+    dragOffset.current = { dx: e.clientX - position.x, dy: e.clientY - position.y };
+    document.body.style.userSelect = 'none';
+
+    function onMove(ev: MouseEvent) {
+      if (!dragOffset.current) return;
+      setPosition({
+        x: Math.min(Math.max(0, ev.clientX - dragOffset.current.dx), window.innerWidth - 320),
+        y: Math.min(Math.max(0, ev.clientY - dragOffset.current.dy), window.innerHeight - 80),
+      });
+    }
+
+    function onUp() {
+      window.removeEventListener('mousemove', onMove);
+      dragOffset.current = null;
+      document.body.style.userSelect = '';
+    }
+
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp, { once: true });
   }
 
   if (!isOpen || !activeTool) return null;
