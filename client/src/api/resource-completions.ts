@@ -1,11 +1,11 @@
 import { apiClient } from './client.js';
-import type { ResourceCompletionItem } from './types.js';
+import type { CompletionsResponse } from './types.js';
 
 export const resourceCompletionsApi = {
   get: (lessonId: string) =>
-    apiClient.get<{ completions: ResourceCompletionItem[] }>(`/lessons/${lessonId}/completions`),
+    apiClient.get<CompletionsResponse>(`/lessons/${lessonId}/completions`),
   toggle: (lessonId: string, resourceType: string, resourceId: string) =>
-    apiClient.post<{ completions: ResourceCompletionItem[] }>(`/lessons/${lessonId}/completions`, {
+    apiClient.post<CompletionsResponse>(`/lessons/${lessonId}/completions`, {
       resourceType,
       resourceId,
     }),

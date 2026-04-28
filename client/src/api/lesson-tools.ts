@@ -13,6 +13,7 @@ interface UpdateToolInput {
   title?: string;
   content?: Record<string, unknown>;
   order?: number;
+  isRequired?: boolean;
 }
 
 export const lessonToolsApi = {
