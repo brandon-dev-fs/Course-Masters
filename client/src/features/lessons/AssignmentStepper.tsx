@@ -1,13 +1,15 @@
-import { Lock, CheckCircle2, BookOpen, FileText, Video, Presentation, Layers, Brain, BookMarked, ClipboardCheck } from 'lucide-react';
+import { Lock, CheckCircle2, BookOpen, FileText, Video, Presentation, Layers, Brain, BookMarked, ClipboardCheck, ExternalLink } from 'lucide-react';
 import type React from 'react';
+import type { AssignmentType } from '../../api/types.js';
 
 export interface StepperItem {
   key: string;
   title: string;
-  kind: 'lessonPlan' | 'resource' | 'tool' | 'quiz';
+  kind: 'lessonPlan' | 'resource' | 'tool' | 'quiz' | 'assignment';
   completionId: string | null;
   resourceType?: 'note' | 'video' | 'lecture';
   toolType?: 'flash_card' | 'practice_problem' | 'vocab';
+  assignmentType?: AssignmentType;
 }
 
 interface AssignmentStepperProps {
@@ -31,6 +33,13 @@ function getStepIcon(item: StepperItem): React.ComponentType<{ className?: strin
     if (item.toolType === 'flash_card') return Layers;
     if (item.toolType === 'practice_problem') return Brain;
     if (item.toolType === 'vocab') return BookMarked;
+  }
+  if (item.kind === 'assignment') {
+    if (item.assignmentType === 'note') return FileText;
+    if (item.assignmentType === 'video') return Video;
+    if (item.assignmentType === 'reading') return ExternalLink;
+    if (item.assignmentType === 'vocab') return BookMarked;
+    if (item.assignmentType === 'practice_problem') return Brain;
   }
   return FileText;
 }
