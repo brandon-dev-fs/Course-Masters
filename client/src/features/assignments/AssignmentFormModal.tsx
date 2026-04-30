@@ -1,9 +1,11 @@
 import { useState } from 'react';
+import { ChevronLeft } from 'lucide-react';
 import Modal from '../../components/Modal.js';
 import Input from '../../components/Input.js';
 import Textarea from '../../components/Textarea.js';
 import Button from '../../components/Button.js';
 import ErrorMessage from '../../components/ErrorMessage.js';
+import AssignmentTypePicker from './AssignmentTypePicker.js';
 import NoteAssignmentForm from './NoteAssignmentForm.js';
 import VideoAssignmentForm from './VideoAssignmentForm.js';
 import ReadingAssignmentForm from './ReadingAssignmentForm.js';
@@ -15,7 +17,6 @@ import type { CreateAssignmentPayload, UpdateAssignmentPayload } from '../../api
 import useFormSubmit from '../../hooks/useFormSubmit.js';
 
 interface AssignmentFormModalProps {
-  type: AssignmentType;
   initial?: Assignment;
   onSubmit: (payload: CreateAssignmentPayload | UpdateAssignmentPayload) => Promise<void>;
   onClose: () => void;
@@ -29,13 +30,11 @@ const TYPE_LABELS: Record<AssignmentType, string> = {
   practice_problem: 'Practice Problem',
 };
 
-// Helper to get initial vocab entries
 function getInitialVocabEntries(initial?: Assignment): VocabEntry[] {
   if (initial?.vocabAssignment) return initial.vocabAssignment.entries;
   return [{ term: '', definition: '' }];
 }
 
-// Helper to get initial practice questions
 function getInitialQuestions(initial?: Assignment): PracticeQuestionDraft[] {
   if (initial?.practiceProblemAssignment?.questions) {
     return initial.practiceProblemAssignment.questions.map(q => ({
@@ -48,13 +47,16 @@ function getInitialQuestions(initial?: Assignment): PracticeQuestionDraft[] {
   return [];
 }
 
-export default function AssignmentFormModal({
-  type, initial, onSubmit, onClose,
-}: AssignmentFormModalProps) {
+export default function AssignmentFormModal({ initial, onSubmit, onClose }: AssignmentFormModalProps) {
   const isEdit = !!initial;
-  const title = isEdit ? `Edit ${TYPE_LABELS[type]}` : `Add ${TYPE_LABELS[type]}`;
 
-  // Shared fields
+  // Two-step state (only relevant in create mode)
+  const [step, setStep] = useState<'pick' | 'form'>(isEdit ? 'form' : 'pick');
+  const [selectedType, setSelectedType] = useState<AssignmentType | null>(
+    isEdit ? initial.type : null,
+  );
+
+  // Shared form fields
   const [assignmentTitle, setAssignmentTitle] = useState(initial?.title ?? '');
   const [objective, setObjective] = useState(initial?.objective ?? '');
   const [titleError, setTitleError] = useState('');
@@ -70,7 +72,9 @@ export default function AssignmentFormModal({
 
   // Reading fields
   const [readingUrl, setReadingUrl] = useState(initial?.readingAssignment?.url ?? '');
-  const [readingDescription, setReadingDescription] = useState(initial?.readingAssignment?.description ?? '');
+  const [readingDescription, setReadingDescription] = useState(
+    initial?.readingAssignment?.description ?? '',
+  );
   const [readingMinutes, setReadingMinutes] = useState(
     initial?.readingAssignment?.estimatedMinutes != null
       ? String(initial.readingAssignment.estimatedMinutes)
@@ -88,16 +92,45 @@ export default function AssignmentFormModal({
   );
   const [questions, setQuestions] = useState<PracticeQuestionDraft[]>(getInitialQuestions(initial));
 
+  function handleTypeSelected(type: AssignmentType) {
+    setSelectedType(type);
+    setStep('form');
+  }
+
+  function handleBack() {
+    setSelectedType(null);
+    setStep('pick');
+    // Reset all form field state
+    setAssignmentTitle('');
+    setObjective('');
+    setTitleError('');
+    setNoteContent(null);
+    setVideoUrl('');
+    setDisplayTitle('');
+    setReadingUrl('');
+    setReadingDescription('');
+    setReadingMinutes('');
+    setVocabEntries([{ term: '', definition: '' }]);
+    setPassingPercentage('');
+    setQuestions([]);
+  }
+
+  const modalTitle = step === 'pick'
+    ? 'Add Assignment'
+    : isEdit
+      ? `Edit ${TYPE_LABELS[selectedType!]}`
+      : `Add ${TYPE_LABELS[selectedType!]}`;
+
   const { error: apiError, submitting, handleSubmit } = useFormSubmit(async () => {
-    // Shared validation
     if (!assignmentTitle.trim()) {
       setTitleError('Title is required');
       throw new Error('Title is required');
     }
     setTitleError('');
 
+    const type = selectedType!;
+
     if (isEdit) {
-      // Build update payload (no type field)
       const updatePayload: UpdateAssignmentPayload = {
         title: assignmentTitle.trim(),
         objective: objective.trim() || undefined,
@@ -139,7 +172,6 @@ export default function AssignmentFormModal({
 
       await onSubmit(updatePayload);
     } else {
-      // Build create payload with type discriminator
       let createPayload: CreateAssignmentPayload;
 
       if (type === 'note') {
@@ -206,83 +238,105 @@ export default function AssignmentFormModal({
   });
 
   return (
-    <Modal title={title} onClose={onClose} size="lg">
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4 overflow-y-auto flex-1">
-        {/* Type read-only in edit mode */}
-        {isEdit && (
-          <div className="flex flex-col gap-1">
-            <span className="text-sm font-semibold text-foreground">Type</span>
-            <span className="text-sm text-muted-foreground capitalize">{type.replace('_', ' ')}</span>
+    <Modal title={modalTitle} onClose={onClose} size="lg">
+      {step === 'pick' ? (
+        <div className="flex flex-col gap-4">
+          <p className="text-sm text-muted-foreground">Choose the type of assignment to add.</p>
+          <AssignmentTypePicker onSelect={handleTypeSelected} />
+        </div>
+      ) : (
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4 overflow-y-auto flex-1">
+          {/* Back button — create mode only */}
+          {!isEdit && (
+            <button
+              type="button"
+              aria-label="Back to type selection"
+              onClick={handleBack}
+              className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors mb-4 self-start"
+            >
+              <ChevronLeft className="w-4 h-4" />
+              Back
+            </button>
+          )}
+
+          {/* Type read-only in edit mode */}
+          {isEdit && (
+            <div className="flex flex-col gap-1">
+              <span className="text-sm font-semibold text-foreground">Type</span>
+              <span className="text-sm text-muted-foreground capitalize">
+                {selectedType!.replace('_', ' ')}
+              </span>
+            </div>
+          )}
+
+          {/* Shared fields */}
+          <div>
+            <Input
+              id="assignment-title"
+              label="Title"
+              value={assignmentTitle}
+              onChange={e => { setAssignmentTitle(e.target.value); if (e.target.value.trim()) setTitleError(''); }}
+              placeholder="e.g. Read the Introduction"
+              required
+            />
+            {titleError && <p role="alert" className="text-sm text-destructive mt-1">{titleError}</p>}
           </div>
-        )}
 
-        {/* Shared fields */}
-        <div>
-          <Input
-            id="assignment-title"
-            label="Title"
-            value={assignmentTitle}
-            onChange={e => { setAssignmentTitle(e.target.value); if (e.target.value.trim()) setTitleError(''); }}
-            placeholder="e.g. Read the Introduction"
-            required
+          <Textarea
+            id="assignment-objective"
+            label="Objective (optional)"
+            value={objective}
+            onChange={e => setObjective(e.target.value)}
+            placeholder="What should students be able to do after completing this?"
+            rows={2}
           />
-          {titleError && <p role="alert" className="text-sm text-destructive mt-1">{titleError}</p>}
-        </div>
 
-        <Textarea
-          id="assignment-objective"
-          label="Objective (optional)"
-          value={objective}
-          onChange={e => setObjective(e.target.value)}
-          placeholder="What should students be able to do after completing this?"
-          rows={2}
-        />
+          {/* Type-specific sub-form */}
+          {selectedType === 'note' && (
+            <NoteAssignmentForm value={noteContent} onChange={setNoteContent} />
+          )}
+          {selectedType === 'video' && (
+            <VideoAssignmentForm
+              url={videoUrl}
+              displayTitle={displayTitle}
+              onUrlChange={setVideoUrl}
+              onDisplayTitleChange={setDisplayTitle}
+            />
+          )}
+          {selectedType === 'reading' && (
+            <ReadingAssignmentForm
+              url={readingUrl}
+              description={readingDescription}
+              estimatedMinutes={readingMinutes}
+              onUrlChange={setReadingUrl}
+              onDescriptionChange={setReadingDescription}
+              onEstimatedMinutesChange={setReadingMinutes}
+            />
+          )}
+          {selectedType === 'vocab' && (
+            <VocabAssignmentForm entries={vocabEntries} onChange={setVocabEntries} />
+          )}
+          {selectedType === 'practice_problem' && (
+            <PracticeProblemAssignmentForm
+              passingPercentage={passingPercentage}
+              questions={questions}
+              onPassingPercentageChange={setPassingPercentage}
+              onQuestionsChange={setQuestions}
+            />
+          )}
 
-        {/* Type-specific sub-form */}
-        {type === 'note' && (
-          <NoteAssignmentForm value={noteContent} onChange={setNoteContent} />
-        )}
-        {type === 'video' && (
-          <VideoAssignmentForm
-            url={videoUrl}
-            displayTitle={displayTitle}
-            onUrlChange={setVideoUrl}
-            onDisplayTitleChange={setDisplayTitle}
-          />
-        )}
-        {type === 'reading' && (
-          <ReadingAssignmentForm
-            url={readingUrl}
-            description={readingDescription}
-            estimatedMinutes={readingMinutes}
-            onUrlChange={setReadingUrl}
-            onDescriptionChange={setReadingDescription}
-            onEstimatedMinutesChange={setReadingMinutes}
-          />
-        )}
-        {type === 'vocab' && (
-          <VocabAssignmentForm entries={vocabEntries} onChange={setVocabEntries} />
-        )}
-        {type === 'practice_problem' && (
-          <PracticeProblemAssignmentForm
-            passingPercentage={passingPercentage}
-            questions={questions}
-            onPassingPercentageChange={setPassingPercentage}
-            onQuestionsChange={setQuestions}
-          />
-        )}
+          {apiError && <ErrorMessage message={apiError} />}
 
-        {apiError && <ErrorMessage message={apiError} />}
-
-        <div className="flex justify-end gap-3 pt-2 shrink-0">
-          <Button type="button" variant="secondary" onClick={onClose} disabled={submitting}>
-            Cancel
-          </Button>
-          <Button type="submit" disabled={submitting}>
-            {submitting ? 'Saving...' : isEdit ? 'Save changes' : 'Add assignment'}
-          </Button>
-        </div>
-      </form>
+          <div className="flex justify-end gap-3 pt-2 shrink-0">
+            <Button type="button" variant="secondary" onClick={onClose} disabled={submitting}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={submitting}>
+              {submitting ? 'Saving...' : 'Save assignment'}
+            </Button>
+          </div>
+        </form>
+      )}
     </Modal>
   );
 }
