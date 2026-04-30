@@ -8,7 +8,9 @@ import { lessonResourcesApi } from '../../api/lesson-resources.js';
 import { lessonToolsApi } from '../../api/lesson-tools.js';
 import { resourceCompletionsApi } from '../../api/resource-completions.js';
 import { progressApi } from '../../api/progress.js';
-import type { CompletionsResponse, Lesson, LessonResource, LessonTool, Unit, UnitProgress } from '../../api/types.js';
+import { assignmentsApi } from '../../api/assignments.js';
+import type { CreateAssignmentPayload, UpdateAssignmentPayload } from '../../api/assignments.js';
+import type { Assignment, AssignmentType, CompletionsResponse, Lesson, LessonResource, LessonTool, Unit, UnitProgress } from '../../api/types.js';
 import { useAuth } from '../../context/AuthContext.js';
 import UnitLessonSidebar from './UnitLessonSidebar.js';
 import LessonPlanView from './LessonPlanView.js';
@@ -35,6 +37,14 @@ import type { AssignmentItem } from './AssignmentSection.js';
 import StudentToolsBar from '../student-notes/StudentToolsBar.js';
 import type { StudentToolType } from '../student-notes/StudentToolsBar.js';
 import StudentMaterialsModal from '../student-notes/StudentMaterialsModal.js';
+import AddAssignmentMenu from '../assignments/AddAssignmentMenu.js';
+import AssignmentFormModal from '../assignments/AssignmentFormModal.js';
+import NoteAssignmentView from '../assignments/NoteAssignmentView.js';
+import VideoAssignmentView from '../assignments/VideoAssignmentView.js';
+import ReadingAssignmentView from '../assignments/ReadingAssignmentView.js';
+import VocabAssignmentView from '../assignments/VocabAssignmentView.js';
+import PracticeProblemRunner from '../assignments/PracticeProblemRunner.js';
+import ConfirmDialog from '../../components/ConfirmDialog.js';
 
 const nextOrder = (arr: { order: number }[]) =>
   arr.length === 0 ? 1 : Math.max(...arr.map(r => r.order)) + 1;
@@ -43,6 +53,7 @@ function buildAssignmentItems(
   lesson: Lesson,
   resources: LessonResource[],
   tools: LessonTool[],
+  assignments: Assignment[],
 ): AssignmentItem[] {
   const items: AssignmentItem[] = [];
 
@@ -76,6 +87,18 @@ function buildAssignmentItems(
       isRequired: t.isRequired,
       order: t.order,
       toolType: t.type,
+    });
+  }
+
+  for (const a of [...assignments].sort((x, y) => x.order - y.order)) {
+    items.push({
+      key: `assignment:${a.id}`,
+      kind: 'assignment',
+      id: a.id,
+      title: a.title,
+      isRequired: true,
+      order: a.order,
+      assignmentType: a.type,
     });
   }
 
@@ -116,6 +139,12 @@ export default function LessonDetailPage() {
   const [editingTool, setEditingTool] = useState<LessonTool | null>(null);
   const newNoteIdRef = useRef<string | null>(null);
 
+  // Assignment layer state
+  const [assignments, setAssignments] = useState<Assignment[]>([]);
+  const [addingAssignmentType, setAddingAssignmentType] = useState<AssignmentType | null>(null);
+  const [editingAssignment, setEditingAssignment] = useState<Assignment | null>(null);
+  const [deletingAssignmentId, setDeletingAssignmentId] = useState<string | null>(null);
+
   useEffect(() => {
     if (!unitId || !lessonId || !courseId) return;
     setLoading(true);
@@ -129,8 +158,9 @@ export default function LessonDetailPage() {
       lessonToolsApi.getAll(lessonId),
       resourceCompletionsApi.get(lessonId),
       progressApi.getUnit(courseId, unitId),
+      assignmentsApi.getAll(lessonId),
     ])
-      .then(([lessonData, allUnits, courseData, lessons, allResources, allTools, comp, unitProg]) => {
+      .then(([lessonData, allUnits, courseData, lessons, allResources, allTools, comp, unitProg, allAssignments]) => {
         setLesson(lessonData);
         setCourseTitle(courseData.title);
         setUnits(allUnits);
@@ -139,6 +169,7 @@ export default function LessonDetailPage() {
         setTools(allTools.sort((a, b) => a.order - b.order));
         setCompletionsData(comp);
         setUnitProgress(unitProg);
+        setAssignments(allAssignments.sort((a, b) => a.order - b.order));
         setActiveStepKey('lessonPlan');
       })
       .catch((err: unknown) => setError(err instanceof Error ? err.message : 'Failed to load lesson'))
@@ -146,8 +177,13 @@ export default function LessonDetailPage() {
   }, [unitId, lessonId, courseId]);
 
   const assignmentItems = useMemo(
-    () => lesson ? buildAssignmentItems(lesson, resources, tools) : [],
-    [lesson, resources, tools],
+    () => lesson ? buildAssignmentItems(lesson, resources, tools, assignments) : [],
+    [lesson, resources, tools, assignments],
+  );
+
+  const completedAssignmentIds = useMemo(
+    () => new Set(assignments.filter(a => a.completed).map(a => a.id)),
+    [assignments],
   );
 
   const completedIds = useMemo(
@@ -284,6 +320,77 @@ export default function LessonDetailPage() {
       );
     }
   }
+
+  // ── Assignment handlers ────────────────────────────────────────────────────
+
+  async function handleCreateAssignment(payload: CreateAssignmentPayload) {
+    if (!lessonId) return;
+    const created = await assignmentsApi.create(lessonId, payload);
+    setAssignments(prev => [...prev, created].sort((a, b) => a.order - b.order));
+    setAddingAssignmentType(null);
+    setActiveStepKey(`assignment:${created.id}`);
+  }
+
+  async function handleUpdateAssignment(assignmentId: string, payload: UpdateAssignmentPayload) {
+    const updated = await assignmentsApi.update(assignmentId, payload);
+    setAssignments(prev => prev.map(a => a.id === assignmentId ? updated : a));
+    setEditingAssignment(null);
+  }
+
+  async function handleDeleteAssignment(assignmentId: string) {
+    await assignmentsApi.delete(assignmentId);
+    const remaining = assignments.filter(a => a.id !== assignmentId);
+    setAssignments(remaining);
+    setDeletingAssignmentId(null);
+    // Navigate to nearest remaining item or lessonPlan
+    const filteredItems = assignmentItems.filter(i => i.id !== assignmentId);
+    const prevItem = filteredItems[Math.max(0, activeIdx - 1)];
+    setActiveStepKey(prevItem?.key ?? 'lessonPlan');
+  }
+
+  async function handleMoveAssignment(id: string, direction: 'up' | 'down') {
+    const sorted = [...assignments].sort((a, b) => a.order - b.order);
+    const idx = sorted.findIndex(a => a.id === id);
+    const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
+    if (swapIdx < 0 || swapIdx >= sorted.length) return;
+
+    const newIdOrder = sorted.map(a => a.id);
+    [newIdOrder[idx], newIdOrder[swapIdx]] = [newIdOrder[swapIdx], newIdOrder[idx]];
+
+    // Optimistic update
+    setAssignments(
+      newIdOrder.map((assignId, i) => ({ ...sorted.find(a => a.id === assignId)!, order: i + 1 })),
+    );
+
+    try {
+      if (!lessonId) return;
+      const updated = await assignmentsApi.reorder(lessonId, { assignmentIds: newIdOrder });
+      setAssignments(updated);
+    } catch (err: unknown) {
+      setAssignments(sorted);
+      setError(err instanceof Error ? err.message : 'Failed to reorder assignments');
+    }
+  }
+
+  const handleToggleAssignmentCompletion = useCallback(async (assignment: Assignment) => {
+    const wasComplete = assignment.completed;
+    // Optimistic flip
+    setAssignments(prev =>
+      prev.map(a => a.id === assignment.id ? { ...a, completed: !wasComplete } : a),
+    );
+    try {
+      if (wasComplete) {
+        await assignmentsApi.uncomplete(assignment.id);
+      } else {
+        await assignmentsApi.complete(assignment.id);
+      }
+    } catch {
+      // Revert
+      setAssignments(prev =>
+        prev.map(a => a.id === assignment.id ? { ...a, completed: wasComplete } : a),
+      );
+    }
+  }, []);
 
   async function handleAddLesson(data: { title: string; description: string; order: number }) {
     if (!unitId || !courseId) return;
@@ -425,6 +532,45 @@ export default function LessonDetailPage() {
       }
     }
 
+    if (item.kind === 'assignment') {
+      const assignment = assignments.find(a => a.id === item.id);
+      if (!assignment) return null;
+
+      if (assignment.type === 'note' && assignment.noteAssignment) {
+        return <NoteAssignmentView content={assignment.noteAssignment.content} />;
+      }
+      if (assignment.type === 'video' && assignment.videoAssignment) {
+        return (
+          <VideoAssignmentView
+            url={assignment.videoAssignment.url}
+            title={assignment.videoAssignment.title}
+          />
+        );
+      }
+      if (assignment.type === 'reading' && assignment.readingAssignment) {
+        return (
+          <ReadingAssignmentView
+            url={assignment.readingAssignment.url}
+            description={assignment.readingAssignment.description}
+            estimatedMinutes={assignment.readingAssignment.estimatedMinutes}
+          />
+        );
+      }
+      if (assignment.type === 'vocab' && assignment.vocabAssignment) {
+        return <VocabAssignmentView entries={assignment.vocabAssignment.entries} />;
+      }
+      if (assignment.type === 'practice_problem' && assignment.practiceProblemAssignment) {
+        return (
+          <PracticeProblemRunner
+            questions={assignment.practiceProblemAssignment.questions}
+            passingPercentage={assignment.practiceProblemAssignment.passingPercentage}
+            onAutoComplete={() => handleToggleAssignmentCompletion({ ...assignment, completed: false })}
+            onManualComplete={() => handleToggleAssignmentCompletion({ ...assignment, completed: false })}
+          />
+        );
+      }
+    }
+
     return null;
   }
 
@@ -442,6 +588,7 @@ export default function LessonDetailPage() {
     completionId: completionKeyOf(item),
     resourceType: item.resourceType,
     toolType: item.toolType,
+    assignmentType: item.assignmentType,
   }));
 
   // Find the active assignment item for single-item rendering
@@ -453,6 +600,7 @@ export default function LessonDetailPage() {
 
     const sortedResources = [...resources].sort((a, b) => a.order - b.order);
     const sortedTools = [...tools].sort((a, b) => a.order - b.order);
+    const sortedAssignments = [...assignments].sort((a, b) => a.order - b.order);
 
     let onMoveUp: (() => void) | undefined;
     let onMoveDown: (() => void) | undefined;
@@ -464,25 +612,51 @@ export default function LessonDetailPage() {
       const ti = sortedTools.findIndex(t => t.id === activeItem.id);
       if (ti > 0) onMoveUp = () => handleMoveTool(activeItem.id!, 'up');
       if (ti < sortedTools.length - 1) onMoveDown = () => handleMoveTool(activeItem.id!, 'down');
+    } else if (activeItem.kind === 'assignment') {
+      const ai = sortedAssignments.findIndex(a => a.id === activeItem.id);
+      if (ai > 0) onMoveUp = () => handleMoveAssignment(activeItem.id!, 'up');
+      if (ai < sortedAssignments.length - 1) onMoveDown = () => handleMoveAssignment(activeItem.id!, 'down');
     }
 
     const isLast = activeIdx === assignmentItems.length - 1;
     const next = assignmentItems[activeIdx + 1];
 
+    // Determine completion state
+    let isComplete: boolean;
+    if (activeItem.kind === 'quiz') {
+      isComplete = quizPassed;
+    } else if (activeItem.kind === 'assignment' && activeItem.id) {
+      isComplete = completedAssignmentIds.has(activeItem.id);
+    } else {
+      isComplete = activeItem.id ? completedIds.has(activeItem.id) : false;
+    }
+
+    // Assignment completion toggle
+    const assignment = activeItem.kind === 'assignment' ? assignments.find(a => a.id === activeItem.id) : undefined;
+    const onToggleCompletion = assignment
+      ? () => handleToggleAssignmentCompletion(assignment)
+      : () => handleToggleCompletion(activeItem);
+
     return (
       <AssignmentSection
         key={activeItem.key}
         item={activeItem}
-        isComplete={activeItem.kind === 'quiz' ? quizPassed : (activeItem.id ? completedIds.has(activeItem.id) : false)}
+        isComplete={isComplete}
         isLocked={activeItem.kind === 'quiz' && !quizUnlocked}
         canEdit={canEdit}
         isLast={isLast}
         incompleteRequired={incompleteRequired}
-        onToggleCompletion={() => handleToggleCompletion(activeItem)}
+        onToggleCompletion={onToggleCompletion}
         onToggleRequired={() => handleToggleRequired(activeItem)}
         onMoveUp={onMoveUp}
         onMoveDown={onMoveDown}
         onNext={() => { if (next) setActiveStepKey(next.key); }}
+        onEdit={canEdit && activeItem.kind === 'assignment' && assignment
+          ? () => setEditingAssignment(assignment)
+          : undefined}
+        onDelete={canEdit && activeItem.kind === 'assignment' && activeItem.id
+          ? () => setDeletingAssignmentId(activeItem.id)
+          : undefined}
       >
         {renderContent(activeItem)}
       </AssignmentSection>
@@ -581,9 +755,9 @@ export default function LessonDetailPage() {
                   </div>
                 )}
 
-                {/* Add assignment buttons */}
+                {/* Legacy add resource/tool buttons (kept for backward compatibility) */}
                 {canEdit && addingItemType === null && (
-                  <div className="flex flex-wrap gap-2 mt-4 pb-4">
+                  <div className="flex flex-wrap gap-2 mt-4 pb-2">
                     {(['note', 'lecture', 'video'] as const).map(type => (
                       <button
                         key={type}
@@ -604,6 +778,15 @@ export default function LessonDetailPage() {
                         {type === 'flash_card' ? 'Flash Card' : type === 'practice_problem' ? 'Practice Problem' : 'Vocab'}
                       </button>
                     ))}
+                  </div>
+                )}
+
+                {/* Add assignment menu */}
+                {canEdit && addingItemType === null && (
+                  <div className="mt-2 pb-4">
+                    <AddAssignmentMenu
+                      onSelect={type => setAddingAssignmentType(type)}
+                    />
                   </div>
                 )}
               </main>
@@ -739,6 +922,36 @@ export default function LessonDetailPage() {
             onCancel={() => setEditingTool(null)}
           />
         </Modal>
+      )}
+
+      {/* Assignment create modal */}
+      {canEdit && addingAssignmentType !== null && (
+        <AssignmentFormModal
+          type={addingAssignmentType}
+          onSubmit={async payload => { await handleCreateAssignment(payload as Parameters<typeof handleCreateAssignment>[0]); }}
+          onClose={() => setAddingAssignmentType(null)}
+        />
+      )}
+
+      {/* Assignment edit modal */}
+      {canEdit && editingAssignment !== null && (
+        <AssignmentFormModal
+          type={editingAssignment.type}
+          initial={editingAssignment}
+          onSubmit={async payload => { await handleUpdateAssignment(editingAssignment.id, payload as UpdateAssignmentPayload); }}
+          onClose={() => setEditingAssignment(null)}
+        />
+      )}
+
+      {/* Assignment delete confirmation */}
+      {canEdit && deletingAssignmentId !== null && (
+        <ConfirmDialog
+          title="Delete assignment?"
+          message={`This will permanently delete "${assignments.find(a => a.id === deletingAssignmentId)?.title ?? 'this assignment'}" and cannot be undone.`}
+          confirmLabel="Delete"
+          onConfirm={() => handleDeleteAssignment(deletingAssignmentId)}
+          onClose={() => setDeletingAssignmentId(null)}
+        />
       )}
     </>
   );

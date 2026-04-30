@@ -1,7 +1,7 @@
 import { useEffect, useRef, useCallback } from 'react';
-import { Lock, ChevronDown, ToggleLeft, ToggleRight, ArrowUp, ArrowDown } from 'lucide-react';
+import { Lock, ChevronDown, ToggleLeft, ToggleRight, ArrowUp, ArrowDown, Pencil, Trash2 } from 'lucide-react';
 
-export type AssignmentKind = 'lessonPlan' | 'resource' | 'tool' | 'quiz';
+export type AssignmentKind = 'lessonPlan' | 'resource' | 'tool' | 'quiz' | 'assignment';
 
 export interface AssignmentItem {
   key: string;
@@ -12,6 +12,7 @@ export interface AssignmentItem {
   order: number;
   resourceType?: 'note' | 'video' | 'lecture';
   toolType?: 'flash_card' | 'practice_problem' | 'vocab';
+  assignmentType?: import('../../api/types.js').AssignmentType;
 }
 
 interface AssignmentSectionProps {
@@ -27,12 +28,14 @@ interface AssignmentSectionProps {
   onMoveUp?: () => void;
   onMoveDown?: () => void;
   onNext: () => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
   children: React.ReactNode;
 }
 
 export default function AssignmentSection({
   item, isComplete, isLocked, canEdit, isLast, incompleteRequired,
-  onVisible, onToggleCompletion, onToggleRequired, onMoveUp, onMoveDown, onNext, children,
+  onVisible, onToggleCompletion, onToggleRequired, onMoveUp, onMoveDown, onNext, onEdit, onDelete, children,
 }: AssignmentSectionProps) {
   const ref = useRef<HTMLElement>(null);
   const stableOnVisible = useCallback((key: string) => onVisible?.(key), [onVisible]);
@@ -73,18 +76,38 @@ export default function AssignmentSection({
             </span>
           )}
         </div>
-        {canEdit && showRequired && (
+        {canEdit && (
           <div className="flex items-center gap-1 shrink-0">
-            <button
-              onClick={onToggleRequired}
-              title={item.isRequired ? 'Mark optional' : 'Mark required'}
-              className="text-muted-foreground hover:text-foreground transition-colors"
-            >
-              {item.isRequired
-                ? <ToggleRight className="w-5 h-5 text-primary" />
-                : <ToggleLeft className="w-5 h-5" />
-              }
-            </button>
+            {onEdit && (
+              <button
+                onClick={onEdit}
+                aria-label={`Edit ${item.title}`}
+                className="p-1.5 rounded text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <Pencil className="w-4 h-4" />
+              </button>
+            )}
+            {onDelete && (
+              <button
+                onClick={onDelete}
+                aria-label={`Delete ${item.title}`}
+                className="p-1.5 rounded text-muted-foreground hover:text-destructive transition-colors"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            )}
+            {showRequired && (
+              <button
+                onClick={onToggleRequired}
+                title={item.isRequired ? 'Mark optional' : 'Mark required'}
+                className="text-muted-foreground hover:text-foreground transition-colors"
+              >
+                {item.isRequired
+                  ? <ToggleRight className="w-5 h-5 text-primary" />
+                  : <ToggleLeft className="w-5 h-5" />
+                }
+              </button>
+            )}
             {(onMoveUp || onMoveDown) && (
               <div className="flex items-center">
                 <button
