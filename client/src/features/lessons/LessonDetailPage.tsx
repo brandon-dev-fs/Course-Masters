@@ -10,7 +10,7 @@ import { resourceCompletionsApi } from '../../api/resource-completions.js';
 import { progressApi } from '../../api/progress.js';
 import { assignmentsApi } from '../../api/assignments.js';
 import type { CreateAssignmentPayload, UpdateAssignmentPayload } from '../../api/assignments.js';
-import type { Assignment, AssignmentType, CompletionsResponse, Lesson, LessonResource, LessonTool, Unit, UnitProgress } from '../../api/types.js';
+import type { Assignment, CompletionsResponse, Lesson, LessonResource, LessonTool, Unit, UnitProgress } from '../../api/types.js';
 import { useAuth } from '../../context/AuthContext.js';
 import UnitLessonSidebar from './UnitLessonSidebar.js';
 import LessonPlanView from './LessonPlanView.js';
@@ -37,7 +37,6 @@ import type { AssignmentItem } from './AssignmentSection.js';
 import StudentToolsBar from '../student-notes/StudentToolsBar.js';
 import type { StudentToolType } from '../student-notes/StudentToolsBar.js';
 import StudentMaterialsModal from '../student-notes/StudentMaterialsModal.js';
-import AddAssignmentMenu from '../assignments/AddAssignmentMenu.js';
 import AssignmentFormModal from '../assignments/AssignmentFormModal.js';
 import NoteAssignmentView from '../assignments/NoteAssignmentView.js';
 import VideoAssignmentView from '../assignments/VideoAssignmentView.js';
@@ -141,7 +140,7 @@ export default function LessonDetailPage() {
 
   // Assignment layer state
   const [assignments, setAssignments] = useState<Assignment[]>([]);
-  const [addingAssignmentType, setAddingAssignmentType] = useState<AssignmentType | null>(null);
+  const [isAddingAssignment, setIsAddingAssignment] = useState<boolean>(false);
   const [editingAssignment, setEditingAssignment] = useState<Assignment | null>(null);
   const [deletingAssignmentId, setDeletingAssignmentId] = useState<string | null>(null);
 
@@ -327,7 +326,7 @@ export default function LessonDetailPage() {
     if (!lessonId) return;
     const created = await assignmentsApi.create(lessonId, payload);
     setAssignments(prev => [...prev, created].sort((a, b) => a.order - b.order));
-    setAddingAssignmentType(null);
+    setIsAddingAssignment(false);
     setActiveStepKey(`assignment:${created.id}`);
   }
 
@@ -781,12 +780,22 @@ export default function LessonDetailPage() {
                   </div>
                 )}
 
-                {/* Add assignment menu */}
+                {/* Inline add assignment button */}
                 {canEdit && addingItemType === null && (
                   <div className="mt-2 pb-4">
-                    <AddAssignmentMenu
-                      onSelect={type => setAddingAssignmentType(type)}
-                    />
+                    <button
+                      type="button"
+                      onClick={() => setIsAddingAssignment(true)}
+                      className={[
+                        'w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl',
+                        'border border-dashed border-border text-sm text-muted-foreground',
+                        'bg-transparent transition-colors',
+                        'hover:border-primary/50 hover:text-foreground hover:bg-surface-raised',
+                        'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary',
+                      ].join(' ')}
+                    >
+                      + Add assignment
+                    </button>
                   </div>
                 )}
               </main>
@@ -925,18 +934,16 @@ export default function LessonDetailPage() {
       )}
 
       {/* Assignment create modal */}
-      {canEdit && addingAssignmentType !== null && (
+      {canEdit && isAddingAssignment && (
         <AssignmentFormModal
-          type={addingAssignmentType}
           onSubmit={async payload => { await handleCreateAssignment(payload as Parameters<typeof handleCreateAssignment>[0]); }}
-          onClose={() => setAddingAssignmentType(null)}
+          onClose={() => setIsAddingAssignment(false)}
         />
       )}
 
       {/* Assignment edit modal */}
       {canEdit && editingAssignment !== null && (
         <AssignmentFormModal
-          type={editingAssignment.type}
           initial={editingAssignment}
           onSubmit={async payload => { await handleUpdateAssignment(editingAssignment.id, payload as UpdateAssignmentPayload); }}
           onClose={() => setEditingAssignment(null)}
