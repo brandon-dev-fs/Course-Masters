@@ -47,7 +47,8 @@ const practiceQuestionSchema = z.object({
 
 const baseAssignmentFields = {
   title: z.string().min(1),
-  objective: z.string().optional(),
+  // min(1) prevents persisting an empty-string objective; use null to clear
+  objective: z.string().min(1).optional(),
 };
 
 // ── Create schema (discriminated union by type) ──────────────────────────────
@@ -63,8 +64,9 @@ export const createAssignmentSchema = z.discriminatedUnion('type', [
     ...baseAssignmentFields,
     type: z.literal('video'),
     url: z.string().url(),
-    // videoTitle is the display title for the video — separate from the shared assignment title
-    videoTitle: z.string().optional(),
+    // displayTitle is the video's own display title — named distinctly from the shared
+    // assignment `title` to avoid a key collision in the flat request body
+    displayTitle: z.string().optional(),
   }),
   z.object({
     ...baseAssignmentFields,
@@ -97,13 +99,14 @@ export const createAssignmentSchema = z.discriminatedUnion('type', [
 
 export const updateAssignmentSchema = z.object({
   title: z.string().min(1).optional(),
-  objective: z.string().optional(),
+  // min(1) prevents persisting an empty-string objective; use null to clear
+  objective: z.string().min(1).optional(),
   // note
   content: z.record(z.any()).optional(),
   // video / reading
   url: z.string().url().optional(),
-  // video display title (separate from shared assignment title to avoid naming collision)
-  videoTitle: z.string().optional(),
+  // displayTitle: video's own display title — distinct from the shared assignment `title`
+  displayTitle: z.string().optional(),
   // reading
   description: z.string().optional(),
   estimatedMinutes: z.number().int().min(1).optional(),
