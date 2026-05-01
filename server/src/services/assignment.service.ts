@@ -95,8 +95,8 @@ export const assignmentService = {
         });
       } else if (data.type === 'video') {
         await tx.videoAssignment.create({
-          // videoTitle is the display title for the video — separate from the shared assignment title
-          data: { assignmentId: assignment.id, url: data.url, title: data.videoTitle ?? null },
+          // displayTitle maps to VideoAssignment.title — separate from the shared assignment title
+          data: { assignmentId: assignment.id, url: data.url, title: data.displayTitle ?? null },
         });
       } else if (data.type === 'reading') {
         await tx.readingAssignment.create({
@@ -161,8 +161,8 @@ export const assignmentService = {
       } else if (assignment.type === AssignmentType.video) {
         const videoUpdates: { url?: string; title?: string } = {};
         if (data.url !== undefined) videoUpdates.url = data.url;
-        // videoTitle is the display title for the video — separate from the shared assignment title
-        if (data.videoTitle !== undefined) videoUpdates.title = data.videoTitle;
+        // displayTitle maps to VideoAssignment.title — separate from the shared assignment title
+        if (data.displayTitle !== undefined) videoUpdates.title = data.displayTitle;
         if (Object.keys(videoUpdates).length > 0) {
           await tx.videoAssignment.update({ where: { assignmentId }, data: videoUpdates });
         }
@@ -214,25 +214,28 @@ export const assignmentService = {
 
     const { lessonId } = assignment;
 
-    // Delete assignment (cascade handles all children and completions)
-    await prisma.assignment.delete({ where: { id: assignmentId } });
+    // Delete + order recalculation run atomically to prevent gaps under concurrency
+    await prisma.$transaction(async (tx) => {
+      // Delete the assignment (cascade handles all children and completions)
+      await tx.assignment.delete({ where: { id: assignmentId } });
 
-    // Recalculate order for remaining assignments in the same lesson
-    const remaining = await prisma.assignment.findMany({
-      where: { lessonId },
-      orderBy: { order: 'asc' },
+      // Recalculate order for remaining assignments in the same lesson
+      const remaining = await tx.assignment.findMany({
+        where: { lessonId },
+        orderBy: { order: 'asc' },
+      });
+
+      if (remaining.length > 0) {
+        await Promise.all(
+          remaining.map((a, index) =>
+            tx.assignment.update({
+              where: { id: a.id },
+              data: { order: index + 1 },
+            }),
+          ),
+        );
+      }
     });
-
-    if (remaining.length > 0) {
-      await prisma.$transaction(
-        remaining.map((a, index) =>
-          prisma.assignment.update({
-            where: { id: a.id },
-            data: { order: index + 1 },
-          }),
-        ),
-      );
-    }
   },
 
   async reorder(lessonId: string, assignmentIds: string[]) {

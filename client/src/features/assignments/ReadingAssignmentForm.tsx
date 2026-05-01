@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import Input from '../../components/Input.js';
 import Textarea from '../../components/Textarea.js';
 
@@ -14,6 +15,9 @@ export default function ReadingAssignmentForm({
   url, description, estimatedMinutes,
   onUrlChange, onDescriptionChange, onEstimatedMinutesChange,
 }: ReadingAssignmentFormProps) {
+  // Only show the URL error after the field has been touched (blurred at least once)
+  const [urlTouched, setUrlTouched] = useState(false);
+
   return (
     <div className="flex flex-col gap-4">
       <div>
@@ -23,10 +27,11 @@ export default function ReadingAssignmentForm({
           type="url"
           value={url}
           onChange={e => onUrlChange(e.target.value)}
+          onBlur={() => setUrlTouched(true)}
           placeholder="https://..."
           required
         />
-        {!url.trim() && (
+        {urlTouched && !url.trim() && (
           <p role="alert" className="text-sm text-destructive mt-1">URL is required</p>
         )}
       </div>

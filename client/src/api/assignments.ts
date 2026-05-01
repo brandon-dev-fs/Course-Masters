@@ -17,7 +17,9 @@ interface NoteCreatePayload extends BaseCreatePayload {
 interface VideoCreatePayload extends BaseCreatePayload {
   type: 'video';
   url: string;
-  videoTitle?: string;
+  // displayTitle is the video's own display title — named distinctly from the shared `title`
+  // to avoid a key collision in the flat request body
+  displayTitle?: string;
 }
 
 interface ReadingCreatePayload extends BaseCreatePayload {
@@ -58,7 +60,8 @@ export interface UpdateAssignmentPayload {
   content?: Record<string, unknown>;
   // video / reading
   url?: string;
-  videoTitle?: string;
+  // displayTitle: video's own display title — distinct from the shared `title`
+  displayTitle?: string;
   // reading
   description?: string;
   estimatedMinutes?: number | null;
@@ -77,16 +80,13 @@ export interface ReorderPayload {
 
 /**
  * Maps a CreateAssignmentPayload or UpdateAssignmentPayload to the flat body
- * expected by the server. For video assignments, `videoTitle` is sent as
- * `title` only at the type-specific level — since both the shared assignment
- * title and the video display title use the key "title" in the contract, we
- * send them in separate keys: `title` for the shared title and `videoTitle`
- * for the video display title. The backend plan maps `videoTitle` → the child
- * `VideoAssignment.title` field.
+ * expected by the server. The `displayTitle` field is the video assignment's
+ * own display title — named distinctly from the shared `title` to avoid a
+ * key collision in the flat request body. The backend maps `displayTitle` →
+ * `VideoAssignment.title`.
  */
 function toApiBody(payload: CreateAssignmentPayload | UpdateAssignmentPayload): Record<string, unknown> {
   // No transformation needed — the payload shape already matches the API contract.
-  // The server accepts `videoTitle` as the optional video display title.
   return payload as unknown as Record<string, unknown>;
 }
 

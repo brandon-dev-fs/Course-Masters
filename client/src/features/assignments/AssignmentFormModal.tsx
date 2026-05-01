@@ -142,7 +142,7 @@ export default function AssignmentFormModal({ initial, onSubmit, onClose }: Assi
       } else if (type === 'video') {
         if (!videoUrl.trim()) throw new Error('URL is required');
         updatePayload.url = videoUrl.trim();
-        if (displayTitle.trim()) updatePayload.videoTitle = displayTitle.trim();
+        if (displayTitle.trim()) updatePayload.displayTitle = displayTitle.trim();
       } else if (type === 'reading') {
         if (!readingUrl.trim()) throw new Error('URL is required');
         updatePayload.url = readingUrl.trim();
@@ -189,7 +189,7 @@ export default function AssignmentFormModal({ initial, onSubmit, onClose }: Assi
           objective: objective.trim() || undefined,
           type: 'video',
           url: videoUrl.trim(),
-          videoTitle: displayTitle.trim() || undefined,
+          displayTitle: displayTitle.trim() || undefined,
         };
       } else if (type === 'reading') {
         if (!readingUrl.trim()) throw new Error('URL is required');

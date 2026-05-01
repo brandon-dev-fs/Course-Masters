@@ -283,8 +283,7 @@ export default function PracticeProblemRunner({
       setPhase('question');
     } else {
       // Last question submitted — compute score and go to summary
-      const correctCount = questions.filter((q, i) => checkCorrect(q, answers[i])).length;
-      // Include the current question in the count
+      // Include the current (just-submitted) answer in the count
       const finalCorrect = questions.filter((q, i) => {
         const ans = i === currentIndex ? currentAnswer : answers[i];
         return checkCorrect(q, ans);
