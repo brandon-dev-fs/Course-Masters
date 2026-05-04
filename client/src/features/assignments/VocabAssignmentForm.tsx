@@ -1,18 +1,14 @@
 import { ArrowUp, ArrowDown, Trash2, Plus } from 'lucide-react';
+import type { SubFormProps } from './AssignmentFormModal.js';
 import type { VocabEntry } from '../../api/types.js';
 
-interface VocabAssignmentFormProps {
-  entries: VocabEntry[];
-  onChange: (entries: VocabEntry[]) => void;
-}
-
-export default function VocabAssignmentForm({ entries, onChange }: VocabAssignmentFormProps) {
+export default function VocabAssignmentForm({ entries, onEntriesChange }: SubFormProps) {
   function addEntry() {
-    onChange([...entries, { term: '', definition: '' }]);
+    onEntriesChange([...entries, { term: '', definition: '' }]);
   }
 
   function removeEntry(idx: number) {
-    onChange(entries.filter((_, i) => i !== idx));
+    onEntriesChange(entries.filter((_, i) => i !== idx));
   }
 
   function moveEntry(idx: number, direction: 'up' | 'down') {
@@ -20,12 +16,12 @@ export default function VocabAssignmentForm({ entries, onChange }: VocabAssignme
     if (swapIdx < 0 || swapIdx >= entries.length) return;
     const next = [...entries];
     [next[idx], next[swapIdx]] = [next[swapIdx], next[idx]];
-    onChange(next);
+    onEntriesChange(next);
   }
 
-  function updateEntry(idx: number, field: 'term' | 'definition', value: string) {
+  function updateEntry(idx: number, field: keyof VocabEntry, value: string) {
     const next = entries.map((e, i) => i === idx ? { ...e, [field]: value } : e);
-    onChange(next);
+    onEntriesChange(next);
   }
 
   const hasValidEntry = entries.some(e => e.term.trim() && e.definition.trim());

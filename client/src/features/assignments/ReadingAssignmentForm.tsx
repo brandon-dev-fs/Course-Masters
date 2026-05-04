@@ -1,20 +1,12 @@
 import { useState } from 'react';
 import Input from '../../components/Input.js';
 import Textarea from '../../components/Textarea.js';
-
-interface ReadingAssignmentFormProps {
-  url: string;
-  description: string;
-  estimatedMinutes: string;
-  onUrlChange: (v: string) => void;
-  onDescriptionChange: (v: string) => void;
-  onEstimatedMinutesChange: (v: string) => void;
-}
+import type { SubFormProps } from './AssignmentFormModal.js';
 
 export default function ReadingAssignmentForm({
   url, description, estimatedMinutes,
   onUrlChange, onDescriptionChange, onEstimatedMinutesChange,
-}: ReadingAssignmentFormProps) {
+}: SubFormProps) {
   // Only show the URL error after the field has been touched (blurred at least once)
   const [urlTouched, setUrlTouched] = useState(false);
 

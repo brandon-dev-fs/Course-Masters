@@ -1,6 +1,7 @@
 import { ArrowUp, ArrowDown, Trash2, Plus } from 'lucide-react';
-import Input from '../../components/Input.js';
 import Textarea from '../../components/Textarea.js';
+import Input from '../../components/Input.js';
+import type { SubFormProps } from './AssignmentFormModal.js';
 import type { PracticeQuestionType } from '../../api/types.js';
 
 export interface PracticeQuestionDraft {
@@ -8,13 +9,6 @@ export interface PracticeQuestionDraft {
   type: PracticeQuestionType;
   order: number;
   content: Record<string, unknown>;
-}
-
-interface PracticeProblemAssignmentFormProps {
-  passingPercentage: string;
-  questions: PracticeQuestionDraft[];
-  onPassingPercentageChange: (v: string) => void;
-  onQuestionsChange: (questions: PracticeQuestionDraft[]) => void;
 }
 
 // ─── Default content shapes per question type ─────────────────────────────────
@@ -477,9 +471,7 @@ function QuestionCard({ question, index, total, onChange, onMoveUp, onMoveDown, 
 
 // ─── Main Form ────────────────────────────────────────────────────────────────
 
-export default function PracticeProblemAssignmentForm({
-  passingPercentage, questions, onPassingPercentageChange, onQuestionsChange,
-}: PracticeProblemAssignmentFormProps) {
+export default function PracticeProblemAssignmentForm({ questions, onQuestionsChange }: SubFormProps) {
   function addQuestion() {
     const newQ: PracticeQuestionDraft = {
       type: 'multiple_choice',
@@ -506,66 +498,37 @@ export default function PracticeProblemAssignmentForm({
     onQuestionsChange(next.map((q, i) => ({ ...q, order: i + 1 })));
   }
 
-  const ppVal = passingPercentage === '' ? '' : Number(passingPercentage);
-  const ppError = passingPercentage !== '' && (Number(passingPercentage) < 0 || Number(passingPercentage) > 100)
-    ? 'Passing percentage must be between 0 and 100.'
-    : '';
-
   return (
-    <div className="flex flex-col gap-5">
-      <div>
-        <Input
-          id="passing-pct"
-          label="Passing percentage (optional)"
-          type="number"
-          value={passingPercentage}
-          onChange={e => onPassingPercentageChange(e.target.value)}
-          placeholder="e.g. 80"
-          min={0}
-          max={100}
+    <div className="flex flex-col gap-3">
+      <p className="text-sm font-semibold text-foreground">
+        Questions<span aria-hidden="true"> *</span>
+        <span className="sr-only"> (required)</span>
+      </p>
+      {questions.map((q, idx) => (
+        <QuestionCard
+          key={idx}
+          question={q}
+          index={idx}
+          total={questions.length}
+          onChange={updated => updateQuestion(idx, updated)}
+          onMoveUp={() => moveQuestion(idx, 'up')}
+          onMoveDown={() => moveQuestion(idx, 'down')}
+          onRemove={() => removeQuestion(idx)}
         />
-        <p className="text-xs text-muted-foreground mt-1">
-          Leave empty — student marks complete manually.
+      ))}
+      <button
+        type="button"
+        onClick={addQuestion}
+        className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors self-start"
+      >
+        <Plus className="w-3.5 h-3.5" />
+        Add question
+      </button>
+      {questions.length === 0 && (
+        <p role="alert" className="text-sm text-destructive">
+          At least one question is required.
         </p>
-        {ppError && <p role="alert" className="text-sm text-destructive mt-1">{ppError}</p>}
-        {typeof ppVal === 'number' && !isNaN(ppVal) && ppVal >= 0 && ppVal <= 100 && (
-          <p className="text-xs text-muted-foreground mt-1">
-            Assignment auto-completes when score &ge; {ppVal}%.
-          </p>
-        )}
-      </div>
-
-      <div className="flex flex-col gap-3">
-        <p className="text-sm font-semibold text-foreground">
-          Questions<span aria-hidden="true"> *</span>
-          <span className="sr-only"> (required)</span>
-        </p>
-        {questions.map((q, idx) => (
-          <QuestionCard
-            key={idx}
-            question={q}
-            index={idx}
-            total={questions.length}
-            onChange={updated => updateQuestion(idx, updated)}
-            onMoveUp={() => moveQuestion(idx, 'up')}
-            onMoveDown={() => moveQuestion(idx, 'down')}
-            onRemove={() => removeQuestion(idx)}
-          />
-        ))}
-        <button
-          type="button"
-          onClick={addQuestion}
-          className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors self-start"
-        >
-          <Plus className="w-3.5 h-3.5" />
-          Add question
-        </button>
-        {questions.length === 0 && (
-          <p role="alert" className="text-sm text-destructive">
-            At least one question is required.
-          </p>
-        )}
-      </div>
+      )}
     </div>
   );
 }

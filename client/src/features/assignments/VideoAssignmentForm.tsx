@@ -2,19 +2,13 @@ import { useRef, useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import Input from '../../components/Input.js';
 import { apiClient } from '../../api/client.js';
+import type { SubFormProps } from './AssignmentFormModal.js';
 
 const youtubeUrlRegex = /^https?:\/\/(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)[\w-]+/;
 
-interface VideoAssignmentFormProps {
-  url: string;
-  displayTitle: string;
-  onUrlChange: (url: string) => void;
-  onDisplayTitleChange: (title: string) => void;
-}
-
 export default function VideoAssignmentForm({
   url, displayTitle, onUrlChange, onDisplayTitleChange,
-}: VideoAssignmentFormProps) {
+}: SubFormProps) {
   const [fetchingTitle, setFetchingTitle] = useState(false);
   const titleTouched = useRef(!!displayTitle);
 
