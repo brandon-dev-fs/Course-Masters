@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { ChevronLeft } from 'lucide-react';
+import { FileText, Video, ExternalLink, BookMarked, Brain, ChevronLeft } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import Modal from '../../components/Modal.js';
 import Input from '../../components/Input.js';
 import Textarea from '../../components/Textarea.js';
@@ -11,10 +12,75 @@ import VideoAssignmentForm from './VideoAssignmentForm.js';
 import ReadingAssignmentForm from './ReadingAssignmentForm.js';
 import VocabAssignmentForm from './VocabAssignmentForm.js';
 import PracticeProblemAssignmentForm from './PracticeProblemAssignmentForm.js';
+import PracticeProblemMetaFields from './PracticeProblemMetaFields.js';
 import type { PracticeQuestionDraft } from './PracticeProblemAssignmentForm.js';
 import type { Assignment, AssignmentType, VocabEntry } from '../../api/types.js';
 import type { CreateAssignmentPayload, UpdateAssignmentPayload } from '../../api/assignments.js';
 import useFormSubmit from '../../hooks/useFormSubmit.js';
+
+// ─── Shared state + handler types ─────────────────────────────────────────────
+
+export interface TypeFormState {
+  noteContent: Record<string, unknown> | null;
+  url: string;               // video + reading
+  displayTitle: string;      // video
+  description: string;       // reading
+  estimatedMinutes: string;  // reading
+  passingPercentage: string; // practice_problem
+  entries: VocabEntry[];     // vocab
+  questions: PracticeQuestionDraft[]; // practice_problem
+}
+
+export interface TypeFormHandlers {
+  onNoteContentChange: (v: Record<string, unknown>) => void;
+  onUrlChange: (v: string) => void;
+  onDisplayTitleChange: (v: string) => void;
+  onDescriptionChange: (v: string) => void;
+  onEstimatedMinutesChange: (v: string) => void;
+  onPassingPercentageChange: (v: string) => void;
+  onEntriesChange: (entries: VocabEntry[]) => void;
+  onQuestionsChange: (questions: PracticeQuestionDraft[]) => void;
+}
+
+export type SubFormProps = TypeFormState & TypeFormHandlers;
+
+// ─── Type registry ─────────────────────────────────────────────────────────────
+
+interface TypeConfig {
+  label: string;
+  icon: LucideIcon;
+  nextLabel?: string;
+  MetaFields?: React.ComponentType<SubFormProps>;
+  ItemsForm?: React.ComponentType<SubFormProps>;
+}
+
+export const TYPE_CONFIG: Record<AssignmentType, TypeConfig> = {
+  note:             { label: 'Note',             icon: FileText,     MetaFields: NoteAssignmentForm },
+  video:            { label: 'Video',             icon: Video,        MetaFields: VideoAssignmentForm },
+  reading:          { label: 'Reading',           icon: ExternalLink, MetaFields: ReadingAssignmentForm },
+  vocab:            { label: 'Vocab',             icon: BookMarked,   nextLabel: 'Terms',
+                      ItemsForm: VocabAssignmentForm },
+  practice_problem: { label: 'Practice Problem',  icon: Brain,        nextLabel: 'Questions',
+                      MetaFields: PracticeProblemMetaFields,
+                      ItemsForm: PracticeProblemAssignmentForm },
+};
+
+// ─── Empty state constant ─────────────────────────────────────────────────────
+
+const EMPTY_TYPE_STATE: TypeFormState = {
+  noteContent: null,
+  url: '',
+  displayTitle: '',
+  description: '',
+  estimatedMinutes: '',
+  passingPercentage: '',
+  entries: [],
+  questions: [],
+};
+
+// ─── Component ────────────────────────────────────────────────────────────────
+
+type ModalStep = 'pick' | 'meta' | 'items';
 
 interface AssignmentFormModalProps {
   initial?: Assignment;
@@ -22,36 +88,11 @@ interface AssignmentFormModalProps {
   onClose: () => void;
 }
 
-const TYPE_LABELS: Record<AssignmentType, string> = {
-  note: 'Note',
-  video: 'Video',
-  reading: 'Reading',
-  vocab: 'Vocab',
-  practice_problem: 'Practice Problem',
-};
-
-function getInitialVocabEntries(initial?: Assignment): VocabEntry[] {
-  if (initial?.vocabAssignment) return initial.vocabAssignment.entries;
-  return [{ term: '', definition: '' }];
-}
-
-function getInitialQuestions(initial?: Assignment): PracticeQuestionDraft[] {
-  if (initial?.practiceProblemAssignment?.questions) {
-    return initial.practiceProblemAssignment.questions.map(q => ({
-      id: q.id,
-      type: q.type,
-      order: q.order,
-      content: q.content,
-    }));
-  }
-  return [];
-}
-
 export default function AssignmentFormModal({ initial, onSubmit, onClose }: AssignmentFormModalProps) {
   const isEdit = !!initial;
 
-  // Two-step state (only relevant in create mode)
-  const [step, setStep] = useState<'pick' | 'form'>(isEdit ? 'form' : 'pick');
+  // Step state
+  const [step, setStep] = useState<ModalStep>(isEdit ? 'meta' : 'pick');
   const [selectedType, setSelectedType] = useState<AssignmentType | null>(
     isEdit ? initial.type : null,
   );
@@ -61,66 +102,72 @@ export default function AssignmentFormModal({ initial, onSubmit, onClose }: Assi
   const [objective, setObjective] = useState(initial?.objective ?? '');
   const [titleError, setTitleError] = useState('');
 
-  // Note fields
-  const [noteContent, setNoteContent] = useState<Record<string, unknown> | null>(
-    initial?.noteAssignment?.content ?? null,
-  );
+  // Flat type-form state — all fields initialised from initial if present
+  const [typeState, setTypeState] = useState<TypeFormState>({
+    noteContent: initial?.noteAssignment?.content ?? null,
+    url: initial?.videoAssignment?.url ?? initial?.readingAssignment?.url ?? '',
+    displayTitle: initial?.videoAssignment?.title ?? '',
+    description: initial?.readingAssignment?.description ?? '',
+    estimatedMinutes: String(initial?.readingAssignment?.estimatedMinutes ?? ''),
+    passingPercentage: String(initial?.practiceProblemAssignment?.passingPercentage ?? ''),
+    entries: initial?.vocabAssignment?.entries ?? [],
+    questions: (initial?.practiceProblemAssignment?.questions ?? []).map(q => ({ ...q })),
+  });
 
-  // Video fields
-  const [videoUrl, setVideoUrl] = useState(initial?.videoAssignment?.url ?? '');
-  const [displayTitle, setDisplayTitle] = useState(initial?.videoAssignment?.title ?? '');
+  const typeHandlers: TypeFormHandlers = {
+    onNoteContentChange:       v => setTypeState(s => ({ ...s, noteContent: v })),
+    onUrlChange:               v => setTypeState(s => ({ ...s, url: v })),
+    onDisplayTitleChange:      v => setTypeState(s => ({ ...s, displayTitle: v })),
+    onDescriptionChange:       v => setTypeState(s => ({ ...s, description: v })),
+    onEstimatedMinutesChange:  v => setTypeState(s => ({ ...s, estimatedMinutes: v })),
+    onPassingPercentageChange: v => setTypeState(s => ({ ...s, passingPercentage: v })),
+    onEntriesChange:           v => setTypeState(s => ({ ...s, entries: v })),
+    onQuestionsChange:         v => setTypeState(s => ({ ...s, questions: v })),
+  };
 
-  // Reading fields
-  const [readingUrl, setReadingUrl] = useState(initial?.readingAssignment?.url ?? '');
-  const [readingDescription, setReadingDescription] = useState(
-    initial?.readingAssignment?.description ?? '',
-  );
-  const [readingMinutes, setReadingMinutes] = useState(
-    initial?.readingAssignment?.estimatedMinutes != null
-      ? String(initial.readingAssignment.estimatedMinutes)
-      : '',
-  );
+  const subFormProps: SubFormProps = { ...typeState, ...typeHandlers };
 
-  // Vocab fields
-  const [vocabEntries, setVocabEntries] = useState<VocabEntry[]>(getInitialVocabEntries(initial));
+  // Registry-driven derived state
+  const config = selectedType ? TYPE_CONFIG[selectedType] : null;
+  const hasItems = !!config?.ItemsForm;
 
-  // Practice problem fields
-  const [passingPercentage, setPassingPercentage] = useState(
-    initial?.practiceProblemAssignment?.passingPercentage != null
-      ? String(initial.practiceProblemAssignment.passingPercentage)
-      : '',
-  );
-  const [questions, setQuestions] = useState<PracticeQuestionDraft[]>(getInitialQuestions(initial));
-
-  function handleTypeSelected(type: AssignmentType) {
-    setSelectedType(type);
-    setStep('form');
-  }
-
-  function handleBack() {
-    setSelectedType(null);
-    setStep('pick');
-    // Reset all form field state
-    setAssignmentTitle('');
-    setObjective('');
-    setTitleError('');
-    setNoteContent(null);
-    setVideoUrl('');
-    setDisplayTitle('');
-    setReadingUrl('');
-    setReadingDescription('');
-    setReadingMinutes('');
-    setVocabEntries([{ term: '', definition: '' }]);
-    setPassingPercentage('');
-    setQuestions([]);
-  }
-
+  // Modal title
   const modalTitle = step === 'pick'
     ? 'Add Assignment'
     : isEdit
-      ? `Edit ${TYPE_LABELS[selectedType!]}`
-      : `Add ${TYPE_LABELS[selectedType!]}`;
+      ? `Edit ${config!.label}`
+      : `Add ${config!.label}`;
 
+  // Navigation handlers
+  function handleTypeSelected(type: AssignmentType) {
+    setSelectedType(type);
+    setStep('meta');
+  }
+
+  function handleBack() {
+    if (step === 'items') {
+      setStep('meta');
+      return;
+    }
+    // meta in create mode — return to picker and reset all state
+    setSelectedType(null);
+    setStep('pick');
+    setAssignmentTitle('');
+    setObjective('');
+    setTitleError('');
+    setTypeState(EMPTY_TYPE_STATE);
+  }
+
+  function handleAdvanceToItems() {
+    if (!assignmentTitle.trim()) {
+      setTitleError('Title is required');
+      return;
+    }
+    setTitleError('');
+    setStep('items');
+  }
+
+  // Form submission
   const { error: apiError, submitting, handleSubmit } = useFormSubmit(async () => {
     if (!assignmentTitle.trim()) {
       setTitleError('Title is required');
@@ -137,37 +184,37 @@ export default function AssignmentFormModal({ initial, onSubmit, onClose }: Assi
       };
 
       if (type === 'note') {
-        if (!noteContent) throw new Error('Content is required');
-        updatePayload.content = noteContent;
+        if (!typeState.noteContent) throw new Error('Content is required');
+        updatePayload.content = typeState.noteContent;
       } else if (type === 'video') {
-        if (!videoUrl.trim()) throw new Error('URL is required');
-        updatePayload.url = videoUrl.trim();
-        if (displayTitle.trim()) updatePayload.displayTitle = displayTitle.trim();
+        if (!typeState.url.trim()) throw new Error('URL is required');
+        updatePayload.url = typeState.url.trim();
+        if (typeState.displayTitle.trim()) updatePayload.displayTitle = typeState.displayTitle.trim();
       } else if (type === 'reading') {
-        if (!readingUrl.trim()) throw new Error('URL is required');
-        updatePayload.url = readingUrl.trim();
-        if (readingDescription.trim()) updatePayload.description = readingDescription.trim();
-        if (readingMinutes.trim()) {
-          const mins = parseInt(readingMinutes, 10);
+        if (!typeState.url.trim()) throw new Error('URL is required');
+        updatePayload.url = typeState.url.trim();
+        if (typeState.description.trim()) updatePayload.description = typeState.description.trim();
+        if (typeState.estimatedMinutes.trim()) {
+          const mins = parseInt(typeState.estimatedMinutes, 10);
           if (isNaN(mins) || mins < 1) throw new Error('Estimated minutes must be at least 1');
           updatePayload.estimatedMinutes = mins;
         } else {
           updatePayload.estimatedMinutes = null;
         }
       } else if (type === 'vocab') {
-        const validEntries = vocabEntries.filter(e => e.term.trim() && e.definition.trim());
+        const validEntries = typeState.entries.filter(e => e.term.trim() && e.definition.trim());
         if (validEntries.length === 0) throw new Error('At least one term with a non-empty term and definition is required');
         updatePayload.entries = validEntries;
       } else if (type === 'practice_problem') {
-        if (questions.length === 0) throw new Error('At least one question is required');
-        if (passingPercentage.trim()) {
-          const pp = parseInt(passingPercentage, 10);
+        if (typeState.questions.length === 0) throw new Error('At least one question is required');
+        if (typeState.passingPercentage.trim()) {
+          const pp = parseInt(typeState.passingPercentage, 10);
           if (isNaN(pp) || pp < 0 || pp > 100) throw new Error('Passing percentage must be between 0 and 100');
           updatePayload.passingPercentage = pp;
         } else {
           updatePayload.passingPercentage = null;
         }
-        updatePayload.questions = questions.map((q, i) => ({ type: q.type, order: i + 1, content: q.content }));
+        updatePayload.questions = typeState.questions.map((q, i) => ({ type: q.type, order: i + 1, content: q.content }));
       }
 
       await onSubmit(updatePayload);
@@ -175,26 +222,26 @@ export default function AssignmentFormModal({ initial, onSubmit, onClose }: Assi
       let createPayload: CreateAssignmentPayload;
 
       if (type === 'note') {
-        if (!noteContent) throw new Error('Content is required');
+        if (!typeState.noteContent) throw new Error('Content is required');
         createPayload = {
           title: assignmentTitle.trim(),
           objective: objective.trim() || undefined,
           type: 'note',
-          content: noteContent,
+          content: typeState.noteContent,
         };
       } else if (type === 'video') {
-        if (!videoUrl.trim()) throw new Error('URL is required');
+        if (!typeState.url.trim()) throw new Error('URL is required');
         createPayload = {
           title: assignmentTitle.trim(),
           objective: objective.trim() || undefined,
           type: 'video',
-          url: videoUrl.trim(),
-          displayTitle: displayTitle.trim() || undefined,
+          url: typeState.url.trim(),
+          displayTitle: typeState.displayTitle.trim() || undefined,
         };
       } else if (type === 'reading') {
-        if (!readingUrl.trim()) throw new Error('URL is required');
-        const estimatedMinutes = readingMinutes.trim()
-          ? parseInt(readingMinutes, 10)
+        if (!typeState.url.trim()) throw new Error('URL is required');
+        const estimatedMinutes = typeState.estimatedMinutes.trim()
+          ? parseInt(typeState.estimatedMinutes, 10)
           : undefined;
         if (estimatedMinutes !== undefined && (isNaN(estimatedMinutes) || estimatedMinutes < 1)) {
           throw new Error('Estimated minutes must be at least 1');
@@ -203,12 +250,12 @@ export default function AssignmentFormModal({ initial, onSubmit, onClose }: Assi
           title: assignmentTitle.trim(),
           objective: objective.trim() || undefined,
           type: 'reading',
-          url: readingUrl.trim(),
-          description: readingDescription.trim() || undefined,
+          url: typeState.url.trim(),
+          description: typeState.description.trim() || undefined,
           estimatedMinutes,
         };
       } else if (type === 'vocab') {
-        const validEntries = vocabEntries.filter(e => e.term.trim() && e.definition.trim());
+        const validEntries = typeState.entries.filter(e => e.term.trim() && e.definition.trim());
         if (validEntries.length === 0) throw new Error('At least one term with a non-empty term and definition is required');
         createPayload = {
           title: assignmentTitle.trim(),
@@ -218,10 +265,10 @@ export default function AssignmentFormModal({ initial, onSubmit, onClose }: Assi
         };
       } else {
         // practice_problem
-        if (questions.length === 0) throw new Error('At least one question is required');
+        if (typeState.questions.length === 0) throw new Error('At least one question is required');
         let pp: number | undefined;
-        if (passingPercentage.trim()) {
-          pp = parseInt(passingPercentage, 10);
+        if (typeState.passingPercentage.trim()) {
+          pp = parseInt(typeState.passingPercentage, 10);
           if (isNaN(pp) || pp < 0 || pp > 100) throw new Error('Passing percentage must be between 0 and 100');
         }
         createPayload = {
@@ -229,7 +276,7 @@ export default function AssignmentFormModal({ initial, onSubmit, onClose }: Assi
           objective: objective.trim() || undefined,
           type: 'practice_problem',
           passingPercentage: pp,
-          questions: questions.map((q, i) => ({ type: q.type, order: i + 1, content: q.content })),
+          questions: typeState.questions.map((q, i) => ({ type: q.type, order: i + 1, content: q.content })),
         };
       }
 
@@ -239,20 +286,27 @@ export default function AssignmentFormModal({ initial, onSubmit, onClose }: Assi
 
   return (
     <Modal title={modalTitle} onClose={onClose} size="lg">
-      {step === 'pick' ? (
+      {step === 'pick' && (
         <div className="flex flex-col gap-4">
           <p className="text-sm text-muted-foreground">Choose the type of assignment to add.</p>
-          <AssignmentTypePicker onSelect={handleTypeSelected} />
+          <AssignmentTypePicker config={TYPE_CONFIG} onSelect={handleTypeSelected} />
         </div>
-      ) : (
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4 overflow-y-auto flex-1">
+      )}
+
+      {step === 'meta' && (
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          {/* Step indicator for two-step types */}
+          {hasItems && (
+            <span className="text-xs text-muted-foreground self-start">1 of 2</span>
+          )}
+
           {/* Back button — create mode only */}
           {!isEdit && (
             <button
               type="button"
               aria-label="Back to type selection"
               onClick={handleBack}
-              className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors mb-4 self-start"
+              className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors self-start"
             >
               <ChevronLeft className="w-4 h-4" />
               Back
@@ -291,51 +345,58 @@ export default function AssignmentFormModal({ initial, onSubmit, onClose }: Assi
             rows={2}
           />
 
-          {/* Type-specific sub-form */}
-          {selectedType === 'note' && (
-            <NoteAssignmentForm value={noteContent} onChange={setNoteContent} />
-          )}
-          {selectedType === 'video' && (
-            <VideoAssignmentForm
-              url={videoUrl}
-              displayTitle={displayTitle}
-              onUrlChange={setVideoUrl}
-              onDisplayTitleChange={setDisplayTitle}
-            />
-          )}
-          {selectedType === 'reading' && (
-            <ReadingAssignmentForm
-              url={readingUrl}
-              description={readingDescription}
-              estimatedMinutes={readingMinutes}
-              onUrlChange={setReadingUrl}
-              onDescriptionChange={setReadingDescription}
-              onEstimatedMinutesChange={setReadingMinutes}
-            />
-          )}
-          {selectedType === 'vocab' && (
-            <VocabAssignmentForm entries={vocabEntries} onChange={setVocabEntries} />
-          )}
-          {selectedType === 'practice_problem' && (
-            <PracticeProblemAssignmentForm
-              passingPercentage={passingPercentage}
-              questions={questions}
-              onPassingPercentageChange={setPassingPercentage}
-              onQuestionsChange={setQuestions}
-            />
-          )}
+          {/* Type-specific meta fields */}
+          {config?.MetaFields && (() => { const MetaFields = config.MetaFields!; return <MetaFields {...subFormProps} />; })()}
 
           {apiError && <ErrorMessage message={apiError} />}
 
-          <div className="flex justify-end gap-3 pt-2 shrink-0">
+          <div className="flex justify-end gap-3 pt-2">
             <Button type="button" variant="secondary" onClick={onClose} disabled={submitting}>
               Cancel
             </Button>
-            <Button type="submit" disabled={submitting}>
+            {!hasItems && (
+              <Button type="submit" disabled={submitting}>
+                {submitting ? 'Saving...' : 'Save assignment'}
+              </Button>
+            )}
+            {hasItems && (
+              <Button type="button" onClick={handleAdvanceToItems}>
+                Next: {config!.nextLabel} →
+              </Button>
+            )}
+          </div>
+        </form>
+      )}
+
+      {step === 'items' && config?.ItemsForm && (
+        <div className="flex flex-col gap-4">
+          {/* Step indicator */}
+          <span className="text-xs text-muted-foreground self-start">2 of 2</span>
+
+          {/* Back button */}
+          <button
+            type="button"
+            aria-label="Back to details"
+            onClick={handleBack}
+            className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors self-start"
+          >
+            <ChevronLeft className="w-4 h-4" />
+            Back
+          </button>
+
+          <config.ItemsForm {...subFormProps} />
+
+          {apiError && <ErrorMessage message={apiError} />}
+
+          <div className="flex justify-end gap-3 pt-2">
+            <Button type="button" variant="secondary" onClick={onClose} disabled={submitting}>
+              Cancel
+            </Button>
+            <Button type="button" onClick={handleSubmit} disabled={submitting}>
               {submitting ? 'Saving...' : 'Save assignment'}
             </Button>
           </div>
-        </form>
+        </div>
       )}
     </Modal>
   );

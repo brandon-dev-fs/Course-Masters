@@ -1,23 +1,17 @@
-import { FileText, Video, ExternalLink, BookMarked, Brain } from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
 import type { AssignmentType } from '../../api/types.js';
+import type { TYPE_CONFIG } from './AssignmentFormModal.js';
 
 interface AssignmentTypePickerProps {
+  config: typeof TYPE_CONFIG;
   onSelect: (type: AssignmentType) => void;
 }
 
-const ASSIGNMENT_TYPES: { type: AssignmentType; label: string; icon: LucideIcon }[] = [
-  { type: 'note',             label: 'Note',             icon: FileText    },
-  { type: 'video',            label: 'Video',            icon: Video       },
-  { type: 'reading',          label: 'Reading',          icon: ExternalLink },
-  { type: 'vocab',            label: 'Vocab',            icon: BookMarked  },
-  { type: 'practice_problem', label: 'Practice Problem', icon: Brain       },
-];
+export default function AssignmentTypePicker({ config, onSelect }: AssignmentTypePickerProps) {
+  const types = Object.entries(config) as [AssignmentType, (typeof TYPE_CONFIG)[AssignmentType]][];
 
-export default function AssignmentTypePicker({ onSelect }: AssignmentTypePickerProps) {
   return (
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-      {ASSIGNMENT_TYPES.map(({ type, label, icon: Icon }) => (
+      {types.map(([type, { label, icon: Icon }]) => (
         <button
           key={type}
           type="button"

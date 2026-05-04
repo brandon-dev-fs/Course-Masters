@@ -1,11 +1,7 @@
 import RichTextEditor from '../../components/RichTextEditor.js';
+import type { SubFormProps } from './AssignmentFormModal.js';
 
-interface NoteAssignmentFormProps {
-  value: Record<string, unknown> | null;
-  onChange: (content: Record<string, unknown>) => void;
-}
-
-export default function NoteAssignmentForm({ value, onChange }: NoteAssignmentFormProps) {
+export default function NoteAssignmentForm({ noteContent, onNoteContentChange }: SubFormProps) {
   return (
     <div className="flex flex-col gap-1.5">
       <label className="text-sm font-semibold text-foreground">
@@ -13,8 +9,8 @@ export default function NoteAssignmentForm({ value, onChange }: NoteAssignmentFo
         <span className="sr-only"> (required)</span>
       </label>
       <RichTextEditor
-        content={value}
-        onChange={onChange}
+        content={noteContent}
+        onChange={onNoteContentChange}
         editable
       />
     </div>
