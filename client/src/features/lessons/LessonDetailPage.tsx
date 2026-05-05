@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Settings, Plus } from 'lucide-react';
+import { Settings } from 'lucide-react';
 import { lessonsApi } from '../../api/lessons.js';
 import { unitsApi } from '../../api/units.js';
 import { coursesApi } from '../../api/courses.js';
@@ -134,7 +134,6 @@ export default function LessonDetailPage() {
   const [showSettings, setShowSettings] = useState(false);
   const [showPlanEdit, setShowPlanEdit] = useState(false);
   const [editingVideoId, setEditingVideoId] = useState<string | null>(null);
-  const [addingItemType, setAddingItemType] = useState<'video' | 'note' | 'lecture' | 'flash_card' | 'practice_problem' | 'vocab' | null>(null);
   const [editingTool, setEditingTool] = useState<LessonTool | null>(null);
   const newNoteIdRef = useRef<string | null>(null);
 
@@ -212,9 +211,10 @@ export default function LessonDetailPage() {
 
   const incompleteRequired = useMemo(
     () => assignmentItems.filter(
-      item => item.isRequired && item.kind !== 'quiz' && item.id !== null && !completedIds.has(item.id)
+      item => item.isRequired && item.kind !== 'quiz' && item.id !== null &&
+        (item.kind === 'assignment' ? !completedAssignmentIds.has(item.id) : !completedIds.has(item.id))
     ),
-    [assignmentItems, completedIds],
+    [assignmentItems, completedIds, completedAssignmentIds],
   );
 
   function completionKeyOf(item: AssignmentItem): string | null {
@@ -416,8 +416,6 @@ export default function LessonDetailPage() {
       return (
         <LessonPlanView
           lesson={lesson!}
-          isComplete={completedIds.has(lesson!.id)}
-          onToggleComplete={() => handleToggleCompletion(item)}
           canEdit={canEdit}
           onEdit={() => setShowPlanEdit(true)}
         />
@@ -456,8 +454,6 @@ export default function LessonDetailPage() {
         return (
           <VideoCard
             video={resource}
-            isComplete={completedIds.has(resource.id)}
-            onToggleComplete={() => handleToggleCompletion(item)}
             onEdit={canEdit ? () => setEditingVideoId(resource.id) : undefined}
             onDelete={canEdit ? async () => {
               await lessonResourcesApi.delete(resource.id);
@@ -474,8 +470,6 @@ export default function LessonDetailPage() {
           <NoteEditor
             key={resource.id}
             note={resource}
-            isComplete={completedIds.has(resource.id)}
-            onToggleComplete={() => handleToggleCompletion(item)}
             onUpdate={updated => setResources(prev => prev.map(r => r.id === updated.id ? updated : r))}
             initialEditing={isNew}
           />
@@ -617,7 +611,9 @@ export default function LessonDetailPage() {
       if (ai < sortedAssignments.length - 1) onMoveDown = () => handleMoveAssignment(activeItem.id!, 'down');
     }
 
+    const isFirst = activeIdx === 0;
     const isLast = activeIdx === assignmentItems.length - 1;
+    const prev = assignmentItems[activeIdx - 1];
     const next = assignmentItems[activeIdx + 1];
 
     // Determine completion state
@@ -643,12 +639,14 @@ export default function LessonDetailPage() {
         isComplete={isComplete}
         isLocked={activeItem.kind === 'quiz' && !quizUnlocked}
         canEdit={canEdit}
+        isFirst={isFirst}
         isLast={isLast}
         incompleteRequired={incompleteRequired}
         onToggleCompletion={onToggleCompletion}
         onToggleRequired={() => handleToggleRequired(activeItem)}
         onMoveUp={onMoveUp}
         onMoveDown={onMoveDown}
+        onPrev={() => { if (prev) setActiveStepKey(prev.key); }}
         onNext={() => { if (next) setActiveStepKey(next.key); }}
         onEdit={canEdit && activeItem.kind === 'assignment' && assignment
           ? () => setEditingAssignment(assignment)
@@ -731,73 +729,14 @@ export default function LessonDetailPage() {
                 items={stepperItems}
                 activeStepKey={activeStepKey}
                 completedIds={completedIds}
+                completedAssignmentIds={completedAssignmentIds}
                 quizUnlocked={quizUnlocked}
                 quizPassed={quizPassed}
                 onStepClick={setActiveStepKey}
+                onAdd={canEdit ? () => setIsAddingAssignment(true) : undefined}
               />
               <main className="flex-1 overflow-y-auto px-4 py-6">
                 {renderActiveAssignment()}
-
-                {/* Add video form (inline at bottom) */}
-                {canEdit && addingItemType === 'video' && (
-                  <div className="mt-4 rounded-xl border border-border bg-surface shadow-warm-sm px-5 py-5">
-                    <VideoForm
-                      nextOrder={nextOrder(resources)}
-                      onSubmit={async ({ title, url, order }) => {
-                        const video = await lessonResourcesApi.create(lessonId!, { type: 'video', title, content: { url }, order });
-                        setResources(prev => [...prev, video].sort((a, b) => a.order - b.order));
-                        setAddingItemType(null);
-                        setActiveStepKey(`resource:${video.id}`);
-                      }}
-                      onCancel={() => setAddingItemType(null)}
-                    />
-                  </div>
-                )}
-
-                {/* Legacy add resource/tool buttons (kept for backward compatibility) */}
-                {canEdit && addingItemType === null && (
-                  <div className="flex flex-wrap gap-2 mt-4 pb-2">
-                    {(['note', 'lecture', 'video'] as const).map(type => (
-                      <button
-                        key={type}
-                        onClick={() => type === 'note' || type === 'lecture' ? handleAddNote(type) : setAddingItemType(type)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-dashed border-border text-sm text-muted-foreground hover:text-foreground hover:border-primary/50 hover:bg-surface-raised transition-colors"
-                      >
-                        <Plus className="w-3.5 h-3.5" />
-                        {type === 'note' ? 'Note' : type === 'lecture' ? 'Lecture' : 'Video'}
-                      </button>
-                    ))}
-                    {(['flash_card', 'practice_problem', 'vocab'] as const).map(type => (
-                      <button
-                        key={type}
-                        onClick={() => setAddingItemType(type)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-dashed border-border text-sm text-muted-foreground hover:text-foreground hover:border-primary/50 hover:bg-surface-raised transition-colors"
-                      >
-                        <Plus className="w-3.5 h-3.5" />
-                        {type === 'flash_card' ? 'Flash Card' : type === 'practice_problem' ? 'Practice Problem' : 'Vocab'}
-                      </button>
-                    ))}
-                  </div>
-                )}
-
-                {/* Inline add assignment button */}
-                {canEdit && addingItemType === null && (
-                  <div className="mt-2 pb-4">
-                    <button
-                      type="button"
-                      onClick={() => setIsAddingAssignment(true)}
-                      className={[
-                        'w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl',
-                        'border border-dashed border-border text-sm text-muted-foreground',
-                        'bg-transparent transition-colors',
-                        'hover:border-primary/50 hover:text-foreground hover:bg-surface-raised',
-                        'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary',
-                      ].join(' ')}
-                    >
-                      + Add assignment
-                    </button>
-                  </div>
-                )}
               </main>
             </>
           )}
@@ -837,55 +776,6 @@ export default function LessonDetailPage() {
           onClose={() => setShowPlanEdit(false)}
           onUpdate={handleUpdate}
         />
-      )}
-
-      {/* Tool creation modals */}
-      {canEdit && addingItemType === 'flash_card' && (
-        <Modal title="Add Flash Card" onClose={() => setAddingItemType(null)}>
-          <FlashCardForm
-            nextOrder={nextOrder(tools)}
-            onSubmit={async ({ front, back, order }) => {
-              const tool = await lessonToolsApi.create(lessonId!, { type: 'flash_card', title: front, content: { front, back }, order });
-              setTools(prev => [...prev, tool].sort((a, b) => a.order - b.order));
-              setAddingItemType(null);
-              setActiveStepKey(`tool:${tool.id}`);
-            }}
-            onCancel={() => setAddingItemType(null)}
-          />
-        </Modal>
-      )}
-      {canEdit && addingItemType === 'practice_problem' && (
-        <Modal title="Add Practice Problem" onClose={() => setAddingItemType(null)}>
-          <PracticeProblemForm
-            nextOrder={nextOrder(tools)}
-            onSubmit={async (draft) => {
-              const tool = await lessonToolsApi.create(lessonId!, {
-                type: 'practice_problem',
-                title: draft.question,
-                content: { question: draft.question, options: draft.content.options, correctIndex: draft.content.correctIndex, calculatorEnabled: draft.calculatorEnabled ?? false },
-                order: draft.order,
-              });
-              setTools(prev => [...prev, tool].sort((a, b) => a.order - b.order));
-              setAddingItemType(null);
-              setActiveStepKey(`tool:${tool.id}`);
-            }}
-            onCancel={() => setAddingItemType(null)}
-          />
-        </Modal>
-      )}
-      {canEdit && addingItemType === 'vocab' && (
-        <Modal title="Add Vocab Term" onClose={() => setAddingItemType(null)}>
-          <VocabForm
-            nextOrder={nextOrder(tools)}
-            onSubmit={async ({ term, definition, order }) => {
-              const tool = await lessonToolsApi.create(lessonId!, { type: 'vocab', title: term, content: { term, definition }, order });
-              setTools(prev => [...prev, tool].sort((a, b) => a.order - b.order));
-              setAddingItemType(null);
-              setActiveStepKey(`tool:${tool.id}`);
-            }}
-            onCancel={() => setAddingItemType(null)}
-          />
-        </Modal>
       )}
 
       {/* Tool edit modals */}

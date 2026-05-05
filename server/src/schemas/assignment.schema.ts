@@ -63,7 +63,7 @@ export const createAssignmentSchema = z.discriminatedUnion('type', [
   z.object({
     ...baseAssignmentFields,
     type: z.literal('video'),
-    url: z.string().url(),
+    url: z.string().url().refine(u => /^https?:\/\//i.test(u), { message: 'URL must use http or https' }),
     // displayTitle is the video's own display title — named distinctly from the shared
     // assignment `title` to avoid a key collision in the flat request body
     displayTitle: z.string().optional(),
@@ -71,7 +71,7 @@ export const createAssignmentSchema = z.discriminatedUnion('type', [
   z.object({
     ...baseAssignmentFields,
     type: z.literal('reading'),
-    url: z.string().url(),
+    url: z.string().url().refine(u => /^https?:\/\//i.test(u), { message: 'URL must use http or https' }),
     description: z.string().optional(),
     estimatedMinutes: z.number().int().min(1).optional(),
   }),
@@ -104,7 +104,7 @@ export const updateAssignmentSchema = z.object({
   // note
   content: z.record(z.any()).optional(),
   // video / reading
-  url: z.string().url().optional(),
+  url: z.string().url().refine(u => /^https?:\/\//i.test(u), { message: 'URL must use http or https' }).optional(),
   // displayTitle: video's own display title — distinct from the shared assignment `title`
   displayTitle: z.string().optional(),
   // reading

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useCallback } from 'react';
-import { Lock, ChevronDown, ToggleLeft, ToggleRight, ArrowUp, ArrowDown, Pencil, Trash2 } from 'lucide-react';
+import { Lock, ChevronDown, ToggleLeft, ToggleRight, ChevronUp, Pencil, Trash2 } from 'lucide-react';
 
 export type AssignmentKind = 'lessonPlan' | 'resource' | 'tool' | 'quiz' | 'assignment';
 
@@ -20,6 +20,7 @@ interface AssignmentSectionProps {
   isComplete: boolean;
   isLocked: boolean;
   canEdit: boolean;
+  isFirst: boolean;
   isLast: boolean;
   incompleteRequired: AssignmentItem[];
   onVisible?: (key: string) => void;
@@ -27,6 +28,7 @@ interface AssignmentSectionProps {
   onToggleRequired: () => void;
   onMoveUp?: () => void;
   onMoveDown?: () => void;
+  onPrev: () => void;
   onNext: () => void;
   onEdit?: () => void;
   onDelete?: () => void;
@@ -34,8 +36,8 @@ interface AssignmentSectionProps {
 }
 
 export default function AssignmentSection({
-  item, isComplete, isLocked, canEdit, isLast, incompleteRequired,
-  onVisible, onToggleCompletion, onToggleRequired, onMoveUp, onMoveDown, onNext, onEdit, onDelete, children,
+  item, isComplete, isLocked, canEdit, isFirst, isLast, incompleteRequired,
+  onVisible, onToggleCompletion, onToggleRequired, onMoveUp, onMoveDown, onPrev, onNext, onEdit, onDelete, children,
 }: AssignmentSectionProps) {
   const ref = useRef<HTMLElement>(null);
   const stableOnVisible = useCallback((key: string) => onVisible?.(key), [onVisible]);
@@ -67,13 +69,31 @@ export default function AssignmentSection({
         <div className="flex items-center gap-2 min-w-0">
           <h2 className="text-sm font-semibold text-foreground truncate">{item.title}</h2>
           {showRequired && (
-            <span className={`shrink-0 px-1.5 py-0.5 rounded text-xs font-medium ${
-              item.isRequired
-                ? 'bg-primary-subtle text-primary'
-                : 'bg-surface text-muted-foreground border border-border'
-            }`}>
-              {item.isRequired ? 'Required' : 'Optional'}
-            </span>
+            canEdit ? (
+              <button
+                onClick={onToggleRequired}
+                title={item.isRequired ? 'Mark optional' : 'Mark required'}
+                className={`shrink-0 flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium transition-colors ${
+                  item.isRequired
+                    ? 'bg-primary-subtle text-primary hover:bg-primary-subtle/70'
+                    : 'bg-surface text-muted-foreground border border-border hover:border-primary/50 hover:text-foreground'
+                }`}
+              >
+                {item.isRequired
+                  ? <ToggleRight className="w-3.5 h-3.5" />
+                  : <ToggleLeft className="w-3.5 h-3.5" />
+                }
+                {item.isRequired ? 'Required' : 'Optional'}
+              </button>
+            ) : (
+              <span className={`shrink-0 px-1.5 py-0.5 rounded text-xs font-medium ${
+                item.isRequired
+                  ? 'bg-primary-subtle text-primary'
+                  : 'bg-surface text-muted-foreground border border-border'
+              }`}>
+                {item.isRequired ? 'Required' : 'Optional'}
+              </span>
+            )
           )}
         </div>
         {canEdit && (
@@ -96,27 +116,16 @@ export default function AssignmentSection({
                 <Trash2 className="w-4 h-4" />
               </button>
             )}
-            {showRequired && (
-              <button
-                onClick={onToggleRequired}
-                title={item.isRequired ? 'Mark optional' : 'Mark required'}
-                className="text-muted-foreground hover:text-foreground transition-colors"
-              >
-                {item.isRequired
-                  ? <ToggleRight className="w-5 h-5 text-primary" />
-                  : <ToggleLeft className="w-5 h-5" />
-                }
-              </button>
-            )}
             {(onMoveUp || onMoveDown) && (
-              <div className="flex items-center">
+              <div className="flex items-center gap-0.5 pl-1 border-l border-border ml-1">
+                <span className="text-xs text-muted-foreground mr-0.5">Reorder</span>
                 <button
                   onClick={onMoveUp}
                   disabled={!onMoveUp}
                   title="Move up"
                   className="p-0.5 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                 >
-                  <ArrowUp className="w-4 h-4" />
+                  <ChevronUp className="w-4 h-4" />
                 </button>
                 <button
                   onClick={onMoveDown}
@@ -124,7 +133,7 @@ export default function AssignmentSection({
                   title="Move down"
                   className="p-0.5 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                 >
-                  <ArrowDown className="w-4 h-4" />
+                  <ChevronDown className="w-4 h-4" />
                 </button>
               </div>
             )}
@@ -173,14 +182,24 @@ export default function AssignmentSection({
           ) : (
             <div />
           )}
-          {!isLast && (
-            <button
-              onClick={onNext}
-              className="flex items-center gap-1.5 text-sm text-primary font-medium hover:underline"
-            >
-              Next <ChevronDown className="w-4 h-4 rotate-[-90deg]" />
-            </button>
-          )}
+          <div className="flex items-center gap-3">
+            {!isFirst && (
+              <button
+                onClick={onPrev}
+                className="flex items-center gap-1.5 text-sm text-muted-foreground font-medium hover:text-foreground hover:underline"
+              >
+                <ChevronDown className="w-4 h-4 rotate-90" /> Back
+              </button>
+            )}
+            {!isLast && (
+              <button
+                onClick={onNext}
+                className="flex items-center gap-1.5 text-sm text-primary font-medium hover:underline"
+              >
+                Next <ChevronDown className="w-4 h-4 rotate-[-90deg]" />
+              </button>
+            )}
+          </div>
         </div>
       )}
     </section>

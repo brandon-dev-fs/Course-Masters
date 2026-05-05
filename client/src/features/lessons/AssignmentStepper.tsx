@@ -1,4 +1,4 @@
-import { Lock, CheckCircle2, BookOpen, FileText, Video, Presentation, Layers, Brain, BookMarked, ClipboardCheck, ExternalLink } from 'lucide-react';
+import { Lock, CheckCircle2, BookOpen, FileText, Video, Presentation, Layers, Brain, BookMarked, ClipboardCheck, ExternalLink, Plus } from 'lucide-react';
 import type React from 'react';
 import type { AssignmentType } from '../../api/types.js';
 
@@ -16,9 +16,11 @@ interface AssignmentStepperProps {
   items: StepperItem[];
   activeStepKey: string;
   completedIds: Set<string>;
+  completedAssignmentIds: Set<string>;
   quizUnlocked: boolean;
   quizPassed: boolean;
   onStepClick: (key: string) => void;
+  onAdd?: () => void;
 }
 
 function getStepIcon(item: StepperItem): React.ComponentType<{ className?: string }> {
@@ -45,7 +47,7 @@ function getStepIcon(item: StepperItem): React.ComponentType<{ className?: strin
 }
 
 export default function AssignmentStepper({
-  items, activeStepKey, completedIds, quizUnlocked, quizPassed, onStepClick,
+  items, activeStepKey, completedIds, completedAssignmentIds, quizUnlocked, quizPassed, onStepClick, onAdd,
 }: AssignmentStepperProps) {
   const totalSteps = items.length;
   const activeIndex = items.findIndex(i => i.key === activeStepKey);
@@ -56,7 +58,8 @@ export default function AssignmentStepper({
       {/* Desktop: icon nodes with labels + connecting line */}
       <div className="hidden lg:flex items-start gap-0 px-4 pt-3 pb-2 overflow-x-auto">
         {items.map((item, idx) => {
-          const isComplete = item.kind === 'quiz' ? quizPassed : (item.completionId ? completedIds.has(item.completionId) : false);
+          const completionSet = item.kind === 'assignment' ? completedAssignmentIds : completedIds;
+          const isComplete = item.kind === 'quiz' ? quizPassed : (item.completionId ? completionSet.has(item.completionId) : false);
           const isActive = item.key === activeStepKey;
           const isLocked = item.kind === 'quiz' && !quizUnlocked;
           const Icon = getStepIcon(item);
@@ -100,13 +103,30 @@ export default function AssignmentStepper({
             </div>
           );
         })}
+        {onAdd && (
+          <div className="flex items-start ml-1">
+            <div className="h-px w-4 mt-3.5 shrink-0 mx-0.5 bg-border" />
+            <div className="flex flex-col items-center gap-1">
+              <button
+                onClick={onAdd}
+                className="flex items-center justify-center w-7 h-7 rounded-full shrink-0 border border-dashed border-border text-muted-foreground hover:border-primary/50 hover:text-primary transition-colors"
+                title="Add assignment"
+                aria-label="Add assignment"
+              >
+                <Plus className="w-3.5 h-3.5" />
+              </button>
+              <span className="text-[10px] w-14 text-center truncate leading-tight text-muted-foreground">Add</span>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Mobile: compact icon nodes + current step name */}
       <div className="lg:hidden flex items-center gap-2 px-4 py-2">
         <div className="flex items-center gap-1 overflow-x-auto flex-1 min-w-0">
           {items.map((item) => {
-            const isComplete = item.kind === 'quiz' ? quizPassed : (item.completionId ? completedIds.has(item.completionId) : false);
+            const completionSet = item.kind === 'assignment' ? completedAssignmentIds : completedIds;
+          const isComplete = item.kind === 'quiz' ? quizPassed : (item.completionId ? completionSet.has(item.completionId) : false);
             const isActive = item.key === activeStepKey;
             const isLocked = item.kind === 'quiz' && !quizUnlocked;
             const Icon = getStepIcon(item);
@@ -137,6 +157,16 @@ export default function AssignmentStepper({
             );
           })}
         </div>
+        {onAdd && (
+          <button
+            onClick={onAdd}
+            className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center border border-dashed border-border text-muted-foreground hover:border-primary/50 hover:text-primary transition-colors"
+            aria-label="Add assignment"
+            title="Add assignment"
+          >
+            <Plus className="w-3 h-3" />
+          </button>
+        )}
         {activeItem && (
           <span className="text-xs text-muted-foreground shrink-0 max-w-[100px] truncate">
             {activeItem.title}

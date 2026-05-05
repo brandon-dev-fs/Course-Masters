@@ -10,9 +10,11 @@ export default function VideoAssignmentForm({
   url, displayTitle, onUrlChange, onDisplayTitleChange,
 }: SubFormProps) {
   const [fetchingTitle, setFetchingTitle] = useState(false);
+  const [urlTouched, setUrlTouched] = useState(false);
   const titleTouched = useRef(!!displayTitle);
 
   async function handleUrlBlur() {
+    setUrlTouched(true);
     const trimmed = url.trim();
     if (!trimmed || !youtubeUrlRegex.test(trimmed) || titleTouched.current) return;
     setFetchingTitle(true);
@@ -39,7 +41,7 @@ export default function VideoAssignmentForm({
         placeholder="https://www.youtube.com/watch?v=..."
         required
       />
-      {!url.trim() && (
+      {urlTouched && !url.trim() && (
         <p role="alert" className="text-sm text-destructive -mt-2">URL is required</p>
       )}
       <div className="relative">

@@ -294,63 +294,57 @@ export default function AssignmentFormModal({ initial, onSubmit, onClose }: Assi
       )}
 
       {step === 'meta' && (
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          {/* Step indicator for two-step types */}
-          {hasItems && (
-            <span className="text-xs text-muted-foreground self-start">1 of 2</span>
-          )}
-
-          {/* Back button — create mode only */}
-          {!isEdit && (
-            <button
-              type="button"
-              aria-label="Back to type selection"
-              onClick={handleBack}
-              className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors self-start"
-            >
-              <ChevronLeft className="w-4 h-4" />
-              Back
-            </button>
-          )}
-
-          {/* Type read-only in edit mode */}
-          {isEdit && (
-            <div className="flex flex-col gap-1">
-              <span className="text-sm font-semibold text-foreground">Type</span>
+        <form onSubmit={handleSubmit} className="flex flex-col min-h-0 flex-1">
+          {/* Fixed header: step indicator + back/type */}
+          <div className="flex flex-col gap-2 pb-3 shrink-0">
+            {hasItems && (
+              <span className="text-xs text-muted-foreground">1 of 2</span>
+            )}
+            {!isEdit && (
+              <button
+                type="button"
+                aria-label="Back to type selection"
+                onClick={handleBack}
+                className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors self-start"
+              >
+                <ChevronLeft className="w-4 h-4" />
+                Back
+              </button>
+            )}
+            {isEdit && (
               <span className="text-sm text-muted-foreground capitalize">
                 {selectedType!.replace('_', ' ')}
               </span>
-            </div>
-          )}
-
-          {/* Shared fields */}
-          <div>
-            <Input
-              id="assignment-title"
-              label="Title"
-              value={assignmentTitle}
-              onChange={e => { setAssignmentTitle(e.target.value); if (e.target.value.trim()) setTitleError(''); }}
-              placeholder="e.g. Read the Introduction"
-              required
-            />
-            {titleError && <p role="alert" className="text-sm text-destructive mt-1">{titleError}</p>}
+            )}
           </div>
 
-          <Textarea
-            id="assignment-objective"
-            label="Objective (optional)"
-            value={objective}
-            onChange={e => setObjective(e.target.value)}
-            placeholder="What should students be able to do after completing this?"
-            rows={2}
-          />
+          {/* Scrollable content */}
+          <div className="flex-1 overflow-y-auto min-h-0 flex flex-col gap-4 pr-1">
+            <div>
+              <Input
+                id="assignment-title"
+                label="Title"
+                value={assignmentTitle}
+                onChange={e => { setAssignmentTitle(e.target.value); if (e.target.value.trim()) setTitleError(''); }}
+                placeholder="e.g. Read the Introduction"
+                required
+              />
+              {titleError && <p role="alert" className="text-sm text-destructive mt-1">{titleError}</p>}
+            </div>
+            <Textarea
+              id="assignment-objective"
+              label="Objective (optional)"
+              value={objective}
+              onChange={e => setObjective(e.target.value)}
+              placeholder="What should students be able to do after completing this?"
+              rows={2}
+            />
+            {config?.MetaFields && (() => { const MetaFields = config.MetaFields!; return <MetaFields {...subFormProps} />; })()}
+            {apiError && <ErrorMessage message={apiError} />}
+          </div>
 
-          {/* Type-specific meta fields */}
-          {config?.MetaFields && (() => { const MetaFields = config.MetaFields!; return <MetaFields {...subFormProps} />; })()}
-
-          {apiError && <ErrorMessage message={apiError} />}
-
-          <div className="flex justify-end gap-3 pt-2">
+          {/* Fixed footer */}
+          <div className="flex justify-end gap-3 pt-4 mt-2 border-t border-border shrink-0">
             <Button type="button" variant="secondary" onClick={onClose} disabled={submitting}>
               Cancel
             </Button>
@@ -369,26 +363,29 @@ export default function AssignmentFormModal({ initial, onSubmit, onClose }: Assi
       )}
 
       {step === 'items' && config?.ItemsForm && (
-        <div className="flex flex-col gap-4">
-          {/* Step indicator */}
-          <span className="text-xs text-muted-foreground self-start">2 of 2</span>
+        <div className="flex flex-col min-h-0 flex-1">
+          {/* Fixed header: step indicator + back */}
+          <div className="flex flex-col gap-2 pb-3 shrink-0">
+            <span className="text-xs text-muted-foreground">2 of 2</span>
+            <button
+              type="button"
+              aria-label="Back to details"
+              onClick={handleBack}
+              className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors self-start"
+            >
+              <ChevronLeft className="w-4 h-4" />
+              Back
+            </button>
+          </div>
 
-          {/* Back button */}
-          <button
-            type="button"
-            aria-label="Back to details"
-            onClick={handleBack}
-            className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors self-start"
-          >
-            <ChevronLeft className="w-4 h-4" />
-            Back
-          </button>
+          {/* Scrollable content */}
+          <div className="flex-1 overflow-y-auto min-h-0 pr-1">
+            <config.ItemsForm {...subFormProps} />
+            {apiError && <ErrorMessage message={apiError} />}
+          </div>
 
-          <config.ItemsForm {...subFormProps} />
-
-          {apiError && <ErrorMessage message={apiError} />}
-
-          <div className="flex justify-end gap-3 pt-2">
+          {/* Fixed footer */}
+          <div className="flex justify-end gap-3 pt-4 mt-2 border-t border-border shrink-0">
             <Button type="button" variant="secondary" onClick={onClose} disabled={submitting}>
               Cancel
             </Button>
