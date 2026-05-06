@@ -1,10 +1,9 @@
 import prisma from '../lib/prisma.js';
-import { NotFoundError } from '../errors/index.js';
+import { assertExists } from '../utils/assertExists.js';
 
 export const completionService = {
   async markLessonComplete(lessonId: string, userId: string) {
-    const lesson = await prisma.lesson.findUnique({ where: { id: lessonId } });
-    if (!lesson) throw new NotFoundError('Lesson not found');
+    await assertExists(prisma.lesson, lessonId, 'Lesson');
 
     const completion = await prisma.lessonCompletion.upsert({
       where: { userId_lessonId: { userId, lessonId } },
@@ -15,15 +14,13 @@ export const completionService = {
   },
 
   async removeLessonComplete(lessonId: string, userId: string) {
-    const lesson = await prisma.lesson.findUnique({ where: { id: lessonId } });
-    if (!lesson) throw new NotFoundError('Lesson not found');
+    await assertExists(prisma.lesson, lessonId, 'Lesson');
 
     await prisma.lessonCompletion.deleteMany({ where: { userId, lessonId } });
   },
 
   async markUnitComplete(unitId: string, userId: string) {
-    const unit = await prisma.unit.findUnique({ where: { id: unitId } });
-    if (!unit) throw new NotFoundError('Unit not found');
+    await assertExists(prisma.unit, unitId, 'Unit');
 
     const completion = await prisma.unitCompletion.upsert({
       where: { userId_unitId: { userId, unitId } },
@@ -34,8 +31,7 @@ export const completionService = {
   },
 
   async removeUnitComplete(unitId: string, userId: string) {
-    const unit = await prisma.unit.findUnique({ where: { id: unitId } });
-    if (!unit) throw new NotFoundError('Unit not found');
+    await assertExists(prisma.unit, unitId, 'Unit');
 
     await prisma.unitCompletion.deleteMany({ where: { userId, unitId } });
   },

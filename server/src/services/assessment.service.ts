@@ -1,6 +1,7 @@
 import { AssessmentType } from '@prisma/client';
 import prisma from '../lib/prisma.js';
 import { AppError, NotFoundError } from '../errors/index.js';
+import { assertExists } from '../utils/assertExists.js';
 import type { BulkUpdateCalculatorInput, CreateAssessmentInput, SubmitAttemptInput } from '../schemas/assessment.schema.js';
 
 const PASS_THRESHOLD = 0.8;
@@ -13,14 +14,11 @@ function parentWhere(type: AssessmentType, parentId: string) {
 
 async function assertParentExists(type: AssessmentType, parentId: string) {
   if (type === 'lesson_quiz') {
-    const lesson = await prisma.lesson.findUnique({ where: { id: parentId } });
-    if (!lesson) throw new NotFoundError('Lesson not found');
+    await assertExists(prisma.lesson, parentId, 'Lesson');
   } else if (type === 'unit_quiz') {
-    const unit = await prisma.unit.findUnique({ where: { id: parentId } });
-    if (!unit) throw new NotFoundError('Unit not found');
+    await assertExists(prisma.unit, parentId, 'Unit');
   } else {
-    const course = await prisma.course.findUnique({ where: { id: parentId } });
-    if (!course) throw new NotFoundError('Course not found');
+    await assertExists(prisma.course, parentId, 'Course');
   }
 }
 
@@ -58,8 +56,7 @@ export const assessmentService = {
   },
 
   async update(assessmentId: string, data: CreateAssessmentInput) {
-    const assessment = await prisma.assessment.findUnique({ where: { id: assessmentId } });
-    if (!assessment) throw new NotFoundError('Assessment not found');
+    await assertExists(prisma.assessment, assessmentId, 'Assessment');
 
     await prisma.assessmentQuestion.deleteMany({ where: { assessmentId } });
     return prisma.assessment.update({
@@ -140,8 +137,7 @@ export const assessmentService = {
   },
 
   async bulkUpdateCalculator(assessmentId: string, data: BulkUpdateCalculatorInput) {
-    const assessment = await prisma.assessment.findUnique({ where: { id: assessmentId } });
-    if (!assessment) throw new NotFoundError('Assessment not found');
+    await assertExists(prisma.assessment, assessmentId, 'Assessment');
 
     const found = await prisma.assessmentQuestion.findMany({
       where: { id: { in: data.questionIds }, assessmentId },

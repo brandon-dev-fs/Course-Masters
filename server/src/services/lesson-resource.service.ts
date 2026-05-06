@@ -1,6 +1,6 @@
 import { ResourceType } from '@prisma/client';
 import prisma from '../lib/prisma.js';
-import { NotFoundError } from '../errors/index.js';
+import { assertExists } from '../utils/assertExists.js';
 import type { CreateLessonResourceInput, UpdateLessonResourceInput } from '../schemas/lesson-resource.schema.js';
 
 export const lessonResourceService = {
@@ -12,20 +12,17 @@ export const lessonResourceService = {
   },
 
   async create(lessonId: string, data: CreateLessonResourceInput) {
-    const lesson = await prisma.lesson.findUnique({ where: { id: lessonId } });
-    if (!lesson) throw new NotFoundError('Lesson not found');
+    await assertExists(prisma.lesson, lessonId, 'Lesson');
     return prisma.lessonResource.create({ data: { ...data, lessonId } });
   },
 
   async update(id: string, data: UpdateLessonResourceInput) {
-    const item = await prisma.lessonResource.findUnique({ where: { id } });
-    if (!item) throw new NotFoundError('Resource not found');
+    await assertExists(prisma.lessonResource, id, 'Resource');
     return prisma.lessonResource.update({ where: { id }, data });
   },
 
   async remove(id: string) {
-    const item = await prisma.lessonResource.findUnique({ where: { id } });
-    if (!item) throw new NotFoundError('Resource not found');
+    await assertExists(prisma.lessonResource, id, 'Resource');
     await prisma.lessonResource.delete({ where: { id } });
   },
 };
