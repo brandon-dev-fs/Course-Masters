@@ -173,7 +173,20 @@ export function requireCourseOwnership(
     // Students are not subject to course ownership checks; their self-scoping
     // is handled by construction (controller stamps req.user.id) or via
     // requireStudentRole on attempt submission.
-    if (req.user!.role !== 'teacher') return next();
+    if (req.user!.role === 'student') return next();
+
+    // Defensive guard: if a new role is added to the system in the future,
+    // it must not silently bypass ownership enforcement. The preceding
+    // authorize('teacher', 'admin') middleware rejects unknown roles before
+    // reaching here, but we assert the invariant explicitly so any future
+    // role addition surfaces as an error rather than a silent passthrough.
+    if (req.user!.role !== 'teacher') {
+      throw new AppError(
+        'FORBIDDEN',
+        'You do not have permission to modify this resource',
+        403,
+      );
+    }
 
     const resourceId = getResourceId(req);
     const authorId = await resolveCourseOwner(resourceId, resourceType);

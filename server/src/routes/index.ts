@@ -8,6 +8,7 @@ import { lessonStudentNotesRouter, studentNotesRouter } from './student-note.rou
 import { lessonAssessmentRouter, unitAssessmentRouter, courseAssessmentRouter, assessmentsRouter } from './assessment.routes.js';
 import { courseProgressRouter, unitProgressRouter } from './progress.routes.js';
 import { lessonCompletionsRouter } from './resource-completion.routes.js';
+import { lessonCompleteRouter, unitCompleteRouter } from './completion.routes.js';
 import youtubeRouter from './youtube.routes.js';
 import { lessonAssignmentsRouter, assignmentsRouter } from './assignment.routes.js';
 import { authenticate } from '../middleware/authenticate.js';
@@ -31,6 +32,8 @@ router.use('/lessons/:lessonId/resources', lessonResourcesRouter);
 router.use('/lessons/:lessonId/tools', lessonToolsRouter);
 router.use('/lessons/:lessonId/student-notes', lessonStudentNotesRouter);
 router.use('/lessons/:lessonId/completions', lessonCompletionsRouter);
+router.use('/lessons/:lessonId/complete', lessonCompleteRouter);
+router.use('/units/:unitId/complete', unitCompleteRouter);
 router.use('/resources', resourcesRouter);
 router.use('/tools', toolsRouter);
 router.use('/student-notes', studentNotesRouter);
