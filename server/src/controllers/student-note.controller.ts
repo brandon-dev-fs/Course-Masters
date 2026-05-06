@@ -4,8 +4,14 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 
 export const studentNoteController = {
   get: asyncHandler(async (req: Request, res: Response) => {
-    const note = await studentNoteService.findByLesson(req.params['lessonId'] as string, req.user!.id);
-    res.json(note);
+    // Role is passed so the service can scope results to the requesting student
+    // or return all notes for teachers/admins (FR-07).
+    const notes = await studentNoteService.findByLesson(
+      req.params['lessonId'] as string,
+      req.user!.id,
+      req.user!.role,
+    );
+    res.json(notes);
   }),
 
   upsert: asyncHandler(async (req: Request, res: Response) => {
@@ -14,7 +20,12 @@ export const studentNoteController = {
   }),
 
   remove: asyncHandler(async (req: Request, res: Response) => {
-    await studentNoteService.remove(req.params['studentNoteId'] as string, req.user!.id);
+    // Pass role so the service can apply admin bypass (FR-09, FR-15).
+    await studentNoteService.remove(
+      req.params['studentNoteId'] as string,
+      req.user!.id,
+      req.user!.role,
+    );
     res.status(204).send();
   }),
 };
