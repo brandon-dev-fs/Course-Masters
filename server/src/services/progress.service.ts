@@ -12,23 +12,20 @@ type CourseProgressData = Prisma.CourseGetPayload<{
         lessons: {
           include: {
             assessment: {
-              include: {
-                attempts: true;
-              };
+              where: { type: 'lesson_quiz' };
+              include: { attempts: true };
             };
           };
         };
         assessment: {
-          include: {
-            attempts: true;
-          };
+          where: { type: 'unit_quiz' };
+          include: { attempts: true };
         };
       };
     };
     assessment: {
-      include: {
-        attempts: true;
-      };
+      where: { type: 'course_exam' };
+      include: { attempts: true };
     };
   };
 }>;
@@ -38,16 +35,14 @@ type UnitProgressData = Prisma.UnitGetPayload<{
     lessons: {
       include: {
         assessment: {
-          include: {
-            attempts: true;
-          };
+          where: { type: 'lesson_quiz' };
+          include: { attempts: true };
         };
       };
     };
     assessment: {
-      include: {
-        attempts: true;
-      };
+      where: { type: 'unit_quiz' };
+      include: { attempts: true };
     };
   };
 }>;

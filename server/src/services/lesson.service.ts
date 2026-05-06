@@ -1,5 +1,4 @@
 import prisma from '../lib/prisma.js';
-import { NotFoundError } from '../errors/index.js';
 import { assertExists } from '../utils/assertExists.js';
 import type { CreateLessonInput, UpdateLessonInput } from '../schemas/lesson.schema.js';
 
@@ -13,11 +12,7 @@ export const lessonService = {
   },
 
   async findById(id: string) {
-    // Inline check retained: findUnique with include cannot be expressed
-    // through the assertExists delegate without losing the typed return shape.
-    const lesson = await prisma.lesson.findUnique({ where: { id } });
-    if (!lesson) throw new NotFoundError('Lesson not found');
-    return lesson;
+    return assertExists(prisma.lesson, id, 'Lesson');
   },
 
   async create(unitId: string, data: CreateLessonInput) {
