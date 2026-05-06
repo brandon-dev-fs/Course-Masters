@@ -1,12 +1,28 @@
 import prisma from '../lib/prisma.js';
 import { NotFoundError, AppError } from '../errors/index.js';
 import type { UpsertStudentNoteInput } from '../schemas/student-note.schema.js';
+import { logAuthFailure } from '../middleware/authorize-resource.js';
 
 export const studentNoteService = {
-  async findByLesson(lessonId: string, userId: string) {
+  /**
+   * Fetch notes for a lesson, scoped by role (FR-07).
+   *
+   * - student: returns the single note belonging to `userId` (or null)
+   * - teacher / admin: returns all notes for the lesson
+   */
+  async findByLesson(
+    lessonId: string,
+    userId: string,
+    userRole: 'student' | 'teacher' | 'admin',
+  ): Promise<import('@prisma/client').StudentNote | import('@prisma/client').StudentNote[] | null> {
     const lesson = await prisma.lesson.findUnique({ where: { id: lessonId } });
     if (!lesson) throw new NotFoundError('Lesson not found');
-    return prisma.studentNote.findUnique({ where: { lessonId_userId: { lessonId, userId } } });
+
+    if (userRole === 'student') {
+      return prisma.studentNote.findUnique({ where: { lessonId_userId: { lessonId, userId } } });
+    }
+
+    return prisma.studentNote.findMany({ where: { lessonId } });
   },
 
   async upsert(lessonId: string, data: UpsertStudentNoteInput, userId: string) {
@@ -19,10 +35,24 @@ export const studentNoteService = {
     });
   },
 
-  async remove(id: string, userId: string) {
+  /**
+   * Delete a student note.
+   *
+   * Ownership is enforced here (FR-09):
+   * - admin: bypass (can delete any note)
+   * - anyone else: must own the note
+   *
+   * Authorization failures are logged per NFR-03.
+   */
+  async remove(id: string, userId: string, userRole: 'student' | 'teacher' | 'admin' = 'student') {
     const note = await prisma.studentNote.findUnique({ where: { id } });
     if (!note) throw new NotFoundError('Student note not found');
-    if (note.userId !== userId) throw new AppError('FORBIDDEN', 'You can only delete your own notes', 403);
+
+    if (userRole !== 'admin' && note.userId !== userId) {
+      logAuthFailure(userId, id, 'DELETE student-note');
+      throw new AppError('FORBIDDEN', 'You can only delete your own notes', 403);
+    }
+
     await prisma.studentNote.delete({ where: { id } });
   },
 };
