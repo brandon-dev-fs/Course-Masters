@@ -9,6 +9,7 @@ import { lessonAssessmentRouter, unitAssessmentRouter, courseAssessmentRouter, a
 import { courseProgressRouter, unitProgressRouter } from './progress.routes.js';
 import { lessonCompletionsRouter } from './resource-completion.routes.js';
 import youtubeRouter from './youtube.routes.js';
+import { lessonAssignmentsRouter, assignmentsRouter } from './assignment.routes.js';
 import { authenticate } from '../middleware/authenticate.js';
 
 const router = Router();
@@ -39,6 +40,10 @@ router.use('/lessons/:lessonId/assessment', lessonAssessmentRouter);
 router.use('/units/:unitId/assessment', unitAssessmentRouter);
 router.use('/courses/:courseId/assessment', courseAssessmentRouter);
 router.use('/assessments', assessmentsRouter);
+
+// Assignments
+router.use('/lessons/:lessonId/assignments', lessonAssignmentsRouter);
+router.use('/assignments', assignmentsRouter);
 
 // Utilities
 router.use('/youtube', youtubeRouter);

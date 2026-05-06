@@ -11,8 +11,8 @@ import { Pencil, Save, X } from 'lucide-react';
 
 interface NoteEditorProps {
   note: LessonResource;
-  isComplete: boolean;
-  onToggleComplete: () => void;
+  isComplete?: boolean;
+  onToggleComplete?: () => void;
   onUpdate?: (note: LessonResource) => void;
   initialEditing?: boolean;
 }
@@ -109,9 +109,11 @@ export default function NoteEditor({ note, isComplete, onToggleComplete, onUpdat
         onChange={handleChange}
         editable={editing}
       />
-      <div className="pt-2 border-t border-border">
-        <ResourceCompletionCheckbox isComplete={isComplete} onToggle={onToggleComplete} />
-      </div>
+      {onToggleComplete !== undefined && (
+        <div className="pt-2 border-t border-border">
+          <ResourceCompletionCheckbox isComplete={isComplete ?? false} onToggle={onToggleComplete} />
+        </div>
+      )}
     </div>
   );
 }

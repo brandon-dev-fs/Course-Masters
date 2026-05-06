@@ -38,6 +38,21 @@ enum ToolType {
   vocab
 }
 
+enum AssignmentType {
+  note
+  video
+  reading
+  vocab
+  practice_problem
+}
+
+enum PracticeQuestionType {
+  multiple_choice
+  true_false
+  matching
+  fill_in_blank
+}
+
 model User {
   id            String    @id
   name          String
@@ -51,14 +66,15 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  sessions            Session[]
-  accounts            Account[]
-  courses             Course[]
-  assessmentAttempts  AssessmentAttempt[]
-  studentNotes        StudentNote[]
-  resourceCompletions LessonResourceCompletion[]
-  lessonCompletions   LessonCompletion[]
-  unitCompletions     UnitCompletion[]
+  sessions              Session[]
+  accounts              Account[]
+  courses               Course[]
+  assessmentAttempts    AssessmentAttempt[]
+  studentNotes          StudentNote[]
+  resourceCompletions   LessonResourceCompletion[]
+  lessonCompletions     LessonCompletion[]
+  unitCompletions       UnitCompletion[]
+  assignmentCompletions AssignmentCompletion[]
 
   @@map("user")
 }
@@ -156,6 +172,7 @@ model Lesson {
   studentNotes        StudentNote[]
   resourceCompletions LessonResourceCompletion[]
   completions         LessonCompletion[]
+  assignments         Assignment[]
 
   @@index([unitId])
 }
@@ -296,4 +313,110 @@ model LessonResourceCompletion {
   @@unique([userId, resourceType, resourceId])
   @@index([userId, lessonId])
   @@map("lesson_resource_completions")
+}
+
+model Assignment {
+  id        String         @id @default(uuid())
+  lessonId  String
+  order     Int
+  title     String
+  objective String?
+  type      AssignmentType
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  lesson                    Lesson                     @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  noteAssignment            NoteAssignment?
+  videoAssignment           VideoAssignment?
+  readingAssignment         ReadingAssignment?
+  vocabAssignment           VocabAssignment?
+  practiceProblemAssignment PracticeProblemAssignment?
+  completions               AssignmentCompletion[]
+
+  @@unique([lessonId, order])
+  @@index([lessonId])
+  @@map("assignment")
+}
+
+model NoteAssignment {
+  id           String @id @default(uuid())
+  assignmentId String @unique
+  content      Json
+
+  assignment Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+
+  @@map("note_assignment")
+}
+
+model VideoAssignment {
+  id           String  @id @default(uuid())
+  assignmentId String  @unique
+  url          String
+  title        String?
+
+  assignment Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+
+  @@map("video_assignment")
+}
+
+model ReadingAssignment {
+  id               String  @id @default(uuid())
+  assignmentId     String  @unique
+  url              String
+  description      String?
+  estimatedMinutes Int?
+
+  assignment Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+
+  @@map("reading_assignment")
+}
+
+model VocabAssignment {
+  id           String @id @default(uuid())
+  assignmentId String @unique
+  entries      Json
+
+  assignment Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+
+  @@map("vocab_assignment")
+}
+
+model PracticeProblemAssignment {
+  id                String @id @default(uuid())
+  assignmentId      String @unique
+  passingPercentage Int?
+
+  assignment Assignment              @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  questions  PracticeProblemQuestion[]
+
+  @@map("practice_problem_assignment")
+}
+
+model PracticeProblemQuestion {
+  id                          String               @id @default(uuid())
+  practiceProblemAssignmentId String
+  order                       Int
+  type                        PracticeQuestionType
+  content                     Json
+
+  practiceProblemAssignment PracticeProblemAssignment @relation(fields: [practiceProblemAssignmentId], references: [id], onDelete: Cascade)
+
+  @@index([practiceProblemAssignmentId])
+  @@map("practice_problem_question")
+}
+
+model AssignmentCompletion {
+  id           String   @id @default(uuid())
+  userId       String
+  assignmentId String
+  completedAt  DateTime @default(now())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  assignment Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, assignmentId])
+  @@index([userId])
+  @@map("assignment_completion")
 }

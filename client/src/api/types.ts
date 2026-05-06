@@ -167,3 +167,73 @@ export interface LessonProgress {
   attempted: boolean;
   quizPassed: boolean;
 }
+
+// ─── Assignment Layer ────────────────────────────────────────────────────────
+
+export type AssignmentType = 'note' | 'video' | 'reading' | 'vocab' | 'practice_problem';
+export type PracticeQuestionType = 'multiple_choice' | 'true_false' | 'matching' | 'fill_in_blank';
+
+export interface NoteAssignmentData {
+  id: string;
+  content: Record<string, unknown>;
+}
+
+export interface VideoAssignmentData {
+  id: string;
+  url: string;
+  title: string | null;
+}
+
+export interface ReadingAssignmentData {
+  id: string;
+  url: string;
+  description: string | null;
+  estimatedMinutes: number | null;
+}
+
+export interface VocabEntry {
+  term: string;
+  definition: string;
+}
+
+export interface VocabAssignmentData {
+  id: string;
+  entries: VocabEntry[];
+}
+
+export interface PracticeQuestion {
+  id: string;
+  order: number;
+  type: PracticeQuestionType;
+  content: Record<string, unknown>;
+}
+
+export interface PracticeProblemAssignmentData {
+  id: string;
+  passingPercentage: number | null;
+  questions: PracticeQuestion[];
+}
+
+export interface Assignment {
+  id: string;
+  lessonId: string;
+  order: number;
+  title: string;
+  objective: string | null;
+  type: AssignmentType;
+  createdAt: string;
+  updatedAt: string;
+  completed: boolean;
+  noteAssignment: NoteAssignmentData | null;
+  videoAssignment: VideoAssignmentData | null;
+  readingAssignment: ReadingAssignmentData | null;
+  vocabAssignment: VocabAssignmentData | null;
+  practiceProblemAssignment: PracticeProblemAssignmentData | null;
+}
+
+export interface AssignmentCompletion {
+  id: string;
+  userId: string;
+  assignmentId: string;
+  completedAt: string;
+}

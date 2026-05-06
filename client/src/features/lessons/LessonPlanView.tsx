@@ -5,8 +5,8 @@ import EmptyState from '../../components/EmptyState.js';
 
 interface LessonPlanViewProps {
   lesson: Lesson;
-  isComplete: boolean;
-  onToggleComplete: () => void;
+  isComplete?: boolean;
+  onToggleComplete?: () => void;
   canEdit: boolean;
   onEdit: () => void;
 }
@@ -44,17 +44,23 @@ export default function LessonPlanView({ lesson, isComplete, onToggleComplete, c
         </div>
       )}
 
-      <div className="flex items-center justify-between pt-2 border-t border-border">
-        <ResourceCompletionCheckbox isComplete={isComplete} onToggle={onToggleComplete} />
-        {canEdit && (
-          <button
-            onClick={onEdit}
-            className="text-sm text-primary hover:text-primary/80 transition-colors"
-          >
-            Edit
-          </button>
-        )}
-      </div>
+      {(onToggleComplete !== undefined || canEdit) && (
+        <div className="flex items-center justify-between pt-2 border-t border-border">
+          {onToggleComplete !== undefined ? (
+            <ResourceCompletionCheckbox isComplete={isComplete ?? false} onToggle={onToggleComplete} />
+          ) : (
+            <div />
+          )}
+          {canEdit && (
+            <button
+              onClick={onEdit}
+              className="text-sm text-primary hover:text-primary/80 transition-colors"
+            >
+              Edit
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 }
