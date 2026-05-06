@@ -14,6 +14,8 @@ export const courseService = {
   },
 
   async findById(id: string) {
+    // Inline check retained: findUnique with include cannot be expressed
+    // through the assertExists delegate without losing the typed return shape.
     const course = await prisma.course.findUnique({
       where: { id },
       include: {

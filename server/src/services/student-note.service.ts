@@ -1,5 +1,6 @@
 import prisma from '../lib/prisma.js';
-import { NotFoundError, AppError } from '../errors/index.js';
+import { AppError } from '../errors/index.js';
+import { assertExists } from '../utils/assertExists.js';
 import type { UpsertStudentNoteInput } from '../schemas/student-note.schema.js';
 import { logAuthFailure } from '../middleware/authorize-resource.js';
 
@@ -15,8 +16,7 @@ export const studentNoteService = {
     userId: string,
     userRole: 'student' | 'teacher' | 'admin',
   ): Promise<import('@prisma/client').StudentNote | import('@prisma/client').StudentNote[] | null> {
-    const lesson = await prisma.lesson.findUnique({ where: { id: lessonId } });
-    if (!lesson) throw new NotFoundError('Lesson not found');
+    await assertExists(prisma.lesson, lessonId, 'Lesson');
 
     if (userRole === 'student') {
       return prisma.studentNote.findUnique({ where: { lessonId_userId: { lessonId, userId } } });
@@ -26,8 +26,7 @@ export const studentNoteService = {
   },
 
   async upsert(lessonId: string, data: UpsertStudentNoteInput, userId: string) {
-    const lesson = await prisma.lesson.findUnique({ where: { id: lessonId } });
-    if (!lesson) throw new NotFoundError('Lesson not found');
+    await assertExists(prisma.lesson, lessonId, 'Lesson');
     return prisma.studentNote.upsert({
       where: { lessonId_userId: { lessonId, userId } },
       create: { content: data.content, lessonId, userId },
@@ -45,8 +44,7 @@ export const studentNoteService = {
    * Authorization failures are logged per NFR-03.
    */
   async remove(id: string, userId: string, userRole: 'student' | 'teacher' | 'admin' = 'student') {
-    const note = await prisma.studentNote.findUnique({ where: { id } });
-    if (!note) throw new NotFoundError('Student note not found');
+    const note = await assertExists(prisma.studentNote, id, 'Student note');
 
     if (userRole !== 'admin' && note.userId !== userId) {
       logAuthFailure(userId, id, 'DELETE student-note');
