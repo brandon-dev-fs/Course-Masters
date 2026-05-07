@@ -6,6 +6,7 @@ import { toNodeHandler } from 'better-auth/node';
 import { auth } from './lib/auth.js';
 import router from './routes/index.js';
 import { errorHandler } from './middleware/errorHandler.js';
+import { envelopeMiddleware } from './middleware/envelope.js';
 import { config } from './config.js';
 import { swaggerDocument } from './swagger.js';
 
@@ -32,6 +33,7 @@ app.all('/api/auth/*splat', authLimiter, toNodeHandler(auth));
 
 app.use(express.json());
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+app.use('/api', envelopeMiddleware);
 app.use('/api', router);
 app.use(errorHandler);
 
