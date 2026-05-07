@@ -1,17 +1,67 @@
 import { z } from 'zod';
 
-export const questionSchema = z.object({
-  type: z.enum(['multiple_choice', 'true_false', 'matching', 'fill_in_blank']).default('multiple_choice'),
-  question: z.string().min(1, 'Question is required'),
-  content: z.record(z.any()),
-  order: z.number().int().min(0),
-  calculatorEnabled: z.boolean().default(false),
+// ── Per-type content schemas ───────────────────────────────────────────────
+
+const multipleChoiceContentSchema = z.object({
+  options: z.array(z.string()).min(1, 'options must be a non-empty array'),
+  correctIndex: z.number().int().min(0, 'correctIndex must be a non-negative integer'),
 });
+
+const trueFalseContentSchema = z.object({
+  correctAnswer: z.boolean(),
+});
+
+const fillInBlankContentSchema = z.object({
+  acceptedAnswers: z.array(z.string()).min(1, 'acceptedAnswers must be a non-empty array'),
+});
+
+const matchingPairSchema = z.object({
+  prompt: z.string().min(1),
+  answer: z.string().min(1),
+});
+
+const matchingContentSchema = z.object({
+  pairs: z.array(matchingPairSchema).min(1, 'pairs must be a non-empty array'),
+});
+
+// ── Discriminated union (drives validate middleware) ───────────────────────
+
+export const questionSchema = z.discriminatedUnion('type', [
+  z.object({
+    type: z.literal('multiple_choice'),
+    question: z.string().min(1, 'Question is required'),
+    content: multipleChoiceContentSchema,
+    order: z.number().int().min(0),
+    calculatorEnabled: z.boolean().default(false),
+  }),
+  z.object({
+    type: z.literal('true_false'),
+    question: z.string().min(1, 'Question is required'),
+    content: trueFalseContentSchema,
+    order: z.number().int().min(0),
+    calculatorEnabled: z.boolean().default(false),
+  }),
+  z.object({
+    type: z.literal('fill_in_blank'),
+    question: z.string().min(1, 'Question is required'),
+    content: fillInBlankContentSchema,
+    order: z.number().int().min(0),
+    calculatorEnabled: z.boolean().default(false),
+  }),
+  z.object({
+    type: z.literal('matching'),
+    question: z.string().min(1, 'Question is required'),
+    content: matchingContentSchema,
+    order: z.number().int().min(0),
+    calculatorEnabled: z.boolean().default(false),
+  }),
+]);
 
 export const createAssessmentSchema = z.object({
   questions: z.array(questionSchema).min(1, 'At least 1 question required'),
 });
 
+// submitAttemptSchema is unchanged — out of scope per spec
 export const submitAttemptSchema = z.object({
   answers: z.array(z.any()),
 });

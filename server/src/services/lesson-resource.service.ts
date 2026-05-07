@@ -1,3 +1,4 @@
+import type { Prisma } from '@prisma/client';
 import { ResourceType } from '@prisma/client';
 import prisma from '../lib/prisma.js';
 import { assertExists } from '../utils/assertExists.js';
@@ -13,7 +14,12 @@ export const lessonResourceService = {
 
   async create(lessonId: string, data: CreateLessonResourceInput) {
     await assertExists(prisma.lesson, lessonId, 'Lesson');
-    return prisma.lessonResource.create({ data: { ...data, lessonId } });
+    // Cast content to InputJsonValue: Zod validates with z.record(z.unknown()) for type
+    // safety; Prisma's InputJsonValue uses a narrower recursive type that does not accept
+    // Record<string, unknown> structurally, so an explicit cast is required here.
+    return prisma.lessonResource.create({
+      data: { ...data, lessonId, content: data.content as Prisma.InputJsonValue },
+    });
   },
 
   async update(id: string, data: UpdateLessonResourceInput) {
