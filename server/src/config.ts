@@ -8,13 +8,18 @@ const envSchema = z.object({
 		.default('development'),
 	BETTER_AUTH_SECRET: z.string().min(32),
 	CLIENT_URL: z.string().url().default('http://localhost:5000'),
+	LOG_LEVEL: z
+		.enum(['trace', 'debug', 'info', 'warn', 'error', 'fatal', 'silent'])
+		.default('info'),
 });
 
 const parsed = envSchema.safeParse(process.env);
 
 if (!parsed.success) {
-	console.error('❌ Invalid environment variables:');
-	console.error(parsed.error.flatten().fieldErrors);
+	// Cannot use logger here — logger depends on config, which hasn't finished
+	// initializing. Write directly to stderr to avoid circular dependency.
+	process.stderr.write('Invalid environment variables:\n');
+	process.stderr.write(JSON.stringify(parsed.error.flatten().fieldErrors) + '\n');
 	process.exit(1);
 }
 
