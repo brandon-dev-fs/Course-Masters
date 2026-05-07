@@ -63,3 +63,8 @@ export const updateLessonToolSchema = z.object({
 
 export type CreateLessonToolInput = z.infer<typeof createLessonToolSchema>;
 export type UpdateLessonToolInput = z.infer<typeof updateLessonToolSchema>;
+
+export const lessonToolQuerySchema = z.object({
+  type: z.enum(['flash_card', 'practice_problem', 'vocab']).optional(),
+});
+export type LessonToolQuery = z.infer<typeof lessonToolQuerySchema>;

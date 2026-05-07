@@ -6,7 +6,7 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 export const lessonToolController = {
   getAll: asyncHandler(async (req: Request, res: Response) => {
     const lessonId = req.params['lessonId'] as string;
-    const type = req.query['type'] as ToolType | undefined;
+    const type = req.query['type'] as ToolType | undefined; // validated by validateQuery middleware
     res.json(await lessonToolService.findAllByLesson(lessonId, type));
   }),
 
