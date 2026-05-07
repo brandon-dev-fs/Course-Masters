@@ -14,6 +14,11 @@ import { swaggerDocument } from './swagger.js';
 
 const app = express();
 
+// Trust the first proxy hop (nginx / Docker networking) so express-rate-limit
+// uses the real client IP from X-Forwarded-For rather than the proxy IP.
+// Without this all clients behind a reverse proxy share one rate-limit bucket.
+app.set('trust proxy', 1);
+
 app.use(
 	cors({
 		origin: config.CLIENT_URL,
