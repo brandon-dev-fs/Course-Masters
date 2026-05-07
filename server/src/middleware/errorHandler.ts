@@ -28,6 +28,19 @@ export function errorHandler(
       res.status(409).json({ error: { code: 'CONFLICT', message: 'Resource already exists' } });
       return;
     }
+    if (err.code === 'P2003') {
+      res.status(409).json({ error: { code: 'CONFLICT', message: 'Operation conflicts with an existing relation' } });
+      return;
+    }
+    if (err.code === 'P2014') {
+      res.status(409).json({ error: { code: 'CONFLICT', message: 'Operation would violate a required relation' } });
+      return;
+    }
+  }
+
+  if (err instanceof Prisma.PrismaClientValidationError) {
+    res.status(400).json({ error: { code: 'VALIDATION_ERROR', message: 'Invalid request data' } });
+    return;
   }
 
   console.error('Unhandled error:', err);

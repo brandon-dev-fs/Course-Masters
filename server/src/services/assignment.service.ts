@@ -1,6 +1,7 @@
 import { AssignmentType } from '@prisma/client';
 import prisma from '../lib/prisma.js';
 import { AppError, NotFoundError } from '../errors/index.js';
+import { assertExists } from '../utils/assertExists.js';
 import type { CreateAssignmentInput, UpdateAssignmentInput } from '../schemas/assignment.schema.js';
 
 // ── Prisma include shape reused across queries ───────────────────────────────
@@ -21,8 +22,7 @@ const ASSIGNMENT_INCLUDE = {
 
 export const assignmentService = {
   async findAllByLesson(lessonId: string, userId: string | null) {
-    const lesson = await prisma.lesson.findUnique({ where: { id: lessonId } });
-    if (!lesson) throw new NotFoundError('Lesson not found');
+    await assertExists(prisma.lesson, lessonId, 'Lesson');
 
     const assignments = await prisma.assignment.findMany({
       where: { lessonId },
@@ -46,6 +46,8 @@ export const assignmentService = {
   },
 
   async findById(assignmentId: string, userId: string | null) {
+    // Inline check retained: findUnique with include cannot be expressed
+    // through the assertExists delegate without losing the typed return shape.
     const assignment = await prisma.assignment.findUnique({
       where: { id: assignmentId },
       include: ASSIGNMENT_INCLUDE,
@@ -64,8 +66,7 @@ export const assignmentService = {
   },
 
   async create(lessonId: string, data: CreateAssignmentInput) {
-    const lesson = await prisma.lesson.findUnique({ where: { id: lessonId } });
-    if (!lesson) throw new NotFoundError('Lesson not found');
+    await assertExists(prisma.lesson, lessonId, 'Lesson');
 
     const result = await prisma.$transaction(async (tx) => {
       // Determine next order value
@@ -209,6 +210,8 @@ export const assignmentService = {
   },
 
   async remove(assignmentId: string) {
+    // Inline check retained: we need lessonId from the record for order recalculation.
+    // assertExists would require a second query to retrieve the same record.
     const assignment = await prisma.assignment.findUnique({ where: { id: assignmentId } });
     if (!assignment) throw new NotFoundError('Assignment not found');
 
@@ -239,8 +242,7 @@ export const assignmentService = {
   },
 
   async reorder(lessonId: string, assignmentIds: string[]) {
-    const lesson = await prisma.lesson.findUnique({ where: { id: lessonId } });
-    if (!lesson) throw new NotFoundError('Lesson not found');
+    await assertExists(prisma.lesson, lessonId, 'Lesson');
 
     const existing = await prisma.assignment.findMany({
       where: { lessonId },
@@ -271,8 +273,7 @@ export const assignmentService = {
   },
 
   async markComplete(assignmentId: string, userId: string) {
-    const assignment = await prisma.assignment.findUnique({ where: { id: assignmentId } });
-    if (!assignment) throw new NotFoundError('Assignment not found');
+    await assertExists(prisma.assignment, assignmentId, 'Assignment');
 
     const completion = await prisma.assignmentCompletion.upsert({
       where: { userId_assignmentId: { userId, assignmentId } },
@@ -284,8 +285,7 @@ export const assignmentService = {
   },
 
   async markIncomplete(assignmentId: string, userId: string) {
-    const assignment = await prisma.assignment.findUnique({ where: { id: assignmentId } });
-    if (!assignment) throw new NotFoundError('Assignment not found');
+    await assertExists(prisma.assignment, assignmentId, 'Assignment');
 
     const completion = await prisma.assignmentCompletion.findUnique({
       where: { userId_assignmentId: { userId, assignmentId } },

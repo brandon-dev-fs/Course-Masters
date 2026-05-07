@@ -1,11 +1,11 @@
 import prisma from '../lib/prisma.js';
 import { NotFoundError } from '../errors/index.js';
+import { assertExists } from '../utils/assertExists.js';
 import type { CreateUnitInput, UpdateUnitInput } from '../schemas/unit.schema.js';
 
 export const unitService = {
   async findAllByCourse(courseId: string) {
-    const course = await prisma.course.findUnique({ where: { id: courseId } });
-    if (!course) throw new NotFoundError('Course not found');
+    await assertExists(prisma.course, courseId, 'Course');
     return prisma.unit.findMany({
       where: { courseId },
       orderBy: { order: 'asc' },
@@ -14,6 +14,8 @@ export const unitService = {
   },
 
   async findById(id: string) {
+    // Inline check retained: findUnique with include cannot be expressed
+    // through the assertExists delegate without losing the typed return shape.
     const unit = await prisma.unit.findUnique({
       where: { id },
       include: {
@@ -25,8 +27,7 @@ export const unitService = {
   },
 
   async create(courseId: string, data: CreateUnitInput) {
-    const course = await prisma.course.findUnique({ where: { id: courseId } });
-    if (!course) throw new NotFoundError('Course not found');
+    await assertExists(prisma.course, courseId, 'Course');
     return prisma.unit.create({ data: { ...data, courseId } });
   },
 
