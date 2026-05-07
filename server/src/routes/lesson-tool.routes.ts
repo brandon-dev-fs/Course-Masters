@@ -1,12 +1,12 @@
 import { Router } from 'express';
 import { lessonToolController } from '../controllers/lesson-tool.controller.js';
-import { validate } from '../middleware/validate.js';
+import { validate, validateQuery } from '../middleware/validate.js';
 import { authorize } from '../middleware/authorize.js';
-import { createLessonToolSchema, updateLessonToolSchema } from '../schemas/lesson-tool.schema.js';
+import { createLessonToolSchema, updateLessonToolSchema, lessonToolQuerySchema } from '../schemas/lesson-tool.schema.js';
 import { requireCourseOwnership } from '../middleware/authorize-resource.js';
 
 export const lessonToolsRouter = Router({ mergeParams: true });
-lessonToolsRouter.get('/', lessonToolController.getAll);
+lessonToolsRouter.get('/', validateQuery(lessonToolQuerySchema), lessonToolController.getAll);
 lessonToolsRouter.post(
   '/',
   authorize('teacher', 'admin'),
