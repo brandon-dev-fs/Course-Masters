@@ -1,5 +1,9 @@
 import { ApiError } from './types.js';
 
+interface ApiEnvelope<T> {
+  data: T;
+}
+
 export class ApiClientError extends Error {
   constructor(
     public readonly code: string,
@@ -30,7 +34,8 @@ async function request<T>(url: string, options?: RequestInit): Promise<T> {
   }
 
   if (res.status === 204) return undefined as T;
-  return res.json() as Promise<T>;
+  const envelope = (await res.json()) as ApiEnvelope<T>;
+  return envelope.data;
 }
 
 export const apiClient = {
