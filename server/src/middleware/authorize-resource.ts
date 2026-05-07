@@ -2,6 +2,7 @@ import { Request, RequestHandler } from 'express';
 import prisma from '../lib/prisma.js';
 import { AppError, NotFoundError } from '../errors/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import { logger } from '../lib/logger.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -23,18 +24,7 @@ export type ResourceOwnershipType =
 // ---------------------------------------------------------------------------
 
 function logAuthFailure(userId: string, resourceId: string, action: string): void {
-  // Writes a structured JSON log entry. No sensitive data (passwords, content,
-  // session tokens) is ever included. Single place to upgrade to a logging
-  // library if adopted later.
-  console.error(
-    JSON.stringify({
-      event: 'authorization_failure',
-      userId,
-      resourceId,
-      action,
-      timestamp: new Date().toISOString(),
-    }),
-  );
+  logger.warn({ event: 'authorization_failure', userId, resourceId, action }, 'Authorization failure');
 }
 
 // ---------------------------------------------------------------------------

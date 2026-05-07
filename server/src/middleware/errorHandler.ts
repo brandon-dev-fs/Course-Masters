@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
 import { Prisma } from '@prisma/client';
 import { AppError } from '../errors/index.js';
+import { logger } from '../lib/logger.js';
 
 export function errorHandler(
   err: unknown,
@@ -43,6 +44,6 @@ export function errorHandler(
     return;
   }
 
-  console.error('Unhandled error:', err);
+  logger.error({ err }, 'Unhandled error');
   res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'An unexpected error occurred' } });
 }
