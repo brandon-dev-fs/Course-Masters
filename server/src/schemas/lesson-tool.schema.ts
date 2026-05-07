@@ -46,15 +46,16 @@ export const createLessonToolSchema = z.discriminatedUnion('type', [
 // PracticeProblemList all send content without type). A discriminated union on
 // `type` is therefore not applicable for updates — we cannot enforce per-type
 // content shapes without a discriminator. The update schema accepts the existing
-// optional fields. content uses z.record(z.unknown()) (not z.any()) to
-// preserve type safety while remaining type-agnostic.
+// optional fields. content uses z.record(z.any()) because without a `type`
+// discriminator present in the request, a flat partial schema cannot branch on
+// per-type shapes; content passes through loosely validated here until a future
+// client change sends `type` on updates, enabling discriminated-union enforcement.
 // Full discriminated-union enforcement on updates requires a client change to
 // always include `type`, which is outside the scope of this spec (cm-0007).
 
 export const updateLessonToolSchema = z.object({
   type: z.enum(['flash_card', 'practice_problem', 'vocab']).optional(),
   title: z.string().min(1).optional(),
-  // z.record(z.any()) for Prisma Json column compatibility — see lesson-resource.schema.ts note
   content: z.record(z.any()).optional(),
   order: z.number().int().min(0).optional(),
   isRequired: z.boolean().optional(),
