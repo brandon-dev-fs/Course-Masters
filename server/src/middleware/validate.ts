@@ -14,3 +14,16 @@ export function validate(schema: ZodSchema) {
     next();
   };
 }
+
+export function validateQuery(schema: ZodSchema) {
+  return (req: Request, res: Response, next: NextFunction): void => {
+    const result = schema.safeParse(req.query);
+    if (!result.success) {
+      const details = result.error.flatten().fieldErrors as Record<string, unknown>;
+      next(new ValidationError('Invalid query parameters', details));
+      return;
+    }
+    res.locals['validatedQuery'] = result.data;
+    next();
+  };
+}

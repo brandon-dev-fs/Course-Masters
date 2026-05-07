@@ -64,3 +64,8 @@ export const updateLessonResourceSchema = z.object({
 
 export type CreateLessonResourceInput = z.infer<typeof createLessonResourceSchema>;
 export type UpdateLessonResourceInput = z.infer<typeof updateLessonResourceSchema>;
+
+export const lessonResourceQuerySchema = z.object({
+  type: z.enum(['note', 'video', 'lecture']).optional(),
+});
+export type LessonResourceQuery = z.infer<typeof lessonResourceQuerySchema>;
