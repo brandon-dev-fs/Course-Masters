@@ -244,29 +244,32 @@ export const assignmentService = {
   async reorder(lessonId: string, assignmentIds: string[]) {
     await assertExists(prisma.lesson, lessonId, 'Lesson');
 
-    const existing = await prisma.assignment.findMany({
-      where: { lessonId },
-      select: { id: true },
-    });
-
-    const existingIds = new Set(existing.map((a) => a.id));
-
-    // Validate: provided IDs must match the lesson's assignment set exactly
-    if (
-      assignmentIds.length !== existing.length ||
-      assignmentIds.some((id) => !existingIds.has(id))
-    ) {
-      throw new AppError('INVALID_REORDER', 'Provided assignment IDs do not match lesson assignments', 400);
-    }
-
-    // Atomically update all order values
     await prisma.$transaction(
-      assignmentIds.map((id, index) =>
-        prisma.assignment.update({
-          where: { id },
-          data: { order: index + 1 },
-        }),
-      ),
+      async (tx) => {
+        const locked = await tx.$queryRaw<{ id: string }[]>`
+          SELECT id FROM "Assignment"
+          WHERE "lessonId" = ${lessonId}
+          FOR UPDATE
+        `;
+
+        const lockedIds = new Set(locked.map((r) => r.id));
+        if (
+          assignmentIds.length !== locked.length ||
+          assignmentIds.some((id) => !lockedIds.has(id))
+        ) {
+          throw new AppError('INVALID_REORDER', 'Provided assignment IDs do not match lesson assignments', 400);
+        }
+
+        await Promise.all(
+          assignmentIds.map((id, index) =>
+            tx.assignment.update({
+              where: { id },
+              data: { order: index + 1 },
+            }),
+          ),
+        );
+      },
+      { isolationLevel: 'Serializable' },
     );
 
     return this.findAllByLesson(lessonId, null);

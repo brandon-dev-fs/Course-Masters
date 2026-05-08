@@ -37,6 +37,10 @@ export function errorHandler(
       res.status(409).json({ error: { code: 'CONFLICT', message: 'Operation would violate a required relation' } });
       return;
     }
+    if (err.code === 'P2034') {
+      res.status(409).json({ error: { code: 'TRANSACTION_CONFLICT', message: 'Concurrent modification detected; please retry.' } });
+      return;
+    }
   }
 
   if (err instanceof Prisma.PrismaClientValidationError) {
