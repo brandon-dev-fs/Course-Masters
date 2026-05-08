@@ -128,12 +128,23 @@ export const assessmentService = {
     return { ...attempt, totalQuestions: total, correctCount: correct };
   },
 
-  async getAttempts(assessmentId: string, userId: string) {
-    return prisma.assessmentAttempt.findMany({
-      where: { assessmentId, userId },
-      orderBy: { createdAt: 'desc' },
-      select: { id: true, score: true, passed: true, createdAt: true },
-    });
+  async getAttempts(assessmentId: string, userId: string, page: number, pageSize: number) {
+    const skip = (page - 1) * pageSize;
+
+    const [total, data] = await Promise.all([
+      prisma.assessmentAttempt.count({
+        where: { assessmentId, userId },
+      }),
+      prisma.assessmentAttempt.findMany({
+        where: { assessmentId, userId },
+        orderBy: { createdAt: 'desc' },
+        select: { id: true, score: true, passed: true, createdAt: true },
+        skip,
+        take: pageSize,
+      }),
+    ]);
+
+    return { data, total, page, pageSize };
   },
 
   async bulkUpdateCalculator(assessmentId: string, data: BulkUpdateCalculatorInput) {
