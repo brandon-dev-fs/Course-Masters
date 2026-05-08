@@ -3,7 +3,7 @@ import type React from 'react';
 export interface QuestionTypeEditorProps {
   content: Record<string, unknown>;
   /** The index of this question within the list (used for unique input name attributes) */
-  index: number;
+  index?: number;
   onChange: (content: Record<string, unknown>) => void;
 }
 
