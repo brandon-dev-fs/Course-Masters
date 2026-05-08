@@ -9,10 +9,9 @@
 ## Features
 | Feature | Key Components |
 |---|---|
-| assessments | AssessmentForm, AssessmentTaker, AssessmentResults, QuestionEditor |
+| assessments | AssessmentSection (unified for quiz/test/exam), AssessmentForm, AssessmentTaker, AssessmentResults, QuestionEditor |
 | auth | LoginPage, RegisterPage, ProfilePage, AdminUsersPage, RequireAuth, RequireRole |
 | courses | CourseListPage, CourseDetailPage, CourseCard, CourseForm |
-| exams / quizzes / tests | ExamSection, ExamAccordionItem, QuizSection, TestSection (use shared assessment components) |
 | flashcards | FlashCard, FlashCardList, FlashCardForm, FlashCardStudyMode |
 | lessons | LessonDetailPage, LessonForm, LessonList |
 | notes | NoteEditor (rich text, teacher-created, backed by LessonResource type='note'/'lecture') |
@@ -55,6 +54,9 @@ Button (polymorphic, variants: primary/secondary/danger/ghost/accent), CardActio
   - `true_false`: `{ correctAnswer: boolean }`
 
 ## Custom Hooks
+
+**Convention:** Feature-specific hooks live in `features/<domain>/hooks/` (e.g., `features/lessons/hooks/useAssignments.ts`). Shared hooks used across multiple features live in `src/hooks/`.
+
 | Hook | Purpose |
 |---|---|
 | `useResourceList` | Generic CRUD list (fetch, add, update, delete, sort) with loading/error/modal state |
@@ -71,7 +73,7 @@ interface AssessmentApi {
   getAttempts?: (id: string) => Promise<AttemptSummary[]>;
 }
 ```
-Pass an adapter object built from `assessmentsApi` methods — see QuizSection/TestSection/ExamSection for examples.
+Pass an adapter object built from `assessmentsApi` methods — see `AssessmentSection` usage in `LessonDetailPage`, `UnitAccordionItem`, and `CourseDetailPage` for examples.
 
 ## Theming & Styling
 - Light/dark toggled via `.dark` class on `<html>` — managed by `ThemeContext`
