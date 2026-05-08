@@ -52,6 +52,7 @@ assessmentsRouter.patch('/:assessmentId/questions/calculator', authorize('teache
 assessmentsRouter.get('/:assessmentId/attempts', authenticate(), assessmentController.getAttempts);
 assessmentsRouter.post(
   '/:assessmentId/attempts',
+  authenticate(),
   requireStudentRole(),
   validate(submitAttemptSchema),
   assessmentController.submitAttempt,

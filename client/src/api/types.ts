@@ -133,6 +133,13 @@ export interface AttemptSummary {
   createdAt: string;
 }
 
+export interface PaginatedAttempts {
+  data: AttemptSummary[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
 export interface CourseProgress {
   totalUnits: number;
   completedUnits: number;
