@@ -90,7 +90,6 @@ interface UseAssignmentsParams {
 
 interface UseAssignmentsReturn {
   assignments: Assignment[];
-  setAssignments: React.Dispatch<React.SetStateAction<Assignment[]>>;
   assignmentItems: AssignmentItem[];
   completedAssignmentIds: Set<string>;
   incompleteRequired: AssignmentItem[];
@@ -221,7 +220,6 @@ export default function useAssignments({
 
   return {
     assignments,
-    setAssignments,
     assignmentItems,
     completedAssignmentIds,
     incompleteRequired,

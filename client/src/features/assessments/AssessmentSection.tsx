@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import useAssessment from '../../hooks/useAssessment.js';
-import AssessmentForm from './AssessmentForm.js';
+import AssessmentForm, { toQuestionDraft } from './AssessmentForm.js';
 import AssessmentTaker from './AssessmentTaker.js';
 import AssessmentResults from './AssessmentResults.js';
 import Modal from '../../components/Modal.js';
@@ -77,20 +77,11 @@ export default function AssessmentSection({
     if (displayMode === 'modal-only' && open) {
       setView(assessment === null ? 'creating' : 'taking');
     }
-  }, [open, assessment, displayMode]);
+  }, [open, assessment, displayMode, setView]);
 
   function openEdit() {
     if (!assessment) return;
-    setEditQuestions(assessment.questions.map(q => ({
-      id: q.id,
-      question: q.question,
-      content: {
-        options: (q.content.options as string[]) ?? [],
-        correctIndex: (q.content.correctIndex as number) ?? 0,
-      },
-      order: q.order,
-      calculatorEnabled: q.calculatorEnabled ?? false,
-    })));
+    setEditQuestions(assessment.questions.map(toQuestionDraft));
     setView('creating');
   }
 

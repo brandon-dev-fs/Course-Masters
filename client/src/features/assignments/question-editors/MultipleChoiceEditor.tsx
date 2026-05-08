@@ -2,6 +2,7 @@ import Textarea from '../../../components/Textarea.js';
 import type { QuestionTypeEditorProps } from './index.js';
 
 export default function MultipleChoiceEditor({ content, index, onChange }: QuestionTypeEditorProps) {
+  const idx = index ?? 0;
   const options = (content.options as string[]) ?? [];
   const correctIndex = (content.correctIndex as number) ?? 0;
   const question = (content.question as string) ?? '';
@@ -39,7 +40,7 @@ export default function MultipleChoiceEditor({ content, index, onChange }: Quest
             <div key={i} className="flex items-center gap-2">
               <input
                 type="radio"
-                name={`mc-correct-${index}`}
+                name={`mc-correct-${idx}`}
                 checked={correctIndex === i}
                 onChange={() => onChange({ ...content, correctIndex: i })}
                 className="accent-accent shrink-0"

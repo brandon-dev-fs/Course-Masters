@@ -2,6 +2,7 @@ import Textarea from '../../../components/Textarea.js';
 import type { QuestionTypeEditorProps } from './index.js';
 
 export default function TrueFalseEditor({ content, index, onChange }: QuestionTypeEditorProps) {
+  const idx = index ?? 0;
   const question = (content.question as string) ?? '';
   const correct = (content.correct as boolean) ?? true;
 
@@ -20,7 +21,7 @@ export default function TrueFalseEditor({ content, index, onChange }: QuestionTy
           <label className="flex items-center gap-2 cursor-pointer">
             <input
               type="radio"
-              name={`tf-correct-${index}`}
+              name={`tf-correct-${idx}`}
               checked={correct === true}
               onChange={() => onChange({ ...content, correct: true })}
               className="accent-accent"
@@ -30,7 +31,7 @@ export default function TrueFalseEditor({ content, index, onChange }: QuestionTy
           <label className="flex items-center gap-2 cursor-pointer">
             <input
               type="radio"
-              name={`tf-correct-${index}`}
+              name={`tf-correct-${idx}`}
               checked={correct === false}
               onChange={() => onChange({ ...content, correct: false })}
               className="accent-accent"
