@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { createAssessmentController, assessmentController } from '../controllers/assessment.controller.js';
 import { validate } from '../middleware/validate.js';
 import { authorize } from '../middleware/authorize.js';
+import { authenticate } from '../middleware/authenticate.js';
 import { bulkUpdateCalculatorSchema, createAssessmentSchema, submitAttemptSchema } from '../schemas/assessment.schema.js';
 import { requireCourseOwnership, requireStudentRole } from '../middleware/authorize-resource.js';
 
@@ -48,9 +49,10 @@ assessmentsRouter.put(
   assessmentController.update,
 );
 assessmentsRouter.patch('/:assessmentId/questions/calculator', authorize('teacher', 'admin'), validate(bulkUpdateCalculatorSchema), assessmentController.bulkUpdateCalculator);
-assessmentsRouter.get('/:assessmentId/attempts', assessmentController.getAttempts);
+assessmentsRouter.get('/:assessmentId/attempts', authenticate(), assessmentController.getAttempts);
 assessmentsRouter.post(
   '/:assessmentId/attempts',
+  authenticate(),
   requireStudentRole(),
   validate(submitAttemptSchema),
   assessmentController.submitAttempt,

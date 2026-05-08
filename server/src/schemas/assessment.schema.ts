@@ -71,7 +71,13 @@ export const bulkUpdateCalculatorSchema = z.object({
   calculatorEnabled: z.boolean(),
 });
 
+export const attemptsQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(100).default(20),
+});
+
 export type QuestionInput = z.infer<typeof questionSchema>;
 export type CreateAssessmentInput = z.infer<typeof createAssessmentSchema>;
 export type SubmitAttemptInput = z.infer<typeof submitAttemptSchema>;
 export type BulkUpdateCalculatorInput = z.infer<typeof bulkUpdateCalculatorSchema>;
+export type AttemptsQuery = z.infer<typeof attemptsQuerySchema>;

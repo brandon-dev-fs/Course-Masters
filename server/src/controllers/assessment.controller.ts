@@ -2,6 +2,8 @@ import { Request, Response } from 'express';
 import { AssessmentType } from '@prisma/client';
 import { assessmentService } from '../services/assessment.service.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import { attemptsQuerySchema } from '../schemas/assessment.schema.js';
+import { ValidationError } from '../errors/index.js';
 
 export function createAssessmentController(type: AssessmentType, parentParam: string) {
   return {
@@ -32,7 +34,19 @@ export const assessmentController = {
   }),
 
   getAttempts: asyncHandler(async (req: Request, res: Response) => {
-    res.json(await assessmentService.getAttempts(req.params['assessmentId'] as string, req.user!.id));
+    const parsed = attemptsQuerySchema.safeParse(req.query);
+    if (!parsed.success) {
+      throw new ValidationError('Invalid pagination parameters', parsed.error.flatten().fieldErrors);
+    }
+    const { page, pageSize } = parsed.data;
+    res.json(
+      await assessmentService.getAttempts(
+        req.params['assessmentId'] as string,
+        req.user!.id,
+        page,
+        pageSize,
+      ),
+    );
   }),
 
   bulkUpdateCalculator: asyncHandler(async (req: Request, res: Response) => {
