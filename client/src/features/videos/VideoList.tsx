@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { lessonResourcesApi } from '../../api/lesson-resources.js';
 import type { LessonResource } from '../../api/types.js';
-import { useAuth } from '../../context/AuthContext.js';
 import useResourceList from '../../hooks/useResourceList.js';
+import useCanEdit from '../../hooks/useCanEdit.js';
 import VideoCard from './VideoCard.js';
 import VideoForm from './VideoForm.js';
 import Modal from '../../components/Modal.js';
@@ -19,8 +19,7 @@ type VideoUpdateInput = { title?: string; content?: { url: string }; order?: num
 const byOrder = (a: LessonResource, b: LessonResource) => a.order - b.order;
 
 export default function VideoList({ lessonId }: { lessonId: string }) {
-  const { user } = useAuth();
-  const canEdit = user?.role === 'teacher' || user?.role === 'admin';
+  const canEdit = useCanEdit();
   const [currentIndex, setCurrentIndex] = useState(0);
   const {
     items: videos, loading, error,

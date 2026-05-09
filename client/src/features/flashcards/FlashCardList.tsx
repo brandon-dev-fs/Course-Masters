@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { lessonToolsApi } from '../../api/lesson-tools.js';
 import type { LessonTool } from '../../api/types.js';
-import { useAuth } from '../../context/AuthContext.js';
 import useResourceList from '../../hooks/useResourceList.js';
+import useCanEdit from '../../hooks/useCanEdit.js';
 import FlashCardComponent from './FlashCard.js';
 import FlashCardStudyMode from './FlashCardStudyMode.js';
 import FlashCardForm from './FlashCardForm.js';
@@ -19,8 +19,7 @@ type CardUpdateInput = { content?: { front: string; back: string }; order?: numb
 const byOrder = (a: LessonTool, b: LessonTool) => a.order - b.order;
 
 export default function FlashCardList({ lessonId }: { lessonId: string }) {
-  const { user } = useAuth();
-  const canEdit = user?.role === 'teacher' || user?.role === 'admin';
+  const canEdit = useCanEdit();
   const {
     items: cards, loading, error,
     showAdd, setShowAdd, deleting, setDeleting,

@@ -1,3 +1,5 @@
+export const youtubeUrlRegex = /^https?:\/\/(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)[\w-]+/;
+
 export function extractYouTubeId(url: string): string | null {
   const patterns = [
     /youtube\.com\/watch\?v=([\w-]+)/,

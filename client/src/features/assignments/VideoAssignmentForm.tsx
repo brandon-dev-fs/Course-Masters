@@ -1,33 +1,28 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, useCallback } from 'react';
 import { Loader2 } from 'lucide-react';
 import Input from '../../components/Input.js';
-import { apiClient } from '../../api/client.js';
 import type { SubFormProps } from './AssignmentFormModal.js';
-
-const youtubeUrlRegex = /^https?:\/\/(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)[\w-]+/;
+import useYouTubeTitle from '../../hooks/useYouTubeTitle.js';
 
 export default function VideoAssignmentForm({
   url, displayTitle, onUrlChange, onDisplayTitleChange,
 }: SubFormProps) {
-  const [fetchingTitle, setFetchingTitle] = useState(false);
   const [urlTouched, setUrlTouched] = useState(false);
   const titleTouched = useRef(!!displayTitle);
 
+  const onTitleFetched = useCallback((fetched: string) => {
+    onDisplayTitleChange(fetched);
+  }, [onDisplayTitleChange]);
+
+  const { fetchingTitle, handleUrlBlur: handleYouTubeUrlBlur } = useYouTubeTitle({
+    url,
+    titleTouched,
+    onTitleFetched,
+  });
+
   async function handleUrlBlur() {
     setUrlTouched(true);
-    const trimmed = url.trim();
-    if (!trimmed || !youtubeUrlRegex.test(trimmed) || titleTouched.current) return;
-    setFetchingTitle(true);
-    try {
-      const { title: fetched } = await apiClient.get<{ title: string }>(
-        `/youtube/title?url=${encodeURIComponent(trimmed)}`,
-      );
-      if (fetched && !titleTouched.current) onDisplayTitleChange(fetched);
-    } catch {
-      // Silently ignore — user can type the title manually
-    } finally {
-      setFetchingTitle(false);
-    }
+    await handleYouTubeUrlBlur();
   }
 
   return (

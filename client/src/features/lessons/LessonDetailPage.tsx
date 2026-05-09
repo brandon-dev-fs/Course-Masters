@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
+import useDisclosure from '../../hooks/useDisclosure.js';
 import { Settings } from 'lucide-react';
 import { assessmentsApi } from '../../api/assessments.js';
 import { lessonResourcesApi } from '../../api/lesson-resources.js';
@@ -42,14 +43,14 @@ export default function LessonDetailPage() {
   // Cross-cutting UI state (no single section owns these)
   const [activeStepKey, setActiveStepKey] = useState('lessonPlan');
   const [activeTool, setActiveTool] = useState<StudentToolType | null>(null);
-  const [showSettings, setShowSettings] = useState(false);
-  const [showPlanEdit, setShowPlanEdit] = useState(false);
+  const settingsDisclosure = useDisclosure();
+  const planEditDisclosure = useDisclosure();
 
   const {
     lesson, courseTitle, units, unitLessons, unitProgress,
     loading, error, canEdit,
     handleAddLesson, handleUpdate, handleDelete,
-  } = useLesson({ courseId, unitId, lessonId }, () => setShowSettings(false));
+  } = useLesson({ courseId, unitId, lessonId }, settingsDisclosure.close);
 
   const {
     resources, completionsData, completedIds,
@@ -180,7 +181,7 @@ export default function LessonDetailPage() {
             </div>
             {canEdit && (
               <button
-                onClick={() => setShowSettings(true)}
+                onClick={settingsDisclosure.open}
                 className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-surface-raised transition-colors shrink-0"
                 aria-label="Lesson settings"
               >
@@ -271,7 +272,7 @@ export default function LessonDetailPage() {
                       onToolDeleted={id => setTools(prev => prev.filter(t => t.id !== id))}
                       onToolUpdated={updated => setTools(prev => prev.map(t => t.id === updated.id ? updated : t))}
                       onToggleAssignmentCompletion={handleToggleAssignmentCompletion}
-                      onPlanEdit={() => setShowPlanEdit(true)}
+                      onPlanEdit={planEditDisclosure.open}
                     />
                   </AssignmentSection>
                 )}
@@ -298,18 +299,18 @@ export default function LessonDetailPage() {
         onClose={() => setActiveTool(null)}
       />
 
-      {showSettings && (
+      {settingsDisclosure.isOpen && (
         <LessonSettingsModal
           lesson={lesson}
-          onClose={() => setShowSettings(false)}
+          onClose={settingsDisclosure.close}
           onUpdate={handleUpdate}
           onDelete={handleDelete}
         />
       )}
-      {showPlanEdit && (
+      {planEditDisclosure.isOpen && (
         <LessonPlanModal
           lesson={lesson}
-          onClose={() => setShowPlanEdit(false)}
+          onClose={planEditDisclosure.close}
           onUpdate={handleUpdate}
         />
       )}

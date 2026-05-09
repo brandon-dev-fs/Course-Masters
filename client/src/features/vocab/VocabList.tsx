@@ -1,7 +1,7 @@
 import { lessonToolsApi } from '../../api/lesson-tools.js';
 import type { LessonTool } from '../../api/types.js';
-import { useAuth } from '../../context/AuthContext.js';
 import useResourceList from '../../hooks/useResourceList.js';
+import useCanEdit from '../../hooks/useCanEdit.js';
 import VocabCard from './VocabCard.js';
 import VocabForm from './VocabForm.js';
 import Modal from '../../components/Modal.js';
@@ -17,8 +17,7 @@ type VocabUpdateInput = { content?: { term: string; definition: string }; order?
 const byOrder = (a: LessonTool, b: LessonTool) => a.order - b.order;
 
 export default function VocabList({ lessonId }: { lessonId: string }) {
-  const { user } = useAuth();
-  const canEdit = user?.role === 'teacher' || user?.role === 'admin';
+  const canEdit = useCanEdit();
   const {
     items: vocabs, loading, error,
     showAdd, setShowAdd, editing, setEditing, deleting, setDeleting,

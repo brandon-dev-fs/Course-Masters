@@ -1,6 +1,8 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { lessonToolsApi } from '../../../api/lesson-tools.js';
 import type { LessonTool } from '../../../api/types.js';
+import useFetch from '../../../hooks/useFetch.js';
+import useOrderedList from '../../../hooks/useOrderedList.js';
 
 interface UseToolsReturn {
   tools: LessonTool[];
@@ -11,47 +13,29 @@ interface UseToolsReturn {
 }
 
 export default function useTools(lessonId: string | undefined): UseToolsReturn {
-  const [tools, setTools] = useState<LessonTool[]>([]);
-  const [editingTool, setEditingTool] = useState<LessonTool | null>(null);
+  const { data: fetchedTools } = useFetch<LessonTool[]>(
+    () => lessonId ? lessonToolsApi.getAll(lessonId) : Promise.resolve([]),
+    [lessonId],
+  );
 
-  useEffect(() => {
-    if (!lessonId) return;
-    lessonToolsApi.getAll(lessonId)
-      .then(allTools => setTools(allTools.sort((a, b) => a.order - b.order)))
-      .catch(() => {
-        // errors surface at the page level via useLesson
-      });
-  }, [lessonId]);
-
-  const handleMoveTool = useCallback(async (id: string, direction: 'up' | 'down') => {
-    const sorted = [...tools].sort((a, b) => a.order - b.order);
-    const idx = sorted.findIndex(t => t.id === id);
-    const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
-    if (swapIdx < 0 || swapIdx >= sorted.length) return;
-    const a = sorted[idx];
-    const b = sorted[swapIdx];
-    const orderA = a.order;
-    const orderB = b.order;
-    setTools(prev =>
-      prev.map(t =>
-        t.id === a.id ? { ...t, order: orderB } :
-        t.id === b.id ? { ...t, order: orderA } : t,
-      ).sort((x, y) => x.order - y.order),
-    );
-    try {
+  const { items: tools, setItems: setTools, handleMove: handleMoveTool } = useOrderedList<LessonTool>(
+    (fetchedTools ?? []).sort((a, b) => a.order - b.order),
+    async (a, b, aNewOrder, bNewOrder) => {
       await Promise.all([
-        lessonToolsApi.update(a.id, { order: orderB }),
-        lessonToolsApi.update(b.id, { order: orderA }),
+        lessonToolsApi.update(a.id, { order: aNewOrder }),
+        lessonToolsApi.update(b.id, { order: bNewOrder }),
       ]);
-    } catch {
-      setTools(prev =>
-        prev.map(t =>
-          t.id === a.id ? { ...t, order: orderA } :
-          t.id === b.id ? { ...t, order: orderB } : t,
-        ).sort((x, y) => x.order - y.order),
-      );
+    },
+  );
+
+  // Sync items when fetched data arrives
+  useEffect(() => {
+    if (fetchedTools) {
+      setTools(fetchedTools.sort((a, b) => a.order - b.order));
     }
-  }, [tools]);
+  }, [fetchedTools, setTools]);
+
+  const [editingTool, setEditingTool] = useState<LessonTool | null>(null);
 
   return {
     tools,

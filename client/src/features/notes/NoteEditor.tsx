@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { lessonResourcesApi } from '../../api/lesson-resources.js';
 import type { LessonResource } from '../../api/types.js';
-import { useAuth } from '../../context/AuthContext.js';
+import useCanEdit from '../../hooks/useCanEdit.js';
 import RichTextEditor from '../../components/RichTextEditor.js';
 import ResourceCompletionCheckbox from '../../components/ResourceCompletionCheckbox.js';
 import Button from '../../components/Button.js';
@@ -18,8 +18,7 @@ interface NoteEditorProps {
 }
 
 export default function NoteEditor({ note, isComplete, onToggleComplete, onUpdate, initialEditing }: NoteEditorProps) {
-  const { user } = useAuth();
-  const canEdit = user?.role === 'teacher' || user?.role === 'admin';
+  const canEdit = useCanEdit();
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);

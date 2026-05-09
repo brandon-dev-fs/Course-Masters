@@ -4,6 +4,7 @@ import type { CreateAssignmentPayload, UpdateAssignmentPayload } from '../../../
 import type { Assignment, Lesson, LessonResource, LessonTool } from '../../../api/types.js';
 import type { AssignmentItem } from '../AssignmentSection.js';
 import type { StudentToolType } from '../../student-notes/StudentToolsBar.js';
+import useFetch from '../../../hooks/useFetch.js';
 
 export const nextOrder = (arr: { order: number }[]) =>
   arr.length === 0 ? 1 : Math.max(...arr.map(r => r.order)) + 1;
@@ -115,16 +116,20 @@ export default function useAssignments({
   completedIds,
   setActiveStepKey,
 }: UseAssignmentsParams): UseAssignmentsReturn {
+  const { data: fetchedAssignments } = useFetch<Assignment[]>(
+    () => lessonId ? assignmentsApi.getAll(lessonId) : Promise.resolve([]),
+    [lessonId],
+  );
+
   const [assignments, setAssignments] = useState<Assignment[]>([]);
 
+  // Sync assignments when fetched data arrives
   useEffect(() => {
-    if (!lessonId) return;
-    assignmentsApi.getAll(lessonId)
-      .then(all => setAssignments(all.sort((a, b) => a.order - b.order)))
-      .catch(() => {
-        // errors surface at the page level via useLesson
-      });
-  }, [lessonId]);
+    if (fetchedAssignments) {
+      setAssignments(fetchedAssignments.sort((a, b) => a.order - b.order));
+    }
+  }, [fetchedAssignments]);
+
   const [isAddingAssignment, setIsAddingAssignment] = useState(false);
   const [editingAssignment, setEditingAssignment] = useState<Assignment | null>(null);
   const [deletingAssignmentId, setDeletingAssignmentId] = useState<string | null>(null);
@@ -178,6 +183,8 @@ export default function useAssignments({
     setActiveStepKey(prevItem?.key ?? 'lessonPlan');
   }, [setActiveStepKey]);
 
+  // handleMoveAssignment uses a full-ID-array reorder API, which cannot be expressed
+  // via useOrderedList's two-item PersistFn. State management is kept inline here.
   const handleMoveAssignment = useCallback(async (id: string, direction: 'up' | 'down') => {
     const sorted = [...assignments].sort((a, b) => a.order - b.order);
     const idx = sorted.findIndex(a => a.id === id);
