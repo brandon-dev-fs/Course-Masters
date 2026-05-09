@@ -1,7 +1,7 @@
 import { lessonToolsApi } from '../../api/lesson-tools.js';
 import type { LessonTool } from '../../api/types.js';
-import { useAuth } from '../../context/AuthContext.js';
 import useResourceList from '../../hooks/useResourceList.js';
+import useCanEdit from '../../hooks/useCanEdit.js';
 import PracticeProblemCard from './PracticeProblemCard.js';
 import PracticeProblemForm from './PracticeProblemForm.js';
 import Modal from '../../components/Modal.js';
@@ -18,8 +18,7 @@ type ProblemUpdateInput = { content?: Record<string, unknown>; order?: number };
 const byOrder = (a: LessonTool, b: LessonTool) => a.order - b.order;
 
 export default function PracticeProblemList({ lessonId }: { lessonId: string }) {
-  const { user } = useAuth();
-  const canEdit = user?.role === 'teacher' || user?.role === 'admin';
+  const canEdit = useCanEdit();
   const {
     items: problems, loading, error,
     showAdd, setShowAdd, editing, setEditing, deleting, setDeleting,
