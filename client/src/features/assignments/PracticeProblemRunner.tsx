@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { CheckCircle2, XCircle, RotateCcw } from 'lucide-react';
 import Button from '../../components/Button.js';
+import ErrorMessage from '../../components/ErrorMessage.js';
 import type { PracticeQuestion, PracticeQuestionType } from '../../api/types.js';
 
 interface PracticeProblemRunnerProps {
@@ -347,7 +348,7 @@ export default function PracticeProblemRunner({
             <p className="text-sm text-muted-foreground">Marking complete...</p>
           )}
           {completeError && (
-            <p role="alert" className="text-sm text-destructive">{completeError}</p>
+            <ErrorMessage variant="inline" message={completeError} />
           )}
         </div>
 

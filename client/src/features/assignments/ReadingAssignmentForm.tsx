@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import Input from '../../components/Input.js';
 import Textarea from '../../components/Textarea.js';
+import ErrorMessage from '../../components/ErrorMessage.js';
 import type { SubFormProps } from './AssignmentFormModal.js';
 
 export default function ReadingAssignmentForm({
@@ -24,7 +25,7 @@ export default function ReadingAssignmentForm({
           required
         />
         {urlTouched && !url.trim() && (
-          <p role="alert" className="text-sm text-destructive mt-1">URL is required</p>
+          <ErrorMessage variant="inline" message="URL is required" className="mt-1" />
         )}
       </div>
       <Textarea

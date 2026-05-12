@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import Input from '../../components/Input.js';
+import ErrorMessage from '../../components/ErrorMessage.js';
 import type { SubFormProps } from './AssignmentFormModal.js';
 
 export default function PracticeProblemMetaFields({ passingPercentage, onPassingPercentageChange }: SubFormProps) {
@@ -27,7 +28,7 @@ export default function PracticeProblemMetaFields({ passingPercentage, onPassing
         />
         <span className="text-sm text-muted-foreground">% — leave empty for manual completion</span>
       </div>
-      {error && <p role="alert" className="text-sm text-destructive mt-1">{error}</p>}
+      {error && <ErrorMessage variant="inline" message={error} className="mt-1" />}
     </div>
   );
 }

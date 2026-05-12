@@ -1,6 +1,7 @@
 import { ArrowUp, ArrowDown, Trash2, Plus } from 'lucide-react';
 import type { SubFormProps } from './AssignmentFormModal.js';
 import type { PracticeQuestionType } from '../../api/types.js';
+import ErrorMessage from '../../components/ErrorMessage.js';
 import {
   MultipleChoiceEditor,
   TrueFalseEditor,
@@ -179,9 +180,7 @@ export default function PracticeProblemAssignmentForm({ questions, onQuestionsCh
         Add question
       </button>
       {questions.length === 0 && (
-        <p role="alert" className="text-sm text-destructive">
-          At least one question is required.
-        </p>
+        <ErrorMessage variant="inline" message="At least one question is required." />
       )}
     </div>
   );
