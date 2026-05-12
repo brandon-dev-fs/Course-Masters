@@ -13,7 +13,10 @@ interface VideoCardProps {
 }
 
 export default function VideoCard({ video, onEdit, onDelete, isComplete, onToggleComplete }: VideoCardProps) {
-  const url = video.content.url as string;
+  if (video.type !== 'video') {
+    return <p className="text-sm text-muted-foreground">Unsupported resource type.</p>;
+  }
+  const url = video.content.url;
   const embedUrl = url ? getEmbedUrl(url) : null;
 
   return (

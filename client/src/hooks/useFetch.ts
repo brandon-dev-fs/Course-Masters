@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { ApiClientError, classifyError } from '../api/client.js';
 
 interface UseFetchResult<T> {
   data: T | null;
@@ -29,7 +30,9 @@ export default function useFetch<T>(
     fetchFn()
       .then(result => { if (!cancelled) setData(result); })
       .catch((err: unknown) => {
-        if (!cancelled) setError(err instanceof Error ? err.message : 'Failed to load');
+        if (!cancelled) {
+          setError(err instanceof ApiClientError ? classifyError(err) : 'Failed to load');
+        }
       })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };

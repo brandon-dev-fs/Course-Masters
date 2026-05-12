@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { ApiClientError, classifyError } from '../api/client.js';
 import type { Assessment, AttemptResult, AttemptSummary, PaginatedAttempts } from '../api/types.js';
 import type { QuestionDraft } from '../features/assessments/QuestionEditor.js';
 
@@ -23,13 +24,17 @@ export default function useAssessment(api: AssessmentApi, parentId: string) {
   useEffect(() => {
     api.get(parentId)
       .then(setAssessment)
-      .catch((err: unknown) => setError(err instanceof Error ? err.message : 'Failed to load'))
+      .catch((err: unknown) => setError(err instanceof ApiClientError ? classifyError(err) : 'Failed to load'))
       .finally(() => setLoading(false));
   }, [parentId]);
 
   useEffect(() => {
     if (assessment && api.getAttempts) {
-      api.getAttempts(assessment.id).then((res) => setAttempts(res.data)).catch(() => {});
+      api.getAttempts(assessment.id)
+        .then((res) => setAttempts(res.data))
+        .catch((err: unknown) => {
+          setError(err instanceof ApiClientError ? classifyError(err) : 'Failed to load attempt history');
+        });
     }
   }, [assessment]);
 
@@ -51,7 +56,12 @@ export default function useAssessment(api: AssessmentApi, parentId: string) {
     const res = await api.submitAttempt(assessment.id, answers);
     setResult(res);
     if (api.getAttempts) {
-      api.getAttempts(assessment.id).then((res) => setAttempts(res.data)).catch(() => {});
+      api.getAttempts(assessment.id)
+        .then((res) => setAttempts(res.data))
+        .catch((err: unknown) => {
+          // Non-fatal: attempt history refresh after submit; user already has results
+          console.warn('Failed to refresh attempt history:', err instanceof Error ? err.message : err);
+        });
     }
     setView('results');
   }

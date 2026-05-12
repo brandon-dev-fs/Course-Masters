@@ -1,4 +1,5 @@
 import { type Dispatch, type FormEvent, type SetStateAction, useState } from 'react';
+import { ApiClientError, classifyError } from '../api/client.js';
 
 export default function useFormSubmit(
   onSubmit: () => Promise<void>,
@@ -18,7 +19,7 @@ export default function useFormSubmit(
     try {
       await onSubmit();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Something went wrong');
+      setError(err instanceof ApiClientError ? classifyError(err) : 'Something went wrong');
     } finally {
       setSubmitting(false);
     }

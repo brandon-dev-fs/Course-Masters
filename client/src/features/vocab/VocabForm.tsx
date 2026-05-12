@@ -13,8 +13,8 @@ interface VocabFormProps {
 }
 
 export default function VocabForm({ initial, nextOrder = 1, onSubmit, onCancel }: VocabFormProps) {
-  const [term, setTerm] = useState((initial?.content?.term as string) ?? '');
-  const [definition, setDefinition] = useState((initial?.content?.definition as string) ?? '');
+  const [term, setTerm] = useState(initial?.type === 'vocab' ? (initial.content.term ?? '') : '');
+  const [definition, setDefinition] = useState(initial?.type === 'vocab' ? (initial.content.definition ?? '') : '');
   const [order, setOrder] = useState(initial?.order ?? nextOrder);
   const { error, submitting, handleSubmit } = useFormSubmit(async () => {
     if (!term.trim() || !definition.trim()) throw new Error('Term and definition are required');

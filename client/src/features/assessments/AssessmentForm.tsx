@@ -24,13 +24,25 @@ function isComplete(q: QuestionDraft) {
 
 /** Convert a persisted question to a local draft. */
 export function toQuestionDraft(q: AssessmentQuestion): QuestionDraft {
+  if (q.type !== 'multiple_choice') {
+    // Non-multiple-choice question types are not yet supported in the editor;
+    // return a safe draft with empty options so the form can still render.
+    return {
+      id: q.id,
+      type: q.type,
+      question: q.question,
+      content: { options: [], correctIndex: 0 },
+      order: q.order,
+      calculatorEnabled: q.calculatorEnabled ?? false,
+    };
+  }
   return {
     id: q.id,
     type: q.type,
     question: q.question,
     content: {
-      options: (q.content.options as string[]) ?? [],
-      correctIndex: (q.content.correctIndex as number) ?? 0,
+      options: q.content.options ?? [],
+      correctIndex: q.content.correctIndex ?? 0,
     },
     order: q.order,
     calculatorEnabled: q.calculatorEnabled ?? false,

@@ -87,7 +87,7 @@ export default function VocabList({ lessonId }: { lessonId: string }) {
       {deleting && (
         <ConfirmDialog
           title="Delete Term"
-          message={`Delete "${(deleting.content?.term as string) ?? deleting.title}"?`}
+          message={`Delete "${deleting.type === 'vocab' ? (deleting.content.term ?? deleting.title) : deleting.title}"?`}
           onConfirm={handleDelete}
           onClose={() => setDeleting(null)}
         />

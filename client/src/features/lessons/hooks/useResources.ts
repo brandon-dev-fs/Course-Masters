@@ -50,8 +50,9 @@ export default function useResources(lessonId: string | undefined): UseResources
     if (!lessonId) return;
     resourceCompletionsApi.get(lessonId)
       .then(comp => setCompletionsData(comp))
-      .catch(() => {
-        // errors surface at the page level via useLesson
+      .catch((err: unknown) => {
+        // Non-fatal: resource completions are decorative; page-level errors are handled via useLesson
+        console.warn('Failed to load resource completions:', err instanceof Error ? err.message : err);
       });
   }, [lessonId]);
 
