@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { GraduationCap, Lock, CheckCircle2, XCircle } from 'lucide-react';
 import { assessmentsApi } from '../../api/assessments.js';
 import useAssessment from '../../hooks/useAssessment.js';
-import AssessmentForm from '../assessments/AssessmentForm.js';
+import AssessmentForm, { toQuestionDraft } from '../assessments/AssessmentForm.js';
 import AssessmentTaker from '../assessments/AssessmentTaker.js';
 import AssessmentResults from '../assessments/AssessmentResults.js';
 import Modal from '../../components/Modal.js';
@@ -36,18 +36,7 @@ export default function ExamCard({ courseId, allUnitsMastered, canEdit }: ExamCa
 
   function openEdit() {
     if (!exam) return;
-    setEditQuestions(
-      exam.questions.map((q) => ({
-        id: q.id,
-        question: q.question,
-        content: {
-          options: (q.content.options as string[]) ?? [],
-          correctIndex: (q.content.correctIndex as number) ?? 0,
-        },
-        order: q.order,
-        calculatorEnabled: q.calculatorEnabled ?? false,
-      })),
-    );
+    setEditQuestions(exam.questions.map(toQuestionDraft));
     setView('creating');
   }
 

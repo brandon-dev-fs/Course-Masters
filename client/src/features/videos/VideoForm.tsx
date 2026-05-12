@@ -15,7 +15,7 @@ interface VideoFormProps {
 
 export default function VideoForm({ initial, nextOrder = 1, onSubmit, onCancel }: VideoFormProps) {
   const [title, setTitle] = useState(initial?.title ?? '');
-  const [url, setUrl] = useState((initial?.content?.url as string) ?? '');
+  const [url, setUrl] = useState(initial?.type === 'video' ? (initial.content.url ?? '') : '');
   const [order, setOrder] = useState(initial?.order ?? nextOrder);
   const titleTouched = useRef(!!initial?.title);
 

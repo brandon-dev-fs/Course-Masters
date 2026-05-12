@@ -28,6 +28,30 @@ import StudentMaterialsModal from '../student-notes/StudentMaterialsModal.js';
 import AssignmentFormModal from '../assignments/AssignmentFormModal.js';
 import ConfirmDialog from '../../components/ConfirmDialog.js';
 import AssessmentSection from '../assessments/AssessmentSection.js';
+import ErrorBoundary from '../../components/ErrorBoundary.js';
+
+function contentAreaFallback(_error: Error, _reset: () => void) {
+  return (
+    <div className="rounded-lg bg-surface border border-border p-4 text-sm text-muted-foreground flex flex-col gap-3">
+      <p>Something went wrong loading this content.</p>
+      <div className="flex gap-3">
+        <a
+          href={window.location.href}
+          className="text-primary underline text-sm"
+        >
+          Reload page
+        </a>
+        <button
+          type="button"
+          onClick={() => window.history.back()}
+          className="text-sm text-muted-foreground underline hover:text-foreground"
+        >
+          Go back
+        </button>
+      </div>
+    </div>
+  );
+}
 
 const testApi = {
   get: assessmentsApi.getUnitQuiz,
@@ -199,22 +223,24 @@ export default function LessonDetailPage() {
           />
 
           {unitTestActive ? (
-            <main className="flex-1 overflow-y-auto px-4 py-4">
-              <AssessmentSection
-                parentId={unitId!}
-                api={testApi}
-                label="Unit Test"
-                createLabel="Create Test"
-                takeLabel="Take Test"
-                retakeLabel="Retake Test"
-                modalTitle="Unit Test"
-                resultsTitle="Test Results"
-                displayMode="inline"
-                canEdit={canEdit}
-                unlocked={allLessonsComplete}
-                lockedMessage="Complete all lessons to unlock the unit test."
-              />
-            </main>
+            <ErrorBoundary fallback={contentAreaFallback}>
+              <main className="flex-1 overflow-y-auto px-4 py-4">
+                <AssessmentSection
+                  parentId={unitId!}
+                  api={testApi}
+                  label="Unit Test"
+                  createLabel="Create Test"
+                  takeLabel="Take Test"
+                  retakeLabel="Retake Test"
+                  modalTitle="Unit Test"
+                  resultsTitle="Test Results"
+                  displayMode="inline"
+                  canEdit={canEdit}
+                  unlocked={allLessonsComplete}
+                  lockedMessage="Complete all lessons to unlock the unit test."
+                />
+              </main>
+            </ErrorBoundary>
           ) : (
             <>
               <AssignmentStepper
@@ -227,6 +253,7 @@ export default function LessonDetailPage() {
                 onStepClick={setActiveStepKey}
                 onAdd={canEdit ? () => setIsAddingAssignment(true) : undefined}
               />
+              <ErrorBoundary fallback={contentAreaFallback}>
               <main className="flex-1 overflow-y-auto px-4 py-6">
                 {activeItem && (
                   <AssignmentSection
@@ -277,6 +304,7 @@ export default function LessonDetailPage() {
                   </AssignmentSection>
                 )}
               </main>
+              </ErrorBoundary>
             </>
           )}
         </div>

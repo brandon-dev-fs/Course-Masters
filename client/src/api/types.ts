@@ -63,25 +63,101 @@ export interface Lesson {
   planContent: Record<string, unknown>;
 }
 
-export interface LessonResource {
+// ─── LessonResource discriminated union ─────────────────────────────────────
+
+/** Tiptap JSON document shape stored in note and lecture content. */
+export type TiptapJSON = Record<string, unknown>;
+
+export interface NoteContent {
+  body: TiptapJSON;
+}
+
+export interface VideoContent {
+  url: string;
+}
+
+export interface NoteResource {
   id: string;
-  type: ResourceType;
+  type: 'note';
   title: string;
-  content: Record<string, unknown>;
+  content: NoteContent;
   order: number;
   lessonId: string;
   isRequired: boolean;
 }
 
-export interface LessonTool {
+export interface VideoResource {
   id: string;
-  type: ToolType;
+  type: 'video';
   title: string;
-  content: Record<string, unknown>;
+  content: VideoContent;
   order: number;
   lessonId: string;
   isRequired: boolean;
 }
+
+export interface LectureResource {
+  id: string;
+  type: 'lecture';
+  title: string;
+  content: NoteContent;
+  order: number;
+  lessonId: string;
+  isRequired: boolean;
+}
+
+export type LessonResource = NoteResource | VideoResource | LectureResource;
+
+// ─── LessonTool discriminated union ─────────────────────────────────────────
+
+export interface FlashCardContent {
+  front: string;
+  back: string;
+}
+
+export interface PracticeProblemContent {
+  question: string;
+  options: string[];
+  correctIndex: number;
+  calculatorEnabled?: boolean;
+}
+
+export interface VocabContent {
+  term: string;
+  definition: string;
+}
+
+export interface FlashCardTool {
+  id: string;
+  type: 'flash_card';
+  title: string;
+  content: FlashCardContent;
+  order: number;
+  lessonId: string;
+  isRequired: boolean;
+}
+
+export interface PracticeProblemTool {
+  id: string;
+  type: 'practice_problem';
+  title: string;
+  content: PracticeProblemContent;
+  order: number;
+  lessonId: string;
+  isRequired: boolean;
+}
+
+export interface VocabTool {
+  id: string;
+  type: 'vocab';
+  title: string;
+  content: VocabContent;
+  order: number;
+  lessonId: string;
+  isRequired: boolean;
+}
+
+export type LessonTool = FlashCardTool | PracticeProblemTool | VocabTool;
 
 export interface ResourceCompletionItem {
   resourceType: string;
@@ -103,14 +179,62 @@ export interface StudentNote {
   updatedAt: string;
 }
 
-export interface AssessmentQuestion {
+// ─── AssessmentQuestion discriminated union ──────────────────────────────────
+
+export interface MultipleChoiceContent {
+  options: string[];
+  correctIndex: number;
+}
+
+export interface TrueFalseContent {
+  correctAnswer: boolean;
+}
+
+/** Matching and fill-in-blank content shapes are reserved for future use. */
+export type MatchingContent = Record<string, unknown>;
+export type FillInBlankContent = Record<string, unknown>;
+
+export interface MultipleChoiceQuestion {
   id: string;
-  type: QuestionType;
+  type: 'multiple_choice';
   question: string;
-  content: Record<string, unknown>;
+  content: MultipleChoiceContent;
   order: number;
   calculatorEnabled: boolean;
 }
+
+export interface TrueFalseQuestion {
+  id: string;
+  type: 'true_false';
+  question: string;
+  content: TrueFalseContent;
+  order: number;
+  calculatorEnabled: boolean;
+}
+
+export interface MatchingQuestion {
+  id: string;
+  type: 'matching';
+  question: string;
+  content: MatchingContent;
+  order: number;
+  calculatorEnabled: boolean;
+}
+
+export interface FillInBlankQuestion {
+  id: string;
+  type: 'fill_in_blank';
+  question: string;
+  content: FillInBlankContent;
+  order: number;
+  calculatorEnabled: boolean;
+}
+
+export type AssessmentQuestion =
+  | MultipleChoiceQuestion
+  | TrueFalseQuestion
+  | MatchingQuestion
+  | FillInBlankQuestion;
 
 export interface Assessment {
   id: string;

@@ -13,14 +13,15 @@ interface PracticeProblemFormProps {
 }
 
 export default function PracticeProblemForm({ initial, nextOrder = 1, onSubmit, onCancel }: PracticeProblemFormProps) {
+  const isPracticeProblem = initial?.type === 'practice_problem';
   const [draft, setDraft] = useState<QuestionDraft>({
-    question: (initial?.content?.question as string) ?? '',
+    question: isPracticeProblem ? (initial.content.question ?? '') : '',
     content: {
-      options: (initial?.content?.options as string[]) ?? ['', ''],
-      correctIndex: (initial?.content?.correctIndex as number) ?? 0,
+      options: isPracticeProblem ? (initial.content.options ?? ['', '']) : ['', ''],
+      correctIndex: isPracticeProblem ? (initial.content.correctIndex ?? 0) : 0,
     },
     order: initial?.order ?? nextOrder,
-    calculatorEnabled: (initial?.content?.calculatorEnabled as boolean) ?? false,
+    calculatorEnabled: isPracticeProblem ? (initial.content.calculatorEnabled ?? false) : false,
   });
   const { error, submitting, handleSubmit } = useFormSubmit(async () => {
     if (!draft.question.trim()) throw new Error('Question is required');

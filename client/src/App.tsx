@@ -12,6 +12,7 @@ import RequireAuth from './features/auth/RequireAuth.js';
 import RequireRole from './features/auth/RequireRole.js';
 import AdminUsersPage from './features/auth/AdminUsersPage.js';
 import LoadingSpinner from './components/LoadingSpinner.js';
+import ErrorBoundary from './components/ErrorBoundary.js';
 
 // function HomePage() {
 // 	const { user, isLoading } = useAuth();
@@ -21,8 +22,9 @@ import LoadingSpinner from './components/LoadingSpinner.js';
 
 export default function App() {
 	return (
-		<ThemeProvider>
-			<AuthProvider>
+		<ErrorBoundary>
+			<ThemeProvider>
+				<AuthProvider>
 				<Routes>
 					<Route element={<Layout />}>
 						<Route
@@ -73,7 +75,8 @@ export default function App() {
 						element={<RegisterPage />}
 					/>
 				</Routes>
-			</AuthProvider>
-		</ThemeProvider>
+				</AuthProvider>
+			</ThemeProvider>
+		</ErrorBoundary>
 	);
 }
