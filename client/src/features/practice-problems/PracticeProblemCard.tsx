@@ -12,10 +12,13 @@ interface PracticeProblemCardProps {
 }
 
 export default function PracticeProblemCard({ problem, onEdit, onDelete }: PracticeProblemCardProps) {
-  const question = (problem.content.question as string) ?? problem.title;
-  const options = (problem.content.options as string[]) ?? [];
-  const correctIndex = (problem.content.correctIndex as number) ?? 0;
-  const calculatorEnabled = (problem.content.calculatorEnabled as boolean) ?? false;
+  if (problem.type !== 'practice_problem') {
+    return <p className="text-sm text-muted-foreground">Unsupported tool type.</p>;
+  }
+  const question = problem.content.question ?? problem.title;
+  const options = problem.content.options ?? [];
+  const correctIndex = problem.content.correctIndex ?? 0;
+  const calculatorEnabled = problem.content.calculatorEnabled ?? false;
 
   const [selected, setSelected] = useState<number | null>(null);
   const [checked, setChecked] = useState(false);

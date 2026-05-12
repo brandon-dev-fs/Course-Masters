@@ -1,6 +1,6 @@
 import { Routes, Route } from 'react-router-dom';
 import { ThemeProvider } from './context/ThemeContext.js';
-import { AuthProvider, useAuth } from './context/AuthContext.js';
+import { AuthProvider } from './context/AuthContext.js';
 import Layout from './components/Layout.js';
 import HomePage from './features/home/HomePage.js';
 import CourseDetailPage from './features/courses/CourseDetailPage.js';
@@ -11,18 +11,13 @@ import ProfilePage from './features/auth/ProfilePage.js';
 import RequireAuth from './features/auth/RequireAuth.js';
 import RequireRole from './features/auth/RequireRole.js';
 import AdminUsersPage from './features/auth/AdminUsersPage.js';
-import LoadingSpinner from './components/LoadingSpinner.js';
-
-// function HomePage() {
-// 	const { user, isLoading } = useAuth();
-// 	if (isLoading) return <LoadingSpinner />;
-// 	return user ? <HomePage /> : <LandingPage />;
-// }
+import ErrorBoundary from './components/ErrorBoundary.js';
 
 export default function App() {
 	return (
-		<ThemeProvider>
-			<AuthProvider>
+		<ErrorBoundary>
+			<ThemeProvider>
+				<AuthProvider>
 				<Routes>
 					<Route element={<Layout />}>
 						<Route
@@ -73,7 +68,8 @@ export default function App() {
 						element={<RegisterPage />}
 					/>
 				</Routes>
-			</AuthProvider>
-		</ThemeProvider>
+				</AuthProvider>
+			</ThemeProvider>
+		</ErrorBoundary>
 	);
 }

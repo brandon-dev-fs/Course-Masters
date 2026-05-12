@@ -1,5 +1,6 @@
 import { FormEvent, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ApiClientError, classifyError } from '../../api/client.js';
 import QuestionEditor, { type QuestionDraft } from './QuestionEditor.js';
 import Button from '../../components/Button.js';
 import ConfirmDialog from '../../components/ConfirmDialog.js';
@@ -24,13 +25,25 @@ function isComplete(q: QuestionDraft) {
 
 /** Convert a persisted question to a local draft. */
 export function toQuestionDraft(q: AssessmentQuestion): QuestionDraft {
+  if (q.type !== 'multiple_choice') {
+    // Non-multiple-choice question types are not yet supported in the editor;
+    // return a safe draft with empty options so the form can still render.
+    return {
+      id: q.id,
+      type: q.type,
+      question: q.question,
+      content: { options: [], correctIndex: 0 },
+      order: q.order,
+      calculatorEnabled: q.calculatorEnabled ?? false,
+    };
+  }
   return {
     id: q.id,
     type: q.type,
     question: q.question,
     content: {
-      options: (q.content.options as string[]) ?? [],
-      correctIndex: (q.content.correctIndex as number) ?? 0,
+      options: q.content.options ?? [],
+      correctIndex: q.content.correctIndex ?? 0,
     },
     order: q.order,
     calculatorEnabled: q.calculatorEnabled ?? false,
@@ -84,7 +97,7 @@ export default function AssessmentForm({ initialQuestions, onSubmit, onCancel, a
     try {
       await onSubmit(questions);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Something went wrong');
+      setError(err instanceof ApiClientError ? classifyError(err) : err instanceof Error ? err.message : 'Something went wrong');
     } finally {
       setSubmitting(false);
     }
@@ -115,7 +128,7 @@ export default function AssessmentForm({ initialQuestions, onSubmit, onCancel, a
       setQuestions(updated.questions.map(toQuestionDraft));
     } catch (err: unknown) {
       setQuestions(snapshot);
-      setBulkError(err instanceof Error ? err.message : 'Bulk update failed');
+      setBulkError(err instanceof ApiClientError ? classifyError(err) : err instanceof Error ? err.message : 'Bulk update failed');
     } finally {
       setBulkLoading(false);
     }

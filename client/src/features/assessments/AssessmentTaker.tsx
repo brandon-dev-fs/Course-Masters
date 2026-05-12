@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ApiClientError, classifyError } from '../../api/client.js';
 import type { AssessmentQuestion } from '../../api/types.js';
 import Button from '../../components/Button.js';
 import CalculatorPanel from './CalculatorPanel.js';
@@ -23,7 +24,7 @@ export default function AssessmentTaker({ questions, onSubmit, onCancel }: Asses
   const isFirst = currentIdx === 0;
   const isLast = currentIdx === total - 1;
   const q = questions[currentIdx];
-  const options = (q.content?.options as string[]) ?? [];
+  const options = q.type === 'multiple_choice' ? q.content.options : [];
 
   // Reset calculator panel whenever the active question changes
   useEffect(() => {
@@ -41,7 +42,7 @@ export default function AssessmentTaker({ questions, onSubmit, onCancel }: Asses
     try {
       await onSubmit(answers as number[]);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Submission failed');
+      setError(err instanceof ApiClientError ? classifyError(err) : err instanceof Error ? err.message : 'Submission failed');
       setSubmitting(false);
     }
   }
@@ -92,27 +93,31 @@ export default function AssessmentTaker({ questions, onSubmit, onCancel }: Asses
         )}
 
         {/* Answer choices */}
-        <div className="flex flex-col gap-2">
-          {options.map((opt, optIdx) => (
-            <label
-              key={optIdx}
-              className={`flex items-center gap-3 rounded-lg border px-4 py-3 cursor-pointer transition-colors ${
-                answers[currentIdx] === optIdx
-                  ? 'border-primary bg-primary/10 text-foreground'
-                  : 'border-border bg-surface text-muted-foreground hover:border-primary/50'
-              }`}
-            >
-              <input
-                type="radio"
-                name={`q-${currentIdx}`}
-                checked={answers[currentIdx] === optIdx}
-                onChange={() => selectAnswer(optIdx)}
-                className="accent-primary"
-              />
-              <span className="text-sm">{opt}</span>
-            </label>
-          ))}
-        </div>
+        {q.type !== 'multiple_choice' ? (
+          <p className="text-sm text-muted-foreground">Unsupported question type.</p>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {options.map((opt, optIdx) => (
+              <label
+                key={optIdx}
+                className={`flex items-center gap-3 rounded-lg border px-4 py-3 cursor-pointer transition-colors ${
+                  answers[currentIdx] === optIdx
+                    ? 'border-primary bg-primary/10 text-foreground'
+                    : 'border-border bg-surface text-muted-foreground hover:border-primary/50'
+                }`}
+              >
+                <input
+                  type="radio"
+                  name={`q-${currentIdx}`}
+                  checked={answers[currentIdx] === optIdx}
+                  onChange={() => selectAnswer(optIdx)}
+                  className="accent-primary"
+                />
+                <span className="text-sm">{opt}</span>
+              </label>
+            ))}
+          </div>
+        )}
       </div>
 
       {error && <p className="text-sm text-destructive">{error}</p>}

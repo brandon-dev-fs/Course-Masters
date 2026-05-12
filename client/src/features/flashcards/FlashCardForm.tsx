@@ -13,8 +13,12 @@ interface FlashCardFormProps {
 }
 
 export default function FlashCardForm({ initial, nextOrder = 1, onSubmit, onCancel }: FlashCardFormProps) {
-  const [front, setFront] = useState((initial?.content?.front as string) ?? '');
-  const [back, setBack] = useState((initial?.content?.back as string) ?? '');
+  const [front, setFront] = useState(
+    initial?.type === 'flash_card' ? (initial.content.front ?? '') : '',
+  );
+  const [back, setBack] = useState(
+    initial?.type === 'flash_card' ? (initial.content.back ?? '') : '',
+  );
   const [order, setOrder] = useState(initial?.order ?? nextOrder);
   const { error, submitting, handleSubmit } = useFormSubmit(async () => {
     if (!front.trim() || !back.trim()) throw new Error('Front and back are required');

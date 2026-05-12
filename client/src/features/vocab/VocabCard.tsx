@@ -9,8 +9,11 @@ interface VocabCardProps {
 }
 
 export default function VocabCard({ vocab, onEdit, onDelete }: VocabCardProps) {
-  const term = (vocab.content.term as string) ?? vocab.title;
-  const definition = (vocab.content.definition as string) ?? '';
+  if (vocab.type !== 'vocab') {
+    return <p className="text-sm text-muted-foreground">Unsupported tool type.</p>;
+  }
+  const term = vocab.content.term ?? vocab.title;
+  const definition = vocab.content.definition ?? '';
 
   return (
     <div className="rounded-lg bg-surface border border-border p-4 group shadow-warm-sm hover:border-primary/30 transition-all">
