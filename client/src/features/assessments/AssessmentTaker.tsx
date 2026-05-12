@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ApiClientError, classifyError } from '../../api/client.js';
 import type { AssessmentQuestion } from '../../api/types.js';
 import Button from '../../components/Button.js';
 import CalculatorPanel from './CalculatorPanel.js';
@@ -41,7 +42,7 @@ export default function AssessmentTaker({ questions, onSubmit, onCancel }: Asses
     try {
       await onSubmit(answers as number[]);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Submission failed');
+      setError(err instanceof ApiClientError ? classifyError(err) : err instanceof Error ? err.message : 'Submission failed');
       setSubmitting(false);
     }
   }
