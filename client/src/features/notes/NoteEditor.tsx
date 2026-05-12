@@ -53,8 +53,8 @@ export default function NoteEditor({ note, isComplete, onToggleComplete, onUpdat
       setEditingTitle(updated.title);
       setEditing(false);
       onUpdate?.(updated);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to save');
     } finally {
       setSaving(false);
     }

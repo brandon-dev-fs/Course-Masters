@@ -1,10 +1,12 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { assignmentsApi } from '../../../api/assignments.js';
 import type { CreateAssignmentPayload, UpdateAssignmentPayload } from '../../../api/assignments.js';
 import type { Assignment, Lesson, LessonResource, LessonTool } from '../../../api/types.js';
 import type { AssignmentItem } from '../AssignmentSection.js';
 import type { StudentToolType } from '../../student-notes/StudentToolsBar.js';
 import useFetch from '../../../hooks/useFetch.js';
+import useOrderedList from '../../../hooks/useOrderedList.js';
+import type { PersistFn } from '../../../hooks/useOrderedList.js';
 
 export const nextOrder = (arr: { order: number }[]) =>
   arr.length === 0 ? 1 : Math.max(...arr.map(r => r.order)) + 1;
@@ -121,9 +123,47 @@ export default function useAssignments({
     [lessonId],
   );
 
-  const [assignments, setAssignments] = useState<Assignment[]>([]);
+  // Stable refs so the PersistFn closure never goes stale between renders.
+  const lessonIdRef = useRef<string | undefined>(lessonId);
+  useEffect(() => { lessonIdRef.current = lessonId; }, [lessonId]);
 
-  // Sync assignments when fetched data arrives
+  // assignmentsRef mirrors the current items array so persistReorder can read
+  // the post-swap state to derive the full sorted ID array for the reorder API.
+  const assignmentsRef = useRef<Assignment[]>([]);
+
+  // PersistFn for useOrderedList: called after the optimistic swap is already
+  // applied to state. Reads the current sorted list from assignmentsRef (which
+  // is kept in sync via the setItems callback below) and calls reorder with the
+  // full ID array. On success, syncs with the authoritative server response.
+  const persistReorder = useCallback<PersistFn<Assignment>>(
+    async (_a, _b, _aNewOrder, _bNewOrder) => {
+      const currentLessonId = lessonIdRef.current;
+      if (!currentLessonId) return;
+      // assignmentsRef.current is already at the post-swap state because
+      // useOrderedList applies the optimistic update before calling persistFn.
+      const sortedIds = [...assignmentsRef.current]
+        .sort((x, y) => x.order - y.order)
+        .map(item => item.id);
+      const updated = await assignmentsApi.reorder(currentLessonId, { assignmentIds: sortedIds });
+      setItems(updated);
+    },
+    // lessonIdRef and assignmentsRef are stable refs; setItems is a stable setter
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
+
+  const { items: assignments, setItems, handleMove: handleMoveAssignment } = useOrderedList<Assignment>(
+    [],
+    persistReorder,
+  );
+
+  // Keep assignmentsRef in sync so persistReorder always sees the latest state.
+  useEffect(() => { assignmentsRef.current = assignments; }, [assignments]);
+
+  // Alias setItems as setAssignments for use in the other handlers below.
+  const setAssignments = setItems;
+
+  // Sync assignments when fetched data arrives.
   useEffect(() => {
     if (fetchedAssignments) {
       setAssignments(fetchedAssignments.sort((a, b) => a.order - b.order));
@@ -182,30 +222,6 @@ export default function useAssignments({
     const prevItem = filteredItems[Math.max(0, activeIdx - 1)];
     setActiveStepKey(prevItem?.key ?? 'lessonPlan');
   }, [setActiveStepKey]);
-
-  // handleMoveAssignment uses a full-ID-array reorder API, which cannot be expressed
-  // via useOrderedList's two-item PersistFn. State management is kept inline here.
-  const handleMoveAssignment = useCallback(async (id: string, direction: 'up' | 'down') => {
-    const sorted = [...assignments].sort((a, b) => a.order - b.order);
-    const idx = sorted.findIndex(a => a.id === id);
-    const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
-    if (swapIdx < 0 || swapIdx >= sorted.length) return;
-
-    const newIdOrder = sorted.map(a => a.id);
-    [newIdOrder[idx], newIdOrder[swapIdx]] = [newIdOrder[swapIdx], newIdOrder[idx]];
-
-    setAssignments(
-      newIdOrder.map((assignId, i) => ({ ...sorted.find(a => a.id === assignId)!, order: i + 1 })),
-    );
-
-    try {
-      if (!lessonId) return;
-      const updated = await assignmentsApi.reorder(lessonId, { assignmentIds: newIdOrder });
-      setAssignments(updated);
-    } catch {
-      setAssignments(sorted);
-    }
-  }, [assignments, lessonId]);
 
   const handleToggleAssignmentCompletion = useCallback(async (assignment: Assignment) => {
     const wasComplete = assignment.completed;
