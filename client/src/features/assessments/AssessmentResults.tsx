@@ -21,7 +21,7 @@ export default function AssessmentResults({ result, onRetake, onDismiss }: Asses
 
       <div>
         <p id="assessment-result-status" className={`text-lg font-semibold ${result.passed ? 'text-accent' : 'text-destructive'}`}>
-          {result.passed ? '✓ Passed!' : '✗ Not passed'}
+          {result.passed ? <><span aria-hidden="true">✓</span> Passed!</> : <><span aria-hidden="true">✗</span> Not passed</>}
         </p>
         <p className="text-sm text-muted-foreground mt-1">
           {result.correctCount} / {result.totalQuestions} correct &middot; 80% required to pass

@@ -15,23 +15,26 @@ export default function Modal({
 	size = 'md',
 }: ModalProps) {
 	const containerRef = useRef<HTMLDivElement | null>(null);
-	const previousFocusRef = useRef<Element | null>(null);
 
+	// Capture the trigger element exactly once at mount (before focus moves into the modal),
+	// and restore focus to it on unmount. Kept separate from the keydown effect so that
+	// inline arrow-function onClose props on call sites don't cause this to re-run and
+	// overwrite previousFocusRef with the already-focused modal container.
 	useEffect(() => {
-		// Capture the currently focused element so we can restore it on close
-		previousFocusRef.current = document.activeElement;
+		const trigger = document.activeElement;
+		return () => {
+			(trigger as HTMLElement | null)?.focus?.();
+		};
+	}, []);
 
+	// Keyboard listener re-subscribes whenever onClose changes identity.
+	useEffect(() => {
 		const onKey = (e: KeyboardEvent) => {
 			if (e.key === 'Escape') onClose();
 		};
 		document.addEventListener('keydown', onKey);
-
 		return () => {
 			document.removeEventListener('keydown', onKey);
-			// Restore focus to the element that opened the modal
-			if (previousFocusRef.current instanceof HTMLElement) {
-				previousFocusRef.current.focus();
-			}
 		};
 	}, [onClose]);
 
