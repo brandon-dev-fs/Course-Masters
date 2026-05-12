@@ -165,16 +165,16 @@ export default function AssessmentSection({
           {hasAttempts && (
             <div className="flex flex-col gap-2">
               <h4 className="text-sm font-medium text-muted-foreground">Previous Attempts</h4>
-              <div className="flex flex-col gap-1.5">
+              <ul className="flex flex-col gap-1.5" role="list">
                 {attempts.map((a, i) => (
-                  <div key={a.id} className="flex items-center justify-between rounded-lg border border-border bg-surface-raised px-3 py-2 text-sm">
+                  <li key={a.id} className="flex items-center justify-between rounded-lg border border-border bg-surface-raised px-3 py-2 text-sm">
                     <span className="text-muted-foreground">#{attempts.length - i}</span>
                     <span className={`font-medium ${a.passed ? 'text-accent' : 'text-destructive'}`}>{Math.round(a.score * 100)}%</span>
                     <span className={`text-xs ${a.passed ? 'text-accent' : 'text-destructive'}`}>{a.passed ? 'Passed' : 'Failed'}</span>
                     <span className="text-xs text-muted-foreground">{new Date(a.createdAt).toLocaleDateString()}</span>
-                  </div>
+                  </li>
                 ))}
-              </div>
+              </ul>
             </div>
           )}
         </>

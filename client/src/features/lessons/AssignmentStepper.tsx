@@ -83,6 +83,7 @@ export default function AssignmentStepper({
                   className={nodeClass}
                   title={item.title}
                   aria-label={item.title}
+                  aria-current={isActive ? 'step' : undefined}
                   disabled={isLocked}
                 >
                   {isLocked ? (
@@ -144,6 +145,7 @@ export default function AssignmentStepper({
                 className={nodeClass}
                 disabled={isLocked}
                 aria-label={item.title}
+                aria-current={isActive ? 'step' : undefined}
                 title={item.title}
               >
                 {isLocked ? (
