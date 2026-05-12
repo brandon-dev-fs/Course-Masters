@@ -29,9 +29,13 @@ export default function UnitTestCard({ unitId, allLessonsComplete }: { unitId: s
             <ClipboardCheck className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
             <span className="font-medium text-foreground text-sm truncate">Unit Test</span>
           </div>
-          <div className={`w-4 h-4 rounded-[3px] border flex items-center justify-center shrink-0 ${
-            passed ? 'bg-green-500 border-green-500' : 'border-border bg-surface-raised'
-          }`}>
+          <div
+            role="img"
+            aria-label={locked ? 'Status: Locked' : passed ? 'Status: Passed' : 'Status: Not passed'}
+            className={`w-4 h-4 rounded-[3px] border flex items-center justify-center shrink-0 ${
+              passed ? 'bg-green-500 border-green-500' : 'border-border bg-surface-raised'
+            }`}
+          >
             {locked
               ? <Lock className="w-2.5 h-2.5 text-muted-foreground/50" />
               : <Check className={`w-3 h-3 ${passed ? 'text-white' : 'text-muted-foreground/25'}`} strokeWidth={3} />
