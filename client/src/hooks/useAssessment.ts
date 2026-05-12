@@ -58,9 +58,8 @@ export default function useAssessment(api: AssessmentApi, parentId: string) {
     if (api.getAttempts) {
       api.getAttempts(assessment.id)
         .then((res) => setAttempts(res.data))
-        .catch((err: unknown) => {
+        .catch(() => {
           // Non-fatal: attempt history refresh after submit; user already has results
-          console.warn('Failed to refresh attempt history:', err instanceof Error ? err.message : err);
         });
     }
     setView('results');

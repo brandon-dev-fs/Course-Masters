@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { ApiClientError, classifyError } from '../../api/client.js';
 import { lessonResourcesApi } from '../../api/lesson-resources.js';
 import type { LessonResource } from '../../api/types.js';
 import useCanEdit from '../../hooks/useCanEdit.js';
@@ -60,7 +61,7 @@ export default function NoteEditor({ note, isComplete, onToggleComplete, onUpdat
       setEditing(false);
       onUpdate?.(updated);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to save');
+      setError(err instanceof ApiClientError ? classifyError(err) : err instanceof Error ? err.message : 'Failed to save');
     } finally {
       setSaving(false);
     }
