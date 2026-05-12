@@ -1,6 +1,7 @@
 import { useRef, useState, useCallback } from 'react';
 import { Loader2 } from 'lucide-react';
 import Input from '../../components/Input.js';
+import ErrorMessage from '../../components/ErrorMessage.js';
 import type { SubFormProps } from './AssignmentFormModal.js';
 import useYouTubeTitle from '../../hooks/useYouTubeTitle.js';
 
@@ -37,7 +38,7 @@ export default function VideoAssignmentForm({
         required
       />
       {urlTouched && !url.trim() && (
-        <p role="alert" className="text-sm text-destructive -mt-2">URL is required</p>
+        <ErrorMessage variant="inline" message="URL is required" className="-mt-2" />
       )}
       <div className="relative">
         <Input

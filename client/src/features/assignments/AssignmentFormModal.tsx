@@ -16,7 +16,7 @@ import PracticeProblemMetaFields from './PracticeProblemMetaFields.js';
 import type { PracticeQuestionDraft } from './PracticeProblemAssignmentForm.js';
 import type { Assignment, AssignmentType, VocabEntry } from '../../api/types.js';
 import type { CreateAssignmentPayload, UpdateAssignmentPayload } from '../../api/assignments.js';
-import useFormSubmit from '../../hooks/useFormSubmit.js';
+import { ApiClientError, classifyError } from '../../api/client.js';
 
 // ─── Shared state + handler types ─────────────────────────────────────────────
 
@@ -138,6 +138,10 @@ export default function AssignmentFormModal({ initial, onSubmit, onClose }: Assi
       ? `Edit ${config!.label}`
       : `Add ${config!.label}`;
 
+  // Submission state
+  const [apiError, setApiError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
   // Navigation handlers
   function handleTypeSelected(type: AssignmentType) {
     setSelectedType(type);
@@ -167,122 +171,131 @@ export default function AssignmentFormModal({ initial, onSubmit, onClose }: Assi
     setStep('items');
   }
 
-  // Form submission
-  const { error: apiError, submitting, handleSubmit } = useFormSubmit(async () => {
-    if (!assignmentTitle.trim()) {
-      setTitleError('Title is required');
-      throw new Error('Title is required');
-    }
-    setTitleError('');
-
-    const type = selectedType!;
-
-    if (isEdit) {
-      const updatePayload: UpdateAssignmentPayload = {
-        title: assignmentTitle.trim(),
-        objective: objective.trim() || undefined,
-      };
-
-      if (type === 'note') {
-        if (!typeState.noteContent) throw new Error('Content is required');
-        updatePayload.content = typeState.noteContent;
-      } else if (type === 'video') {
-        if (!typeState.url.trim()) throw new Error('URL is required');
-        updatePayload.url = typeState.url.trim();
-        if (typeState.displayTitle.trim()) updatePayload.displayTitle = typeState.displayTitle.trim();
-      } else if (type === 'reading') {
-        if (!typeState.url.trim()) throw new Error('URL is required');
-        updatePayload.url = typeState.url.trim();
-        if (typeState.description.trim()) updatePayload.description = typeState.description.trim();
-        if (typeState.estimatedMinutes.trim()) {
-          const mins = parseInt(typeState.estimatedMinutes, 10);
-          if (isNaN(mins) || mins < 1) throw new Error('Estimated minutes must be at least 1');
-          updatePayload.estimatedMinutes = mins;
-        } else {
-          updatePayload.estimatedMinutes = null;
-        }
-      } else if (type === 'vocab') {
-        const validEntries = typeState.entries.filter(e => e.term.trim() && e.definition.trim());
-        if (validEntries.length === 0) throw new Error('At least one term with a non-empty term and definition is required');
-        updatePayload.entries = validEntries;
-      } else if (type === 'practice_problem') {
-        if (typeState.questions.length === 0) throw new Error('At least one question is required');
-        if (typeState.passingPercentage.trim()) {
-          const pp = parseInt(typeState.passingPercentage, 10);
-          if (isNaN(pp) || pp < 0 || pp > 100) throw new Error('Passing percentage must be between 0 and 100');
-          updatePayload.passingPercentage = pp;
-        } else {
-          updatePayload.passingPercentage = null;
-        }
-        updatePayload.questions = typeState.questions.map((q, i) => ({ type: q.type, order: i + 1, content: q.content }));
+  // Form submission — called both as form onSubmit (with event) and button onClick (without event)
+  async function handleSubmit(e?: React.FormEvent) {
+    e?.preventDefault();
+    setSubmitting(true);
+    setApiError('');
+    try {
+      if (!assignmentTitle.trim()) {
+        setTitleError('Title is required');
+        throw new Error('Title is required');
       }
+      setTitleError('');
 
-      await onSubmit(updatePayload);
-    } else {
-      let createPayload: CreateAssignmentPayload;
+      const type = selectedType!;
 
-      if (type === 'note') {
-        if (!typeState.noteContent) throw new Error('Content is required');
-        createPayload = {
+      if (isEdit) {
+        const updatePayload: UpdateAssignmentPayload = {
           title: assignmentTitle.trim(),
           objective: objective.trim() || undefined,
-          type: 'note',
-          content: typeState.noteContent,
         };
-      } else if (type === 'video') {
-        if (!typeState.url.trim()) throw new Error('URL is required');
-        createPayload = {
-          title: assignmentTitle.trim(),
-          objective: objective.trim() || undefined,
-          type: 'video',
-          url: typeState.url.trim(),
-          displayTitle: typeState.displayTitle.trim() || undefined,
-        };
-      } else if (type === 'reading') {
-        if (!typeState.url.trim()) throw new Error('URL is required');
-        const estimatedMinutes = typeState.estimatedMinutes.trim()
-          ? parseInt(typeState.estimatedMinutes, 10)
-          : undefined;
-        if (estimatedMinutes !== undefined && (isNaN(estimatedMinutes) || estimatedMinutes < 1)) {
-          throw new Error('Estimated minutes must be at least 1');
+
+        if (type === 'note') {
+          if (!typeState.noteContent) throw new Error('Content is required');
+          updatePayload.content = typeState.noteContent;
+        } else if (type === 'video') {
+          if (!typeState.url.trim()) throw new Error('URL is required');
+          updatePayload.url = typeState.url.trim();
+          if (typeState.displayTitle.trim()) updatePayload.displayTitle = typeState.displayTitle.trim();
+        } else if (type === 'reading') {
+          if (!typeState.url.trim()) throw new Error('URL is required');
+          updatePayload.url = typeState.url.trim();
+          if (typeState.description.trim()) updatePayload.description = typeState.description.trim();
+          if (typeState.estimatedMinutes.trim()) {
+            const mins = parseInt(typeState.estimatedMinutes, 10);
+            if (isNaN(mins) || mins < 1) throw new Error('Estimated minutes must be at least 1');
+            updatePayload.estimatedMinutes = mins;
+          } else {
+            updatePayload.estimatedMinutes = null;
+          }
+        } else if (type === 'vocab') {
+          const validEntries = typeState.entries.filter(e => e.term.trim() && e.definition.trim());
+          if (validEntries.length === 0) throw new Error('At least one term with a non-empty term and definition is required');
+          updatePayload.entries = validEntries;
+        } else if (type === 'practice_problem') {
+          if (typeState.questions.length === 0) throw new Error('At least one question is required');
+          if (typeState.passingPercentage.trim()) {
+            const pp = parseInt(typeState.passingPercentage, 10);
+            if (isNaN(pp) || pp < 0 || pp > 100) throw new Error('Passing percentage must be between 0 and 100');
+            updatePayload.passingPercentage = pp;
+          } else {
+            updatePayload.passingPercentage = null;
+          }
+          updatePayload.questions = typeState.questions.map((q, i) => ({ type: q.type, order: i + 1, content: q.content }));
         }
-        createPayload = {
-          title: assignmentTitle.trim(),
-          objective: objective.trim() || undefined,
-          type: 'reading',
-          url: typeState.url.trim(),
-          description: typeState.description.trim() || undefined,
-          estimatedMinutes,
-        };
-      } else if (type === 'vocab') {
-        const validEntries = typeState.entries.filter(e => e.term.trim() && e.definition.trim());
-        if (validEntries.length === 0) throw new Error('At least one term with a non-empty term and definition is required');
-        createPayload = {
-          title: assignmentTitle.trim(),
-          objective: objective.trim() || undefined,
-          type: 'vocab',
-          entries: validEntries,
-        };
+
+        await onSubmit(updatePayload);
       } else {
-        // practice_problem
-        if (typeState.questions.length === 0) throw new Error('At least one question is required');
-        let pp: number | undefined;
-        if (typeState.passingPercentage.trim()) {
-          pp = parseInt(typeState.passingPercentage, 10);
-          if (isNaN(pp) || pp < 0 || pp > 100) throw new Error('Passing percentage must be between 0 and 100');
-        }
-        createPayload = {
-          title: assignmentTitle.trim(),
-          objective: objective.trim() || undefined,
-          type: 'practice_problem',
-          passingPercentage: pp,
-          questions: typeState.questions.map((q, i) => ({ type: q.type, order: i + 1, content: q.content })),
-        };
-      }
+        let createPayload: CreateAssignmentPayload;
 
-      await onSubmit(createPayload);
+        if (type === 'note') {
+          if (!typeState.noteContent) throw new Error('Content is required');
+          createPayload = {
+            title: assignmentTitle.trim(),
+            objective: objective.trim() || undefined,
+            type: 'note',
+            content: typeState.noteContent,
+          };
+        } else if (type === 'video') {
+          if (!typeState.url.trim()) throw new Error('URL is required');
+          createPayload = {
+            title: assignmentTitle.trim(),
+            objective: objective.trim() || undefined,
+            type: 'video',
+            url: typeState.url.trim(),
+            displayTitle: typeState.displayTitle.trim() || undefined,
+          };
+        } else if (type === 'reading') {
+          if (!typeState.url.trim()) throw new Error('URL is required');
+          const estimatedMinutes = typeState.estimatedMinutes.trim()
+            ? parseInt(typeState.estimatedMinutes, 10)
+            : undefined;
+          if (estimatedMinutes !== undefined && (isNaN(estimatedMinutes) || estimatedMinutes < 1)) {
+            throw new Error('Estimated minutes must be at least 1');
+          }
+          createPayload = {
+            title: assignmentTitle.trim(),
+            objective: objective.trim() || undefined,
+            type: 'reading',
+            url: typeState.url.trim(),
+            description: typeState.description.trim() || undefined,
+            estimatedMinutes,
+          };
+        } else if (type === 'vocab') {
+          const validEntries = typeState.entries.filter(e => e.term.trim() && e.definition.trim());
+          if (validEntries.length === 0) throw new Error('At least one term with a non-empty term and definition is required');
+          createPayload = {
+            title: assignmentTitle.trim(),
+            objective: objective.trim() || undefined,
+            type: 'vocab',
+            entries: validEntries,
+          };
+        } else {
+          // practice_problem
+          if (typeState.questions.length === 0) throw new Error('At least one question is required');
+          let pp: number | undefined;
+          if (typeState.passingPercentage.trim()) {
+            pp = parseInt(typeState.passingPercentage, 10);
+            if (isNaN(pp) || pp < 0 || pp > 100) throw new Error('Passing percentage must be between 0 and 100');
+          }
+          createPayload = {
+            title: assignmentTitle.trim(),
+            objective: objective.trim() || undefined,
+            type: 'practice_problem',
+            passingPercentage: pp,
+            questions: typeState.questions.map((q, i) => ({ type: q.type, order: i + 1, content: q.content })),
+          };
+        }
+
+        await onSubmit(createPayload);
+      }
+    } catch (err: unknown) {
+      setApiError(err instanceof ApiClientError ? classifyError(err) : err instanceof Error ? err.message : 'Something went wrong');
+    } finally {
+      setSubmitting(false);
     }
-  });
+  }
 
   return (
     <Modal title={modalTitle} onClose={onClose} size="lg">
@@ -329,7 +342,7 @@ export default function AssignmentFormModal({ initial, onSubmit, onClose }: Assi
                 placeholder="e.g. Read the Introduction"
                 required
               />
-              {titleError && <p role="alert" className="text-sm text-destructive mt-1">{titleError}</p>}
+              {titleError && <ErrorMessage variant="inline" message={titleError} className="mt-1" />}
             </div>
             <Textarea
               id="assignment-objective"

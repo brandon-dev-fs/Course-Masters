@@ -2,8 +2,9 @@ import { useState, useRef, useCallback } from 'react';
 import { Loader2 } from 'lucide-react';
 import Input from '../../components/Input.js';
 import Button from '../../components/Button.js';
+import ErrorMessage from '../../components/ErrorMessage.js';
+import { ApiClientError, classifyError } from '../../api/client.js';
 import type { LessonResource } from '../../api/types.js';
-import useFormSubmit from '../../hooks/useFormSubmit.js';
 import useYouTubeTitle from '../../hooks/useYouTubeTitle.js';
 
 interface VideoFormProps {
@@ -18,6 +19,8 @@ export default function VideoForm({ initial, nextOrder = 1, onSubmit, onCancel }
   const [url, setUrl] = useState(initial?.type === 'video' ? (initial.content.url ?? '') : '');
   const [order, setOrder] = useState(initial?.order ?? nextOrder);
   const titleTouched = useRef(!!initial?.title);
+  const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   const onTitleFetched = useCallback((fetched: string) => {
     setTitle(fetched);
@@ -25,11 +28,20 @@ export default function VideoForm({ initial, nextOrder = 1, onSubmit, onCancel }
 
   const { fetchingTitle, handleUrlBlur } = useYouTubeTitle({ url, titleTouched, onTitleFetched });
 
-  const { error, submitting, handleSubmit } = useFormSubmit(async () => {
-    if (!title.trim()) throw new Error('Title is required');
-    if (!url.trim()) throw new Error('YouTube URL is required');
-    await onSubmit({ title: title.trim(), url: url.trim(), order });
-  });
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setSubmitting(true);
+    setError('');
+    try {
+      if (!title.trim()) throw new Error('Title is required');
+      if (!url.trim()) throw new Error('YouTube URL is required');
+      await onSubmit({ title: title.trim(), url: url.trim(), order });
+    } catch (err: unknown) {
+      setError(err instanceof ApiClientError ? classifyError(err) : err instanceof Error ? err.message : 'Something went wrong');
+    } finally {
+      setSubmitting(false);
+    }
+  }
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -48,7 +60,7 @@ export default function VideoForm({ initial, nextOrder = 1, onSubmit, onCancel }
         )}
       </div>
       <Input id="order" label="Order" type="number" value={order} onChange={e => setOrder(Number(e.target.value))} min={1} />
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      {error && <ErrorMessage message={error} />}
       <div className="flex justify-end gap-3 pt-2">
         <Button type="button" variant="secondary" onClick={onCancel} disabled={submitting}>Cancel</Button>
         <Button type="submit" disabled={submitting || fetchingTitle}>{submitting ? 'Saving...' : initial?.id ? 'Save Changes' : 'Add Video'}</Button>
