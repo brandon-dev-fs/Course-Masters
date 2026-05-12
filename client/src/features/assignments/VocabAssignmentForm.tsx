@@ -1,6 +1,7 @@
 import { ArrowUp, ArrowDown, Trash2, Plus } from 'lucide-react';
 import type { SubFormProps } from './AssignmentFormModal.js';
 import type { VocabEntry } from '../../api/types.js';
+import ErrorMessage from '../../components/ErrorMessage.js';
 
 export default function VocabAssignmentForm({ entries, onEntriesChange }: SubFormProps) {
   function addEntry() {
@@ -92,9 +93,7 @@ export default function VocabAssignmentForm({ entries, onEntriesChange }: SubFor
       </button>
 
       {!hasValidEntry && (
-        <p role="alert" className="text-sm text-destructive">
-          At least one term with a non-empty term and definition is required.
-        </p>
+        <ErrorMessage variant="inline" message="At least one term with a non-empty term and definition is required." />
       )}
     </div>
   );

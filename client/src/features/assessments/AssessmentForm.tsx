@@ -4,6 +4,7 @@ import { ApiClientError, classifyError } from '../../api/client.js';
 import QuestionEditor, { type QuestionDraft } from './QuestionEditor.js';
 import Button from '../../components/Button.js';
 import ConfirmDialog from '../../components/ConfirmDialog.js';
+import ErrorMessage from '../../components/ErrorMessage.js';
 import { assessmentsApi } from '../../api/assessments.js';
 import type { AssessmentQuestion } from '../../api/types.js';
 
@@ -205,7 +206,7 @@ export default function AssessmentForm({ initialQuestions, onSubmit, onCancel, a
               </div>
             </div>
             {bulkError && (
-              <p className="text-xs text-destructive mt-1">{bulkError}</p>
+              <ErrorMessage variant="inline" message={bulkError} className="text-xs mt-1" />
             )}
           </div>
         )}
@@ -249,7 +250,7 @@ export default function AssessmentForm({ initialQuestions, onSubmit, onCancel, a
           )}
         </div>
 
-        {error && <p className="text-sm text-destructive">{error}</p>}
+        {error && <ErrorMessage message={error} />}
 
         <div className="flex justify-end gap-3 pt-2 border-t border-border">
           <Button type="button" variant="secondary" onClick={onCancel} disabled={submitting}>Cancel</Button>

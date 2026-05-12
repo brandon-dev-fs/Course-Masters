@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { ApiClientError, classifyError } from '../../api/client.js';
 import type { AssessmentQuestion } from '../../api/types.js';
 import Button from '../../components/Button.js';
+import ErrorMessage from '../../components/ErrorMessage.js';
 import CalculatorPanel from './CalculatorPanel.js';
 
 interface AssessmentTakerProps {
@@ -120,7 +121,7 @@ export default function AssessmentTaker({ questions, onSubmit, onCancel }: Asses
         )}
       </div>
 
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      {error && <ErrorMessage message={error} />}
 
       {/* Navigation and actions */}
       <div className="flex items-center justify-between">

@@ -60,7 +60,6 @@ Button (polymorphic, variants: primary/secondary/danger/ghost/accent), CardActio
 | Hook | Purpose |
 |---|---|
 | `useResourceList` | Generic CRUD list (fetch, add, update, delete, sort) with loading/error/modal state |
-| `useFormSubmit` | Form submission with error/loading state |
 | `useAssessment` | Assessment lifecycle (get, create, take, submit, view results) |
 
 ### useAssessment API interface
@@ -95,7 +94,7 @@ Pass an adapter object built from `assessmentsApi` methods — see `AssessmentSe
 - Assessment abstraction: shared `AssessmentTaker`/`AssessmentForm`/`QuestionEditor` reused for quiz, test, exam — never duplicate question UI
 - `QuestionDraft` shape: `{ type?, question, content: { options: string[], correctIndex: number }, order }` — mirrors `AssessmentQuestion.content`
 - YouTube embeds use `youtube-nocookie.com` for privacy
-- Forms use `useState` for field values, `useFormSubmit` for async submission
+- Forms use `useState` for field values and inline async submit handlers (loading + error state managed directly in each form component)
 - Optimistic UI updates via `useResourceList`
 
 ---
