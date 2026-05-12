@@ -14,55 +14,56 @@ import UnitCardStrip from '../units/UnitCardStrip.js';
 import Button from '../../components/Button.js';
 import LoadingSpinner from '../../components/LoadingSpinner.js';
 import ErrorMessage from '../../components/ErrorMessage.js';
-import { useAuth } from '../../context/AuthContext.js';
+import useFetch from '../../hooks/useFetch.js';
+import useCanEdit from '../../hooks/useCanEdit.js';
+import useDisclosure from '../../hooks/useDisclosure.js';
+
+interface CoursePageData {
+  course: Course;
+  courses: Course[];
+  progress: CourseProgress;
+}
 
 export default function CourseDetailPage() {
-	const { user } = useAuth();
-	const canEdit = user?.role === 'teacher' || user?.role === 'admin';
+	const canEdit = useCanEdit();
 	const { courseId } = useParams<{ courseId: string }>();
 	const navigate = useNavigate();
+
+	const { data, loading, error } = useFetch<CoursePageData>(
+		() => Promise.all([
+			coursesApi.getOne(courseId!),
+			coursesApi.getAll(),
+			progressApi.getCourse(courseId!),
+		]).then(([course, courses, progress]) => ({ course, courses, progress })),
+		[courseId],
+	);
+
 	const [course, setCourse] = useState<Course | null>(null);
 	const [courses, setCourses] = useState<Course[]>([]);
 	const [progress, setProgress] = useState<CourseProgress | null>(null);
-	const [loading, setLoading] = useState(true);
-	const [error, setError] = useState('');
-	const [showSettings, setShowSettings] = useState(false);
-	const [showSyllabusView, setShowSyllabusView] = useState(false);
-	const [showSyllabusEdit, setShowSyllabusEdit] = useState(false);
-	const [showUnitSettings, setShowUnitSettings] = useState(false);
-	const [showCalendar, setShowCalendar] = useState(false);
 
-	async function load() {
-		if (!courseId) return;
-		try {
-			const [data, allCourses, prog] = await Promise.all([
-				coursesApi.getOne(courseId),
-				coursesApi.getAll(),
-				progressApi.getCourse(courseId),
-			]);
-			setCourse(data);
-			setCourses(allCourses);
-			setProgress(prog);
-		} catch (err: unknown) {
-			setError(
-				err instanceof Error ? err.message : 'Failed to load course',
-			);
-		} finally {
-			setLoading(false);
-		}
-	}
-
+	// Sync state from fetch result on initial load and courseId change
 	useEffect(() => {
-		void load();
-	}, [courseId]);
+		if (data) {
+			setCourse(data.course);
+			setCourses(data.courses);
+			setProgress(data.progress);
+		}
+	}, [data]);
 
-	async function handleCourseUpdate(data: {
+	const settingsDisclosure = useDisclosure();
+	const syllabusViewDisclosure = useDisclosure();
+	const syllabusEditDisclosure = useDisclosure();
+	const unitSettingsDisclosure = useDisclosure();
+	const calendarDisclosure = useDisclosure();
+
+	async function handleCourseUpdate(updateData: {
 		title: string;
 		description?: string;
 		syllabus?: Record<string, unknown> | null;
 	}) {
 		if (!courseId) return;
-		const updated = await coursesApi.update(courseId, data);
+		const updated = await coursesApi.update(courseId, updateData);
 		setCourse((prev) => (prev ? { ...prev, ...updated } : null));
 	}
 
@@ -72,9 +73,9 @@ export default function CourseDetailPage() {
 		navigate('/');
 	}
 
-	async function handleAddUnit(data: { title: string; order: number }) {
+	async function handleAddUnit(unitData: { title: string; order: number }) {
 		if (!courseId || !course) return;
-		const unit = await unitsApi.create(courseId, data);
+		const unit = await unitsApi.create(courseId, unitData);
 		setCourse((prev) =>
 			prev
 				? {
@@ -90,10 +91,10 @@ export default function CourseDetailPage() {
 
 	async function handleUpdateUnit(
 		unit: Unit,
-		data: { title: string; order: number },
+		unitData: { title: string; order: number },
 	) {
 		if (!courseId) return;
-		const updated = await unitsApi.update(courseId, unit.id, data);
+		const updated = await unitsApi.update(courseId, unit.id, unitData);
 		setCourse((prev) =>
 			prev
 				? {
@@ -130,8 +131,8 @@ export default function CourseDetailPage() {
 				progress={progress}
 				courses={courses}
 				canEdit={canEdit}
-				onOpenSettings={() => setShowSettings(true)}
-				onOpenCalendar={() => setShowCalendar(true)}
+				onOpenSettings={settingsDisclosure.open}
+				onOpenCalendar={calendarDisclosure.open}
 			/>
 
 			<div className="container mx-auto py-6">
@@ -144,8 +145,8 @@ export default function CourseDetailPage() {
 							variant="secondary"
 							onClick={() =>
 								course.syllabus
-									? setShowSyllabusView(true)
-									: setShowSyllabusEdit(true)
+									? syllabusViewDisclosure.open()
+									: syllabusEditDisclosure.open()
 							}
 						>
 							{course.syllabus
@@ -157,7 +158,7 @@ export default function CourseDetailPage() {
 						<Button
 							size="sm"
 							variant="secondary"
-							onClick={() => setShowUnitSettings(true)}
+							onClick={unitSettingsDisclosure.open}
 						>
 							+ Add Unit
 						</Button>
@@ -173,47 +174,47 @@ export default function CourseDetailPage() {
 			/>
 			</div>
 
-			{showSettings && (
+			{settingsDisclosure.isOpen && (
 				<CourseSettingsModal
 					course={course}
-					onClose={() => setShowSettings(false)}
+					onClose={settingsDisclosure.close}
 					onUpdateCourse={handleCourseUpdate}
 					onDeleteCourse={handleCourseDelete}
 				/>
 			)}
-			{showSyllabusView && course.syllabus && (
+			{syllabusViewDisclosure.isOpen && course.syllabus && (
 				<SyllabusViewModal
 					syllabus={course.syllabus as Record<string, unknown>}
 					canEdit={canEdit}
-					onClose={() => setShowSyllabusView(false)}
+					onClose={syllabusViewDisclosure.close}
 					onEdit={() => {
-						setShowSyllabusView(false);
-						setShowSyllabusEdit(true);
+						syllabusViewDisclosure.close();
+						syllabusEditDisclosure.open();
 					}}
 				/>
 			)}
-			{showSyllabusEdit && (
+			{syllabusEditDisclosure.isOpen && (
 				<SyllabusEditModal
 					course={course}
-					onClose={() => setShowSyllabusEdit(false)}
+					onClose={syllabusEditDisclosure.close}
 					onUpdateCourse={handleCourseUpdate}
 				/>
 			)}
-			{showUnitSettings && (
+			{unitSettingsDisclosure.isOpen && (
 				<UnitSettingsModal
 					course={course}
-					onClose={() => setShowUnitSettings(false)}
+					onClose={unitSettingsDisclosure.close}
 					onAddUnit={handleAddUnit}
 					onUpdateUnit={handleUpdateUnit}
 					onDeleteUnit={handleDeleteUnit}
 					initialAdding={true}
 				/>
 			)}
-			{showCalendar && (
+			{calendarDisclosure.isOpen && (
 				<CalendarModal
 					course={course}
 					progress={progress}
-					onClose={() => setShowCalendar(false)}
+					onClose={calendarDisclosure.close}
 				/>
 			)}
 		</div>

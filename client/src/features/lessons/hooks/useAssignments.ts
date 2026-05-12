@@ -1,9 +1,12 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { assignmentsApi } from '../../../api/assignments.js';
 import type { CreateAssignmentPayload, UpdateAssignmentPayload } from '../../../api/assignments.js';
 import type { Assignment, Lesson, LessonResource, LessonTool } from '../../../api/types.js';
 import type { AssignmentItem } from '../AssignmentSection.js';
 import type { StudentToolType } from '../../student-notes/StudentToolsBar.js';
+import useFetch from '../../../hooks/useFetch.js';
+import useOrderedList from '../../../hooks/useOrderedList.js';
+import type { PersistFn } from '../../../hooks/useOrderedList.js';
 
 export const nextOrder = (arr: { order: number }[]) =>
   arr.length === 0 ? 1 : Math.max(...arr.map(r => r.order)) + 1;
@@ -115,16 +118,61 @@ export default function useAssignments({
   completedIds,
   setActiveStepKey,
 }: UseAssignmentsParams): UseAssignmentsReturn {
-  const [assignments, setAssignments] = useState<Assignment[]>([]);
+  const { data: fetchedAssignments } = useFetch<Assignment[]>(
+    () => lessonId ? assignmentsApi.getAll(lessonId) : Promise.resolve([]),
+    [lessonId],
+  );
 
+  // Stable refs so the PersistFn closure never goes stale between renders.
+  const lessonIdRef = useRef<string | undefined>(lessonId);
+  useEffect(() => { lessonIdRef.current = lessonId; }, [lessonId]);
+
+  // assignmentsRef mirrors the current items array so persistReorder can read
+  // the post-swap state to derive the full sorted ID array for the reorder API.
+  const assignmentsRef = useRef<Assignment[]>([]);
+
+  // PersistFn for useOrderedList: called in the same synchronous frame as the
+  // optimistic setItems call, before React commits and before the assignmentsRef
+  // useEffect fires. We therefore cannot rely on assignmentsRef.current being at
+  // the post-swap state — instead we apply the swap inline using the aNewOrder /
+  // bNewOrder arguments that useOrderedList already passes us.
+  const persistReorder = useCallback<PersistFn<Assignment>>(
+    async (a, b, aNewOrder, bNewOrder) => {
+      const currentLessonId = lessonIdRef.current;
+      if (!currentLessonId) return;
+      const sortedIds = [...assignmentsRef.current]
+        .map(item =>
+          item.id === a.id ? { ...item, order: aNewOrder } :
+          item.id === b.id ? { ...item, order: bNewOrder } : item,
+        )
+        .sort((x, y) => x.order - y.order)
+        .map(item => item.id);
+      const updated = await assignmentsApi.reorder(currentLessonId, { assignmentIds: sortedIds });
+      setItems(updated);
+    },
+    // lessonIdRef and assignmentsRef are stable refs; setItems is a stable setter
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
+
+  const { items: assignments, setItems, handleMove: handleMoveAssignment } = useOrderedList<Assignment>(
+    [],
+    persistReorder,
+  );
+
+  // Keep assignmentsRef in sync so persistReorder always sees the latest state.
+  useEffect(() => { assignmentsRef.current = assignments; }, [assignments]);
+
+  // Alias setItems as setAssignments for use in the other handlers below.
+  const setAssignments = setItems;
+
+  // Sync assignments when fetched data arrives.
   useEffect(() => {
-    if (!lessonId) return;
-    assignmentsApi.getAll(lessonId)
-      .then(all => setAssignments(all.sort((a, b) => a.order - b.order)))
-      .catch(() => {
-        // errors surface at the page level via useLesson
-      });
-  }, [lessonId]);
+    if (fetchedAssignments) {
+      setAssignments(fetchedAssignments.sort((a, b) => a.order - b.order));
+    }
+  }, [fetchedAssignments]);
+
   const [isAddingAssignment, setIsAddingAssignment] = useState(false);
   const [editingAssignment, setEditingAssignment] = useState<Assignment | null>(null);
   const [deletingAssignmentId, setDeletingAssignmentId] = useState<string | null>(null);
@@ -177,28 +225,6 @@ export default function useAssignments({
     const prevItem = filteredItems[Math.max(0, activeIdx - 1)];
     setActiveStepKey(prevItem?.key ?? 'lessonPlan');
   }, [setActiveStepKey]);
-
-  const handleMoveAssignment = useCallback(async (id: string, direction: 'up' | 'down') => {
-    const sorted = [...assignments].sort((a, b) => a.order - b.order);
-    const idx = sorted.findIndex(a => a.id === id);
-    const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
-    if (swapIdx < 0 || swapIdx >= sorted.length) return;
-
-    const newIdOrder = sorted.map(a => a.id);
-    [newIdOrder[idx], newIdOrder[swapIdx]] = [newIdOrder[swapIdx], newIdOrder[idx]];
-
-    setAssignments(
-      newIdOrder.map((assignId, i) => ({ ...sorted.find(a => a.id === assignId)!, order: i + 1 })),
-    );
-
-    try {
-      if (!lessonId) return;
-      const updated = await assignmentsApi.reorder(lessonId, { assignmentIds: newIdOrder });
-      setAssignments(updated);
-    } catch {
-      setAssignments(sorted);
-    }
-  }, [assignments, lessonId]);
 
   const handleToggleAssignmentCompletion = useCallback(async (assignment: Assignment) => {
     const wasComplete = assignment.completed;

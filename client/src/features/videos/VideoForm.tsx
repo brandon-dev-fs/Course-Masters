@@ -1,12 +1,10 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { Loader2 } from 'lucide-react';
 import Input from '../../components/Input.js';
 import Button from '../../components/Button.js';
 import type { LessonResource } from '../../api/types.js';
-import { apiClient } from '../../api/client.js';
 import useFormSubmit from '../../hooks/useFormSubmit.js';
-
-const youtubeUrlRegex = /^https?:\/\/(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)[\w-]+/;
+import useYouTubeTitle from '../../hooks/useYouTubeTitle.js';
 
 interface VideoFormProps {
   initial?: LessonResource;
@@ -19,30 +17,19 @@ export default function VideoForm({ initial, nextOrder = 1, onSubmit, onCancel }
   const [title, setTitle] = useState(initial?.title ?? '');
   const [url, setUrl] = useState((initial?.content?.url as string) ?? '');
   const [order, setOrder] = useState(initial?.order ?? nextOrder);
-  const [fetchingTitle, setFetchingTitle] = useState(false);
   const titleTouched = useRef(!!initial?.title);
+
+  const onTitleFetched = useCallback((fetched: string) => {
+    setTitle(fetched);
+  }, []);
+
+  const { fetchingTitle, handleUrlBlur } = useYouTubeTitle({ url, titleTouched, onTitleFetched });
+
   const { error, submitting, handleSubmit } = useFormSubmit(async () => {
     if (!title.trim()) throw new Error('Title is required');
     if (!url.trim()) throw new Error('YouTube URL is required');
     await onSubmit({ title: title.trim(), url: url.trim(), order });
   });
-
-  async function handleUrlBlur() {
-    const trimmed = url.trim();
-    if (!trimmed || !youtubeUrlRegex.test(trimmed) || titleTouched.current) return;
-
-    setFetchingTitle(true);
-    try {
-      const { title: fetched } = await apiClient.get<{ title: string }>(
-        `/youtube/title?url=${encodeURIComponent(trimmed)}`,
-      );
-      if (fetched && !titleTouched.current) setTitle(fetched);
-    } catch {
-      // Silently ignore — user can type the title manually
-    } finally {
-      setFetchingTitle(false);
-    }
-  }
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">

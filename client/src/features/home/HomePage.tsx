@@ -12,11 +12,12 @@ import LoadingSpinner from '../../components/LoadingSpinner.js';
 import ErrorMessage from '../../components/ErrorMessage.js';
 import EmptyState from '../../components/EmptyState.js';
 import { useAuth } from '../../context/AuthContext.js';
+import useCanEdit from '../../hooks/useCanEdit.js';
 
 export default function HomePage() {
 	const { user } = useAuth();
 	const loggedIn = user !== null;
-	const canEdit = user?.role === 'teacher' || user?.role === 'admin';
+	const canEdit = useCanEdit();
 	const [courses, setCourses] = useState<Course[]>([]);
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState('');
