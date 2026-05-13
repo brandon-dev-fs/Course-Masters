@@ -86,11 +86,20 @@ export const assessmentService = {
       ];
 
       if (allRequiredIds.length > 0) {
-        const completions = await prisma.lessonResourceCompletion.findMany({
-          where: { lessonId, userId },
-          select: { resourceId: true },
-        });
-        const completedIds = new Set(completions.map(c => c.resourceId));
+        const [resourceCompletions, toolCompletions] = await Promise.all([
+          prisma.lessonResourceCompletion.findMany({
+            where: { resource: { lessonId }, userId },
+            select: { resourceId: true },
+          }),
+          prisma.lessonToolCompletion.findMany({
+            where: { tool: { lessonId }, userId },
+            select: { toolId: true },
+          }),
+        ]);
+        const completedIds = new Set([
+          ...resourceCompletions.map(c => c.resourceId),
+          ...toolCompletions.map(c => c.toolId),
+        ]);
         const allComplete = allRequiredIds.every(id => completedIds.has(id));
         if (!allComplete) {
           throw new AppError(
