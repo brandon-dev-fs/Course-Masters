@@ -13,8 +13,8 @@ export const resourceCompletionController = {
   toggleCompletion: asyncHandler(async (req: Request, res: Response) => {
     const lessonId = req.params['lessonId'] as string;
     const userId = req.user!.id;
-    const { resourceType, resourceId } = req.body;
-    const data = await resourceCompletionService.toggle(lessonId, userId, resourceType, resourceId);
+    const { type, targetId } = req.body as { type: 'resource' | 'tool'; targetId: string };
+    const data = await resourceCompletionService.toggle(lessonId, userId, type, targetId);
     res.json(data);
   }),
 };

@@ -1,7 +1,13 @@
 import { PrismaClient } from '@prisma/client';
 import { hashPassword } from 'better-auth/crypto';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { join, dirname } from 'node:path';
 
 const prisma = new PrismaClient();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 async function seedUser(email: string, name: string, role: 'student' | 'teacher' | 'admin') {
 	const id = crypto.randomUUID();
@@ -563,13 +569,12 @@ async function main() {
 		data: { assessmentId: quiz1.id, userId: user.id, score: 1, passed: true },
 	});
 
+	// Seed resource completions for lesson 1 (typed FK tables)
 	await prisma.lessonResourceCompletion.createMany({
 		data: [
-			{ userId: user.id, lessonId: lesson1.id, resourceType: 'lessonPlan', resourceId: lesson1.id },
-			{ userId: user.id, lessonId: lesson1.id, resourceType: 'video', resourceId: video1.id },
-			{ userId: user.id, lessonId: lesson1.id, resourceType: 'note', resourceId: note1.id },
-			{ userId: user.id, lessonId: lesson1.id, resourceType: 'note', resourceId: note1b.id },
-			{ userId: user.id, lessonId: lesson1.id, resourceType: 'vocab', resourceId: lesson1.id },
+			{ userId: user.id, resourceId: video1.id },
+			{ userId: user.id, resourceId: note1.id },
+			{ userId: user.id, resourceId: note1b.id },
 		],
 	});
 
@@ -754,10 +759,10 @@ async function main() {
 		data: { assessmentId: quiz2.id, userId: user.id, score: 1, passed: true },
 	});
 
+	// Seed resource completions for lesson 2
 	await prisma.lessonResourceCompletion.createMany({
 		data: [
-			{ userId: user.id, lessonId: lesson2.id, resourceType: 'lessonPlan', resourceId: lesson2.id },
-			{ userId: user.id, lessonId: lesson2.id, resourceType: 'video', resourceId: video2.id },
+			{ userId: user.id, resourceId: video2.id },
 		],
 	});
 
@@ -962,10 +967,10 @@ async function main() {
 		data: { assessmentId: quiz3.id, userId: user.id, score: 1, passed: true },
 	});
 
+	// Seed resource completions for lesson 3
 	await prisma.lessonResourceCompletion.createMany({
 		data: [
-			{ userId: user.id, lessonId: lesson3.id, resourceType: 'lessonPlan', resourceId: lesson3.id },
-			{ userId: user.id, lessonId: lesson3.id, resourceType: 'video', resourceId: video3.id },
+			{ userId: user.id, resourceId: video3.id },
 		],
 	});
 
@@ -1185,6 +1190,15 @@ async function main() {
 	console.log(`Seeded assessments: ${quiz1.id}, ${quiz2.id}, ${quiz3.id}, ${quiz4.id}`);
 	console.log(`Seeded unit quizzes: ${test1.id}, ${test2.id}`);
 	console.log(`Seeded course exam: ${exam.id}`);
+
+	// Apply raw SQL constraints (idempotent — safe to run on every seed)
+	const constraintsSql = readFileSync(
+		join(__dirname, 'raw', 'cm-0016-constraints.sql'),
+		'utf-8',
+	);
+	await prisma.$executeRawUnsafe(constraintsSql);
+	console.log('Applied cm-0016 constraints (assessment CHECK + assignment trigger).');
+
 	console.log('Seed complete!');
 }
 
