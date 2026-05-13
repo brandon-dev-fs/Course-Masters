@@ -1,5 +1,5 @@
 import prisma from '../lib/prisma.js';
-import { NotFoundError } from '../errors/index.js';
+import { NotFoundError, ValidationError } from '../errors/index.js';
 
 interface CompletionItem {
   type: 'resource' | 'tool';
@@ -114,6 +114,8 @@ export const resourceCompletionService = {
           data: { userId, toolId: targetId },
         });
       }
+    } else {
+      throw new ValidationError('type must be resource or tool');
     }
 
     return this.getByLesson(lessonId, userId);

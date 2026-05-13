@@ -1,13 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import { hashPassword } from 'better-auth/crypto';
-import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
-import { join, dirname } from 'node:path';
 
 const prisma = new PrismaClient();
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
 
 async function seedUser(email: string, name: string, role: 'student' | 'teacher' | 'admin') {
 	const id = crypto.randomUUID();
@@ -416,7 +410,7 @@ async function main() {
 		},
 	});
 
-	await prisma.lessonTool.createMany({
+	const tools1Flashcards = await prisma.lessonTool.createManyAndReturn({
 		data: [
 			{
 				lessonId: lesson1.id,
@@ -445,7 +439,7 @@ async function main() {
 		],
 	});
 
-	await prisma.lessonTool.createMany({
+	const tools1Vocab = await prisma.lessonTool.createManyAndReturn({
 		data: [
 			{
 				lessonId: lesson1.id,
@@ -490,7 +484,7 @@ async function main() {
 		],
 	});
 
-	await prisma.lessonTool.createMany({
+	const tools1Practice = await prisma.lessonTool.createManyAndReturn({
 		data: [
 			{
 				lessonId: lesson1.id,
@@ -575,6 +569,15 @@ async function main() {
 			{ userId: user.id, resourceId: video1.id },
 			{ userId: user.id, resourceId: note1.id },
 			{ userId: user.id, resourceId: note1b.id },
+		],
+	});
+
+	// Seed tool completions for lesson 1 so the demo user can submit the quiz
+	await prisma.lessonToolCompletion.createMany({
+		data: [
+			...tools1Flashcards.map(t => ({ userId: user.id, toolId: t.id })),
+			...tools1Vocab.map(t => ({ userId: user.id, toolId: t.id })),
+			...tools1Practice.map(t => ({ userId: user.id, toolId: t.id })),
 		],
 	});
 
@@ -668,7 +671,7 @@ async function main() {
 		},
 	});
 
-	await prisma.lessonTool.createMany({
+	const tools2Flashcards = await prisma.lessonTool.createManyAndReturn({
 		data: [
 			{
 				lessonId: lesson2.id,
@@ -687,7 +690,7 @@ async function main() {
 		],
 	});
 
-	await prisma.lessonTool.createMany({
+	const tools2Vocab = await prisma.lessonTool.createManyAndReturn({
 		data: [
 			{
 				lessonId: lesson2.id,
@@ -763,6 +766,14 @@ async function main() {
 	await prisma.lessonResourceCompletion.createMany({
 		data: [
 			{ userId: user.id, resourceId: video2.id },
+		],
+	});
+
+	// Seed tool completions for lesson 2 so the demo user can submit the quiz
+	await prisma.lessonToolCompletion.createMany({
+		data: [
+			...tools2Flashcards.map(t => ({ userId: user.id, toolId: t.id })),
+			...tools2Vocab.map(t => ({ userId: user.id, toolId: t.id })),
 		],
 	});
 
@@ -870,7 +881,7 @@ async function main() {
 		},
 	});
 
-	await prisma.lessonTool.createMany({
+	const tools3Flashcards = await prisma.lessonTool.createManyAndReturn({
 		data: [
 			{
 				lessonId: lesson3.id,
@@ -895,7 +906,7 @@ async function main() {
 		],
 	});
 
-	await prisma.lessonTool.createMany({
+	const tools3Vocab = await prisma.lessonTool.createManyAndReturn({
 		data: [
 			{
 				lessonId: lesson3.id,
@@ -971,6 +982,14 @@ async function main() {
 	await prisma.lessonResourceCompletion.createMany({
 		data: [
 			{ userId: user.id, resourceId: video3.id },
+		],
+	});
+
+	// Seed tool completions for lesson 3 so the demo user can submit the quiz
+	await prisma.lessonToolCompletion.createMany({
+		data: [
+			...tools3Flashcards.map(t => ({ userId: user.id, toolId: t.id })),
+			...tools3Vocab.map(t => ({ userId: user.id, toolId: t.id })),
 		],
 	});
 
@@ -1191,12 +1210,85 @@ async function main() {
 	console.log(`Seeded unit quizzes: ${test1.id}, ${test2.id}`);
 	console.log(`Seeded course exam: ${exam.id}`);
 
-	// Apply raw SQL constraints (idempotent — safe to run on every seed)
-	const constraintsSql = readFileSync(
-		join(__dirname, 'raw', 'cm-0016-constraints.sql'),
-		'utf-8',
-	);
-	await prisma.$executeRawUnsafe(constraintsSql);
+	// Apply raw SQL constraints (idempotent — safe to run on every seed).
+	// Each statement is executed separately because Prisma 6 does not support
+	// multi-statement strings in $executeRawUnsafe.
+	// The canonical reference copy lives in server/prisma/raw/cm-0016-constraints.sql
+	// for manual psql execution only.
+
+	// 1. Pre-constraint cleanup: remove rows that violate the single-owner rule
+	await prisma.$executeRawUnsafe(`
+		DELETE FROM assessment
+		WHERE (
+		  ("lessonId" IS NOT NULL)::int +
+		  ("unitId"   IS NOT NULL)::int +
+		  ("courseId" IS NOT NULL)::int
+		) <> 1
+	`);
+
+	// 2. Drop existing CHECK constraint (idempotent)
+	await prisma.$executeRawUnsafe(`
+		ALTER TABLE assessment
+		  DROP CONSTRAINT IF EXISTS chk_assessment_single_owner
+	`);
+
+	// 3. Add CHECK constraint enforcing exactly one owner FK
+	await prisma.$executeRawUnsafe(`
+		ALTER TABLE assessment
+		  ADD CONSTRAINT chk_assessment_single_owner
+		    CHECK (
+		      (("lessonId" IS NOT NULL)::int +
+		       ("unitId"   IS NOT NULL)::int +
+		       ("courseId" IS NOT NULL)::int) = 1
+		    )
+	`);
+
+	// 4. Create or replace the plpgsql trigger function
+	await prisma.$executeRawUnsafe(`
+		CREATE OR REPLACE FUNCTION enforce_assignment_subtype()
+		RETURNS trigger LANGUAGE plpgsql AS $$
+		BEGIN
+		  IF NEW.type = 'note' THEN
+		    IF NOT EXISTS (SELECT 1 FROM note_assignment WHERE "assignmentId" = NEW.id) THEN
+		      RAISE EXCEPTION 'assignment % declared type=note but no note_assignment row exists', NEW.id;
+		    END IF;
+		  ELSIF NEW.type = 'video' THEN
+		    IF NOT EXISTS (SELECT 1 FROM video_assignment WHERE "assignmentId" = NEW.id) THEN
+		      RAISE EXCEPTION 'assignment % declared type=video but no video_assignment row exists', NEW.id;
+		    END IF;
+		  ELSIF NEW.type = 'reading' THEN
+		    IF NOT EXISTS (SELECT 1 FROM reading_assignment WHERE "assignmentId" = NEW.id) THEN
+		      RAISE EXCEPTION 'assignment % declared type=reading but no reading_assignment row exists', NEW.id;
+		    END IF;
+		  ELSIF NEW.type = 'vocab' THEN
+		    IF NOT EXISTS (SELECT 1 FROM vocab_assignment WHERE "assignmentId" = NEW.id) THEN
+		      RAISE EXCEPTION 'assignment % declared type=vocab but no vocab_assignment row exists', NEW.id;
+		    END IF;
+		  ELSIF NEW.type = 'practice_problem' THEN
+		    IF NOT EXISTS (SELECT 1 FROM practice_problem_assignment WHERE "assignmentId" = NEW.id) THEN
+		      RAISE EXCEPTION 'assignment % declared type=practice_problem but no practice_problem_assignment row exists', NEW.id;
+		    END IF;
+		  ELSE
+		    RAISE EXCEPTION 'assignment % has unknown type: %', NEW.id, NEW.type;
+		  END IF;
+		  RETURN NEW;
+		END;
+		$$
+	`);
+
+	// 5. Drop trigger (idempotent)
+	await prisma.$executeRawUnsafe(`
+		DROP TRIGGER IF EXISTS trg_assignment_subtype ON assignment
+	`);
+
+	// 6. Recreate constraint trigger
+	await prisma.$executeRawUnsafe(`
+		CREATE CONSTRAINT TRIGGER trg_assignment_subtype
+		  AFTER INSERT OR UPDATE ON assignment
+		  DEFERRABLE INITIALLY DEFERRED
+		  FOR EACH ROW EXECUTE FUNCTION enforce_assignment_subtype()
+	`);
+
 	console.log('Applied cm-0016 constraints (assessment CHECK + assignment trigger).');
 
 	console.log('Seed complete!');
