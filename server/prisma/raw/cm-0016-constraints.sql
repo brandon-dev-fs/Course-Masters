@@ -1,6 +1,8 @@
 -- cm-0016: Data integrity constraints
--- Applied idempotently via seed.ts or manually:
+-- Reference copy for manual psql execution only:
 --   psql $DATABASE_URL -f server/prisma/raw/cm-0016-constraints.sql
+-- NOTE: seed.ts executes each statement individually (Prisma 6 does not support
+-- multi-statement strings in $executeRawUnsafe). Keep this file in sync with seed.ts.
 
 -- ── Pre-constraint cleanup ────────────────────────────────────────────────────
 -- Remove any assessment rows that violate the single-owner rule before
