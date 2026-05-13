@@ -46,13 +46,6 @@ enum AssignmentType {
   practice_problem
 }
 
-enum PracticeQuestionType {
-  multiple_choice
-  true_false
-  matching
-  fill_in_blank
-}
-
 model User {
   id            String    @id
   name          String
@@ -72,6 +65,7 @@ model User {
   assessmentAttempts    AssessmentAttempt[]
   studentNotes          StudentNote[]
   resourceCompletions   LessonResourceCompletion[]
+  toolCompletions       LessonToolCompletion[]
   lessonCompletions     LessonCompletion[]
   unitCompletions       UnitCompletion[]
   assignmentCompletions AssignmentCompletion[]
@@ -165,14 +159,13 @@ model Lesson {
   objective   String
   planContent Json
 
-  unit                Unit                      @relation(fields: [unitId], references: [id], onDelete: Cascade)
-  resources           LessonResource[]
-  tools               LessonTool[]
-  assessment          Assessment?
-  studentNotes        StudentNote[]
-  resourceCompletions LessonResourceCompletion[]
-  completions         LessonCompletion[]
-  assignments         Assignment[]
+  unit        Unit             @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  resources   LessonResource[]
+  tools       LessonTool[]
+  assessment  Assessment?
+  studentNotes StudentNote[]
+  completions LessonCompletion[]
+  assignments Assignment[]
 
   @@index([unitId])
 }
@@ -186,7 +179,8 @@ model LessonResource {
   lessonId   String
   isRequired Boolean      @default(true)
 
-  lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  lesson      Lesson                    @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  completions LessonResourceCompletion[]
 
   @@index([lessonId])
   @@map("lesson_resource")
@@ -201,7 +195,8 @@ model LessonTool {
   lessonId   String
   isRequired Boolean  @default(true)
 
-  lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  lesson      Lesson                 @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  completions LessonToolCompletion[]
 
   @@index([lessonId])
   @@map("lesson_tool")
@@ -300,19 +295,31 @@ model UnitCompletion {
 }
 
 model LessonResourceCompletion {
-  id           String   @id @default(uuid())
-  userId       String
-  lessonId     String
-  resourceType String
-  resourceId   String
-  completedAt  DateTime @default(now())
+  id          String   @id @default(uuid())
+  userId      String
+  resourceId  String
+  completedAt DateTime @default(now())
 
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  user     User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resource LessonResource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, resourceType, resourceId])
-  @@index([userId, lessonId])
-  @@map("lesson_resource_completions")
+  @@unique([userId, resourceId])
+  @@index([userId])
+  @@map("lesson_resource_completion")
+}
+
+model LessonToolCompletion {
+  id          String   @id @default(uuid())
+  userId      String
+  toolId      String
+  completedAt DateTime @default(now())
+
+  user User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tool LessonTool @relation(fields: [toolId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, toolId])
+  @@index([userId])
+  @@map("lesson_tool_completion")
 }
 
 model Assignment {
@@ -396,7 +403,7 @@ model PracticeProblemQuestion {
   id                          String               @id @default(uuid())
   practiceProblemAssignmentId String
   order                       Int
-  type                        PracticeQuestionType
+  type                        QuestionType
   content                     Json
 
   practiceProblemAssignment PracticeProblemAssignment @relation(fields: [practiceProblemAssignmentId], references: [id], onDelete: Cascade)
