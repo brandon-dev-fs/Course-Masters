@@ -1,4 +1,4 @@
-import { ReactNode, useEffect } from 'react';
+import { ReactNode, useEffect, useRef } from 'react';
 import Button from './Button.js';
 
 interface ModalProps {
@@ -14,13 +14,34 @@ export default function Modal({
 	children,
 	size = 'md',
 }: ModalProps) {
+	const containerRef = useRef<HTMLDivElement | null>(null);
+
+	// Capture the trigger element exactly once at mount (before focus moves into the modal),
+	// and restore focus to it on unmount. Kept separate from the keydown effect so that
+	// inline arrow-function onClose props on call sites don't cause this to re-run and
+	// overwrite previousFocusRef with the already-focused modal container.
+	useEffect(() => {
+		const trigger = document.activeElement;
+		return () => {
+			(trigger as HTMLElement | null)?.focus?.();
+		};
+	}, []);
+
+	// Keyboard listener re-subscribes whenever onClose changes identity.
 	useEffect(() => {
 		const onKey = (e: KeyboardEvent) => {
 			if (e.key === 'Escape') onClose();
 		};
 		document.addEventListener('keydown', onKey);
-		return () => document.removeEventListener('keydown', onKey);
+		return () => {
+			document.removeEventListener('keydown', onKey);
+		};
 	}, [onClose]);
+
+	// Move focus into the modal container on mount
+	useEffect(() => {
+		containerRef.current?.focus();
+	}, []);
 
 	return (
 		<div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -29,10 +50,15 @@ export default function Modal({
 				onClick={onClose}
 			/>
 			<div
-				className={`relative flex flex-col max-h-[85vh] z-10 w-full ${size === 'xl' ? 'max-w-4xl' : size === 'lg' ? 'max-w-xl' : 'max-w-md'} rounded-2xl bg-surface-raised border border-border shadow-warm-lg mx-4`}
+				ref={containerRef}
+				tabIndex={-1}
+				role="dialog"
+				aria-modal="true"
+				aria-labelledby="modal-title"
+				className={`relative flex flex-col max-h-[85vh] z-10 w-full ${size === 'xl' ? 'max-w-4xl' : size === 'lg' ? 'max-w-xl' : 'max-w-md'} rounded-2xl bg-surface-raised border border-border shadow-warm-lg mx-4 outline-none`}
 			>
 				<div className="flex items-center justify-between px-7 pt-7 pb-4 shrink-0">
-					<h2 className="text-lg font-semibold text-foreground">
+					<h2 id="modal-title" className="text-lg font-semibold text-foreground">
 						{title}
 					</h2>
 					<Button

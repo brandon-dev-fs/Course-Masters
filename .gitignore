@@ -141,3 +141,5 @@ vite.config.ts.timestamp-*
 # Claude 
 .claude/misc/*worktrees/
 worktrees/
+
+task.md
