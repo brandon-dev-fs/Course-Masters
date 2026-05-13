@@ -136,11 +136,13 @@ model Course {
 }
 
 model Unit {
-  id          String @id @default(uuid())
+  id          String   @id @default(uuid())
   title       String
   description String
   order       Int
   courseId    String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   course     Course          @relation(fields: [courseId], references: [id], onDelete: Cascade)
   lessons    Lesson[]
@@ -151,13 +153,15 @@ model Unit {
 }
 
 model Lesson {
-  id          String @id @default(uuid())
+  id          String   @id @default(uuid())
   title       String
   description String
   order       Int
   unitId      String
   objective   String
   planContent Json
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   unit        Unit             @relation(fields: [unitId], references: [id], onDelete: Cascade)
   resources   LessonResource[]
@@ -178,6 +182,8 @@ model LessonResource {
   order      Int
   lessonId   String
   isRequired Boolean      @default(true)
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
 
   lesson      Lesson                    @relation(fields: [lessonId], references: [id], onDelete: Cascade)
   completions LessonResourceCompletion[]
@@ -194,6 +200,8 @@ model LessonTool {
   order      Int
   lessonId   String
   isRequired Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   lesson      Lesson                 @relation(fields: [lessonId], references: [id], onDelete: Cascade)
   completions LessonToolCompletion[]
@@ -228,6 +236,8 @@ model AssessmentQuestion {
   order             Int
   assessmentId      String
   calculatorEnabled Boolean      @default(false)
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
 
   assessment Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
 
@@ -264,6 +274,7 @@ model StudentNote {
 
   @@unique([lessonId, userId])
   @@index([userId])
+  @@index([lessonId])
 }
 
 model LessonCompletion {
@@ -277,6 +288,7 @@ model LessonCompletion {
 
   @@unique([userId, lessonId])
   @@index([userId])
+  @@index([lessonId])
   @@map("lesson_completion")
 }
 
@@ -291,6 +303,7 @@ model UnitCompletion {
 
   @@unique([userId, unitId])
   @@index([userId])
+  @@index([unitId])
   @@map("unit_completion")
 }
 
@@ -425,5 +438,6 @@ model AssignmentCompletion {
 
   @@unique([userId, assignmentId])
   @@index([userId])
+  @@index([assignmentId])
   @@map("assignment_completion")
 }
