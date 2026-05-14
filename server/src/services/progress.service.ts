@@ -8,8 +8,10 @@ import { NotFoundError } from '../errors/index.js';
 type CourseProgressData = Prisma.CourseGetPayload<{
   include: {
     units: {
+      where: { deletedAt: null };
       include: {
         lessons: {
+          where: { deletedAt: null };
           include: {
             assessment: {
               where: { type: 'lesson_quiz' };
@@ -33,6 +35,7 @@ type CourseProgressData = Prisma.CourseGetPayload<{
 type UnitProgressData = Prisma.UnitGetPayload<{
   include: {
     lessons: {
+      where: { deletedAt: null };
       include: {
         assessment: {
           where: { type: 'lesson_quiz' };
@@ -87,19 +90,20 @@ type UnitProgressResult = {
 };
 
 // ── Data fetching functions ───────────────────────────────────────────────────
-// Deep-include queries cannot be expressed through the assertExists delegate
-// without losing the typed return shape, so inline null checks are used here.
+// Soft-deleted Units, Lessons, and Assessments are excluded from all includes.
 
 export async function fetchCourseProgressData(
   courseId: string,
   userId: string,
 ): Promise<CourseProgressData> {
-  const course = await prisma.course.findUnique({
-    where: { id: courseId },
+  const course = await prisma.course.findFirst({
+    where: { id: courseId, deletedAt: null },
     include: {
       units: {
+        where: { deletedAt: null },
         include: {
           lessons: {
+            where: { deletedAt: null },
             include: {
               assessment: {
                 where: { type: 'lesson_quiz' },
@@ -134,10 +138,11 @@ export async function fetchUnitProgressData(
   unitId: string,
   userId: string,
 ): Promise<UnitProgressData> {
-  const unit = await prisma.unit.findUnique({
-    where: { id: unitId },
+  const unit = await prisma.unit.findFirst({
+    where: { id: unitId, deletedAt: null },
     include: {
       lessons: {
+        where: { deletedAt: null },
         include: {
           assessment: {
             where: { type: 'lesson_quiz' },
