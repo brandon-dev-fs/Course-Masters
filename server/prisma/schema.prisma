@@ -280,6 +280,7 @@ model StudentNote {
   @@unique([lessonId, userId])
   @@index([userId])
   @@index([lessonId])
+  @@map("student_note")
 }
 
 model LessonCompletion {
