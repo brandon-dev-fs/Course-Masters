@@ -58,6 +58,7 @@ model User {
   banExpires    DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+  deletedAt     DateTime?
 
   sessions              Session[]
   accounts              Account[]
@@ -120,13 +121,14 @@ model Verification {
 }
 
 model Course {
-  id          String   @id @default(uuid())
+  id          String    @id @default(uuid())
   title       String
   description String
   syllabus    Json?
   authorId    String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
 
   author     User        @relation(fields: [authorId], references: [id], onDelete: Cascade)
   units      Unit[]
@@ -136,13 +138,14 @@ model Course {
 }
 
 model Unit {
-  id          String   @id @default(uuid())
+  id          String    @id @default(uuid())
   title       String
   description String
   order       Int
   courseId    String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
 
   course     Course          @relation(fields: [courseId], references: [id], onDelete: Cascade)
   lessons    Lesson[]
@@ -153,15 +156,16 @@ model Unit {
 }
 
 model Lesson {
-  id          String   @id @default(uuid())
+  id          String    @id @default(uuid())
   title       String
   description String
   order       Int
   unitId      String
   objective   String
   planContent Json
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
 
   unit        Unit             @relation(fields: [unitId], references: [id], onDelete: Cascade)
   resources   LessonResource[]
@@ -211,13 +215,14 @@ model LessonTool {
 }
 
 model Assessment {
-  id       String         @id @default(uuid())
-  type     AssessmentType
-  lessonId String?        @unique
-  unitId   String?        @unique
-  courseId String?        @unique
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
+  id        String         @id @default(uuid())
+  type      AssessmentType
+  lessonId  String?        @unique
+  unitId    String?        @unique
+  courseId  String?        @unique
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+  deletedAt DateTime?
 
   lesson    Lesson?    @relation(fields: [lessonId], references: [id], onDelete: Cascade)
   unit      Unit?      @relation(fields: [unitId], references: [id], onDelete: Cascade)

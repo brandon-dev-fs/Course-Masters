@@ -1,7 +1,6 @@
 import { AssessmentType } from '@prisma/client';
 import prisma from '../lib/prisma.js';
 import { AppError, NotFoundError } from '../errors/index.js';
-import { assertExists } from '../utils/assertExists.js';
 import type { BulkUpdateCalculatorInput, CreateAssessmentInput, SubmitAttemptInput } from '../schemas/assessment.schema.js';
 
 const PASS_THRESHOLD = 0.8;
@@ -12,20 +11,32 @@ function parentWhere(type: AssessmentType, parentId: string) {
   return { courseId: parentId };
 }
 
+/**
+ * Assert the parent entity exists and is not soft-deleted.
+ * Uses inline findFirst with deletedAt: null — does not use assertExists
+ * since assertExists does not filter by deletedAt.
+ */
 async function assertParentExists(type: AssessmentType, parentId: string) {
   if (type === 'lesson_quiz') {
-    await assertExists(prisma.lesson, parentId, 'Lesson');
+    const lesson = await prisma.lesson.findFirst({ where: { id: parentId, deletedAt: null } });
+    if (!lesson) throw new NotFoundError('Lesson not found');
   } else if (type === 'unit_quiz') {
-    await assertExists(prisma.unit, parentId, 'Unit');
+    const unit = await prisma.unit.findFirst({ where: { id: parentId, deletedAt: null } });
+    if (!unit) throw new NotFoundError('Unit not found');
   } else {
-    await assertExists(prisma.course, parentId, 'Course');
+    const course = await prisma.course.findFirst({ where: { id: parentId, deletedAt: null } });
+    if (!course) throw new NotFoundError('Course not found');
   }
 }
 
 export const assessmentService = {
   async findByParent(type: AssessmentType, parentId: string, userId?: string) {
-    const assessment = await prisma.assessment.findUnique({
-      where: parentWhere(type, parentId),
+    // Check parent exists and is not soft-deleted
+    await assertParentExists(type, parentId);
+
+    // findFirst instead of findUnique so we can include deletedAt: null filter
+    const assessment = await prisma.assessment.findFirst({
+      where: { ...parentWhere(type, parentId), deletedAt: null },
       include: {
         questions: { orderBy: { order: 'asc' } },
         attempts: userId
@@ -56,7 +67,10 @@ export const assessmentService = {
   },
 
   async update(assessmentId: string, data: CreateAssessmentInput) {
-    await assertExists(prisma.assessment, assessmentId, 'Assessment');
+    const assessment = await prisma.assessment.findFirst({
+      where: { id: assessmentId, deletedAt: null },
+    });
+    if (!assessment) throw new NotFoundError('Assessment not found');
 
     await prisma.assessmentQuestion.deleteMany({ where: { assessmentId } });
     return prisma.assessment.update({
@@ -67,8 +81,8 @@ export const assessmentService = {
   },
 
   async submitAttempt(assessmentId: string, data: SubmitAttemptInput, userId: string) {
-    const assessment = await prisma.assessment.findUnique({
-      where: { id: assessmentId },
+    const assessment = await prisma.assessment.findFirst({
+      where: { id: assessmentId, deletedAt: null },
       include: { questions: { orderBy: { order: 'asc' } } },
     });
     if (!assessment) throw new NotFoundError('Assessment not found');
@@ -157,7 +171,10 @@ export const assessmentService = {
   },
 
   async bulkUpdateCalculator(assessmentId: string, data: BulkUpdateCalculatorInput) {
-    await assertExists(prisma.assessment, assessmentId, 'Assessment');
+    const assessment = await prisma.assessment.findFirst({
+      where: { id: assessmentId, deletedAt: null },
+    });
+    if (!assessment) throw new NotFoundError('Assessment not found');
 
     const found = await prisma.assessmentQuestion.findMany({
       where: { id: { in: data.questionIds }, assessmentId },
