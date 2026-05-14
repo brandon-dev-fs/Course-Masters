@@ -135,6 +135,7 @@ model Course {
   assessment Assessment?
 
   @@index([authorId])
+  @@map("course")
 }
 
 model Unit {
@@ -153,6 +154,7 @@ model Unit {
   completions UnitCompletion[]
 
   @@index([courseId])
+  @@map("unit")
 }
 
 model Lesson {
@@ -176,6 +178,7 @@ model Lesson {
   assignments Assignment[]
 
   @@index([unitId])
+  @@map("lesson")
 }
 
 model LessonResource {
@@ -280,6 +283,7 @@ model StudentNote {
   @@unique([lessonId, userId])
   @@index([userId])
   @@index([lessonId])
+  @@map("student_note")
 }
 
 model LessonCompletion {
