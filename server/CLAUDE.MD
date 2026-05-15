@@ -225,3 +225,76 @@ Validated by Zod in `config.ts` at startup — server will not start with invali
 - **Progress scoring**: lesson complete = `lesson_quiz` exists + latest attempt `passed === true`. Course % = `Math.round((completedLessons / totalLessons) * 90)`, then 100 if `course_exam` passed.
 - **Assessment pass threshold**: 80% (`PASS_THRESHOLD = 0.8` in `assessment.service.ts`). Grading is always server-side.
 - **Seed command**: `node --env-file=.env --import=tsx/esm prisma/seed.ts` — do NOT use `prisma db seed`.
+
+---
+
+## Unit Testing
+
+### Test Runner
+Vitest with `node` environment. No DOM simulation — tests run in plain Node.js context.
+
+### Running Tests
+| Command | Description |
+|---|---|
+| `npm test -w server` | Single-run, no coverage (fast feedback) |
+| `npm run test:watch -w server` | Watch mode for local development |
+| `npm run test:coverage -w server` | Single-run with V8 coverage + threshold enforcement |
+
+Or from within `server/`:
+| Command | Description |
+|---|---|
+| `npm test` | Single-run, no coverage |
+| `npm run test:watch` | Watch mode |
+| `npm run test:coverage` | Coverage with threshold |
+
+### File Naming and Directory Structure
+
+```
+server/src/__tests__/
+  mocks/
+    prisma.ts           # Shared Prisma mock factory (prismaMock)
+  services/
+    *.service.test.ts   # Service layer tests
+  controllers/
+    *.controller.test.ts
+  middleware/
+    *.test.ts
+  utils/
+    *.test.ts
+```
+
+- Test files: `*.test.ts`
+- Location: `server/src/__tests__/<layer>/<name>.test.ts` where `<layer>` is `services`, `controllers`, `middleware`, or `utils`
+- One test file per source module
+- Test file names mirror the source file: `assessment.service.ts` → `assessment.service.test.ts`
+
+### Mocking Prisma
+
+The Prisma singleton (`src/lib/prisma.ts`) must be mocked in every test file that exercises service code. Use the shared proxy-based mock factory:
+
+```ts
+import type { Prisma, ModelName } from '@prisma/client';
+import { prismaMock } from '../mocks/prisma.js';
+
+vi.mock('../../lib/prisma.js', () => ({ default: prismaMock }));
+
+// Configure return values per test
+prismaMock.assessment.findFirst.mockResolvedValue(makeAssessment());
+```
+
+### Fixture Typing
+
+Use Prisma-inferred types for test fixtures — never `Record<string, unknown>` or `any`. This ensures schema changes surface as compile errors in tests:
+
+```ts
+import type { Prisma, AssessmentQuestion } from '@prisma/client';
+
+type AssessmentWithQuestions = Prisma.AssessmentGetPayload<{ include: { questions: true } }>;
+
+function makeQuestion(overrides: Partial<AssessmentQuestion>): AssessmentQuestion { ... }
+function makeAssessment(overrides: Partial<AssessmentWithQuestions> = {}): AssessmentWithQuestions { ... }
+```
+
+### Coverage Threshold
+
+The 70% threshold is enforced only by `test:coverage` (`vitest run --coverage`), not by `npm test`. The aggregate will be below 70% until broader test coverage is added — this is expected while establishing the infrastructure. `json-summary` reporter is included for future CI integration.

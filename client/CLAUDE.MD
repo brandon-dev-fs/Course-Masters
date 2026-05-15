@@ -241,5 +241,110 @@ Never build separate quiz/test/exam UI — always use the shared `AssessmentSect
 
 ---
 
+## Unit Testing
+
+### Test Runner
+Vitest with `jsdom` environment. React Testing Library for component and hook rendering.
+
+### Running Tests
+| Command | Description |
+|---|---|
+| `npm test -w client` | Single-run, no coverage (fast feedback) |
+| `npm run test:watch -w client` | Watch mode for local development |
+| `npm run test:coverage -w client` | Single-run with V8 coverage + threshold enforcement |
+
+Or from within `client/`:
+| Command | Description |
+|---|---|
+| `npm test` | Single-run, no coverage |
+| `npm run test:watch` | Watch mode |
+| `npm run test:coverage` | Coverage with threshold |
+
+### File Naming and Directory Structure
+
+```
+client/src/__tests__/
+  setup/
+    renderWithProviders.tsx     # Full provider tree wrapper (AuthProvider + MemoryRouter)
+  mocks/
+    apiClient.mock.ts           # createApiClientMock() factory + apiClientMock singleton
+    authClient.mock.ts          # authClientMock singleton
+    authContext.mock.ts         # makeAuthContext(), makeStudentUser(), makeTeacherUser(), makeAdminUser()
+    reactRouter.mock.ts         # createNavigateMock() helper
+  hooks/
+    *.test.ts / *.test.tsx      # Hook tests
+  components/                  # Component tests
+  context/                     # Context tests
+  api/                         # API module tests
+  utils/                       # Utility tests
+```
+
+- Test files: `*.test.ts` for hooks/utilities, `*.test.tsx` for components and hooks using JSX wrappers
+- Location: `client/src/__tests__/<layer>/<name>.test.{ts,tsx}` where `<layer>` is `hooks`, `components`, `context`, `api`, or `utils`
+- Mock files use the `.mock.ts` infix convention: `apiClient.mock.ts`, `authClient.mock.ts`
+- One test file per source module; names mirror the source file
+
+### `renderWithProviders` Pattern
+
+Use for component tests needing the full provider tree (AuthProvider + MemoryRouter). Control auth state via `authClientMock.getSession`:
+
+```tsx
+import { renderWithProviders } from '../setup/renderWithProviders.js';
+vi.mock('../../api/auth.js', () => ({ authClient: authClientMock }));
+
+authClientMock.getSession.mockResolvedValue({ data: { user: makeTeacherUser() }, error: null });
+const { getByText } = renderWithProviders(<MyComponent />);
+```
+
+### Direct `AuthContext.Provider` Pattern (hook tests)
+
+For hooks that only need synchronous auth state, use `AuthContext.Provider` directly to avoid async `getSession` wait:
+
+```tsx
+import { AuthContext } from '../../context/AuthContext.js';
+import { makeAuthContext, makeTeacherUser } from '../mocks/authContext.mock.js';
+
+renderHook(() => useCanEdit(), {
+  wrapper: ({ children }) => (
+    <AuthContext.Provider value={makeAuthContext({ user: makeTeacherUser() })}>
+      {children}
+    </AuthContext.Provider>
+  ),
+});
+```
+
+### Mocking `apiClient` and `authClient`
+
+```ts
+import { apiClientMock } from '../mocks/apiClient.mock.js';
+vi.mock('../../api/client.js', () => ({ apiClient: apiClientMock }));
+apiClientMock.get.mockResolvedValue({ id: '1' });
+```
+
+Always use `mockResolvedValueOnce` / `mockRejectedValueOnce` for per-test overrides to avoid state leaking between tests.
+
+### Wrapping State Updates in `act()`
+
+State updates triggered by test code (not user events) must be wrapped in `act()`:
+
+```ts
+import { act } from '@testing-library/react';
+act(() => { result.current.reload(); });
+await waitFor(() => expect(result.current.loading).toBe(false));
+```
+
+### Global Test Setup (`vitest.setup.ts`)
+
+- `@testing-library/jest-dom` matchers loaded globally (`.toBeInTheDocument()`, `.toHaveTextContent()`, etc.)
+- `window.matchMedia` stubbed — jsdom does not implement it
+- `ResizeObserver` stubbed — jsdom does not implement it
+- `vi.clearAllMocks()` runs after each test (also enforced via `clearMocks: true` in config)
+
+### Coverage Threshold
+
+The 70% threshold is enforced only by `test:coverage`, not by `npm test`. Coverage will be below 70% until broader tests are added — expected while establishing the infrastructure.
+
+---
+
 ## User Instructions
 <!-- Add your personal preferences and workflow notes here -->
