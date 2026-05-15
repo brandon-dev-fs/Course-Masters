@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import type { Assignment } from '@prisma/client';
+import type { Assignment, Prisma } from '@prisma/client';
 import { prismaMock } from '../mocks/prisma.js';
 
 vi.mock('../../lib/prisma.js', () => ({ default: prismaMock }));
@@ -26,7 +26,17 @@ const ASSIGNMENT_ID = 'assignment-1';
 const USER_ID = 'user-1';
 const mockLesson = { id: LESSON_ID, title: 'Lesson 1' };
 
-const ASSIGNMENT_WITH_RELATIONS = {
+type AssignmentWithRelations = Prisma.AssignmentGetPayload<{
+  include: {
+    noteAssignment: true;
+    videoAssignment: true;
+    readingAssignment: true;
+    vocabAssignment: true;
+    practiceProblemAssignment: { include: { questions: true } };
+  };
+}>;
+
+const ASSIGNMENT_WITH_RELATIONS: AssignmentWithRelations = {
   ...makeAssignment(),
   noteAssignment: null,
   videoAssignment: null,

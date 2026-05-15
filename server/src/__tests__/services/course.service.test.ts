@@ -26,8 +26,12 @@ function makeCourse(overrides: Partial<Course> = {}): Course {
   };
 }
 
+type CourseWithUnits = Prisma.CourseGetPayload<{
+  include: { author: { select: { id: true; name: true } }; units: true };
+}>;
+
 // Simulated course with units (as returned by findFirst in findById)
-const mockCourseWithUnits = {
+const mockCourseWithUnits: CourseWithUnits = {
   ...makeCourse(),
   author: { id: USER_ID, name: 'Author' },
   units: [],

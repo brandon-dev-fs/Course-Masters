@@ -63,7 +63,7 @@ type UnitProgressData = Prisma.UnitGetPayload<{
 
 function makeAttempt(passed: boolean, score = passed ? 1 : 0) {
   return {
-    id: `attempt-${Math.random()}`,
+    id: 'attempt-1',
     assessmentId: 'a-1',
     userId: 'user-1',
     score,
