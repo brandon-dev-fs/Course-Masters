@@ -8,7 +8,8 @@
     "db:migrate": "npm run db:migrate -w server",
     "db:seed": "npm run db:seed -w server",
     "db:studio": "npm run db:studio -w server",
-    "postinstall": "npm run db:generate -w server"
+    "postinstall": "npm run db:generate -w server",
+    "test": "npm run test -w server -w client"
   },
   "devDependencies": {
     "concurrently": "^9.1.2"
