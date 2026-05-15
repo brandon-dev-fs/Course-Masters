@@ -192,6 +192,10 @@ describe('useAssignments', () => {
 
       const { result } = renderHook(() => useAssignments(defaultParams));
       await waitFor(() => expect(assignmentsApiMock.getAll).toHaveBeenCalled());
+      // Flush the getAll response so the sync useEffect has committed setAssignments([])
+      // before handleCreateAssignment appends. Without this, the fetch response can
+      // arrive after create and overwrite [created] back to [].
+      await act(async () => {});
 
       await act(async () => {
         await result.current.handleCreateAssignment({ title: 'New', type: 'note', content: {} });
