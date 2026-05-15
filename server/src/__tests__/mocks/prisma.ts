@@ -26,15 +26,21 @@ function createModelProxy(): Record<string, ReturnType<typeof vi.fn>> {
  *   vi.mock('../../lib/prisma.js', () => ({ default: prismaMock }))
  */
 function createPrismaProxy() {
-  const models: Record<string, ReturnType<typeof createModelProxy>> = {};
+  const models: Record<string, unknown> = {};
 
   const proxy = new Proxy(models, {
     get(target, prop: string) {
-      // Handle $transaction specially: execute callback with a fresh proxy
+      // Cache $transaction so mockImplementation() calls configure the same
+      // fn instance that service code accesses. Default behavior passes the
+      // proxy itself as the transaction client so model stubs configured on
+      // prismaMock are visible inside transaction callbacks.
       if (prop === '$transaction') {
-        return vi.fn((callback: (tx: typeof proxy) => Promise<unknown>) => {
-          return callback(createPrismaProxy());
-        });
+        if (!('$transaction' in target)) {
+          target['$transaction'] = vi.fn(
+            (callback: (tx: typeof proxy) => Promise<unknown>) => callback(proxy),
+          );
+        }
+        return target['$transaction'];
       }
       if (!(prop in target)) {
         target[prop] = createModelProxy();
