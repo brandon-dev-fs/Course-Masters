@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import type { Prisma, AssessmentQuestion } from '@prisma/client';
 import { prismaMock } from '../mocks/prisma.js';
 
 vi.mock('../../lib/prisma.js', () => ({ default: prismaMock }));
@@ -11,21 +12,24 @@ import { AppError, NotFoundError } from '../../errors/index.js';
 // Helpers
 // ---------------------------------------------------------------------------
 
-function makeQuestion(
-  overrides: Record<string, unknown>,
-): Record<string, unknown> {
+type AssessmentWithQuestions = Prisma.AssessmentGetPayload<{ include: { questions: true } }>;
+
+function makeQuestion(overrides: Partial<AssessmentQuestion>): AssessmentQuestion {
   return {
     id: 'q-1',
     assessmentId: 'a-1',
     type: 'multiple_choice',
+    question: 'Test question',
     order: 0,
     calculatorEnabled: false,
     content: {},
+    createdAt: new Date(),
+    updatedAt: new Date(),
     ...overrides,
   };
 }
 
-function makeAssessment(overrides: Record<string, unknown> = {}): Record<string, unknown> {
+function makeAssessment(overrides: Partial<AssessmentWithQuestions> = {}): AssessmentWithQuestions {
   return {
     id: 'a-1',
     type: 'lesson_quiz',
