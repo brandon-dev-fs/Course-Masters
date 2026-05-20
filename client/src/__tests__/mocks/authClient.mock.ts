@@ -10,7 +10,7 @@ import { vi } from 'vitest';
  * Usage in a test file (top-level, before any describe block):
  *   vi.mock('../../api/auth.js', () => ({ authClient: authClientMock }))
  */
-export function createAuthContextValue() {
+export function createAuthClientMock() {
   return {
     getSession: vi.fn().mockResolvedValue({ data: null, error: null }),
     signIn: {
@@ -23,4 +23,4 @@ export function createAuthContextValue() {
   };
 }
 
-export const authClientMock = createAuthContextValue();
+export const authClientMock = createAuthClientMock();
