@@ -107,6 +107,32 @@ describe('useFetch', () => {
     });
   });
 
+  describe('cancellation on unmount', () => {
+    it('does not update state when unmounted before fetch resolves (cancelled=true branch)', async () => {
+      let resolveIt!: (value: object) => void;
+      const fetchFn = vi.fn().mockReturnValue(
+        new Promise<object>(r => { resolveIt = r; }),
+      );
+      const { unmount } = renderHook(() => useFetch(fetchFn, []));
+      unmount(); // mark cancelled=true before the promise resolves
+      resolveIt({ id: '1' }); // resolving now hits `if (!cancelled)` false branch
+      await new Promise(r => setTimeout(r, 20));
+      expect(fetchFn).toHaveBeenCalledOnce();
+    });
+
+    it('does not update state when unmounted before fetch rejects (cancelled=true in catch)', async () => {
+      let rejectIt!: (err: unknown) => void;
+      const fetchFn = vi.fn().mockReturnValue(
+        new Promise<object>((_, r) => { rejectIt = r; }),
+      );
+      const { unmount } = renderHook(() => useFetch(fetchFn, []));
+      unmount();
+      rejectIt(new Error('too late'));
+      await new Promise(r => setTimeout(r, 20));
+      expect(fetchFn).toHaveBeenCalledOnce();
+    });
+  });
+
   describe('dependency change', () => {
     it('re-fetches when a dep value changes', async () => {
       const fetchFn = vi.fn().mockResolvedValue([]);

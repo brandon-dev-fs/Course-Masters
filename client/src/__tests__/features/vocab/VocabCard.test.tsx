@@ -35,4 +35,16 @@ describe('VocabCard', () => {
     render(<VocabCard vocab={wrongType} />);
     expect(screen.getByText(/unsupported tool type/i)).toBeInTheDocument();
   });
+
+  it('falls back to vocab.title when content.term is missing (covers ?? branch)', () => {
+    const noTerm = { ...vocabTool, content: { definition: 'A storage location.' } } as unknown as LessonTool;
+    render(<VocabCard vocab={noTerm} />);
+    expect(screen.getByText('Variable')).toBeInTheDocument(); // vocab.title
+  });
+
+  it('falls back to empty string when content.definition is missing (covers ?? branch)', () => {
+    const noDef = { ...vocabTool, content: { term: 'Variable' } } as unknown as LessonTool;
+    render(<VocabCard vocab={noDef} />);
+    expect(screen.getByText('Variable')).toBeInTheDocument();
+  });
 });
