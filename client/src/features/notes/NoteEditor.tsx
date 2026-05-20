@@ -33,8 +33,13 @@ export default function NoteEditor({ note, isComplete, onToggleComplete, onUpdat
   const [editingTitle, setEditingTitle] = useState(note.title);
   const [editing, setEditing] = useState(initialEditing ?? false);
   const pendingBody = useRef<Record<string, unknown>>(savedBody);
+  const isFirstMount = useRef(true);
 
   useEffect(() => {
+    if (isFirstMount.current) {
+      isFirstMount.current = false;
+      return;
+    }
     const body = note.content.body ?? { type: 'doc', content: [] };
     setSavedBody(body);
     pendingBody.current = body;

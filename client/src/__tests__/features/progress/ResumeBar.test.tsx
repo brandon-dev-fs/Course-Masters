@@ -55,4 +55,51 @@ describe('ResumeBar', () => {
     expect(screen.getByText('Lesson 1')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /resume/i })).toBeInTheDocument();
   });
+
+  it('shows exam prompt when all lessons complete but exam not passed', () => {
+    const unit2: Unit = {
+      id: 'u2',
+      title: 'Unit 2',
+      description: '',
+      order: 2,
+      courseId: 'c1',
+      lessons: [
+        { id: 'l2', title: 'Lesson 2', description: '', order: 1, unitId: 'u2', objective: '', planContent: {} },
+      ],
+    };
+    const progressAllDone: CourseProgress = {
+      completedLessons: 2,
+      totalLessons: 2,
+      percentComplete: 90,
+      examPassed: false,
+      totalUnits: 2,
+      units: [
+        { unitId: 'u1', lessons: [{ lessonId: 'l1', quizPassed: true }] },
+        { unitId: 'u2', lessons: [{ lessonId: 'l2', quizPassed: true }] },
+      ],
+    };
+    render(
+      <MemoryRouter>
+        <ResumeBar courseId="c1" units={[unit2, unit]} progress={progressAllDone} />
+      </MemoryRouter>,
+    );
+    expect(screen.getByText('Final Exam')).toBeInTheDocument();
+  });
+
+  it('renders nothing when all lessons and exam complete', () => {
+    const progressComplete: CourseProgress = {
+      completedLessons: 1,
+      totalLessons: 1,
+      percentComplete: 100,
+      examPassed: true,
+      totalUnits: 1,
+      units: [{ unitId: 'u1', lessons: [{ lessonId: 'l1', quizPassed: true }] }],
+    };
+    const { container } = render(
+      <MemoryRouter>
+        <ResumeBar courseId="c1" units={[unit]} progress={progressComplete} />
+      </MemoryRouter>,
+    );
+    expect(container.firstChild).toBeNull();
+  });
 });
