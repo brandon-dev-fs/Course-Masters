@@ -58,9 +58,9 @@ export default function HeroSection({ loggedIn, userName = '' }: HeroSectionProp
 					</div>
 				</div>
 
-				{/* Right column: decorative SVG */}
-				<div className="flex items-center justify-center mt-8 md:mt-0">
-					<div className="w-full max-w-[320px] md:w-[480px] md:max-w-none">
+				{/* Right column: decorative SVG — overflow visible so outer orbits bleed naturally */}
+				<div className="flex items-center justify-center mt-8 md:mt-0 overflow-visible">
+					<div className="w-full md:w-[520px]">
 						<SolarSystemSvg />
 					</div>
 				</div>

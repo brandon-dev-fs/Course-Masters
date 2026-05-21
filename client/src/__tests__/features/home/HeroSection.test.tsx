@@ -1,34 +1,87 @@
-import { render, screen } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
+import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import HeroSection from '../../../features/home/HeroSection.js';
 
-describe('HeroSection', () => {
-  it('renders without crashing', () => {
-    render(
-      <MemoryRouter>
-        <HeroSection loggedIn={false} />
-      </MemoryRouter>,
-    );
-    expect(screen.getByRole('heading', { level: 1 })).toBeInTheDocument();
-  });
+function renderHero(props: { loggedIn: boolean; userName?: string }) {
+	return render(
+		<MemoryRouter>
+			<HeroSection {...props} />
+		</MemoryRouter>,
+	);
+}
 
-  it('shows Get Started and Sign In links when not logged in', () => {
-    render(
-      <MemoryRouter>
-        <HeroSection loggedIn={false} />
-      </MemoryRouter>,
-    );
-    expect(screen.getByRole('link', { name: /get started/i })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /sign in/i })).toBeInTheDocument();
-  });
+describe('HeroSection — guest state', () => {
+	it('renders the hero landmark', () => {
+		renderHero({ loggedIn: false });
+		expect(screen.getByRole('region', { name: 'Hero' })).toBeInTheDocument();
+	});
 
-  it('hides CTA links when logged in', () => {
-    render(
-      <MemoryRouter>
-        <HeroSection loggedIn={true} userName="Test User" />
-      </MemoryRouter>,
-    );
-    expect(screen.queryByRole('link', { name: /get started/i })).not.toBeInTheDocument();
-  });
+	it('renders the headline', () => {
+		renderHero({ loggedIn: false });
+		expect(
+			screen.getByText(/Master anything/i),
+		).toBeInTheDocument();
+	});
+
+	it('renders the subtitle paragraph', () => {
+		renderHero({ loggedIn: false });
+		expect(
+			screen.getByText(/Build structured courses/i),
+		).toBeInTheDocument();
+	});
+
+	it('renders the Get Started link pointing to /register', () => {
+		renderHero({ loggedIn: false });
+		const link = screen.getByRole('link', { name: 'Get Started' });
+		expect(link).toBeInTheDocument();
+		expect(link).toHaveAttribute('href', '/register');
+	});
+
+	it('renders the Sign In link pointing to /login', () => {
+		renderHero({ loggedIn: false });
+		const link = screen.getByRole('link', { name: 'Sign In' });
+		expect(link).toBeInTheDocument();
+		expect(link).toHaveAttribute('href', '/login');
+	});
+
+	it('renders the decorative solar system SVG', () => {
+		renderHero({ loggedIn: false });
+		const svgs = document.querySelectorAll('svg[aria-hidden="true"]');
+		expect(svgs.length).toBeGreaterThan(0);
+	});
+});
+
+describe('HeroSection — authenticated state', () => {
+	it('renders the greeting with the user name', () => {
+		renderHero({ loggedIn: true, userName: 'Test User' });
+		expect(screen.getByText(/Welcome back, Test User\./i)).toBeInTheDocument();
+	});
+
+	it('does not render the subtitle', () => {
+		renderHero({ loggedIn: true, userName: 'Test User' });
+		expect(
+			screen.queryByText(/Build structured courses/i),
+		).not.toBeInTheDocument();
+	});
+
+	it('does not render the Get Started CTA', () => {
+		renderHero({ loggedIn: true, userName: 'Test User' });
+		expect(
+			screen.queryByRole('link', { name: 'Get Started' }),
+		).not.toBeInTheDocument();
+	});
+
+	it('does not render the Sign In CTA', () => {
+		renderHero({ loggedIn: true, userName: 'Test User' });
+		expect(
+			screen.queryByRole('link', { name: 'Sign In' }),
+		).not.toBeInTheDocument();
+	});
+
+	it('does not render the solar system SVG', () => {
+		renderHero({ loggedIn: true, userName: 'Test User' });
+		const svgs = document.querySelectorAll('svg[aria-hidden="true"]');
+		expect(svgs.length).toBe(0);
+	});
 });
