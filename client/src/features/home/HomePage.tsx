@@ -70,7 +70,7 @@ export default function HomePage() {
 
 	return (
 		<div>
-			<HeroSection loggedIn={loggedIn} />
+			<HeroSection loggedIn={loggedIn} userName={user?.name ?? ''} />
 
 			{loggedIn && (
 				<div

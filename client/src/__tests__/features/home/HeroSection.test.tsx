@@ -7,7 +7,7 @@ describe('HeroSection', () => {
   it('renders without crashing', () => {
     render(
       <MemoryRouter>
-        <HeroSection />
+        <HeroSection loggedIn={false} />
       </MemoryRouter>,
     );
     expect(screen.getByRole('heading', { level: 1 })).toBeInTheDocument();
@@ -19,16 +19,16 @@ describe('HeroSection', () => {
         <HeroSection loggedIn={false} />
       </MemoryRouter>,
     );
-    expect(screen.getByRole('button', { name: /get started/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /sign in/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /get started/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /sign in/i })).toBeInTheDocument();
   });
 
-  it('hides CTA buttons when logged in', () => {
+  it('hides CTA links when logged in', () => {
     render(
       <MemoryRouter>
-        <HeroSection loggedIn={true} />
+        <HeroSection loggedIn={true} userName="Test User" />
       </MemoryRouter>,
     );
-    expect(screen.queryByRole('button', { name: /get started/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /get started/i })).not.toBeInTheDocument();
   });
 });
