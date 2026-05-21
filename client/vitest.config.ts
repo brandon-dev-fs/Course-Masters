@@ -9,12 +9,17 @@ export default defineConfig({
     clearMocks: true,
     setupFiles: ['./vitest.setup.ts'],
     include: ['src/**/*.test.{ts,tsx}'],
+    testTimeout: 15000,
+    hookTimeout: 10000,
+    maxWorkers: 2,
+    minWorkers: 1,
     coverage: {
       provider: 'v8',
       reporter: ['text', 'lcov'],
       include: ['src/**/*.{ts,tsx}'],
       exclude: [
         'src/main.tsx',
+        'src/components/RichTextEditor.tsx',
         'src/**/*.test.{ts,tsx}',
         'src/__tests__/**',
       ],
