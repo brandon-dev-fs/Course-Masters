@@ -5,14 +5,17 @@ import MonthGrid from './MonthGrid.js';
 import type { Course, CourseProgress } from '../../api/types.js';
 import type { UnitMarker } from './MonthGrid.js';
 
+// Colors for unit calendar markers.
+// Brand values use CSS custom properties so they track the design token system.
+// Calendar-specific accent colors are intentional display colors outside the brand palette.
 const UNIT_COLORS = [
-  '#138808', // primary green
-  '#085287', // accent blue
-  '#b45309', // amber
-  '#7c3aed', // violet
-  '#0891b2', // cyan
-  '#be185d', // pink
-  '#16a34a', // emerald
+  'var(--green-primary)',  // brand green (was #138808 — now tracks --green-primary)
+  'var(--blue-accent)',    // brand blue  (was #085287 — now tracks --blue-accent)
+  '#b45309',               // amber  — calendar accent, no token equivalent
+  '#7c3aed',               // violet — calendar accent, no token equivalent
+  '#0891b2',               // cyan   — calendar accent, no token equivalent
+  '#be185d',               // pink   — calendar accent, no token equivalent
+  '#16a34a',               // emerald — calendar accent, no token equivalent
 ];
 
 const MONTH_NAMES = [
