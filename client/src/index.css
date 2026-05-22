@@ -35,17 +35,69 @@
   --color-destructive-foreground: var(--destructive-foreground);
   --color-success:                var(--success);
   --color-warning:                var(--warning);
+
+  /* Named brand tokens */
+  --color-green-primary:            var(--green-primary);
+  --color-green-primary-foreground: var(--green-primary-foreground);
+  --color-green-surface:            var(--green-surface);
+  --color-green-surface-text:       var(--green-surface-text);
+  --color-green-button:             var(--green-button);
+  --color-green-button-text:        var(--green-button-text);
+
+  --color-blue-accent:              var(--blue-accent);
+  --color-blue-accent-foreground:   var(--blue-accent-foreground);
+  --color-blue-surface:             var(--blue-surface);
+  --color-blue-surface-text:        var(--blue-surface-text);
+
+  --color-orange-accent:            var(--orange-accent);
+  --color-orange-accent-foreground: var(--orange-accent-foreground);
+  --color-orange-surface:           var(--orange-surface);
+  --color-orange-surface-text:      var(--orange-surface-text);
+
+  /* Surface and text tokens */
+  --color-border-subtle:            var(--border-subtle);
+  --color-text-primary:             var(--text-primary);
+  --color-text-secondary:           var(--text-secondary);
+
+  /* Hero section */
+  --color-hero-deep:                var(--hero-deep);
 }
 
 /* ─── Light theme (default) ─────────────────────────────────────────────── */
 :root {
-  /* Brand */
-  --primary:            #138808;  /* India green */
-  --primary-foreground: #ffffff;
-  --primary-subtle:     #e8f5e4;  /* Green wash for badges/active tabs */
-  --accent:             #085287;  /* Ocean blue */
-  --accent-foreground:  #ffffff;
-  --accent-subtle:      #e0eef8;  /* Blue wash */
+  /* Brand — named tokens */
+  --green-primary:             #047857;
+  --green-primary-foreground:  #FFFFFF;
+  --green-surface:             #ECFDF5;
+  --green-surface-text:        #065F46;
+  --green-button:              #047857;
+  --green-button-text:         #FFFFFF;
+
+  --blue-accent:               #2563EB;
+  --blue-accent-foreground:    #FFFFFF;
+  --blue-surface:              #EFF6FF;
+  --blue-surface-text:         #1E40AF;
+
+  --orange-accent:             #EA580C;
+  --orange-accent-foreground:  #FFFFFF;
+  --orange-surface:            #FFF7ED;
+  --orange-surface-text:       #9A3412;
+
+  /* Surface and text tokens */
+  --border-subtle:             #F3F4F6;
+  --text-primary:              #111827;
+  --text-secondary:            #6B7280;
+
+  /* Hero section token (theme-invariant — always deep dark) */
+  --hero-deep:                 #0a0a16;
+
+  /* Brand — generic aliases (backward compatibility) */
+  --primary:            var(--green-primary);
+  --primary-foreground: var(--green-primary-foreground);
+  --primary-subtle:     var(--green-surface);
+  --accent:             var(--blue-accent);
+  --accent-foreground:  var(--blue-accent-foreground);
+  --accent-subtle:      var(--blue-surface);
   --charcoal:           #2c2c35;  /* Third brand color */
   --charcoal-foreground: #ffffff;
 
@@ -74,13 +126,36 @@
 
 /* ─── Dark theme ─────────────────────────────────────────────────────────── */
 .dark {
-  /* Brand — slightly brightened for contrast on dark backgrounds */
-  --primary:            #17a009;
-  --primary-foreground: #ffffff;
-  --primary-subtle:     #1a3318;
-  --accent:             #0a6db5;
-  --accent-foreground:  #ffffff;
-  --accent-subtle:      #0f2a40;
+  /* Brand — named tokens */
+  --green-primary:             #10B981;
+  --green-primary-foreground:  #FFFFFF;
+  --green-surface:             rgba(4, 120, 87, 0.15);
+  --green-surface-text:        #6EE7B7;
+  --green-button:              #047857;  /* invariant — same as light */
+  --green-button-text:         #FFFFFF;
+
+  --blue-accent:               #60A5FA;
+  --blue-accent-foreground:    #FFFFFF;
+  --blue-surface:              rgba(37, 99, 235, 0.15);
+  --blue-surface-text:         #93C5FD;
+
+  --orange-accent:             #FB923C;
+  --orange-accent-foreground:  #FFFFFF;
+  --orange-surface:            rgba(234, 88, 12, 0.15);
+  --orange-surface-text:       #FDBA74;
+
+  /* Surface and text tokens */
+  --border-subtle:             rgba(255, 255, 255, 0.06);
+  --text-primary:              #F9FAFB;
+  --text-secondary:            #A1A1AA;
+
+  /* Brand — generic aliases (backward compatibility) */
+  --primary:            var(--green-primary);
+  --primary-foreground: var(--green-primary-foreground);
+  --primary-subtle:     var(--green-surface);
+  --accent:             var(--blue-accent);
+  --accent-foreground:  var(--blue-accent-foreground);
+  --accent-subtle:      var(--blue-surface);
   --charcoal:           #4a4a56;
   --charcoal-foreground: #ffffff;
 
