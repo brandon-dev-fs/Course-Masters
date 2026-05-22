@@ -101,16 +101,16 @@
   --charcoal:           #2c2c35;  /* Third brand color */
   --charcoal-foreground: #ffffff;
 
-  /* Surfaces — warm off-white tones */
-  --background:         #faf9f7;  /* Warm cream */
-  --foreground:         #1e1e24;
-  --surface:            #f0ede8;  /* Cards, sidebars */
-  --surface-raised:     #ffffff;  /* Elevated cards, modals */
-  --border:             #e0dbd4;
+  /* Surfaces */
+  --background:         #FFFFFF;
+  --foreground:         #111827;
+  --surface:            #F9FAFB;  /* Cards, sidebars */
+  --surface-raised:     #FFFFFF;  /* Elevated cards, modals */
+  --border:             #E4E4E7;
 
   /* Text */
-  --muted:              #f0ede8;
-  --muted-foreground:   #6e6860;  /* Warm mid-gray */
+  --muted:              #F9FAFB;
+  --muted-foreground:   #6B7280;
 
   /* Status */
   --destructive:            #dc2626;
@@ -118,10 +118,10 @@
   --success:                #16a34a;
   --warning:                #d97706;
 
-  /* Shadows — warm-tinted */
-  --shadow-sm: 0 1px 3px rgba(44, 36, 28, 0.08), 0 1px 2px rgba(44, 36, 28, 0.04);
-  --shadow-md: 0 4px 12px rgba(44, 36, 28, 0.10), 0 2px 4px rgba(44, 36, 28, 0.06);
-  --shadow-lg: 0 10px 30px rgba(44, 36, 28, 0.12), 0 4px 10px rgba(44, 36, 28, 0.08);
+  /* Shadows */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.10), 0 2px 4px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.12), 0 4px 10px rgba(0, 0, 0, 0.08);
 }
 
 /* ─── Dark theme ─────────────────────────────────────────────────────────── */
@@ -152,23 +152,23 @@
   /* Brand — generic aliases (backward compatibility) */
   --primary:            var(--green-primary);
   --primary-foreground: var(--green-primary-foreground);
-  --primary-subtle:     var(--green-surface);
+  --primary-subtle:     #1a3318;  /* dark-mode surface: opaque, not rgba — dark bg needs solid color */
   --accent:             var(--blue-accent);
   --accent-foreground:  var(--blue-accent-foreground);
-  --accent-subtle:      var(--blue-surface);
+  --accent-subtle:      #0f2a40;  /* dark-mode surface: opaque, not rgba */
   --charcoal:           #4a4a56;
   --charcoal-foreground: #ffffff;
 
-  /* Surfaces — warm-tinted darks */
-  --background:         #1a1917;
-  --foreground:         #f0f0f3;
-  --surface:            #242220;  /* Cards, panels */
-  --surface-raised:     #2e2c29;  /* Modals, dropdowns */
-  --border:             #3d3a36;
+  /* Surfaces */
+  --background:         #09090B;
+  --foreground:         #F9FAFB;
+  --surface:            #18181B;  /* Cards, panels */
+  --surface-raised:     #27272A;  /* Modals, dropdowns */
+  --border:             #27272A;
 
   /* Text */
-  --muted:              #242220;
-  --muted-foreground:   #9090a0;
+  --muted:              #18181B;
+  --muted-foreground:   #A1A1AA;
 
   /* Status */
   --destructive:            #ef4444;
