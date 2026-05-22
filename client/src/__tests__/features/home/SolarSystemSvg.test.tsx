@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { render } from '@testing-library/react';
-import SolarSystemSvg from '../../features/home/SolarSystemSvg.js';
+import SolarSystemSvg from '../../../features/home/SolarSystemSvg.js';
 
 describe('SolarSystemSvg', () => {
 	it('renders an aria-hidden SVG', () => {
