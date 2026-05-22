@@ -75,7 +75,7 @@ export default function HomePage() {
 			{loggedIn && (
 				<div
 					id="courses"
-					className="px-6 scroll-mt-20"
+					className="px-6 pt-8 scroll-mt-20"
 				>
 					<div className="flex items-center justify-between mb-6">
 						<h2 className="text-2xl font-bold text-foreground tracking-tight">

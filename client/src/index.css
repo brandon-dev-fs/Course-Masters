@@ -88,8 +88,8 @@
   --text-primary:              #111827;
   --text-secondary:            #6B7280;
 
-  /* Hero section token (theme-invariant — always deep dark) */
-  --hero-deep:                 #0a0a16;
+  /* Hero section token (theme-invariant — dark navy, distinct from #09090B page bg) */
+  --hero-deep:                 #0f172a;
 
   /* Brand — generic aliases (backward compatibility) */
   --primary:            var(--green-primary);

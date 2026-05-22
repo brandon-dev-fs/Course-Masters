@@ -11,13 +11,13 @@ approver: agent
 
 ## Summary
 
-This review covers the cm-0022 hero section redesign, which consists of three purely presentational frontend files: a refactored `HeroSection.tsx`, a new decorative `SolarSystemSvg.tsx`, and a one-line prop addition in `HomePage.tsx`. No API routes, authentication logic, data mutations, or backend code were changed. The change surface presents a minimal security footprint and no issues at medium severity or above were found.
+This review covers the cm-0022 hero section redesign (including post-fix commits), which consists of three purely presentational frontend files — a refactored `HeroSection.tsx`, a new decorative `SolarSystemSvg.tsx`, and a one-line prop addition in `HomePage.tsx` — plus an expanded test suite for both components. No API routes, authentication logic, data mutations, or backend code were changed. The change surface presents a minimal security footprint and no issues at medium severity or above were found. The re-run confirms the previous approved status remains valid.
 
 ## Scope
 
 - Branch: `refactor/code_cleanup`
 - Base: `develop`
-- Files changed: 3
+- Files changed: 5 (HeroSection.tsx, SolarSystemSvg.tsx, HomePage.tsx, HeroSection.test.tsx, SolarSystemSvg.test.tsx)
 - Spec: cm-0022
 
 ## Issues
@@ -40,7 +40,9 @@ No issues found.
 | API security — CORS, content-type, resource existence leakage | n/a — no API changes |
 | Hardcoded credentials or secrets | pass — none present |
 | Client-side sensitive data storage (localStorage, URL params) | pass — no client-side storage used |
+| SVG security — inline script, external resource references | pass — SVG contains only static geometry and CSS animations; no `<script>`, no `xlink:href` to external origins, no event handlers |
+| Test additions — new attack surface via test utilities | pass — test files are dev-only, not bundled into production; tests correctly assert `aria-hidden="true"` and `focusable="false"` on the decorative SVG |
 
 ## Verdict
 
-APPROVED — Zero security issues found; change is purely presentational with no attack surface introduced.
+APPROVED — Zero security issues found; change is purely presentational with no attack surface introduced. Re-run confirms prior approval stands.

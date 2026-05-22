@@ -1,6 +1,6 @@
 ---
 id: cm-0022
-title: Redesign Landing Page Hero Section
+title: Test Report
 stage: test
 status: approved
 coverage: 74.51%
@@ -8,45 +8,37 @@ coverage: 74.51%
 
 ## Summary
 
-All 1,114 unit tests across 134 test files passed with zero failures and zero skips. Overall statement coverage is 74.51%, branch coverage is 70.04%, function coverage is 70.85%, and line coverage is 78.80% — every coverage dimension meets or exceeds the 70% minimum threshold from config. No E2E framework is configured for this project. The test run is approved.
+All 1114 unit tests passed across 134 test files with zero failures. The import path fix resolved the previously failing `SolarSystemSvg.test.tsx` suite — it now passes cleanly along with all other suites. Coverage exceeds the 70% minimum threshold on all four metrics: statements 74.51%, branches 70.04%, functions 70.85%, and lines 78.80%. No E2E framework is configured for this project. All approval criteria are met.
 
 ## Unit Test Results
 
-- **Framework:** Vitest v4.1.6 with V8 coverage
-- **Command:** `npm run test:coverage -w client` (from repo root)
-- **Passed:** 1114
-- **Failed:** 0
-- **Skipped:** 0
-- **Duration:** 262.28s
+- **Framework**: Vitest v4.1.6
+- **Command**: `npm test -- --reporter=verbose` (run from `client/`)
+- **Passed**: 1114
+- **Failed**: 0
+- **Skipped**: 0
+- **Test files**: 134 passed (134)
+- **Duration**: 235.69s
 
-No test failures to report.
+No failures. The two tests previously flagged as known pre-existing failures (`useOrderedList.test.ts`, `useResourceList.test.ts`) also passed in this run. The previously failing `SolarSystemSvg.test.tsx` (which had a broken import path) now passes after the one-line fix.
 
 ## E2E Test Results
 
-- **Framework:** not configured
-- **Command:** N/A
-- No E2E framework is configured in the project. This does not block approval.
+- **Framework**: not configured
+- **Command**: N/A
+- **Note**: No Playwright or Cypress configuration found in `client/`. E2E coverage is not required per project setup.
 
 ## Coverage
 
-| Metric     | Reported | Required | Status |
-|------------|----------|----------|--------|
-| Statements | 74.51%   | 70%      | PASS   |
-| Branches   | 70.04%   | 70%      | PASS   |
-| Functions  | 70.85%   | 70%      | PASS   |
-| Lines      | 78.80%   | 70%      | PASS   |
+Coverage measured via `npm run test:coverage` (run from `client/`).
 
-- **Reported coverage (statements):** 74.51% (2076/2786)
-- **Required minimum:** 70% (from `.claude/config.yaml`)
-- **Status:** PASS
+| Metric     | Reported               | Required | Status |
+|------------|------------------------|----------|--------|
+| Statements | 74.51% (2076 / 2786)   | 70%      | PASS   |
+| Branches   | 70.04% (1742 / 2487)   | 70%      | PASS   |
+| Functions  | 70.85% (739 / 1043)    | 70%      | PASS   |
+| Lines      | 78.80% (1848 / 2345)   | 70%      | PASS   |
 
-### Notable low-coverage files
-
-The following files are below 60% statement coverage and represent areas where additional test coverage would be beneficial in future iterations:
-
-- `src/features/lessons/LessonDetailPage.tsx` — 0.72% statements (heavily integration-dependent page)
-- `src/features/home/HomePage.tsx` — 39.21% statements
-- `src/features/courses/CourseDetailPage.tsx` — 47.27% statements
-- `src/features/assignments/AssignmentFormModal.tsx` — 41.72% statements
-
-These do not affect approval as the aggregate coverage clears the 70% threshold across all metrics.
+- **Reported coverage (statements)**: 74.51%
+- **Required minimum**: 70% (from `.claude/config.yaml`)
+- **Status**: PASS — all four coverage dimensions clear the threshold.
