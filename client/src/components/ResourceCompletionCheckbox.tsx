@@ -12,7 +12,7 @@ export default function ResourceCompletionCheckbox({ isComplete, onToggle }: Res
       onClick={onToggle}
       className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-colors ${
         isComplete
-          ? 'bg-green-surface text-green-surface-text hover:bg-green-surface'
+          ? 'bg-green-surface text-green-surface-text hover:brightness-95'
           : 'bg-surface-raised text-muted-foreground hover:text-foreground hover:bg-surface-raised/80'
       }`}
     >

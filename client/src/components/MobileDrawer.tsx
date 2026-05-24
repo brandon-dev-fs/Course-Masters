@@ -24,16 +24,20 @@ export default function MobileDrawer({ isOpen, onClose, focusReturnRef }: Mobile
   const location = useLocation();
   const drawerRef = useRef<HTMLDivElement>(null);
   const closeBtnRef = useRef<HTMLButtonElement>(null);
+  const wasOpenRef = useRef(false);
 
   function isActive(path: string): boolean {
     return location.pathname === path;
   }
 
-  // Move focus into drawer when it opens; return focus to hamburger on close
+  // Move focus into drawer when it opens; return focus to hamburger on close.
+  // wasOpenRef guards the else branch so it only fires after a real open/close cycle,
+  // not on initial mount when isOpen is already false.
   useEffect(() => {
     if (isOpen) {
+      wasOpenRef.current = true;
       requestAnimationFrame(() => closeBtnRef.current?.focus());
-    } else {
+    } else if (wasOpenRef.current) {
       focusReturnRef.current?.focus();
     }
   }, [isOpen, focusReturnRef]);
@@ -114,7 +118,7 @@ export default function MobileDrawer({ isOpen, onClose, focusReturnRef }: Mobile
             ref={closeBtnRef}
             onClick={onClose}
             aria-label="Close navigation menu"
-            className="w-9 h-9 flex items-center justify-center rounded-xl text-muted-foreground hover:text-foreground hover:bg-surface transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-primary focus-visible:ring-offset-2"
+            className="w-11 h-11 flex items-center justify-center rounded-xl text-muted-foreground hover:text-foreground hover:bg-surface transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-primary focus-visible:ring-offset-2"
           >
             <X className="w-5 h-5" />
           </button>

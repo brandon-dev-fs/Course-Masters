@@ -44,7 +44,7 @@ export default function Layout() {
 		function handleScroll() {
 			const heroEl = document.querySelector<HTMLElement>('[aria-label="Hero"]');
 			const threshold = heroEl
-				? heroEl.getBoundingClientRect().height + heroEl.offsetTop
+				? heroEl.offsetHeight + heroEl.offsetTop
 				: HERO_HEIGHT_ESTIMATE;
 			setHasScrolled(window.scrollY > threshold);
 		}
