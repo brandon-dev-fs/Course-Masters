@@ -173,7 +173,7 @@
   /* Status */
   --destructive:            #ef4444;
   --destructive-foreground: #ffffff;
-  --success:                #22c55e;
+  --success:                #16a34a;
   --warning:                #f59e0b;
 
   /* Shadows — subtle on dark */
@@ -203,6 +203,16 @@ html {
 .pencil-draw {
   animation: pencil-draw 1.6s ease-in-out infinite;
   transform-origin: left center;
+}
+
+/* ─── Mobile drawer slide-in animation ───────────────────────────────────── */
+@keyframes slide-in-right {
+  from { transform: translateX(100%); }
+  to   { transform: translateX(0); }
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 300ms ease-in-out forwards;
 }
 
 /* ─── Rich text editor content ───────────────────────────────────────────── */

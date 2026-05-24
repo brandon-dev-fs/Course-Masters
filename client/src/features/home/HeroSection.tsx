@@ -12,7 +12,7 @@ export default function HeroSection({ loggedIn, userName = '' }: HeroSectionProp
 		return (
 			<section
 				aria-label="Hero"
-				className="w-full py-10 px-5 bg-surface md:py-14 md:px-6"
+				className="w-full py-10 px-5 bg-surface border-b border-border md:py-14 md:px-6"
 			>
 				<div className="max-w-7xl mx-auto">
 					<h1 className="text-2xl md:text-3xl font-bold text-foreground tracking-tight">

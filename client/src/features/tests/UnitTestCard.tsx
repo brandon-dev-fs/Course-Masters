@@ -33,7 +33,7 @@ export default function UnitTestCard({ unitId, allLessonsComplete }: { unitId: s
             role="img"
             aria-label={locked ? 'Status: Locked' : passed ? 'Status: Passed' : 'Status: Not passed'}
             className={`w-4 h-4 rounded-[3px] border flex items-center justify-center shrink-0 ${
-              passed ? 'bg-green-500 border-green-500' : 'border-border bg-surface-raised'
+              passed ? 'bg-green-primary border-green-primary' : 'border-border bg-surface-raised'
             }`}
           >
             {locked
