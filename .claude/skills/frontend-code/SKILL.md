@@ -1,41 +1,42 @@
 ---
 name: frontend-code
-description: Implement frontend code per the approved plan in an isolated worktree with passing unit tests.
+description: Implement a single task from the frontend plan in an isolated worktree. Called repeatedly by /implement, one task at a time.
 ---
 
 # frontend-code
 
 ## Purpose
 
-Implement frontend code from the approved plan in the assigned worktree. Write unit tests. Commit with `<id>: <summary>` format.
+Implement **one task** from the frontend plan. Called by `/implement` for each unchecked task. Commit the work for that task only, then return for lead-dev review.
 
 ## Inputs
 
-- Approved spec at `.claude/specs/<id>/spec.md`
-- Approved frontend plan at `.claude/plans/<id>/frontend-plan.md`
-- Approved api-contract at `.claude/plans/<id>/api-contract.md`
-- `CLAUDE.md` for frontend stack, conventions, and tooling
-- `.claude/rules/frontend.md` for project-specific rules
-- Optional: rejected review doc from `.claude/reviews/<id>/`
-- Worktree path and branch name (from `/implement`)
+- The current task description and its parent section from the plan
+- The full section context (not the entire plan — just the relevant section)
+- `CLAUDE.md` for frontend stack and conventions
+- `.claude/rules/frontend.md`, `.claude/rules/api.md`, `.claude/rules/design.md`
+- Optional: lead-dev rejection feedback (if retrying a failed task)
+- Worktree path and branch name
 
 ## Output
 
-Code committed to worktree. Success only if unit tests pass (or no framework configured).
+One or more commits implementing the single task. Commit message format: `<id>: <task summary>`.
 
 ## Procedure
 
-1. Read `CLAUDE.md` and `.claude/rules/frontend.md`.
-2. Verify spec, plan, and api-contract approved.
-3. If review doc provided, address each issue at `medium`+.
-4. Implement per plan following the project's conventions from `CLAUDE.md`.
-5. **Contract immutability**: if api-contract is missing a capability, stop and report.
-6. Write unit tests (if framework exists per `CLAUDE.md`).
-7. Run tests. Do not commit if tests fail.
-8. Commit with `<id>: <imperative summary>`.
+1. Read `CLAUDE.md` and relevant scoped rules.
+2. Read the task description and its parent section for context.
+3. If lead-dev feedback provided (retry), address the specific issues.
+4. Implement **only what the task describes**. Do not work ahead.
+5. Write tests if framework exists and task involves testable logic.
+6. Run tests. Do not commit if tests fail.
+7. Commit with `<id>: <task summary>`.
+8. Return for lead-dev review.
 
 ## Constraints
 
-- Stay in assigned worktree. No backend code, no `.claude/` artifacts.
-- Follow all conventions from `CLAUDE.md` and `.claude/rules/frontend.md`.
+- Implement one task only. Do not touch code outside the task's scope.
+- Stay in the assigned worktree.
+- Follow all conventions from `CLAUDE.md` and scoped rules.
+- API contract is immutable. Stop and escalate if needed.
 - Never touch protected branches.

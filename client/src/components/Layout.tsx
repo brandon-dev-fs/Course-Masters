@@ -1,4 +1,6 @@
-import { Outlet, Link, useNavigate } from 'react-router-dom';
+import { useState, useRef, useEffect } from 'react';
+import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
+import { Menu } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext.js';
 import { useAuth } from '../context/AuthContext.js';
 import {
@@ -11,20 +13,63 @@ import {
 } from 'lucide-react';
 import Button from './Button.js';
 import Footer from './Footer.js';
+import MobileDrawer from './MobileDrawer.js';
+
+// Approximate height threshold for considering the hero section visible.
+// Errs toward showing the opaque navbar rather than a transparent flash (NFR-01).
+const HERO_HEIGHT_ESTIMATE = 400;
 
 export default function Layout() {
 	const { theme, toggleTheme } = useTheme();
 	const { user, logout } = useAuth();
 	const navigate = useNavigate();
+	const location = useLocation();
+
+	const [drawerOpen, setDrawerOpen] = useState(false);
+	// Initialize synchronously from current scroll position to avoid FOUC (NFR-01)
+	const [hasScrolled, setHasScrolled] = useState(() => window.scrollY > HERO_HEIGHT_ESTIMATE);
+	const hamburgerRef = useRef<HTMLButtonElement>(null);
+
+	// Hero overlay applies only on the guest landing page in light mode
+	const isHeroPage = location.pathname === '/' && user === null;
+	const isHeroOverlay = isHeroPage && !hasScrolled && theme !== 'dark';
+
+	// Attach scroll listener only when on the guest hero page
+	useEffect(() => {
+		if (!isHeroPage) {
+			setHasScrolled(false);
+			return;
+		}
+
+		function handleScroll() {
+			const heroEl = document.querySelector<HTMLElement>('[aria-label="Hero"]');
+			const threshold = heroEl
+				? heroEl.offsetHeight + heroEl.offsetTop
+				: HERO_HEIGHT_ESTIMATE;
+			setHasScrolled(window.scrollY > threshold);
+		}
+
+		window.addEventListener('scroll', handleScroll, { passive: true });
+		return () => window.removeEventListener('scroll', handleScroll);
+	}, [isHeroPage]);
+
+	// Close drawer on route change
+	useEffect(() => {
+		setDrawerOpen(false);
+	}, [location.pathname]);
 
 	async function handleLogout() {
 		await logout();
 		navigate('/');
 	}
 
+	const headerClass = isHeroOverlay
+		? 'sticky top-0 z-40 bg-transparent px-6 py-4 flex items-center justify-between transition-colors duration-300'
+		: 'sticky top-0 z-40 bg-background/90 backdrop-blur-md border-b border-border shadow-warm-sm px-6 py-4 flex items-center justify-between transition-colors duration-300';
+
 	return (
 		<div className="min-h-screen bg-background text-foreground flex flex-col">
-			<header className="sticky top-0 z-40 bg-background/90 backdrop-blur-md border-b border-border shadow-warm-sm px-6 py-4 flex items-center justify-between">
+			<header className={headerClass}>
 				<Link
 					to="/"
 					className="text-xl font-bold text-primary hover:opacity-80 transition-opacity flex items-center gap-2"
@@ -32,7 +77,9 @@ export default function Layout() {
 					<GraduationCap className="w-6 h-6" />
 					<span>Course Masters</span>
 				</Link>
-				<div className="flex items-center gap-1">
+
+				{/* Inline nav items — hidden below md breakpoint */}
+				<div className="hidden md:flex items-center gap-1">
 					<button
 						onClick={toggleTheme}
 						className="w-10 h-10 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors rounded-xl hover:bg-surface"
@@ -98,7 +145,26 @@ export default function Layout() {
 						</>
 					)}
 				</div>
+
+				{/* Hamburger button — visible only below md breakpoint */}
+				<button
+					ref={hamburgerRef}
+					onClick={() => setDrawerOpen(true)}
+					aria-label="Open navigation menu"
+					aria-expanded={drawerOpen}
+					aria-controls="mobile-nav-drawer"
+					className="md:hidden w-11 h-11 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors rounded-xl hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-primary focus-visible:ring-offset-2"
+				>
+					<Menu className="w-5 h-5" />
+				</button>
 			</header>
+
+			<MobileDrawer
+				isOpen={drawerOpen}
+				onClose={() => setDrawerOpen(false)}
+				focusReturnRef={hamburgerRef}
+			/>
+
 			<main className="pb-8 flex-1">
 				<Outlet />
 			</main>

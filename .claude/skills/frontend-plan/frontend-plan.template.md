@@ -12,12 +12,32 @@ status: pending
 
 ## Folder Structure
 
+### Tasks
+
+- [ ]
+
 ## Component Tree
+
+### Tasks
+
+- [ ]
 
 ## Hooks / Data Fetching
 
+### Tasks
+
+- [ ]
+
 ## API Calls
 
+### Tasks
+
+- [ ]
+
 ## State Management
+
+### Tasks
+
+- [ ]
 
 ## Pseudocode

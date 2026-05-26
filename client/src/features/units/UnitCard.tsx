@@ -37,13 +37,13 @@ export default function UnitCard({ courseId, unit, unitProgress }: UnitCardProps
   return (
     <div className="w-full md:w-64 md:shrink-0 flex flex-col rounded-2xl bg-surface border border-border shadow-warm-sm hover:shadow-warm-md transition-all">
       {/* Accent bar */}
-      <div className={`h-1.5 rounded-t-2xl ${isComplete ? 'bg-green-500' : 'bg-primary'}`} />
+      <div className={`h-1.5 rounded-t-2xl ${isComplete ? 'bg-green-primary' : 'bg-primary'}`} />
 
       {/* Header */}
       <div className="flex items-center gap-2.5 px-4 pt-3 pb-2">
         <span className={`w-6 h-6 flex items-center justify-center rounded-md text-xs font-bold shrink-0 ${
           isComplete
-            ? 'bg-green-500 text-white'
+            ? 'bg-green-primary text-white'
             : 'bg-surface-raised text-muted-foreground border border-border'
         }`}>
           {unit.order}
@@ -86,7 +86,7 @@ export default function UnitCard({ courseId, unit, unitProgress }: UnitCardProps
         {testLocked ? (
           <Lock className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
         ) : testPassed ? (
-          <ClipboardCheck className="w-3.5 h-3.5 text-green-500 shrink-0" />
+          <ClipboardCheck className="w-3.5 h-3.5 text-green-primary shrink-0" />
         ) : (
           <ClipboardList className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
         )}
@@ -94,7 +94,7 @@ export default function UnitCard({ courseId, unit, unitProgress }: UnitCardProps
           testLocked
             ? 'text-muted-foreground/60'
             : testPassed
-              ? 'text-green-600 font-medium'
+              ? 'text-green-primary font-medium'
               : 'text-muted-foreground'
         }`}>
           {testPassed ? 'Unit test passed' : testLocked ? 'Unit test locked' : 'Unit test available'}

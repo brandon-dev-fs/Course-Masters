@@ -12,14 +12,32 @@ status: pending
 
 ## Folder Layout
 
+### Tasks
+- [ ]
+
 ## Handlers / Controllers
+
+### Tasks
+- [ ]
 
 ## Services / Business Logic
 
+### Tasks
+- [ ]
+
 ## Data Access
+
+### Tasks
+- [ ]
 
 ## Error Handling
 
+### Tasks
+- [ ]
+
 ## Schema Changes
+
+### Tasks
+- [ ]
 
 ## Pseudocode

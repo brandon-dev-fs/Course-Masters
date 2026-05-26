@@ -51,7 +51,7 @@ export default function ExamCard({ courseId, allUnitsMastered, canEdit }: ExamCa
         locked ? 'border-border opacity-60' : 'border-border shadow-warm-sm hover:shadow-warm-md'
       }`}>
         {/* Distinct muted accent bar */}
-        <div className={`h-1.5 rounded-t-2xl ${lastAttempt?.passed ? 'bg-green-500' : 'bg-muted-foreground/40'}`} />
+        <div className={`h-1.5 rounded-t-2xl ${lastAttempt?.passed ? 'bg-green-primary' : 'bg-muted-foreground/40'}`} />
 
         {/* Header */}
         <div className="flex items-center gap-2.5 px-4 pt-3 pb-2">
@@ -59,14 +59,14 @@ export default function ExamCard({ courseId, allUnitsMastered, canEdit }: ExamCa
             locked
               ? 'bg-surface-raised text-muted-foreground border border-border'
               : lastAttempt?.passed
-                ? 'bg-green-500 text-white'
+                ? 'bg-green-primary text-white'
                 : 'bg-surface-raised text-muted-foreground border border-border'
           }`}>
             {locked ? <Lock className="w-3 h-3" /> : <GraduationCap className="w-3.5 h-3.5" />}
           </span>
           <span className="font-semibold text-sm text-foreground">Final Exam</span>
           {lastAttempt && (
-            <span className={`flex items-center gap-1 text-xs font-semibold ml-auto shrink-0 ${lastAttempt.passed ? 'text-green-600' : 'text-destructive'}`}>
+            <span className={`flex items-center gap-1 text-xs font-semibold ml-auto shrink-0 ${lastAttempt.passed ? 'text-green-primary' : 'text-destructive'}`}>
               {lastAttempt.passed ? (
                 <CheckCircle2 className="w-3.5 h-3.5" />
               ) : (
