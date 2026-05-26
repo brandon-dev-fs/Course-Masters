@@ -20,12 +20,13 @@ import MobileDrawer from '../../components/MobileDrawer.js';
 function renderDrawer(
   isOpen: boolean,
   authOverrides?: Parameters<typeof makeAuthContext>[0],
+  initialRoute = '/',
 ) {
   const onClose = vi.fn();
   const focusReturnRef = createRef<HTMLButtonElement>();
 
   render(
-    <MemoryRouter>
+    <MemoryRouter initialEntries={[initialRoute]}>
       <ThemeProvider>
         <AuthContext.Provider value={makeAuthContext(authOverrides)}>
           <MobileDrawer
@@ -126,6 +127,58 @@ describe('MobileDrawer', () => {
       expect(
         screen.getByRole('button', { name: /switch to (dark|light) mode/i }),
       ).toBeInTheDocument();
+    });
+
+    it('shows "Switch to dark mode" label in light mode', () => {
+      localStorage.setItem('theme', 'light');
+      renderDrawer(true, { user: null });
+      expect(
+        screen.getByRole('button', { name: /switch to dark mode/i }),
+      ).toBeInTheDocument();
+      localStorage.removeItem('theme');
+    });
+  });
+
+  describe('sign out', () => {
+    it('calls logout when Sign Out is clicked', async () => {
+      const logoutMock = vi.fn().mockResolvedValue(undefined);
+      renderDrawer(true, { user: makeStudentUser(), logout: logoutMock });
+      fireEvent.click(screen.getByRole('button', { name: /sign out/i }));
+      expect(logoutMock).toHaveBeenCalledOnce();
+    });
+  });
+
+  describe('active route', () => {
+    it('marks the Sign In link as aria-current="page" when on /login', () => {
+      renderDrawer(true, { user: null }, '/login');
+      expect(screen.getByRole('link', { name: /sign in/i })).toHaveAttribute(
+        'aria-current',
+        'page',
+      );
+    });
+
+    it('marks the Sign Up link as aria-current="page" when on /register', () => {
+      renderDrawer(true, { user: null }, '/register');
+      expect(screen.getByRole('link', { name: /sign up/i })).toHaveAttribute(
+        'aria-current',
+        'page',
+      );
+    });
+
+    it('marks the Profile link as aria-current="page" when on /profile', () => {
+      renderDrawer(true, { user: makeStudentUser() }, '/profile');
+      expect(screen.getByRole('link', { name: makeStudentUser().name })).toHaveAttribute(
+        'aria-current',
+        'page',
+      );
+    });
+
+    it('marks the Admin link as aria-current="page" when on /admin/users', () => {
+      renderDrawer(true, { user: makeAdminUser() }, '/admin/users');
+      const adminNavLink = screen
+        .getAllByRole('link', { name: 'Admin' })
+        .find((l) => l.getAttribute('href') === '/admin/users');
+      expect(adminNavLink).toHaveAttribute('aria-current', 'page');
     });
   });
 });
