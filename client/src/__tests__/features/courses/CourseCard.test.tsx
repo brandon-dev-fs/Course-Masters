@@ -88,28 +88,13 @@ describe('CourseCard', () => {
     expect(onEdit).toHaveBeenCalledOnce();
   });
 
-  it('renders without crashing when index is not provided (defaults to 0)', () => {
+  it('shows the category pill label', () => {
     render(
       <MemoryRouter>
         <CourseCard course={course} onEdit={onEdit} onDelete={onDelete} />
       </MemoryRouter>,
     );
-    expect(screen.getByText('Intro to Python')).toBeInTheDocument();
-  });
-
-  it('applies different color variants based on index', () => {
-    const { rerender } = render(
-      <MemoryRouter>
-        <CourseCard course={course} index={0} onEdit={onEdit} onDelete={onDelete} />
-      </MemoryRouter>,
-    );
-    expect(screen.getByText('Intro to Python')).toBeInTheDocument();
-
-    rerender(
-      <MemoryRouter>
-        <CourseCard course={course} index={1} onEdit={onEdit} onDelete={onDelete} />
-      </MemoryRouter>,
-    );
-    expect(screen.getByText('Intro to Python')).toBeInTheDocument();
+    // 'Intro to Python' has no matching keywords — falls back to 'Other'
+    expect(screen.getByText('Other')).toBeInTheDocument();
   });
 });

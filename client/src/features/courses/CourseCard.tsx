@@ -9,18 +9,19 @@ import CourseCardMenu from './CourseCardMenu.js';
 
 interface CourseCardProps {
   course: Course;
-  index?: number;
   canEdit?: boolean;
   onEdit: () => void;
   onDelete: () => void;
 }
 
-// Icon color variants by index % 3 — determines color only, not icon
-const COLOR_VARIANTS = [
-  { containerClass: 'bg-green-surface', iconClass: 'text-green-primary' },
-  { containerClass: 'bg-blue-surface', iconClass: 'text-blue-accent' },
-  { containerClass: 'bg-orange-surface', iconClass: 'text-orange-surface-text' },
-] as const;
+// Icon container color by category — semantically matched to subject matter
+const CATEGORY_COLOR: Record<CourseCategory, { containerClass: string; iconClass: string }> = {
+  Mathematics: { containerClass: 'bg-blue-surface', iconClass: 'text-blue-accent' },
+  Science: { containerClass: 'bg-orange-surface', iconClass: 'text-orange-surface-text' },
+  Language: { containerClass: 'bg-green-surface', iconClass: 'text-green-primary' },
+  Music: { containerClass: 'bg-blue-surface', iconClass: 'text-blue-accent' },
+  Other: { containerClass: 'bg-surface', iconClass: 'text-text-secondary' },
+};
 
 // Icon by course category — semantically matched to subject matter
 const CATEGORY_ICON: Record<CourseCategory, typeof BookOpen> = {
@@ -31,25 +32,24 @@ const CATEGORY_ICON: Record<CourseCategory, typeof BookOpen> = {
   Other: GraduationCap,
 };
 
-// Category pill colors
+// Category pill colors — aligned with CATEGORY_COLOR
 const CATEGORY_PILL_CLASS: Record<CourseCategory, string> = {
   Mathematics: 'bg-blue-surface text-blue-surface-text',
-  Science: 'bg-green-surface text-green-surface-text',
-  Language: 'bg-orange-surface text-orange-surface-text',
+  Science: 'bg-orange-surface text-orange-surface-text',
+  Language: 'bg-green-surface text-green-surface-text',
   Music: 'bg-blue-surface text-blue-surface-text',
   Other: 'bg-surface border border-border-subtle text-text-secondary',
 };
 
 export default function CourseCard({
   course,
-  index = 0,
   canEdit = true,
   onEdit,
   onDelete,
 }: CourseCardProps) {
   const unitCount = course._count?.units ?? 0;
-  const colorVariant = COLOR_VARIANTS[index % 3];
   const category = getCourseCategory(course.title);
+  const colorVariant = CATEGORY_COLOR[category];
   const Icon = CATEGORY_ICON[category];
   const categoryPillClass = CATEGORY_PILL_CLASS[category];
 
