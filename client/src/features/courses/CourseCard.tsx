@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { BookOpen, FlaskConical, Music, LayoutGrid } from 'lucide-react';
+import { BookOpen, FlaskConical, Music, LayoutGrid, Calculator, Languages, GraduationCap } from 'lucide-react';
 
 import type { Course } from '../../api/types.js';
 
@@ -15,24 +15,21 @@ interface CourseCardProps {
   onDelete: () => void;
 }
 
-// Icon color variants by index % 3
-const ICON_VARIANTS = [
-  {
-    containerClass: 'bg-green-surface',
-    iconClass: 'text-green-primary',
-    Icon: BookOpen,
-  },
-  {
-    containerClass: 'bg-blue-surface',
-    iconClass: 'text-blue-accent',
-    Icon: FlaskConical,
-  },
-  {
-    containerClass: 'bg-orange-surface',
-    iconClass: 'text-orange-surface-text',
-    Icon: Music,
-  },
+// Icon color variants by index % 3 — determines color only, not icon
+const COLOR_VARIANTS = [
+  { containerClass: 'bg-green-surface', iconClass: 'text-green-primary' },
+  { containerClass: 'bg-blue-surface', iconClass: 'text-blue-accent' },
+  { containerClass: 'bg-orange-surface', iconClass: 'text-orange-surface-text' },
 ] as const;
+
+// Icon by course category — semantically matched to subject matter
+const CATEGORY_ICON: Record<CourseCategory, typeof BookOpen> = {
+  Mathematics: Calculator,
+  Science: FlaskConical,
+  Language: Languages,
+  Music: Music,
+  Other: GraduationCap,
+};
 
 // Category pill colors
 const CATEGORY_PILL_CLASS: Record<CourseCategory, string> = {
@@ -51,9 +48,9 @@ export default function CourseCard({
   onDelete,
 }: CourseCardProps) {
   const unitCount = course._count?.units ?? 0;
-  const variant = ICON_VARIANTS[index % 3];
-  const { Icon } = variant;
+  const colorVariant = COLOR_VARIANTS[index % 3];
   const category = getCourseCategory(course.title);
+  const Icon = CATEGORY_ICON[category];
   const categoryPillClass = CATEGORY_PILL_CLASS[category];
 
   return (
@@ -61,10 +58,10 @@ export default function CourseCard({
       {/* Icon + menu row (desktop: full-width row; mobile: icon column) */}
       <div className="flex items-start justify-between gap-2 md:mb-3 shrink-0 md:w-full">
         <div
-          className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${variant.containerClass}`}
+          className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${colorVariant.containerClass}`}
         >
           <Icon
-            className={`w-6 h-6 ${variant.iconClass}`}
+            className={`w-6 h-6 ${colorVariant.iconClass}`}
             aria-hidden="true"
           />
         </div>
