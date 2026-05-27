@@ -15,9 +15,6 @@ import Button from './Button.js';
 import Footer from './Footer.js';
 import MobileDrawer from './MobileDrawer.js';
 
-// Approximate height threshold for considering the hero section visible.
-// Errs toward showing the opaque navbar rather than a transparent flash (NFR-01).
-const HERO_HEIGHT_ESTIMATE = 400;
 
 export default function Layout() {
 	const { theme, toggleTheme } = useTheme();
@@ -27,7 +24,7 @@ export default function Layout() {
 
 	const [drawerOpen, setDrawerOpen] = useState(false);
 	// Initialize synchronously from current scroll position to avoid FOUC (NFR-01)
-	const [hasScrolled, setHasScrolled] = useState(() => window.scrollY > HERO_HEIGHT_ESTIMATE);
+	const [hasScrolled, setHasScrolled] = useState(() => window.scrollY > 0);
 	const hamburgerRef = useRef<HTMLButtonElement>(null);
 
 	// Hero overlay applies only on the guest landing page in light mode
@@ -42,11 +39,7 @@ export default function Layout() {
 		}
 
 		function handleScroll() {
-			const heroEl = document.querySelector<HTMLElement>('[aria-label="Hero"]');
-			const threshold = heroEl
-				? heroEl.offsetHeight + heroEl.offsetTop
-				: HERO_HEIGHT_ESTIMATE;
-			setHasScrolled(window.scrollY > threshold);
+			setHasScrolled(window.scrollY > 0);
 		}
 
 		window.addEventListener('scroll', handleScroll, { passive: true });

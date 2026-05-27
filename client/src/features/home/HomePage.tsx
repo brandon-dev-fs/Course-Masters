@@ -1,16 +1,24 @@
-import { useEffect, useState } from 'react';
-import { BookOpen } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { BookOpen, SearchX } from 'lucide-react';
+
 import { coursesApi } from '../../api/courses.js';
 import type { Course } from '../../api/types.js';
+
 import CourseCard from '../courses/CourseCard.js';
+import CourseFilters from '../courses/CourseFilters.js';
+import type { CourseCategory } from '../courses/CourseFilters.js';
+import { getCourseCategory } from '../courses/CourseFilters.js';
 import CourseForm from '../courses/CourseForm.js';
 import HeroSection from './HeroSection.js';
+import HowItWorksSection from './HowItWorksSection.js';
+
 import Modal from '../../components/Modal.js';
 import ConfirmDialog from '../../components/ConfirmDialog.js';
 import Button from '../../components/Button.js';
 import LoadingSpinner from '../../components/LoadingSpinner.js';
 import ErrorMessage from '../../components/ErrorMessage.js';
 import EmptyState from '../../components/EmptyState.js';
+
 import { useAuth } from '../../context/AuthContext.js';
 import useCanEdit from '../../hooks/useCanEdit.js';
 
@@ -24,6 +32,21 @@ export default function HomePage() {
 	const [showCreate, setShowCreate] = useState(false);
 	const [editing, setEditing] = useState<Course | null>(null);
 	const [deleting, setDeleting] = useState<Course | null>(null);
+
+	const [searchQuery, setSearchQuery] = useState('');
+	const [selectedCategory, setSelectedCategory] = useState<CourseCategory | 'All'>('All');
+
+	const filteredCourses = useMemo(() => {
+		return courses.filter((course) => {
+			const matchesSearch =
+				searchQuery === '' ||
+				course.title.toLowerCase().includes(searchQuery.toLowerCase());
+			const matchesCategory =
+				selectedCategory === 'All' ||
+				getCourseCategory(course.title) === selectedCategory;
+			return matchesSearch && matchesCategory;
+		});
+	}, [courses, searchQuery, selectedCategory]);
 
 	async function load() {
 		setLoading(true);
@@ -72,6 +95,8 @@ export default function HomePage() {
 		<div>
 			<HeroSection loggedIn={loggedIn} userName={user?.name ?? ''} />
 
+			{!loggedIn && <HowItWorksSection />}
+
 			{loggedIn && (
 				<div
 					id="courses"
@@ -107,17 +132,40 @@ export default function HomePage() {
 							}
 						/>
 					) : (
-						<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-							{courses.map((course) => (
-								<CourseCard
-									key={course.id}
-									course={course}
-									canEdit={canEdit}
-									onEdit={() => setEditing(course)}
-									onDelete={() => setDeleting(course)}
-								/>
-							))}
-						</div>
+						<>
+							<CourseFilters
+								searchQuery={searchQuery}
+								onSearchChange={setSearchQuery}
+								selectedCategory={selectedCategory}
+								onCategoryChange={setSelectedCategory}
+							/>
+
+							<div
+								aria-live="polite"
+								className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"
+							>
+								{filteredCourses.length === 0 ? (
+									<div className="col-span-full">
+										<EmptyState
+											icon={<SearchX className="w-8 h-8" />}
+											title="No courses match your filters"
+											description="Try a different search term or category"
+										/>
+									</div>
+								) : (
+									filteredCourses.map((course, index) => (
+										<CourseCard
+											key={course.id}
+											course={course}
+											index={index}
+											canEdit={canEdit}
+											onEdit={() => setEditing(course)}
+											onDelete={() => setDeleting(course)}
+										/>
+									))
+								)}
+							</div>
+						</>
 					)}
 				</div>
 			)}
