@@ -75,7 +75,11 @@ export default function Layout() {
 				<div className="hidden md:flex items-center gap-1">
 					<button
 						onClick={toggleTheme}
-						className="w-10 h-10 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors rounded-xl hover:bg-surface"
+						className={`w-10 h-10 flex items-center justify-center transition-colors rounded-xl ${
+							isHeroOverlay
+								? 'text-white/75 hover:text-white hover:bg-white/10'
+								: 'text-muted-foreground hover:text-foreground hover:bg-surface'
+						}`}
 						aria-label="Toggle theme"
 					>
 						{theme === 'dark' ? (
@@ -90,6 +94,7 @@ export default function Layout() {
 								<Button
 									variant="ghost"
 									size="sm"
+									className={isHeroOverlay ? "text-white/80 hover:text-white hover:bg-white/10" : ""}
 								>
 									Sign In
 								</Button>
@@ -146,7 +151,7 @@ export default function Layout() {
 					aria-label="Open navigation menu"
 					aria-expanded={drawerOpen}
 					aria-controls="mobile-nav-drawer"
-					className="md:hidden w-11 h-11 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors rounded-xl hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-primary focus-visible:ring-offset-2"
+					className={`md:hidden w-11 h-11 flex items-center justify-center transition-colors rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-primary focus-visible:ring-offset-2 ${isHeroOverlay ? "text-white/75 hover:text-white hover:bg-white/10" : "text-muted-foreground hover:text-foreground hover:bg-surface"}`}
 				>
 					<Menu className="w-5 h-5" />
 				</button>
