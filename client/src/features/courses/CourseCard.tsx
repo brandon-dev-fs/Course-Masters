@@ -9,7 +9,7 @@ import CourseCardMenu from './CourseCardMenu.js';
 
 interface CourseCardProps {
   course: Course;
-  index: number;
+  index?: number;
   canEdit?: boolean;
   onEdit: () => void;
   onDelete: () => void;
@@ -45,7 +45,7 @@ const CATEGORY_PILL_CLASS: Record<CourseCategory, string> = {
 
 export default function CourseCard({
   course,
-  index,
+  index = 0,
   canEdit = true,
   onEdit,
   onDelete,
