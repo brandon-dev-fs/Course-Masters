@@ -1,6 +1,4 @@
-import { Link } from 'react-router-dom';
-
-import { BookOpen, Layers, TrendingUp, ArrowRight } from 'lucide-react';
+import { BookOpen, Layers, TrendingUp } from 'lucide-react';
 
 type StepConfig = {
   badge: string;
@@ -104,13 +102,6 @@ export default function HowItWorksSection() {
           </div>
         </div>
 
-        <Link
-          to="/register"
-          className="inline-flex items-center gap-2 mt-10 px-8 py-3.5 bg-green-button text-green-button-text font-semibold rounded-xl hover:opacity-90 transition-opacity"
-        >
-          Get started — it's free
-          <ArrowRight className="w-4 h-4" aria-hidden="true" />
-        </Link>
       </div>
     </section>
   );
