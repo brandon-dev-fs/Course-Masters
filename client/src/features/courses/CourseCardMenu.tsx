@@ -15,15 +15,21 @@ export default function CourseCardMenu({ onEdit, onDelete }: CourseCardMenuProps
     if (!isOpen) return;
 
     function handleClickOutside(event: MouseEvent) {
-      if (!menuRef.current?.contains(event.target as Node)) {
-        setIsOpen(false);
+      if (
+        menuRef.current?.contains(event.target as Node) ||
+        triggerRef.current?.contains(event.target as Node)
+      ) {
+        return;
       }
+      setIsOpen(false);
     }
 
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === 'Escape') {
         setIsOpen(false);
         triggerRef.current?.focus();
+      } else if (event.key === 'Tab') {
+        setIsOpen(false);
       } else if (event.key === 'ArrowDown') {
         event.preventDefault();
         const items = menuRef.current?.querySelectorAll<HTMLButtonElement>('[role="menuitem"]');
