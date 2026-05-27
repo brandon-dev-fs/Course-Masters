@@ -46,12 +46,12 @@ export default function HowItWorksSection() {
   return (
     <section
       aria-labelledby="how-it-works-heading"
-      className="bg-hero-deep py-20 px-6"
+      className="bg-background py-20 px-6"
     >
       <div className="max-w-5xl mx-auto text-center">
         <h2
           id="how-it-works-heading"
-          className="text-3xl font-bold text-white mb-3"
+          className="text-3xl font-bold text-text-primary mb-3"
         >
           How it works
         </h2>
@@ -63,12 +63,12 @@ export default function HowItWorksSection() {
           {/* Desktop connecting line */}
           <div
             aria-hidden="true"
-            className="hidden md:block absolute top-8 left-[17%] right-[17%] h-px bg-white/20"
+            className="hidden md:block absolute top-8 left-[17%] right-[17%] h-px bg-border-subtle"
           />
           {/* Mobile connecting line */}
           <div
             aria-hidden="true"
-            className="block md:hidden absolute left-6 top-8 bottom-8 w-px bg-white/20"
+            className="block md:hidden absolute left-6 top-8 bottom-8 w-px bg-border-subtle"
           />
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12">
@@ -92,7 +92,7 @@ export default function HowItWorksSection() {
                   >
                     {step.badge}
                   </span>
-                  <h3 className="text-lg font-bold text-white mb-2">
+                  <h3 className="text-lg font-bold text-text-primary mb-2">
                     {step.title}
                   </h3>
                   <p className="text-sm text-text-secondary max-w-[200px] mx-auto">
