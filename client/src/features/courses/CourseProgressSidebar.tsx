@@ -1,12 +1,11 @@
 import { Calendar, ChevronRight, CreditCard, List, Plus } from 'lucide-react';
 
-import type { Course, CourseProgress } from '../../api/types.js';
+import type { CourseProgress } from '../../api/types.js';
 
 import ProgressBar from '../progress/ProgressBar.js';
 
 interface CourseProgressSidebarProps {
   progress: CourseProgress | null;
-  course: Course;
   canEdit: boolean;
   onOpenSyllabus: () => void;
   onOpenCalendar: () => void;
@@ -19,7 +18,6 @@ const actionRowClasses =
 
 export default function CourseProgressSidebar({
   progress,
-  course: _course,
   canEdit,
   onOpenSyllabus,
   onOpenCalendar,
@@ -68,21 +66,21 @@ export default function CourseProgressSidebar({
         <nav aria-label="Quick actions">
           <ul className="flex flex-col gap-1">
             <li>
-              <button onClick={onReviewFlashCards} className={actionRowClasses}>
+              <button type="button" onClick={onReviewFlashCards} className={actionRowClasses}>
                 <CreditCard className="w-4 h-4 shrink-0" aria-hidden="true" />
                 <span className="flex-1 text-left">Review flash cards</span>
                 <ChevronRight className="w-4 h-4 shrink-0" aria-hidden="true" />
               </button>
             </li>
             <li>
-              <button onClick={onOpenSyllabus} className={actionRowClasses}>
+              <button type="button" onClick={onOpenSyllabus} className={actionRowClasses}>
                 <List className="w-4 h-4 shrink-0" aria-hidden="true" />
                 <span className="flex-1 text-left">View syllabus</span>
                 <ChevronRight className="w-4 h-4 shrink-0" aria-hidden="true" />
               </button>
             </li>
             <li>
-              <button onClick={onOpenCalendar} className={actionRowClasses}>
+              <button type="button" onClick={onOpenCalendar} className={actionRowClasses}>
                 <Calendar className="w-4 h-4 shrink-0" aria-hidden="true" />
                 <span className="flex-1 text-left">Calendar</span>
                 <ChevronRight className="w-4 h-4 shrink-0" aria-hidden="true" />
@@ -95,6 +93,7 @@ export default function CourseProgressSidebar({
       {/* Add Unit button — teachers/admins only */}
       {canEdit && (
         <button
+          type="button"
           onClick={onAddUnit}
           className="w-full flex items-center justify-center gap-2 px-3 py-2 border border-border-subtle rounded-lg text-sm text-text-secondary hover:text-text-primary hover:border-blue-accent transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-accent"
         >

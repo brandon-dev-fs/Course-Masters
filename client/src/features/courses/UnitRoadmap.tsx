@@ -46,7 +46,7 @@ function StateDot({ state }: { state: UnitState }) {
   if (state === 'completed') {
     return (
       <div className="w-6 h-6 rounded-full bg-green-primary flex items-center justify-center">
-        <Check className="w-3.5 h-3.5 text-white" />
+        <Check className="w-3.5 h-3.5 text-green-primary-foreground" />
       </div>
     );
   }
@@ -115,13 +115,16 @@ export default function UnitRoadmap({
       {/* Final Exam item */}
       <div className={allUnitsComplete ? undefined : 'opacity-60'}>
         {allUnitsComplete ? (
-          <Link
-            to="#exam"
-            className="flex items-center gap-2 text-text-primary font-medium"
-          >
-            <Trophy className="w-4 h-4" />
-            <span>Final exam</span>
-          </Link>
+          <>
+            {/* TODO: cm-0026 wire up real exam route when exam page exists */}
+            <Link
+              to="#exam"
+              className="flex items-center gap-2 text-text-primary font-medium"
+            >
+              <Trophy className="w-4 h-4" />
+              <span>Final exam</span>
+            </Link>
+          </>
         ) : (
           <div className="flex flex-col gap-1">
             <div className="flex items-center gap-2 text-text-primary font-medium">
