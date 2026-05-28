@@ -51,11 +51,18 @@ export default function CourseDetailPage() {
 		}
 	}, [data]);
 
+	const [editingUnit, setEditingUnit] = useState<Unit | null>(null);
+
 	const settingsDisclosure = useDisclosure();
 	const syllabusViewDisclosure = useDisclosure();
 	const syllabusEditDisclosure = useDisclosure();
 	const unitSettingsDisclosure = useDisclosure();
 	const calendarDisclosure = useDisclosure();
+
+	function handleEditUnit(unit: Unit) {
+		setEditingUnit(unit);
+		unitSettingsDisclosure.open();
+	}
 
 	async function handleCourseUpdate(updateData: {
 		title: string;
@@ -110,6 +117,7 @@ export default function CourseDetailPage() {
 	async function handleDeleteUnit(unit: Unit) {
 		if (!courseId) return;
 		await unitsApi.delete(courseId, unit.id);
+		setEditingUnit(null);
 		setCourse((prev) =>
 			prev
 				? {
@@ -203,11 +211,16 @@ export default function CourseDetailPage() {
 			{unitSettingsDisclosure.isOpen && (
 				<UnitSettingsModal
 					course={course}
-					onClose={unitSettingsDisclosure.close}
+					onClose={() => {
+						setEditingUnit(null);
+						unitSettingsDisclosure.close();
+					}}
 					onAddUnit={handleAddUnit}
 					onUpdateUnit={handleUpdateUnit}
 					onDeleteUnit={handleDeleteUnit}
-					initialAdding={true}
+					initialAdding={editingUnit === null}
+					// @ts-expect-error -- unit prop will be added to UnitSettingsModal in a subsequent task
+					unit={editingUnit ?? undefined}
 				/>
 			)}
 			{calendarDisclosure.isOpen && (
