@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 
-import { Check, Circle, BookOpen, ClipboardCheck } from 'lucide-react';
+import { Check, Circle, BookOpen, ClipboardCheck, Play } from 'lucide-react';
 
 import type { Unit, CourseProgress } from '../../api/types.js';
 
@@ -13,6 +13,35 @@ interface RoadmapUnitCardProps {
   state: UnitState;
   canEdit: boolean;
   onEditUnit: () => void;
+}
+
+function getContinueLessonUrl(
+  courseId: string,
+  unit: Unit,
+  unitProgress: CourseProgress['units'][number] | undefined,
+): string {
+  const sortedLessons = [...(unit.lessons ?? [])].sort((a, b) => a.order - b.order);
+
+  if (!unitProgress || sortedLessons.length === 0) {
+    const first = sortedLessons[0];
+    return first
+      ? `/courses/${courseId}/units/${unit.id}/lessons/${first.id}`
+      : `/courses/${courseId}`;
+  }
+
+  // Find first lesson where quizPassed is false (or not attempted)
+  for (const lesson of sortedLessons) {
+    const lessonProg = unitProgress.lessons.find((l) => l.lessonId === lesson.id);
+    if (!lessonProg?.quizPassed) {
+      return `/courses/${courseId}/units/${unit.id}/lessons/${lesson.id}`;
+    }
+  }
+
+  // All lessons passed — go to last lesson
+  const last = sortedLessons[sortedLessons.length - 1];
+  return last
+    ? `/courses/${courseId}/units/${unit.id}/lessons/${last.id}`
+    : `/courses/${courseId}`;
 }
 
 function cardClasses(state: UnitState): string {
@@ -160,6 +189,19 @@ export default function RoadmapUnitCard({
           </span>
         )}
       </div>
+
+      {/* Continue lesson CTA — in-progress units only */}
+      {state === 'in-progress' && (
+        <div className="mt-3">
+          <Link
+            to={getContinueLessonUrl(courseId, unit, unitProgress)}
+            className="flex items-center justify-center gap-2 w-full px-4 py-2 bg-green-button text-green-button-text rounded-lg text-sm font-medium hover:opacity-90 transition-opacity focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-accent"
+          >
+            <Play className="w-4 h-4 fill-current" aria-hidden="true" />
+            Continue lesson
+          </Link>
+        </div>
+      )}
     </div>
   );
 }
