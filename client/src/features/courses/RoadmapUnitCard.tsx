@@ -98,7 +98,7 @@ export default function RoadmapUnitCard({
     (lesson) => !isLessonComplete(lesson.id),
   );
 
-  const isUnitComplete = state === 'completed' && (unitProgress?.testPassed ?? false);
+  const isUnitComplete = state === 'completed';
 
   return (
     <div className={cardClasses(state)}>

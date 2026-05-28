@@ -42,6 +42,7 @@ export default function MobileProgressBar({
       {/* Action buttons row */}
       <div className="flex items-center gap-2">
         <button
+          type="button"
           onClick={onReviewFlashCards}
           className="flex items-center gap-1.5 px-3 py-2.5 rounded-full text-xs font-medium bg-surface-raised text-text-primary border border-border-subtle hover:border-blue-accent hover:text-blue-accent transition-colors min-h-[44px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-accent"
         >
@@ -49,6 +50,7 @@ export default function MobileProgressBar({
           Flash cards
         </button>
         <button
+          type="button"
           onClick={onOpenSyllabus}
           className="flex items-center gap-1.5 px-3 py-2.5 rounded-full text-xs font-medium bg-surface-raised text-text-primary border border-border-subtle hover:border-blue-accent hover:text-blue-accent transition-colors min-h-[44px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-accent"
         >

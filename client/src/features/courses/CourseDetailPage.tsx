@@ -187,7 +187,6 @@ export default function CourseDetailPage() {
 							<aside className="w-[260px] shrink-0 hidden md:block sticky top-[72px]">
 								<CourseProgressSidebar
 									progress={progress}
-									course={course}
 									canEdit={canEdit}
 									onOpenSyllabus={handleOpenSyllabus}
 									onOpenCalendar={calendarDisclosure.open}
