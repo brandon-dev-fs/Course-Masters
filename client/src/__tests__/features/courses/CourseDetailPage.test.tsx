@@ -41,8 +41,11 @@ const mockProgress = {
   courseId: 'course-1',
   totalLessons: 5,
   completedLessons: 2,
-  percentage: 36,
+  totalUnits: 1,
+  completedUnits: 0,
+  percentComplete: 36,
   examPassed: false,
+  examScore: null,
   units: [],
 };
 
@@ -69,7 +72,7 @@ describe('CourseDetailPage', () => {
     expect(await screen.findByText('Test Course')).toBeInTheDocument();
   });
 
-  it('shows Units section heading', async () => {
+  it('renders course unit roadmap', async () => {
     authClientMock.getSession.mockResolvedValue({ data: { user: makeStudentUser() }, error: null });
     apiClientMock.get
       .mockResolvedValueOnce(mockCourse)
@@ -77,7 +80,7 @@ describe('CourseDetailPage', () => {
       .mockResolvedValueOnce(mockProgress);
 
     renderWithProviders(<CourseDetailPage />, { initialRoute: '/courses/course-1' });
-    expect(await screen.findByText('Units')).toBeInTheDocument();
+    expect(await screen.findByRole('list', { name: 'Course units' })).toBeInTheDocument();
   });
 
   it('shows Add Unit button for teachers', async () => {
@@ -88,7 +91,7 @@ describe('CourseDetailPage', () => {
       .mockResolvedValueOnce(mockProgress);
 
     renderWithProviders(<CourseDetailPage />, { initialRoute: '/courses/course-1' });
-    expect(await screen.findByText('+ Add Unit')).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: /add unit/i })).toBeInTheDocument();
   });
 
   it('does not show Add Unit button for students', async () => {
@@ -113,7 +116,7 @@ describe('CourseDetailPage', () => {
     });
   });
 
-  it('shows Add Syllabus button for teacher when no syllabus', async () => {
+  it('shows syllabus quick action button for teacher when no syllabus', async () => {
     authClientMock.getSession.mockResolvedValue({ data: { user: makeTeacherUser() }, error: null });
     apiClientMock.get
       .mockResolvedValueOnce({ ...mockCourse, syllabus: null })
@@ -121,10 +124,10 @@ describe('CourseDetailPage', () => {
       .mockResolvedValueOnce(mockProgress);
 
     renderWithProviders(<CourseDetailPage />, { initialRoute: '/courses/course-1' });
-    expect(await screen.findByText('+ Add Syllabus')).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: /view syllabus/i })).toBeInTheDocument();
   });
 
-  it('shows View Syllabus button when syllabus exists', async () => {
+  it('shows View syllabus button when syllabus exists', async () => {
     authClientMock.getSession.mockResolvedValue({ data: { user: makeStudentUser() }, error: null });
     apiClientMock.get
       .mockResolvedValueOnce({ ...mockCourse, syllabus: { content: 'some syllabus' } })
@@ -132,6 +135,6 @@ describe('CourseDetailPage', () => {
       .mockResolvedValueOnce(mockProgress);
 
     renderWithProviders(<CourseDetailPage />, { initialRoute: '/courses/course-1' });
-    expect(await screen.findByText('View Syllabus')).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: /view syllabus/i })).toBeInTheDocument();
   });
 });
