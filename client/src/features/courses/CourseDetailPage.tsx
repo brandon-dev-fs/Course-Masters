@@ -1,19 +1,24 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+
 import { coursesApi } from '../../api/courses.js';
 import { unitsApi } from '../../api/units.js';
 import { progressApi } from '../../api/progress.js';
 import type { Course, Unit, CourseProgress } from '../../api/types.js';
+
 import UnitSettingsModal from '../units/UnitSettingsModal.js';
 import CourseSettingsModal from './CourseSettingsModal.js';
 import SyllabusEditModal from './SyllabusEditModal.js';
 import SyllabusViewModal from './SyllabusViewModal.js';
 import CalendarModal from './CalendarModal.js';
-import CourseHero from './CourseHero.js';
-import UnitCardStrip from '../units/UnitCardStrip.js';
-import Button from '../../components/Button.js';
+import CourseHeader from './CourseHeader.js';
+import UnitRoadmap from './UnitRoadmap.js';
+import MobileProgressBar from './MobileProgressBar.js';
+import CourseProgressSidebar from './CourseProgressSidebar.js';
+
 import LoadingSpinner from '../../components/LoadingSpinner.js';
 import ErrorMessage from '../../components/ErrorMessage.js';
+
 import useFetch from '../../hooks/useFetch.js';
 import useCanEdit from '../../hooks/useCanEdit.js';
 import useDisclosure from '../../hooks/useDisclosure.js';
@@ -62,6 +67,26 @@ export default function CourseDetailPage() {
 	function handleEditUnit(unit: Unit) {
 		setEditingUnit(unit);
 		unitSettingsDisclosure.open();
+	}
+
+	function handleOpenSyllabus() {
+		if (course?.syllabus) {
+			syllabusViewDisclosure.open();
+		} else {
+			syllabusEditDisclosure.open();
+		}
+	}
+
+	function handleReviewFlashCards() {
+		if (!course?.units) return;
+		const sortedUnits = [...course.units].sort((a, b) => a.order - b.order);
+		for (const unit of sortedUnits) {
+			const sortedLessons = [...(unit.lessons ?? [])].sort((a, b) => a.order - b.order);
+			if (sortedLessons.length > 0) {
+				navigate(`/courses/${course.id}/units/${unit.id}/lessons/${sortedLessons[0].id}`);
+				return;
+			}
+		}
 	}
 
 	async function handleCourseUpdate(updateData: {
@@ -128,61 +153,54 @@ export default function CourseDetailPage() {
 		);
 	}
 
-	if (loading) return <LoadingSpinner />;
-	if (error) return <ErrorMessage message={error} />;
-	if (!course) return null;
-
 	return (
-		<div>
-			<CourseHero
-				course={course}
-				progress={progress}
-				courses={courses}
-				canEdit={canEdit}
-				onOpenSettings={settingsDisclosure.open}
-				onOpenCalendar={calendarDisclosure.open}
-			/>
+		<div className="bg-background min-h-screen">
+			<div className="container mx-auto px-4 md:px-6 py-6">
+				{loading && <LoadingSpinner />}
+				{error && <ErrorMessage message={error} />}
 
-			<div className="container mx-auto py-6">
-			<div className="flex items-center justify-between mb-4">
-				<h2 className="text-lg font-semibold text-foreground">Units</h2>
-				<div className="flex items-center gap-2">
-					{(course.syllabus || canEdit) && (
-						<Button
-							size="sm"
-							variant="secondary"
-							onClick={() =>
-								course.syllabus
-									? syllabusViewDisclosure.open()
-									: syllabusEditDisclosure.open()
-							}
-						>
-							{course.syllabus
-								? 'View Syllabus'
-								: '+ Add Syllabus'}
-						</Button>
-					)}
-					{canEdit && (
-						<Button
-							size="sm"
-							variant="secondary"
-							onClick={unitSettingsDisclosure.open}
-						>
-							+ Add Unit
-						</Button>
-					)}
-				</div>
+				{course && (
+					<>
+						<CourseHeader
+							course={course}
+							courses={courses}
+							canEdit={canEdit}
+							onOpenSettings={settingsDisclosure.open}
+							onOpenCalendar={calendarDisclosure.open}
+						/>
+
+						<div className="flex gap-6 mt-6 items-start">
+							<main className="flex-1 min-w-0">
+								<MobileProgressBar
+									progress={progress}
+									onOpenSyllabus={handleOpenSyllabus}
+									onReviewFlashCards={handleReviewFlashCards}
+								/>
+								<UnitRoadmap
+									courseId={course.id}
+									units={course.units ?? []}
+									progress={progress}
+									canEdit={canEdit}
+									onEditUnit={handleEditUnit}
+								/>
+							</main>
+							<aside className="w-[260px] shrink-0 hidden md:block sticky top-[72px]">
+								<CourseProgressSidebar
+									progress={progress}
+									course={course}
+									canEdit={canEdit}
+									onOpenSyllabus={handleOpenSyllabus}
+									onOpenCalendar={calendarDisclosure.open}
+									onReviewFlashCards={handleReviewFlashCards}
+									onAddUnit={unitSettingsDisclosure.open}
+								/>
+							</aside>
+						</div>
+					</>
+				)}
 			</div>
 
-			<UnitCardStrip
-				courseId={courseId!}
-				units={course.units ?? []}
-				canEdit={canEdit}
-				progress={progress}
-			/>
-			</div>
-
-			{settingsDisclosure.isOpen && (
+			{settingsDisclosure.isOpen && course && (
 				<CourseSettingsModal
 					course={course}
 					onClose={settingsDisclosure.close}
@@ -190,7 +208,7 @@ export default function CourseDetailPage() {
 					onDeleteCourse={handleCourseDelete}
 				/>
 			)}
-			{syllabusViewDisclosure.isOpen && course.syllabus && (
+			{syllabusViewDisclosure.isOpen && course?.syllabus && (
 				<SyllabusViewModal
 					syllabus={course.syllabus as Record<string, unknown>}
 					canEdit={canEdit}
@@ -201,14 +219,14 @@ export default function CourseDetailPage() {
 					}}
 				/>
 			)}
-			{syllabusEditDisclosure.isOpen && (
+			{syllabusEditDisclosure.isOpen && course && (
 				<SyllabusEditModal
 					course={course}
 					onClose={syllabusEditDisclosure.close}
 					onUpdateCourse={handleCourseUpdate}
 				/>
 			)}
-			{unitSettingsDisclosure.isOpen && (
+			{unitSettingsDisclosure.isOpen && course && (
 				<UnitSettingsModal
 					course={course}
 					onClose={() => {
@@ -223,7 +241,7 @@ export default function CourseDetailPage() {
 					unit={editingUnit ?? undefined}
 				/>
 			)}
-			{calendarDisclosure.isOpen && (
+			{calendarDisclosure.isOpen && course && (
 				<CalendarModal
 					course={course}
 					progress={progress}
