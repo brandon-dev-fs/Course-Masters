@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 
-import { Check, Circle, BookOpen, ClipboardCheck, Play } from 'lucide-react';
+import { Check, Circle, BookOpen, ClipboardCheck, Pencil, Play } from 'lucide-react';
 
 import type { Unit, CourseProgress } from '../../api/types.js';
 
@@ -78,8 +78,8 @@ export default function RoadmapUnitCard({
   unit,
   unitProgress,
   state,
-  canEdit: _canEdit,
-  onEditUnit: _onEditUnit,
+  canEdit,
+  onEditUnit,
 }: RoadmapUnitCardProps) {
   const sortedLessons = [...(unit.lessons ?? [])].sort((a, b) => a.order - b.order);
   const lessonCount = sortedLessons.length;
@@ -108,7 +108,18 @@ export default function RoadmapUnitCard({
           {unit.title}
           {state === 'locked' && <span className="sr-only"> (locked)</span>}
         </h3>
-        <StateBadge state={state} />
+        <div className="flex items-center gap-1 shrink-0">
+          {canEdit && (
+            <button
+              onClick={onEditUnit}
+              aria-label="Edit unit"
+              className="p-1.5 rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-raised transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-accent"
+            >
+              <Pencil className="w-3.5 h-3.5" aria-hidden="true" />
+            </button>
+          )}
+          <StateBadge state={state} />
+        </div>
       </div>
 
       {/* Lesson list */}
