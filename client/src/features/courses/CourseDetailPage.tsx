@@ -237,7 +237,6 @@ export default function CourseDetailPage() {
 					onUpdateUnit={handleUpdateUnit}
 					onDeleteUnit={handleDeleteUnit}
 					initialAdding={editingUnit === null}
-					// @ts-expect-error -- unit prop will be added to UnitSettingsModal in a subsequent task
 					unit={editingUnit ?? undefined}
 				/>
 			)}
