@@ -111,6 +111,7 @@ export default function RoadmapUnitCard({
         <div className="flex items-center gap-1 shrink-0">
           {canEdit && (
             <button
+              type="button"
               onClick={onEditUnit}
               aria-label="Edit unit"
               className="p-1.5 rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-raised transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-accent"
