@@ -46,7 +46,7 @@ function StateDot({ state }: { state: UnitState }) {
   if (state === 'completed') {
     return (
       <div className="w-6 h-6 rounded-full bg-green-primary flex items-center justify-center">
-        <Check className="w-3.5 h-3.5 text-green-primary-foreground" />
+        <Check className="w-3.5 h-3.5 text-green-primary-foreground" aria-hidden="true" />
       </div>
     );
   }
@@ -57,7 +57,7 @@ function StateDot({ state }: { state: UnitState }) {
 
   return (
     <div className="w-6 h-6 rounded-full bg-surface border-2 border-border-subtle flex items-center justify-center">
-      <Lock className="w-3 h-3 text-text-secondary" />
+      <Lock className="w-3 h-3 text-text-secondary" aria-hidden="true" />
     </div>
   );
 }
@@ -88,7 +88,7 @@ export default function UnitRoadmap({
     <div>
       <ol aria-label="Course units" className="relative flex flex-col gap-0">
         {entries.map(({ unit, state }, index) => (
-          <li key={unit.id} className="relative flex gap-4">
+          <li key={unit.id} className={`relative flex gap-4${state === 'locked' ? ' opacity-60' : ''}`}>
             {/* Dot column */}
             <div className="flex flex-col items-center">
               <StateDot state={state} />
@@ -121,16 +121,16 @@ export default function UnitRoadmap({
               to="#exam"
               className="flex items-center gap-2 text-text-primary font-medium"
             >
-              <Trophy className="w-4 h-4" />
+              <Trophy className="w-4 h-4" aria-hidden="true" />
               <span>Final exam</span>
             </Link>
           </>
         ) : (
           <div className="flex flex-col gap-1">
             <div className="flex items-center gap-2 text-text-primary font-medium">
-              <Trophy className="w-4 h-4" />
+              <Trophy className="w-4 h-4" aria-hidden="true" />
               <span>Final exam</span>
-              <Lock className="w-4 h-4 text-text-secondary" />
+              <Lock className="w-4 h-4 text-text-secondary" aria-hidden="true" />
             </div>
             <p className="text-sm text-text-secondary">Complete all units to unlock</p>
           </div>

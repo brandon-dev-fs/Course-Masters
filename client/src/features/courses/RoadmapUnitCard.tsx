@@ -182,7 +182,7 @@ export default function RoadmapUnitCard({
           {/* TODO: flash card and practice problem counts require tool data on lesson —
               showing lesson count as proxy until API includes tool data */}
           <span className="flex items-center gap-1">
-            <BookOpen className="w-3.5 h-3.5" />
+            <BookOpen className="w-3.5 h-3.5" aria-hidden="true" />
             {lessonCount} lessons
           </span>
         </div>
@@ -192,7 +192,7 @@ export default function RoadmapUnitCard({
       <div className="mt-2">
         {isUnitComplete ? (
           <span className="flex items-center gap-1 text-xs text-green-surface-text font-medium">
-            <ClipboardCheck className="w-3.5 h-3.5" />
+            <ClipboardCheck className="w-3.5 h-3.5" aria-hidden="true" />
             Unit test passed
           </span>
         ) : (
