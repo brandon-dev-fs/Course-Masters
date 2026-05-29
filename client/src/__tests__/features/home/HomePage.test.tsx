@@ -83,7 +83,7 @@ describe('HomePage', () => {
     authClientMock.getSession.mockResolvedValue(sessionFor(STUDENT));
     renderWithProviders(<HomePage />);
     await screen.findByText('My Courses');
-    expect(screen.queryByText('+ New Course')).not.toBeInTheDocument();
+    expect(screen.queryAllByText('+ New Course')).toHaveLength(0);
   });
 
   // --- Empty states ---
