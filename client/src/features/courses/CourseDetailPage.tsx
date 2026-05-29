@@ -47,6 +47,12 @@ export default function CourseDetailPage() {
 	const [courses, setCourses] = useState<Course[]>([]);
 	const [progress, setProgress] = useState<CourseProgress | null>(null);
 
+	// Clear stale course data immediately when navigating to a different course
+	useEffect(() => {
+		setCourse(null);
+		setProgress(null);
+	}, [courseId]);
+
 	// Sync state from fetch result on initial load and courseId change
 	useEffect(() => {
 		if (data) {
