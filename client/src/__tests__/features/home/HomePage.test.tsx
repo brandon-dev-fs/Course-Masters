@@ -74,8 +74,9 @@ describe('HomePage', () => {
   it('shows New Course button for teacher', async () => {
     authClientMock.getSession.mockResolvedValue(sessionFor(TEACHER));
     renderWithProviders(<HomePage />);
+    // Multiple "+ New Course" buttons may be present (header + empty state action)
     const buttons = await screen.findAllByText('+ New Course');
-    expect(buttons.length).toBeGreaterThanOrEqual(1);
+    expect(buttons.length).toBeGreaterThan(0);
   });
 
   it('does not show New Course button for student', async () => {
