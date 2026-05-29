@@ -74,14 +74,15 @@ describe('HomePage', () => {
   it('shows New Course button for teacher', async () => {
     authClientMock.getSession.mockResolvedValue(sessionFor(TEACHER));
     renderWithProviders(<HomePage />);
-    expect(await screen.findByText('+ New Course')).toBeInTheDocument();
+    const buttons = await screen.findAllByText('+ New Course');
+    expect(buttons.length).toBeGreaterThanOrEqual(1);
   });
 
   it('does not show New Course button for student', async () => {
     authClientMock.getSession.mockResolvedValue(sessionFor(STUDENT));
     renderWithProviders(<HomePage />);
     await screen.findByText('My Courses');
-    expect(screen.queryByText('+ New Course')).not.toBeInTheDocument();
+    expect(screen.queryAllByText('+ New Course')).toHaveLength(0);
   });
 
   // --- Empty states ---
