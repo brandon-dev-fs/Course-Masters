@@ -40,8 +40,9 @@ describe('StudentToolsBar', () => {
         mode="mobile"
       />,
     );
-    expect(screen.getAllByText('My Notes').length).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText('Flash Cards').length).toBeGreaterThanOrEqual(1);
+    // Mobile mode shows short labels
+    expect(screen.getAllByText('Notes').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('Cards').length).toBeGreaterThanOrEqual(1);
   });
 
   it('calls onOpenTool with the correct tool when clicked', () => {
@@ -55,7 +56,8 @@ describe('StudentToolsBar', () => {
         mode="mobile"
       />,
     );
-    fireEvent.click(screen.getAllByText('Flash Cards')[0]);
+    // Mobile tab shows short label 'Cards'; aria-label is 'Flash Cards'
+    fireEvent.click(screen.getAllByText('Cards')[0]);
     expect(onOpenTool).toHaveBeenCalledWith('flashcards');
   });
 

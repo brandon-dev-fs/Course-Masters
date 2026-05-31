@@ -85,7 +85,7 @@ export default function StudentMaterialsModal({
       {availableTools.length > 1 && (
         <div className="flex gap-1 px-2 py-1.5 border-b border-border bg-surface shrink-0 overflow-x-auto">
           {availableTools.map(tool => {
-            const { label, Icon } = TOOL_META[tool];
+            const { longLabel, Icon } = TOOL_META[tool];
             return (
               <button
                 key={tool}
@@ -97,7 +97,7 @@ export default function StudentMaterialsModal({
                 }`}
               >
                 <Icon className="w-3.5 h-3.5" />
-                {label}
+                {longLabel}
               </button>
             );
           })}

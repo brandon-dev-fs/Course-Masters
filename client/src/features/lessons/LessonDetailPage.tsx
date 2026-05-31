@@ -1,7 +1,7 @@
-import { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useState, useRef } from 'react';
+import { useParams, Link } from 'react-router-dom';
 import useDisclosure from '../../hooks/useDisclosure.js';
-import { Settings } from 'lucide-react';
+import { Settings, Menu, PanelLeft } from 'lucide-react';
 import { assessmentsApi } from '../../api/assessments.js';
 import { lessonResourcesApi } from '../../api/lesson-resources.js';
 import { lessonToolsApi } from '../../api/lesson-tools.js';
@@ -61,14 +61,33 @@ const testApi = {
   getAttempts: assessmentsApi.getAttempts,
 };
 
+function readSidebarCollapsed(): boolean {
+  try {
+    return localStorage.getItem('cm-sidebar-collapsed') === 'true';
+  } catch {
+    return false;
+  }
+}
+
+function writeSidebarCollapsed(value: boolean): void {
+  try {
+    localStorage.setItem('cm-sidebar-collapsed', String(value));
+  } catch {
+    // ignore — localStorage unavailable
+  }
+}
+
 export default function LessonDetailPage() {
   const { courseId, unitId, lessonId } = useParams<{ courseId: string; unitId: string; lessonId: string }>();
 
-  // Cross-cutting UI state (no single section owns these)
+  // Cross-cutting UI state
   const [activeStepKey, setActiveStepKey] = useState('lessonPlan');
   const [activeTool, setActiveTool] = useState<StudentToolType | null>(null);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(readSidebarCollapsed);
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const settingsDisclosure = useDisclosure();
   const planEditDisclosure = useDisclosure();
+  const hamburgerRef = useRef<HTMLButtonElement>(null);
 
   const {
     lesson, courseTitle, units, unitLessons, unitProgress,
@@ -99,7 +118,19 @@ export default function LessonDetailPage() {
     handleMoveAssignment, handleToggleAssignmentCompletion,
   } = useAssignments({ lessonId, lesson, resources, tools, completedIds, setActiveStepKey });
 
-  // handleToggleRequired spans both resources and tools — kept in page
+  function handleToggleSidebar() {
+    setSidebarCollapsed(prev => {
+      const next = !prev;
+      writeSidebarCollapsed(next);
+      return next;
+    });
+  }
+
+  function handleMobileClose() {
+    setMobileDrawerOpen(false);
+    hamburgerRef.current?.focus();
+  }
+
   async function handleToggleRequired(item: AssignmentItem) {
     if (!lessonId || !item.id) return;
     const newRequired = !item.isRequired;
@@ -141,7 +172,6 @@ export default function LessonDetailPage() {
     assignmentType: item.assignmentType,
   }));
 
-  // Compute move handlers for the active item
   const sortedResources = [...resources].sort((a, b) => a.order - b.order);
   const sortedTools = [...tools].sort((a, b) => a.order - b.order);
   const sortedAssignments = [...assignments].sort((a, b) => a.order - b.order);
@@ -174,57 +204,123 @@ export default function LessonDetailPage() {
     ? () => handleToggleAssignmentCompletion(activeAssignment)
     : () => activeItem && handleToggleCompletion(activeItem);
 
+  const currentUnit = units.find(u => u.id === unitId);
+
+  // Mobile tab bar excludes practice problems
+  const mobileAvailableTools = availableTools.filter((t): t is StudentToolType => t !== 'practice');
+
   return (
     <>
       <div
-        className="relative -mx-4 -mb-8 flex min-h-[calc(100vh-4.5rem)]"
-        style={{ width: '100vw', left: '50%', marginLeft: '-50vw' }}
+        className="relative -mx-4 -mb-8 flex flex-col"
+        style={{ width: '100vw', left: '50%', marginLeft: '-50vw', minHeight: 'calc(100vh - 4.5rem)' }}
       >
-        <UnitLessonSidebar
-          lessons={unitLessons}
-          currentLessonId={lesson.id}
-          courseId={courseId!}
-          unitId={unitId!}
-          courseTitle={courseTitle}
-          unitTitle={units.find(u => u.id === unitId)?.title ?? ''}
-          units={units}
-          canEdit={canEdit}
-          onAddLesson={handleAddLesson}
-          onUnitTestClick={() => setActiveStepKey('unit-test')}
-          unitTestActive={unitTestActive}
-          onLessonClick={() => setActiveStepKey('lessonPlan')}
-        />
+        {/* Desktop breadcrumb bar */}
+        <div className="hidden lg:flex items-center gap-3 px-4 py-2 bg-surface border-b border-border shrink-0">
+          <button
+            onClick={handleToggleSidebar}
+            className="p-1.5 rounded text-muted-foreground hover:text-foreground hover:bg-surface-raised transition-colors shrink-0"
+            aria-label="Toggle lesson sidebar"
+            aria-expanded={!sidebarCollapsed}
+            aria-controls="unit-lesson-sidebar"
+          >
+            <PanelLeft className="w-4 h-4" />
+          </button>
+          <nav aria-label="Breadcrumb" className="flex-1 min-w-0">
+            <ol className="flex items-center gap-1.5 text-xs text-muted-foreground min-w-0">
+              <li className="shrink-0">
+                <Link to={`/courses/${courseId}`} className="hover:text-foreground hover:underline">
+                  {courseTitle}
+                </Link>
+              </li>
+              <li aria-hidden className="shrink-0">›</li>
+              <li className="truncate shrink min-w-0">{currentUnit?.title ?? ''}</li>
+              <li aria-hidden className="shrink-0">›</li>
+              <li className="text-foreground font-medium truncate shrink min-w-0" aria-current="page">
+                {lesson.title}
+              </li>
+            </ol>
+          </nav>
+          {!unitTestActive && (
+            <span className="text-xs text-muted-foreground shrink-0">
+              Step {activeIdx + 1} of {stepperItems.length}
+            </span>
+          )}
+          {canEdit && (
+            <button
+              onClick={settingsDisclosure.open}
+              className="p-1.5 rounded text-muted-foreground hover:text-foreground hover:bg-surface-raised transition-colors shrink-0"
+              aria-label="Lesson settings"
+            >
+              <Settings className="w-4 h-4" />
+            </button>
+          )}
+        </div>
 
-        <div className="flex flex-col flex-1 min-w-0">
-          <header className="flex items-center justify-between gap-4 px-4 py-3 border-b border-border shrink-0">
-            <div className="flex flex-col min-w-0">
-              <h1 className="text-xl font-bold text-foreground truncate">{lesson.order}. {lesson.title}</h1>
-              {lesson.description && (
-                <p className="text-sm text-muted-foreground truncate">{lesson.description}</p>
-              )}
-            </div>
-            {canEdit && (
-              <button
-                onClick={settingsDisclosure.open}
-                className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-surface-raised transition-colors shrink-0"
-                aria-label="Lesson settings"
-              >
-                <Settings className="w-5 h-5" />
-              </button>
-            )}
-          </header>
+        {/* Mobile header */}
+        <div className="lg:hidden flex items-center gap-3 px-4 py-2 bg-surface border-b border-border shrink-0">
+          <button
+            ref={hamburgerRef}
+            onClick={() => setMobileDrawerOpen(true)}
+            className="p-1.5 rounded text-muted-foreground hover:text-foreground hover:bg-surface-raised transition-colors shrink-0"
+            aria-label="Open lesson navigation"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
+          <span className="text-sm font-bold text-foreground truncate flex-1">
+            {lesson.order}. {lesson.title}
+          </span>
+          {canEdit && (
+            <button
+              onClick={settingsDisclosure.open}
+              className="p-1.5 rounded text-muted-foreground hover:text-foreground hover:bg-surface-raised transition-colors shrink-0"
+              aria-label="Lesson settings"
+            >
+              <Settings className="w-4 h-4" />
+            </button>
+          )}
+        </div>
 
-          <StudentToolsBar
-            availableTools={availableTools}
-            activeTool={activeTool}
-            onOpenTool={tool => setActiveTool(prev => prev === tool ? null : tool)}
-            isQuizActive={isQuizActive}
-            mode="mobile"
+        {/* Panel row — flex-col on mobile, flex-row on desktop */}
+        <div className="flex flex-col lg:flex-row flex-1 min-h-0">
+          <UnitLessonSidebar
+            lessons={unitLessons}
+            currentLessonId={lesson.id}
+            courseId={courseId!}
+            unitId={unitId!}
+            courseTitle={courseTitle}
+            unitTitle={currentUnit?.title ?? ''}
+            units={units}
+            canEdit={canEdit}
+            onAddLesson={handleAddLesson}
+            onUnitTestClick={() => setActiveStepKey('unit-test')}
+            unitTestActive={unitTestActive}
+            onLessonClick={() => setActiveStepKey('lessonPlan')}
+            collapsed={sidebarCollapsed}
+            mobileOpen={mobileDrawerOpen}
+            onMobileClose={handleMobileClose}
           />
 
-          {unitTestActive ? (
-            <ErrorBoundary fallback={contentAreaFallback}>
-              <main className="flex-1 overflow-y-auto px-4 py-4">
+          {!unitTestActive && (
+            <AssignmentStepper
+              items={stepperItems}
+              activeStepKey={activeStepKey}
+              completedIds={completedIds}
+              completedAssignmentIds={completedAssignmentIds}
+              quizUnlocked={quizUnlocked}
+              quizPassed={quizPassed}
+              onStepClick={setActiveStepKey}
+              onAdd={canEdit ? () => setIsAddingAssignment(true) : undefined}
+            />
+          )}
+
+          <ErrorBoundary fallback={contentAreaFallback}>
+            <main
+              id="lesson-content"
+              aria-live="polite"
+              className="flex-1 min-w-0 overflow-y-auto px-4 py-6 pb-24 lg:pb-6"
+            >
+              {unitTestActive ? (
                 <AssessmentSection
                   parentId={unitId!}
                   api={testApi}
@@ -239,23 +335,8 @@ export default function LessonDetailPage() {
                   unlocked={allLessonsComplete}
                   lockedMessage="Complete all lessons to unlock the unit test."
                 />
-              </main>
-            </ErrorBoundary>
-          ) : (
-            <>
-              <AssignmentStepper
-                items={stepperItems}
-                activeStepKey={activeStepKey}
-                completedIds={completedIds}
-                completedAssignmentIds={completedAssignmentIds}
-                quizUnlocked={quizUnlocked}
-                quizPassed={quizPassed}
-                onStepClick={setActiveStepKey}
-                onAdd={canEdit ? () => setIsAddingAssignment(true) : undefined}
-              />
-              <ErrorBoundary fallback={contentAreaFallback}>
-              <main className="flex-1 overflow-y-auto px-4 py-6">
-                {activeItem && (
+              ) : (
+                activeItem && (
                   <AssignmentSection
                     key={activeItem.key}
                     item={activeItem}
@@ -302,19 +383,27 @@ export default function LessonDetailPage() {
                       onPlanEdit={planEditDisclosure.open}
                     />
                   </AssignmentSection>
-                )}
-              </main>
-              </ErrorBoundary>
-            </>
-          )}
+                )
+              )}
+            </main>
+          </ErrorBoundary>
+
+          <StudentToolsBar
+            availableTools={availableTools}
+            activeTool={activeTool}
+            onOpenTool={tool => setActiveTool(prev => prev === tool ? null : tool)}
+            isQuizActive={isQuizActive}
+            mode="desktop"
+          />
         </div>
 
+        {/* Mobile bottom tab bar */}
         <StudentToolsBar
-          availableTools={availableTools}
+          availableTools={mobileAvailableTools}
           activeTool={activeTool}
           onOpenTool={tool => setActiveTool(prev => prev === tool ? null : tool)}
           isQuizActive={isQuizActive}
-          mode="desktop"
+          mode="mobile"
         />
       </div>
 

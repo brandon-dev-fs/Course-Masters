@@ -76,7 +76,7 @@ describe('UnitLessonSidebar', () => {
 
   it('renders course title link', () => {
     renderSidebar();
-    // Course title appears in desktop sidebar as a link
-    expect(screen.getByText('My Course')).toBeInTheDocument();
+    // Course title appears in desktop sidebar (as a link) and in the mobile drawer header
+    expect(screen.getAllByText('My Course').length).toBeGreaterThan(0);
   });
 });

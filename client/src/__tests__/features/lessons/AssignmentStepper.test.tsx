@@ -1,6 +1,6 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import AssignmentStepper from '../../../features/lessons/AssignmentStepper.js';
+import AssignmentStepper, { getStepLabel } from '../../../features/lessons/AssignmentStepper.js';
 import type { StepperItem } from '../../../features/lessons/AssignmentStepper.js';
 
 const items: StepperItem[] = [
@@ -31,30 +31,32 @@ describe('AssignmentStepper', () => {
     );
   }
 
-  it('renders all step titles', () => {
+  it('renders step labels for each item', () => {
     renderStepper();
-    expect(screen.getAllByText('Lesson Plan').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Video 1').length).toBeGreaterThan(0);
+    // Desktop sidebar shows short single-word labels (aria-hidden spans)
+    expect(screen.getAllByText('Plan').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Video').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Quiz').length).toBeGreaterThan(0);
   });
 
   it('calls onStepClick when a step is clicked', () => {
     renderStepper();
-    const buttons = screen.getAllByLabelText('Lesson Plan');
+    // aria-label is now "Label: Title" format
+    const buttons = screen.getAllByLabelText('Plan: Lesson Plan');
     fireEvent.click(buttons[0]);
     expect(onStepClick).toHaveBeenCalledWith('lessonPlan');
   });
 
   it('does not call onStepClick for locked quiz', () => {
     renderStepper({ quizUnlocked: false });
-    const quizButtons = screen.getAllByLabelText('Quiz');
+    const quizButtons = screen.getAllByLabelText('Quiz: Quiz');
     fireEvent.click(quizButtons[0]);
     expect(onStepClick).not.toHaveBeenCalled();
   });
 
   it('marks quiz as disabled when not unlocked', () => {
     renderStepper({ quizUnlocked: false });
-    const quizButtons = screen.getAllByLabelText('Quiz');
+    const quizButtons = screen.getAllByLabelText('Quiz: Quiz');
     expect(quizButtons[0]).toBeDisabled();
   });
 
@@ -71,24 +73,60 @@ describe('AssignmentStepper', () => {
     expect(onAdd).toHaveBeenCalledOnce();
   });
 
-  it('shows completed step with check icon when completionId is in completedIds', () => {
-    renderStepper({ completedIds: new Set(['r1']) });
-    // The component renders CheckCircle2 for completed items
-    // We can verify via aria-current on the active item
-    const lessonPlanBtns = screen.getAllByLabelText('Lesson Plan');
+  it('shows active step with aria-current on the active button', () => {
+    renderStepper();
+    const lessonPlanBtns = screen.getAllByLabelText('Plan: Lesson Plan');
     expect(lessonPlanBtns[0]).toHaveAttribute('aria-current', 'step');
   });
 
-  it('marks quiz as passed when quizPassed is true', () => {
+  it('marks quiz step as active when it is the active step', () => {
     renderStepper({ quizPassed: true, activeStepKey: 'quiz' });
-    const quizBtns = screen.getAllByLabelText('Quiz');
-    // active quiz step should have aria-current
+    const quizBtns = screen.getAllByLabelText('Quiz: Quiz');
     expect(quizBtns[0]).toHaveAttribute('aria-current', 'step');
   });
 
-  it('shows current step name in mobile view', () => {
+  it('shows step counter in mobile progress bar', () => {
     renderStepper({ activeStepKey: 'r1' });
-    // Mobile view shows current step title in a span
-    expect(screen.getAllByText('Video 1').length).toBeGreaterThan(1);
+    // Mobile bar shows "2/3" when second item (index 1) is active out of 3 items
+    expect(screen.getByText('2/3')).toBeTruthy();
+  });
+
+  describe('getStepLabel', () => {
+    it('returns Plan for lessonPlan', () => {
+      expect(getStepLabel({ key: 'k', title: 't', kind: 'lessonPlan', completionId: null })).toBe('Plan');
+    });
+    it('returns Quiz for quiz', () => {
+      expect(getStepLabel({ key: 'k', title: 't', kind: 'quiz', completionId: null })).toBe('Quiz');
+    });
+    it('returns Video for video resource', () => {
+      expect(getStepLabel({ key: 'k', title: 't', kind: 'resource', completionId: null, resourceType: 'video' })).toBe('Video');
+    });
+    it('returns Lecture for lecture resource', () => {
+      expect(getStepLabel({ key: 'k', title: 't', kind: 'resource', completionId: null, resourceType: 'lecture' })).toBe('Lecture');
+    });
+    it('returns Read for note resource', () => {
+      expect(getStepLabel({ key: 'k', title: 't', kind: 'resource', completionId: null, resourceType: 'note' })).toBe('Read');
+    });
+    it('returns Cards for flash_card tool', () => {
+      expect(getStepLabel({ key: 'k', title: 't', kind: 'tool', completionId: null, toolType: 'flash_card' })).toBe('Cards');
+    });
+    it('returns Practice for practice_problem tool', () => {
+      expect(getStepLabel({ key: 'k', title: 't', kind: 'tool', completionId: null, toolType: 'practice_problem' })).toBe('Practice');
+    });
+    it('returns Vocab for vocab tool', () => {
+      expect(getStepLabel({ key: 'k', title: 't', kind: 'tool', completionId: null, toolType: 'vocab' })).toBe('Vocab');
+    });
+    it('returns Read for note assignment', () => {
+      expect(getStepLabel({ key: 'k', title: 't', kind: 'assignment', completionId: null, assignmentType: 'note' })).toBe('Read');
+    });
+    it('returns Video for video assignment', () => {
+      expect(getStepLabel({ key: 'k', title: 't', kind: 'assignment', completionId: null, assignmentType: 'video' })).toBe('Video');
+    });
+    it('returns Vocab for vocab assignment', () => {
+      expect(getStepLabel({ key: 'k', title: 't', kind: 'assignment', completionId: null, assignmentType: 'vocab' })).toBe('Vocab');
+    });
+    it('returns Practice for practice_problem assignment', () => {
+      expect(getStepLabel({ key: 'k', title: 't', kind: 'assignment', completionId: null, assignmentType: 'practice_problem' })).toBe('Practice');
+    });
   });
 });
