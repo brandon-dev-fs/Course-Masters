@@ -34,6 +34,7 @@ export default function UnitLessonSidebar({
 }: UnitLessonSidebarProps) {
   const [showAddLesson, setShowAddLesson] = useState(false);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const drawerRef = useRef<HTMLDivElement>(null);
   const sorted = [...lessons].sort((a, b) => a.order - b.order);
 
   async function handleAddLesson(data: { title: string; description: string; order: number }) {
@@ -51,15 +52,43 @@ export default function UnitLessonSidebar({
     onLessonClick?.();
   }
 
-  // Focus management and Escape key for mobile drawer
+  // Focus management, focus trap, and Escape key for mobile drawer
   useEffect(() => {
     if (!mobileOpen) return;
 
     // Move focus to close button when drawer opens
     closeButtonRef.current?.focus();
 
+    function getFocusableElements() {
+      return Array.from(
+        drawerRef.current?.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        ) ?? []
+      ).filter(el => !el.closest('[inert]'));
+    }
+
     function handleKeyDown(e: KeyboardEvent) {
-      if (e.key === 'Escape') onMobileClose?.();
+      if (e.key === 'Escape') {
+        onMobileClose?.();
+        return;
+      }
+      if (e.key === 'Tab') {
+        const focusable = getFocusableElements();
+        if (focusable.length === 0) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (e.shiftKey) {
+          if (document.activeElement === first) {
+            e.preventDefault();
+            last.focus();
+          }
+        } else {
+          if (document.activeElement === last) {
+            e.preventDefault();
+            first.focus();
+          }
+        }
+      }
     }
 
     document.addEventListener('keydown', handleKeyDown);
@@ -109,11 +138,12 @@ export default function UnitLessonSidebar({
         id="unit-lesson-sidebar"
         aria-label="Unit lessons"
         aria-hidden={collapsed}
-        tabIndex={collapsed ? -1 : undefined}
+        {...(collapsed ? { inert: '' } as React.HTMLAttributes<HTMLElement> : {})}
         className={`hidden lg:flex flex-col shrink-0 border-r border-border bg-surface overflow-y-auto transition-all duration-200 ease-in-out ${
           collapsed ? 'w-0 overflow-hidden' : 'w-44'
         }`}
       >
+        {/* min-w matches parent w-44 = 176px to prevent content reflow during collapse */}
         <div className="py-3 min-w-[176px]">
           <div className="px-4 pb-3 mb-1 border-b border-border flex flex-col gap-2">
             <Link to={`/courses/${courseId}`} className="text-xs font-semibold text-primary hover:underline truncate">
@@ -153,15 +183,16 @@ export default function UnitLessonSidebar({
       <div className="lg:hidden">
         {/* Backdrop */}
         {mobileOpen && (
-          <div
-            className="fixed inset-0 z-40 bg-black/40"
+          <button
+            type="button"
+            className="fixed inset-0 z-40 bg-black/40 cursor-default"
             onClick={onMobileClose}
-            role="button"
             aria-label="Close navigation"
           />
         )}
         {/* Drawer */}
-        <nav
+        <div
+          ref={drawerRef}
           role="dialog"
           aria-modal="true"
           aria-label="Lesson navigation"
@@ -180,35 +211,37 @@ export default function UnitLessonSidebar({
               <X className="w-4 h-4" />
             </button>
           </div>
-          <div className="p-3 flex flex-col gap-0.5">
-            <div className="px-1 pb-2 mb-1 border-b border-border">
-              {units.length > 0 ? (
-                <UnitDropdown units={units} currentUnitId={unitId} courseId={courseId} />
-              ) : (
-                <div className="flex items-center gap-1 min-w-0 py-1">
-                  <ChevronRight className="w-3 h-3 text-muted-foreground shrink-0" />
-                  <span className="text-xs font-medium text-muted-foreground truncate">{unitTitle}</span>
-                </div>
+          <nav aria-label="Lessons in this unit">
+            <div className="p-3 flex flex-col gap-0.5">
+              <div className="px-1 pb-2 mb-1 border-b border-border">
+                {units.length > 0 ? (
+                  <UnitDropdown units={units} currentUnitId={unitId} courseId={courseId} />
+                ) : (
+                  <div className="flex items-center gap-1 min-w-0 py-1">
+                    <ChevronRight className="w-3 h-3 text-muted-foreground shrink-0" />
+                    <span className="text-xs font-medium text-muted-foreground truncate">{unitTitle}</span>
+                  </div>
+                )}
+              </div>
+              {lessonList}
+              {unitTestItem && (
+                <>
+                  <div className="my-1 border-t border-border" />
+                  {unitTestItem}
+                </>
+              )}
+              {canEdit && (
+                <button
+                  onClick={() => { onMobileClose?.(); setShowAddLesson(true); }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-primary hover:bg-surface-raised transition-colors font-medium mt-1"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  Add Lesson
+                </button>
               )}
             </div>
-            {lessonList}
-            {unitTestItem && (
-              <>
-                <div className="my-1 border-t border-border" />
-                {unitTestItem}
-              </>
-            )}
-            {canEdit && (
-              <button
-                onClick={() => { onMobileClose?.(); setShowAddLesson(true); }}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm text-primary hover:bg-surface-raised transition-colors font-medium mt-1"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                Add Lesson
-              </button>
-            )}
-          </div>
-        </nav>
+          </nav>
+        </div>
       </div>
 
       {showAddLesson && (

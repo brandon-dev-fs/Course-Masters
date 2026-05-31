@@ -60,8 +60,7 @@ export default function StudentToolsBar({ availableTools, activeTool, onOpenTool
             return (
               <button
                 key={tool}
-                role="tab"
-                aria-selected={isActive}
+                aria-pressed={isActive}
                 aria-label={longLabel}
                 onClick={() => onOpenTool(tool)}
                 className={`flex flex-col items-center gap-0.5 flex-1 py-2 min-h-[44px] transition-colors ${
