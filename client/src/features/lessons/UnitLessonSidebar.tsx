@@ -138,7 +138,7 @@ export default function UnitLessonSidebar({
         id="unit-lesson-sidebar"
         aria-label="Unit lessons"
         aria-hidden={collapsed}
-        {...(collapsed ? { inert: '' } as React.HTMLAttributes<HTMLElement> : {})}
+        {...(collapsed ? { inert: '' } as unknown as React.HTMLAttributes<HTMLElement> : {})}
         className={`hidden lg:flex flex-col shrink-0 border-r border-border bg-surface overflow-y-auto transition-all duration-200 ease-in-out ${
           collapsed ? 'w-0 overflow-hidden' : 'w-44'
         }`}
