@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import useDisclosure from '../../hooks/useDisclosure.js';
-import { Menu, ArrowLeft } from 'lucide-react';
+import { Menu, ArrowLeft, Settings } from 'lucide-react';
 import { assessmentsApi } from '../../api/assessments.js';
 import { lessonResourcesApi } from '../../api/lesson-resources.js';
 import { lessonToolsApi } from '../../api/lesson-tools.js';
@@ -220,7 +220,8 @@ export default function LessonDetailPage() {
       >
         {/* Desktop breadcrumb bar */}
         <div className="hidden lg:flex items-center gap-2 px-4 py-2 bg-surface border-b border-border shrink-0">
-          <nav aria-label="Breadcrumb">
+          <h1 className="sr-only">{lesson.title}</h1>
+          <nav aria-label="Breadcrumb" className="flex-1 min-w-0">
             <ol className="flex items-center gap-1.5 text-sm min-w-0">
               <li className="shrink-0">
                 <Link to={`/courses/${courseId}`} className="text-primary hover:underline font-medium">
@@ -233,6 +234,15 @@ export default function LessonDetailPage() {
               </li>
             </ol>
           </nav>
+          {canEdit && (
+            <button
+              onClick={settingsDisclosure.open}
+              className="p-1.5 rounded text-muted-foreground hover:text-foreground hover:bg-surface-raised transition-colors shrink-0"
+              aria-label="Lesson settings"
+            >
+              <Settings className="w-4 h-4" />
+            </button>
+          )}
         </div>
 
         {/* Mobile header */}
@@ -261,9 +271,18 @@ export default function LessonDetailPage() {
               <Menu className="w-5 h-5" />
             </button>
           </div>
-          {/* Row 2: lesson title */}
-          <div className="px-4 pb-2">
-            <h1 className="text-base font-bold text-foreground">{lesson.title}</h1>
+          {/* Row 2: lesson title + settings */}
+          <div className="flex items-center gap-2 px-4 pb-2">
+            <h1 className="text-base font-bold text-foreground flex-1">{lesson.title}</h1>
+            {canEdit && (
+              <button
+                onClick={settingsDisclosure.open}
+                className="p-1.5 rounded text-muted-foreground hover:text-foreground hover:bg-surface-raised transition-colors shrink-0"
+                aria-label="Lesson settings"
+              >
+                <Settings className="w-4 h-4" />
+              </button>
+            )}
           </div>
         </div>
 
