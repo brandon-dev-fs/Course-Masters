@@ -218,22 +218,18 @@ export default function LessonDetailPage() {
         className="relative -mx-4 flex flex-col flex-1"
         style={{ width: '100vw', left: '50%', marginLeft: '-50vw' }}
       >
-        {/* Desktop breadcrumb bar */}
+        {/* Desktop top bar */}
         <div className="hidden lg:flex items-center gap-2 px-4 py-2 bg-surface border-b border-border shrink-0">
           <h1 className="sr-only">{lesson.title}</h1>
-          <nav aria-label="Breadcrumb" className="flex-1 min-w-0">
-            <ol className="flex items-center gap-1.5 text-sm min-w-0">
-              <li className="shrink-0">
-                <Link to={`/courses/${courseId}`} className="text-primary hover:underline font-medium">
-                  {courseTitle}
-                </Link>
-              </li>
-              <li aria-hidden className="shrink-0 text-muted-foreground">›</li>
-              <li className="text-foreground font-medium truncate shrink min-w-0" aria-current="page">
-                {lesson.title}
-              </li>
-            </ol>
-          </nav>
+          <Link
+            to={`/courses/${courseId}`}
+            className="flex items-center gap-1.5 text-sm text-primary hover:underline font-medium"
+            aria-label={`Back to ${currentUnit?.title ?? courseTitle}`}
+          >
+            <ArrowLeft className="w-3.5 h-3.5 shrink-0" />
+            {currentUnit?.title ?? courseTitle}
+          </Link>
+          <div className="flex-1" />
           {canEdit && (
             <button
               onClick={settingsDisclosure.open}

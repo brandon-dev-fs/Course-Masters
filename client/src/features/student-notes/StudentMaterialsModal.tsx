@@ -18,17 +18,25 @@ interface StudentMaterialsModalProps {
 }
 
 type Position = { x: number; y: number };
+type Size = { width: number; height: number };
+
+const MIN_W = 320;
+const MIN_H = 280;
+const DEFAULT_W = 460;
+const DEFAULT_H = 520;
 
 function defaultPosition(): Position {
-  if (typeof window === 'undefined') return { x: 100, y: 100 };
-  return { x: window.innerWidth - 340, y: window.innerHeight - 480 };
+  if (typeof window === 'undefined') return { x: 100, y: 80 };
+  return { x: Math.max(0, window.innerWidth - DEFAULT_W - 16), y: 80 };
 }
 
 export default function StudentMaterialsModal({
   lessonId, isOpen, activeTool, availableTools, onSwitchTool, onClose,
 }: StudentMaterialsModalProps) {
   const [position, setPosition] = useState<Position>(defaultPosition);
+  const [size, setSize] = useState<Size>({ width: DEFAULT_W, height: DEFAULT_H });
   const dragOffset = useRef<{ dx: number; dy: number } | null>(null);
+  const resizeStart = useRef<{ mouseX: number; mouseY: number; w: number; h: number } | null>(null);
 
   function handleDragStart(e: React.MouseEvent) {
     e.preventDefault();
@@ -38,7 +46,7 @@ export default function StudentMaterialsModal({
     function onMove(ev: MouseEvent) {
       if (!dragOffset.current) return;
       setPosition({
-        x: Math.min(Math.max(0, ev.clientX - dragOffset.current.dx), window.innerWidth - 320),
+        x: Math.min(Math.max(0, ev.clientX - dragOffset.current.dx), window.innerWidth - size.width),
         y: Math.min(Math.max(0, ev.clientY - dragOffset.current.dy), window.innerHeight - 80),
       });
     }
@@ -53,17 +61,40 @@ export default function StudentMaterialsModal({
     window.addEventListener('mouseup', onUp, { once: true });
   }
 
+  function handleResizeStart(e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    resizeStart.current = { mouseX: e.clientX, mouseY: e.clientY, w: size.width, h: size.height };
+    document.body.style.userSelect = 'none';
+    document.body.style.cursor = 'nwse-resize';
+
+    function onMove(ev: MouseEvent) {
+      if (!resizeStart.current) return;
+      const newW = Math.max(MIN_W, resizeStart.current.w + (ev.clientX - resizeStart.current.mouseX));
+      const newH = Math.max(MIN_H, resizeStart.current.h + (ev.clientY - resizeStart.current.mouseY));
+      // Clamp to viewport
+      const maxW = window.innerWidth - position.x - 8;
+      const maxH = window.innerHeight - position.y - 8;
+      setSize({ width: Math.min(newW, maxW), height: Math.min(newH, maxH) });
+    }
+
+    function onUp() {
+      window.removeEventListener('mousemove', onMove);
+      resizeStart.current = null;
+      document.body.style.userSelect = '';
+      document.body.style.cursor = '';
+    }
+
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp, { once: true });
+  }
+
   if (!isOpen || !activeTool) return null;
 
   const modal = (
     <div
-      className="fixed z-50 w-80 rounded-xl border border-border bg-surface shadow-warm-lg flex flex-col overflow-hidden"
-      style={{
-        left: position.x,
-        top: position.y,
-        maxHeight: '70vh',
-        // Mobile: override to bottom sheet
-      }}
+      className="fixed z-50 rounded-xl border border-border bg-surface shadow-warm-lg flex flex-col overflow-hidden"
+      style={{ left: position.x, top: position.y, width: size.width, height: size.height }}
     >
       {/* Drag handle + header */}
       <div
@@ -74,7 +105,7 @@ export default function StudentMaterialsModal({
         <span className="text-xs font-semibold text-foreground">Student Materials</span>
         <button
           onClick={onClose}
-          className="text-muted-foreground hover:text-foreground transition-colors"
+          className="p-0.5 rounded text-muted-foreground hover:text-foreground transition-colors"
           aria-label="Close"
         >
           <X className="w-4 h-4" />
@@ -110,6 +141,19 @@ export default function StudentMaterialsModal({
         {activeTool === 'flashcards' && <div className="p-3"><FlashCardList lessonId={lessonId} /></div>}
         {activeTool === 'practice' && <div className="p-3"><PracticeProblemList lessonId={lessonId} /></div>}
         {activeTool === 'vocab' && <div className="p-3"><VocabList lessonId={lessonId} /></div>}
+      </div>
+
+      {/* Resize handle — bottom-right corner */}
+      <div
+        onMouseDown={handleResizeStart}
+        className="absolute bottom-0 right-0 w-4 h-4 cursor-nwse-resize"
+        aria-hidden
+      >
+        <svg width="16" height="16" viewBox="0 0 16 16" className="text-muted-foreground/50">
+          <line x1="14" y1="2" x2="2" y2="14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+          <line x1="14" y1="7" x2="7" y2="14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+          <line x1="14" y1="12" x2="12" y2="14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+        </svg>
       </div>
     </div>
   );
