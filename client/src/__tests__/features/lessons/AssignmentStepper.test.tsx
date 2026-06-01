@@ -31,12 +31,12 @@ describe('AssignmentStepper', () => {
     );
   }
 
-  it('renders step labels for each item', () => {
+  it('renders step buttons for each item via aria-labels', () => {
     renderStepper();
-    // Desktop sidebar shows short single-word labels (aria-hidden spans)
-    expect(screen.getAllByText('Plan').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Video').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Quiz').length).toBeGreaterThan(0);
+    // Desktop and mobile each render buttons identified by aria-label
+    expect(screen.getAllByLabelText('Plan: Lesson Plan').length).toBeGreaterThan(0);
+    expect(screen.getAllByLabelText('Video: Video 1').length).toBeGreaterThan(0);
+    expect(screen.getAllByLabelText('Quiz: Quiz').length).toBeGreaterThan(0);
   });
 
   it('calls onStepClick when a step is clicked', () => {
@@ -87,8 +87,8 @@ describe('AssignmentStepper', () => {
 
   it('shows step counter in mobile progress bar', () => {
     renderStepper({ activeStepKey: 'r1' });
-    // Mobile bar shows "2/3" when second item (index 1) is active out of 3 items
-    expect(screen.getByText('2/3')).toBeTruthy();
+    // Header shows "Step 2 of 3" when second item (index 1) is active out of 3 items
+    expect(screen.getAllByText('Step 2 of 3').length).toBeGreaterThan(0);
   });
 
   describe('getStepLabel', () => {
