@@ -162,7 +162,7 @@ export default function LessonDetailPage() {
     ? unitProgress.totalLessons > 0 && unitProgress.completedLessons === unitProgress.totalLessons
     : false;
   const completedLessonIds = new Set(
-    unitProgress?.lessons.filter(l => l.completed).map(l => l.lessonId) ?? []
+    unitProgress?.lessons.filter(l => l.quizPassed).map(l => l.lessonId) ?? []
   );
 
   const stepperItems: StepperItem[] = assignmentItems.map(item => ({
