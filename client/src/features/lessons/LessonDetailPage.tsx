@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import useDisclosure from '../../hooks/useDisclosure.js';
-import { Settings, Menu, PanelLeft } from 'lucide-react';
+import { Menu, ArrowLeft } from 'lucide-react';
 import { assessmentsApi } from '../../api/assessments.js';
 import { lessonResourcesApi } from '../../api/lesson-resources.js';
 import { lessonToolsApi } from '../../api/lesson-tools.js';
@@ -161,6 +161,9 @@ export default function LessonDetailPage() {
   const allLessonsComplete = unitProgress
     ? unitProgress.totalLessons > 0 && unitProgress.completedLessons === unitProgress.totalLessons
     : false;
+  const completedLessonIds = new Set(
+    unitProgress?.lessons.filter(l => l.completed).map(l => l.lessonId) ?? []
+  );
 
   const stepperItems: StepperItem[] = assignmentItems.map(item => ({
     key: item.key,
@@ -216,69 +219,52 @@ export default function LessonDetailPage() {
         style={{ width: '100vw', left: '50%', marginLeft: '-50vw', minHeight: 'calc(100vh - 4.5rem)' }}
       >
         {/* Desktop breadcrumb bar */}
-        <div className="hidden lg:flex items-center gap-3 px-4 py-2 bg-surface border-b border-border shrink-0">
-          <button
-            onClick={handleToggleSidebar}
-            className="p-1.5 rounded text-muted-foreground hover:text-foreground hover:bg-surface-raised transition-colors shrink-0"
-            aria-label="Toggle lesson sidebar"
-            aria-expanded={!sidebarCollapsed}
-            aria-controls="unit-lesson-sidebar"
-          >
-            <PanelLeft className="w-4 h-4" />
-          </button>
-          <nav aria-label="Breadcrumb" className="flex-1 min-w-0">
-            <ol className="flex items-center gap-1.5 text-xs text-muted-foreground min-w-0">
+        <div className="hidden lg:flex items-center gap-2 px-4 py-2 bg-surface border-b border-border shrink-0">
+          <nav aria-label="Breadcrumb">
+            <ol className="flex items-center gap-1.5 text-sm min-w-0">
               <li className="shrink-0">
-                <Link to={`/courses/${courseId}`} className="hover:text-foreground hover:underline">
+                <Link to={`/courses/${courseId}`} className="text-primary hover:underline font-medium">
                   {courseTitle}
                 </Link>
               </li>
-              <li aria-hidden className="shrink-0">›</li>
-              <li className="truncate shrink min-w-0">{currentUnit?.title ?? ''}</li>
-              <li aria-hidden className="shrink-0">›</li>
+              <li aria-hidden className="shrink-0 text-muted-foreground">›</li>
               <li className="text-foreground font-medium truncate shrink min-w-0" aria-current="page">
                 {lesson.title}
               </li>
             </ol>
           </nav>
-          {!unitTestActive && (
-            <span className="text-xs text-muted-foreground shrink-0">
-              Step {activeIdx + 1} of {stepperItems.length}
-            </span>
-          )}
-          {canEdit && (
-            <button
-              onClick={settingsDisclosure.open}
-              className="p-1.5 rounded text-muted-foreground hover:text-foreground hover:bg-surface-raised transition-colors shrink-0"
-              aria-label="Lesson settings"
-            >
-              <Settings className="w-4 h-4" />
-            </button>
-          )}
         </div>
 
         {/* Mobile header */}
-        <div className="lg:hidden flex items-center gap-3 px-4 py-2 bg-surface border-b border-border shrink-0">
-          <button
-            ref={hamburgerRef}
-            onClick={() => setMobileDrawerOpen(true)}
-            className="p-1.5 rounded text-muted-foreground hover:text-foreground hover:bg-surface-raised transition-colors shrink-0"
-            aria-label="Open lesson navigation"
-          >
-            <Menu className="w-5 h-5" />
-          </button>
-          <span className="text-sm font-bold text-foreground truncate flex-1">
-            {lesson.order}. {lesson.title}
-          </span>
-          {canEdit && (
-            <button
-              onClick={settingsDisclosure.open}
-              className="p-1.5 rounded text-muted-foreground hover:text-foreground hover:bg-surface-raised transition-colors shrink-0"
-              aria-label="Lesson settings"
+        <div className="lg:hidden flex flex-col bg-surface border-b border-border shrink-0">
+          {/* Row 1: back arrow + course name + hamburger */}
+          <div className="flex items-center gap-2 px-4 py-2">
+            <Link
+              to={`/courses/${courseId}`}
+              className="text-primary shrink-0"
+              aria-label={`Back to ${courseTitle}`}
             >
-              <Settings className="w-4 h-4" />
+              <ArrowLeft className="w-4 h-4" />
+            </Link>
+            <Link
+              to={`/courses/${courseId}`}
+              className="text-xs text-primary hover:underline flex-1 truncate"
+            >
+              {courseTitle}
+            </Link>
+            <button
+              ref={hamburgerRef}
+              onClick={() => setMobileDrawerOpen(true)}
+              className="p-1.5 rounded text-muted-foreground hover:text-foreground hover:bg-surface-raised transition-colors shrink-0"
+              aria-label="Open lesson navigation"
+            >
+              <Menu className="w-5 h-5" />
             </button>
-          )}
+          </div>
+          {/* Row 2: lesson title */}
+          <div className="px-4 pb-2">
+            <h1 className="text-base font-bold text-foreground">{lesson.title}</h1>
+          </div>
         </div>
 
         {/* Panel row — flex-col on mobile, flex-row on desktop */}
@@ -299,94 +285,98 @@ export default function LessonDetailPage() {
             collapsed={sidebarCollapsed}
             mobileOpen={mobileDrawerOpen}
             onMobileClose={handleMobileClose}
+            completedLessonIds={completedLessonIds}
+            onToggle={handleToggleSidebar}
           />
 
-          {!unitTestActive && (
-            <AssignmentStepper
-              items={stepperItems}
-              activeStepKey={activeStepKey}
-              completedIds={completedIds}
-              completedAssignmentIds={completedAssignmentIds}
-              quizUnlocked={quizUnlocked}
-              quizPassed={quizPassed}
-              onStepClick={setActiveStepKey}
-              onAdd={canEdit ? () => setIsAddingAssignment(true) : undefined}
-            />
-          )}
+          <div className="flex flex-col flex-1 min-w-0 min-h-0">
+            {!unitTestActive && (
+              <AssignmentStepper
+                items={stepperItems}
+                activeStepKey={activeStepKey}
+                completedIds={completedIds}
+                completedAssignmentIds={completedAssignmentIds}
+                quizUnlocked={quizUnlocked}
+                quizPassed={quizPassed}
+                onStepClick={setActiveStepKey}
+                onAdd={canEdit ? () => setIsAddingAssignment(true) : undefined}
+              />
+            )}
 
-          <ErrorBoundary fallback={contentAreaFallback}>
-            <main
-              id="lesson-content"
-              aria-live="polite"
-              className="flex-1 min-w-0 overflow-y-auto px-4 py-6 pb-24 lg:pb-6"
-            >
-              {unitTestActive ? (
-                <AssessmentSection
-                  parentId={unitId!}
-                  api={testApi}
-                  label="Unit Test"
-                  createLabel="Create Test"
-                  takeLabel="Take Test"
-                  retakeLabel="Retake Test"
-                  modalTitle="Unit Test"
-                  resultsTitle="Test Results"
-                  displayMode="inline"
-                  canEdit={canEdit}
-                  unlocked={allLessonsComplete}
-                  lockedMessage="Complete all lessons to unlock the unit test."
-                />
-              ) : (
-                activeItem && (
-                  <AssignmentSection
-                    key={activeItem.key}
-                    item={activeItem}
-                    isComplete={isComplete}
-                    isLocked={activeItem.kind === 'quiz' && !quizUnlocked}
+            <ErrorBoundary fallback={contentAreaFallback}>
+              <main
+                id="lesson-content"
+                aria-live="polite"
+                className="flex-1 min-w-0 overflow-y-auto px-4 py-6 pb-24 lg:pb-6"
+              >
+                {unitTestActive ? (
+                  <AssessmentSection
+                    parentId={unitId!}
+                    api={testApi}
+                    label="Unit Test"
+                    createLabel="Create Test"
+                    takeLabel="Take Test"
+                    retakeLabel="Retake Test"
+                    modalTitle="Unit Test"
+                    resultsTitle="Test Results"
+                    displayMode="inline"
                     canEdit={canEdit}
-                    isFirst={activeIdx === 0}
-                    isLast={activeIdx === assignmentItems.length - 1}
-                    incompleteRequired={incompleteRequired}
-                    onToggleCompletion={onToggleCompletion}
-                    onToggleRequired={() => handleToggleRequired(activeItem)}
-                    onMoveUp={onMoveUp}
-                    onMoveDown={onMoveDown}
-                    onPrev={() => { const p = assignmentItems[activeIdx - 1]; if (p) setActiveStepKey(p.key); }}
-                    onNext={() => { const n = assignmentItems[activeIdx + 1]; if (n) setActiveStepKey(n.key); }}
-                    onEdit={canEdit && activeItem.kind === 'assignment' && activeAssignment
-                      ? () => setEditingAssignment(activeAssignment)
-                      : undefined}
-                    onDelete={canEdit && activeItem.kind === 'assignment' && activeItem.id
-                      ? () => setDeletingAssignmentId(activeItem.id)
-                      : undefined}
-                  >
-                    <ActiveItemContent
+                    unlocked={allLessonsComplete}
+                    lockedMessage="Complete all lessons to unlock the unit test."
+                  />
+                ) : (
+                  activeItem && (
+                    <AssignmentSection
+                      key={activeItem.key}
                       item={activeItem}
-                      lesson={lesson}
-                      resources={resources}
-                      tools={tools}
-                      assignments={assignments}
+                      isComplete={isComplete}
+                      isLocked={activeItem.kind === 'quiz' && !quizUnlocked}
                       canEdit={canEdit}
-                      editingVideoId={editingVideoId}
-                      newNoteIdRef={newNoteIdRef}
-                      onVideoEditStart={id => setEditingVideoId(id)}
-                      onVideoEditCancel={() => setEditingVideoId(null)}
-                      onVideoUpdated={updated => {
-                        setResources(prev => prev.map(r => r.id === updated.id ? updated : r).sort((a, b) => a.order - b.order));
-                        setEditingVideoId(null);
-                      }}
-                      onVideoDeleted={id => setResources(prev => prev.filter(r => r.id !== id))}
-                      onNoteUpdated={updated => setResources(prev => prev.map(r => r.id === updated.id ? updated : r))}
-                      onEditTool={t => setEditingTool(t)}
-                      onToolDeleted={id => setTools(prev => prev.filter(t => t.id !== id))}
-                      onToolUpdated={updated => setTools(prev => prev.map(t => t.id === updated.id ? updated : t))}
-                      onToggleAssignmentCompletion={handleToggleAssignmentCompletion}
-                      onPlanEdit={planEditDisclosure.open}
-                    />
-                  </AssignmentSection>
-                )
-              )}
-            </main>
-          </ErrorBoundary>
+                      isFirst={activeIdx === 0}
+                      isLast={activeIdx === assignmentItems.length - 1}
+                      incompleteRequired={incompleteRequired}
+                      onToggleCompletion={onToggleCompletion}
+                      onToggleRequired={() => handleToggleRequired(activeItem)}
+                      onMoveUp={onMoveUp}
+                      onMoveDown={onMoveDown}
+                      onPrev={() => { const p = assignmentItems[activeIdx - 1]; if (p) setActiveStepKey(p.key); }}
+                      onNext={() => { const n = assignmentItems[activeIdx + 1]; if (n) setActiveStepKey(n.key); }}
+                      onEdit={canEdit && activeItem.kind === 'assignment' && activeAssignment
+                        ? () => setEditingAssignment(activeAssignment)
+                        : undefined}
+                      onDelete={canEdit && activeItem.kind === 'assignment' && activeItem.id
+                        ? () => setDeletingAssignmentId(activeItem.id)
+                        : undefined}
+                    >
+                      <ActiveItemContent
+                        item={activeItem}
+                        lesson={lesson}
+                        resources={resources}
+                        tools={tools}
+                        assignments={assignments}
+                        canEdit={canEdit}
+                        editingVideoId={editingVideoId}
+                        newNoteIdRef={newNoteIdRef}
+                        onVideoEditStart={id => setEditingVideoId(id)}
+                        onVideoEditCancel={() => setEditingVideoId(null)}
+                        onVideoUpdated={updated => {
+                          setResources(prev => prev.map(r => r.id === updated.id ? updated : r).sort((a, b) => a.order - b.order));
+                          setEditingVideoId(null);
+                        }}
+                        onVideoDeleted={id => setResources(prev => prev.filter(r => r.id !== id))}
+                        onNoteUpdated={updated => setResources(prev => prev.map(r => r.id === updated.id ? updated : r))}
+                        onEditTool={t => setEditingTool(t)}
+                        onToolDeleted={id => setTools(prev => prev.filter(t => t.id !== id))}
+                        onToolUpdated={updated => setTools(prev => prev.map(t => t.id === updated.id ? updated : t))}
+                        onToggleAssignmentCompletion={handleToggleAssignmentCompletion}
+                        onPlanEdit={planEditDisclosure.open}
+                      />
+                    </AssignmentSection>
+                  )
+                )}
+              </main>
+            </ErrorBoundary>
+          </div>
 
           <StudentToolsBar
             availableTools={availableTools}

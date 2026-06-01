@@ -90,37 +90,40 @@ export default function AssignmentStepper({
 
   return (
     <>
-      {/* Desktop: vertical step sidebar */}
-      <nav
-        aria-label="Lesson steps"
-        className="hidden lg:flex flex-col w-14 shrink-0 border-r border-border bg-surface overflow-y-auto py-3 items-center"
-      >
-        {items.map((item, idx) => {
-          const isComplete = isItemComplete(item);
-          const isActive = item.key === activeStepKey;
-          const isLocked = item.kind === 'quiz' && !quizUnlocked;
-          const prevComplete = idx > 0 ? isItemComplete(items[idx - 1]) : false;
-          const Icon = getStepIcon(item);
-          const label = getStepLabel(item);
+      {/* Desktop: horizontal activity bar */}
+      <div className="hidden lg:block border-b border-border bg-surface">
+        {/* Header row */}
+        <div className="flex items-center justify-between px-4 py-2">
+          <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Lesson activities</span>
+          <span className="text-xs text-muted-foreground">Step {activeIndex + 1} of {items.length}</span>
+        </div>
+        {/* Circles row */}
+        <nav aria-label="Lesson steps" className="flex items-center px-4 pb-2 gap-0">
+          {items.map((item, idx) => {
+            const isComplete = isItemComplete(item);
+            const isActive = item.key === activeStepKey;
+            const isLocked = item.kind === 'quiz' && !quizUnlocked;
+            const prevComplete = idx > 0 ? isItemComplete(items[idx - 1]) : false;
+            const Icon = getStepIcon(item);
+            const label = getStepLabel(item);
 
-          let circleClass = 'flex items-center justify-center w-8 h-8 rounded-full shrink-0 transition-colors ';
-          if (isLocked) {
-            circleClass += 'border border-border bg-surface text-muted-foreground opacity-50 cursor-not-allowed';
-          } else if (isComplete || isActive) {
-            circleClass += 'bg-primary text-primary-foreground cursor-pointer hover:opacity-90';
-          } else {
-            circleClass += 'border border-border bg-surface text-muted-foreground cursor-pointer hover:border-primary/50 hover:text-foreground';
-          }
+            let circleClass = 'flex items-center justify-center w-7 h-7 rounded-full shrink-0 transition-colors ';
+            if (isLocked) {
+              circleClass += 'border border-border bg-surface text-muted-foreground opacity-50 cursor-not-allowed';
+            } else if (isComplete || isActive) {
+              circleClass += 'bg-primary text-primary-foreground cursor-pointer hover:opacity-90';
+            } else {
+              circleClass += 'border border-border bg-surface text-muted-foreground cursor-pointer hover:border-primary/50 hover:text-foreground';
+            }
 
-          return (
-            <div key={item.key} className="flex flex-col items-center w-full">
-              {idx > 0 && (
-                <div
-                  aria-hidden
-                  className={`w-px h-3 mx-auto ${prevComplete ? 'bg-primary' : 'bg-border'}`}
-                />
-              )}
-              <div className="flex flex-col items-center gap-0.5 px-1">
+            return (
+              <div key={item.key} className="flex items-center">
+                {idx > 0 && (
+                  <div
+                    aria-hidden
+                    className={`flex-1 h-px w-4 ${prevComplete ? 'bg-primary' : 'bg-border'}`}
+                  />
+                )}
                 <button
                   onClick={() => !isLocked && onStepClick(item.key)}
                   className={`${circleClass} ${focusRing}`}
@@ -138,66 +141,64 @@ export default function AssignmentStepper({
                     <Icon className="w-4 h-4" />
                   )}
                 </button>
-                <span
-                  aria-hidden
-                  className={`text-[10px] text-center leading-tight ${
-                    isActive ? 'text-primary font-medium' : 'text-muted-foreground'
-                  }`}
-                >
-                  {label}
-                </span>
               </div>
-            </div>
-          );
-        })}
-        {onAdd && (
-          <div className="flex flex-col items-center w-full">
-            <div aria-hidden className="w-px h-3 mx-auto bg-border" />
-            <div className="flex flex-col items-center gap-0.5 px-1">
+            );
+          })}
+          {onAdd && (
+            <div className="flex items-center">
+              <div aria-hidden className="flex-1 h-px w-4 bg-border" />
               <button
                 onClick={onAdd}
-                className={`flex items-center justify-center w-8 h-8 rounded-full border border-dashed border-border text-muted-foreground hover:border-primary/50 hover:text-foreground transition-colors ${focusRing}`}
+                className={`flex items-center justify-center w-7 h-7 rounded-full border border-dashed border-border text-muted-foreground hover:border-primary/50 hover:text-foreground transition-colors ${focusRing}`}
                 aria-label="Add assignment"
                 title="Add assignment"
               >
                 <Plus className="w-4 h-4" />
               </button>
-              <span aria-hidden className="text-[10px] text-muted-foreground text-center leading-tight">Add</span>
             </div>
-          </div>
-        )}
-      </nav>
+          )}
+        </nav>
+      </div>
 
-      {/* Mobile: compact segmented progress bar */}
-      <div className="lg:hidden flex items-center gap-2 px-4 py-2 border-b border-border bg-surface">
-        <span className="text-xs text-muted-foreground font-medium shrink-0">
-          {activeIndex + 1}/{items.length}
-        </span>
-        <div className="flex gap-0.5 flex-1 min-w-0" aria-hidden>
-          {items.map(item => {
-            const isComplete = isItemComplete(item);
-            const isActive = item.key === activeStepKey;
-            return (
-              <div
-                key={item.key}
-                className={`h-1.5 rounded-full flex-1 ${isComplete || isActive ? 'bg-primary' : 'bg-border'}`}
-              />
-            );
-          })}
+      {/* Mobile: header + compact segmented progress bar */}
+      <div className="lg:hidden border-b border-border bg-surface">
+        {/* Header row */}
+        <div className="flex items-center justify-between px-4 pt-2">
+          <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Lesson activities</span>
+          <span className="text-xs text-muted-foreground">Step {activeIndex + 1} of {items.length}</span>
         </div>
-        {activeItem && (() => {
-          const Icon = getStepIcon(activeItem);
-          return <Icon aria-hidden className="w-4 h-4 text-muted-foreground shrink-0" />;
-        })()}
-        {onAdd && (
-          <button
-            onClick={onAdd}
-            className={`w-6 h-6 rounded-full flex items-center justify-center border border-dashed border-border text-muted-foreground hover:border-primary/50 hover:text-foreground transition-colors shrink-0 ${focusRing}`}
-            aria-label="Add assignment"
-          >
-            <Plus className="w-3 h-3" />
-          </button>
-        )}
+        {/* Progress bar row */}
+        <div className="flex items-center gap-2 px-4 py-2">
+          <div className="flex gap-0.5 flex-1 min-w-0" aria-hidden>
+            {items.map(item => {
+              const isComplete = isItemComplete(item);
+              const isActive = item.key === activeStepKey;
+              return (
+                <div
+                  key={item.key}
+                  className={`h-1.5 rounded-full flex-1 ${isComplete || isActive ? 'bg-primary' : 'bg-border'}`}
+                />
+              );
+            })}
+          </div>
+          {activeItem && (() => {
+            const Icon = getStepIcon(activeItem);
+            return (
+              <div className="w-7 h-7 rounded-full bg-primary flex items-center justify-center shrink-0">
+                <Icon className="w-4 h-4 text-primary-foreground" />
+              </div>
+            );
+          })()}
+          {onAdd && (
+            <button
+              onClick={onAdd}
+              className={`w-6 h-6 rounded-full flex items-center justify-center border border-dashed border-border text-muted-foreground hover:border-primary/50 hover:text-foreground transition-colors shrink-0 ${focusRing}`}
+              aria-label="Add assignment"
+            >
+              <Plus className="w-3 h-3" />
+            </button>
+          )}
+        </div>
       </div>
     </>
   );
