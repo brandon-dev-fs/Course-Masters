@@ -163,7 +163,7 @@ export default function Layout() {
 				focusReturnRef={hamburgerRef}
 			/>
 
-			<main className="pb-8 flex-1">
+			<main className="flex-1 flex flex-col">
 				<Outlet />
 			</main>
 			<Footer />

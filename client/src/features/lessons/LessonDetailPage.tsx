@@ -215,8 +215,8 @@ export default function LessonDetailPage() {
   return (
     <>
       <div
-        className="relative -mx-4 -mb-8 flex flex-col"
-        style={{ width: '100vw', left: '50%', marginLeft: '-50vw', minHeight: 'calc(100vh - 4.5rem)' }}
+        className="relative -mx-4 flex flex-col flex-1"
+        style={{ width: '100vw', left: '50%', marginLeft: '-50vw' }}
       >
         {/* Desktop breadcrumb bar */}
         <div className="hidden lg:flex items-center gap-2 px-4 py-2 bg-surface border-b border-border shrink-0">
