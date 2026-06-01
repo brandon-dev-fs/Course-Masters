@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Plus, ClipboardCheck, X, CheckCircle2, Lock, PanelLeft } from 'lucide-react';
+import { Plus, X, CheckCircle2, Lock, PanelLeft } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import type { Lesson, Unit } from '../../api/types.js';
 import LessonForm from './LessonForm.js';

@@ -306,9 +306,16 @@ export default function LessonDetailPage() {
             <ErrorBoundary fallback={contentAreaFallback}>
               <main
                 id="lesson-content"
-                aria-live="polite"
                 className="flex-1 min-w-0 overflow-y-auto px-4 py-6 pb-24 lg:pb-6"
               >
+                {/* Scoped live region announces only step changes, not every child mutation */}
+                <span
+                  aria-live="polite"
+                  aria-atomic="true"
+                  className="sr-only"
+                >
+                  {activeItem?.title ?? ''}
+                </span>
                 {unitTestActive ? (
                   <AssessmentSection
                     parentId={unitId!}
