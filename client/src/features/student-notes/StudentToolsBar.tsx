@@ -2,11 +2,11 @@ import { NotebookPen, Layers, Brain, BookOpen } from 'lucide-react';
 
 export type StudentToolType = 'notes' | 'flashcards' | 'practice' | 'vocab';
 
-export const TOOL_META: Record<StudentToolType, { label: string; Icon: React.ComponentType<{ className?: string }> }> = {
-  notes:     { label: 'My Notes',          Icon: NotebookPen },
-  flashcards:{ label: 'Flash Cards',       Icon: Layers },
-  practice:  { label: 'Practice Problems', Icon: Brain },
-  vocab:     { label: 'Vocabulary',        Icon: BookOpen },
+export const TOOL_META: Record<StudentToolType, { label: string; longLabel: string; Icon: React.ComponentType<{ className?: string }> }> = {
+  notes:      { label: 'Notes',    longLabel: 'My Notes',          Icon: NotebookPen },
+  flashcards: { label: 'Cards',    longLabel: 'Flash Cards',       Icon: Layers },
+  practice:   { label: 'Practice', longLabel: 'Practice Problems', Icon: Brain },
+  vocab:      { label: 'Vocab',    longLabel: 'Vocabulary',        Icon: BookOpen },
 };
 
 interface StudentToolsBarProps {
@@ -14,7 +14,7 @@ interface StudentToolsBarProps {
   activeTool: StudentToolType | null;
   onOpenTool: (tool: StudentToolType) => void;
   isQuizActive: boolean;
-  /** Which layout to render. 'mobile' = horizontal bar only, 'desktop' = vertical strip only, 'both' = both (default) */
+  /** Which layout to render. 'mobile' = bottom tab bar only, 'desktop' = vertical strip only, 'both' = both (default) */
   mode?: 'mobile' | 'desktop' | 'both';
 }
 
@@ -27,19 +27,19 @@ export default function StudentToolsBar({ availableTools, activeTool, onOpenTool
       {(mode === 'desktop' || mode === 'both') && (
         <aside className="hidden lg:flex lg:flex-col w-10 shrink-0 border-l border-border bg-surface items-center py-3 gap-2">
           {availableTools.map(tool => {
-            const { label, Icon } = TOOL_META[tool];
+            const { longLabel, Icon } = TOOL_META[tool];
             const isActive = activeTool === tool;
             return (
               <button
                 key={tool}
                 onClick={() => onOpenTool(tool)}
-                title={label}
+                title={longLabel}
                 className={`w-8 h-8 flex items-center justify-center rounded-lg transition-colors ${
                   isActive
                     ? 'bg-primary-subtle text-primary'
                     : 'text-muted-foreground hover:text-foreground hover:bg-surface-raised'
                 }`}
-                aria-label={label}
+                aria-label={longLabel}
               >
                 <Icon className="w-4 h-4" />
               </button>
@@ -48,28 +48,31 @@ export default function StudentToolsBar({ availableTools, activeTool, onOpenTool
         </aside>
       )}
 
-      {/* Mobile: horizontal row above content */}
+      {/* Mobile: fixed bottom tab bar */}
       {(mode === 'mobile' || mode === 'both') && (
-        <div className="lg:hidden flex gap-2 px-4 py-2 border-b border-border bg-surface overflow-x-auto">
+        <nav
+          aria-label="Student tools"
+          className="fixed bottom-0 left-0 right-0 z-40 bg-surface border-t border-border flex lg:hidden"
+        >
           {availableTools.map(tool => {
-            const { label, Icon } = TOOL_META[tool];
+            const { label, longLabel, Icon } = TOOL_META[tool];
             const isActive = activeTool === tool;
             return (
               <button
                 key={tool}
+                aria-pressed={isActive}
+                aria-label={longLabel}
                 onClick={() => onOpenTool(tool)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium shrink-0 transition-colors ${
-                  isActive
-                    ? 'bg-primary-subtle text-primary'
-                    : 'bg-surface-raised text-muted-foreground hover:text-foreground'
+                className={`flex flex-col items-center gap-0.5 flex-1 py-2 min-h-[44px] transition-colors ${
+                  isActive ? 'text-primary' : 'text-muted-foreground'
                 }`}
               >
-                <Icon className="w-3.5 h-3.5" />
-                {label}
+                <Icon className="w-5 h-5" />
+                <span className="text-[10px]">{label}</span>
               </button>
             );
           })}
-        </div>
+        </nav>
       )}
     </>
   );

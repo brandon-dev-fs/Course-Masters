@@ -37,8 +37,8 @@ describe('UnitLessonSidebar', () => {
 
   it('renders lesson titles', () => {
     renderSidebar();
-    expect(screen.getAllByText('1. Lesson 1').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('2. Lesson 2').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Lesson 1').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Lesson 2').length).toBeGreaterThan(0);
   });
 
   it('shows Unit Test button when onUnitTestClick provided', () => {
@@ -74,9 +74,9 @@ describe('UnitLessonSidebar', () => {
     expect(screen.getByLabelText(/title/i)).toBeInTheDocument();
   });
 
-  it('renders course title link', () => {
+  it('renders lessons heading in sidebar', () => {
     renderSidebar();
-    // Course title appears in desktop sidebar as a link
-    expect(screen.getByText('My Course')).toBeInTheDocument();
+    // "Lessons" heading appears in the mobile drawer header and (when not collapsed) in the desktop sidebar
+    expect(screen.getAllByText('Lessons').length).toBeGreaterThan(0);
   });
 });
