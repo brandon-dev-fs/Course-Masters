@@ -94,7 +94,6 @@ export default function AssignmentStepper({
       <nav
         aria-label="Lesson steps"
         className="hidden lg:flex flex-col w-14 shrink-0 border-r border-border bg-surface overflow-y-auto py-3 items-center"
-        tabIndex={0}
       >
         {items.map((item, idx) => {
           const isComplete = isItemComplete(item);
@@ -108,7 +107,7 @@ export default function AssignmentStepper({
           if (isLocked) {
             circleClass += 'border border-border bg-surface text-muted-foreground opacity-50 cursor-not-allowed';
           } else if (isComplete || isActive) {
-            circleClass += 'bg-primary text-white cursor-pointer hover:opacity-90';
+            circleClass += 'bg-primary text-primary-foreground cursor-pointer hover:opacity-90';
           } else {
             circleClass += 'border border-border bg-surface text-muted-foreground cursor-pointer hover:border-primary/50 hover:text-foreground';
           }
@@ -175,12 +174,12 @@ export default function AssignmentStepper({
           {activeIndex + 1}/{items.length}
         </span>
         <div className="flex gap-0.5 flex-1 min-w-0" aria-hidden>
-          {items.map((item, idx) => {
+          {items.map(item => {
             const isComplete = isItemComplete(item);
             const isActive = item.key === activeStepKey;
             return (
               <div
-                key={idx}
+                key={item.key}
                 className={`h-1.5 rounded-full flex-1 ${isComplete || isActive ? 'bg-primary' : 'bg-border'}`}
               />
             );
