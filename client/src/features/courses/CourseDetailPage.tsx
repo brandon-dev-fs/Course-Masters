@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 
 import { coursesApi } from '../../api/courses.js';
 import { unitsApi } from '../../api/units.js';
+import { lessonsApi } from '../../api/lessons.js';
 import { progressApi } from '../../api/progress.js';
 import type { Course, Unit, CourseProgress } from '../../api/types.js';
 
@@ -15,6 +16,8 @@ import CourseHeader from './CourseHeader.js';
 import UnitRoadmap from './UnitRoadmap.js';
 import MobileProgressBar from './MobileProgressBar.js';
 import CourseProgressSidebar from './CourseProgressSidebar.js';
+import LessonForm from '../lessons/LessonForm.js';
+import Modal from '../../components/Modal.js';
 
 import LoadingSpinner from '../../components/LoadingSpinner.js';
 import ErrorMessage from '../../components/ErrorMessage.js';
@@ -63,6 +66,7 @@ export default function CourseDetailPage() {
 	}, [data]);
 
 	const [editingUnit, setEditingUnit] = useState<Unit | null>(null);
+	const [addLessonUnit, setAddLessonUnit] = useState<Unit | null>(null);
 
 	const settingsDisclosure = useDisclosure();
 	const syllabusViewDisclosure = useDisclosure();
@@ -127,6 +131,27 @@ export default function CourseDetailPage() {
 		);
 	}
 
+	async function handleAddFirstLesson(
+		unit: Unit,
+		data: { title: string; description: string; order: number },
+	) {
+		const newLesson = await lessonsApi.create(unit.id, data);
+		setCourse((prev) =>
+			prev
+				? {
+						...prev,
+						units: prev.units?.map((u) =>
+							u.id === unit.id
+								? { ...u, lessons: [...(u.lessons ?? []), newLesson] }
+								: u,
+						),
+					}
+				: null,
+		);
+		setAddLessonUnit(null);
+		navigate(`/courses/${courseId}/units/${unit.id}/lessons/${newLesson.id}`);
+	}
+
 	async function handleUpdateUnit(
 		unit: Unit,
 		unitData: { title: string; order: number },
@@ -188,6 +213,7 @@ export default function CourseDetailPage() {
 									progress={progress}
 									canEdit={canEdit}
 									onEditUnit={handleEditUnit}
+									onAddLesson={setAddLessonUnit}
 								/>
 							</main>
 							<aside className="w-[260px] shrink-0 hidden md:block sticky top-[72px]">
@@ -251,6 +277,15 @@ export default function CourseDetailPage() {
 					progress={progress}
 					onClose={calendarDisclosure.close}
 				/>
+			)}
+			{addLessonUnit && (
+				<Modal title="Add First Lesson" onClose={() => setAddLessonUnit(null)}>
+					<LessonForm
+						nextOrder={1}
+						onSubmit={(data) => handleAddFirstLesson(addLessonUnit, data)}
+						onCancel={() => setAddLessonUnit(null)}
+					/>
+				</Modal>
 			)}
 		</div>
 	);
