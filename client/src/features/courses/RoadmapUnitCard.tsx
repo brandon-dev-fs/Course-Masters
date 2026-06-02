@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 
-import { Check, Circle, BookOpen, ClipboardCheck, Pencil, Play } from 'lucide-react';
+import { Check, Circle, BookOpen, ClipboardCheck, Pencil, Play, Plus } from 'lucide-react';
 
 import type { Unit, CourseProgress } from '../../api/types.js';
 
@@ -13,6 +13,7 @@ interface RoadmapUnitCardProps {
   state: UnitState;
   canEdit: boolean;
   onEditUnit: () => void;
+  onAddLesson?: () => void;
 }
 
 function getContinueLessonUrl(
@@ -80,6 +81,7 @@ export default function RoadmapUnitCard({
   state,
   canEdit,
   onEditUnit,
+  onAddLesson,
 }: RoadmapUnitCardProps) {
   const sortedLessons = [...(unit.lessons ?? [])].sort((a, b) => a.order - b.order);
   const lessonCount = sortedLessons.length;
@@ -202,16 +204,27 @@ export default function RoadmapUnitCard({
         )}
       </div>
 
-      {/* Continue lesson CTA — in-progress units only */}
+      {/* CTA — in-progress units only */}
       {state === 'in-progress' && (
         <div className="mt-3">
-          <Link
-            to={getContinueLessonUrl(courseId, unit, unitProgress)}
-            className="flex items-center justify-center gap-2 w-full px-4 py-2 bg-green-button text-green-button-text rounded-lg text-sm font-medium hover:opacity-90 transition-opacity focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-accent"
-          >
-            <Play className="w-4 h-4 fill-current" aria-hidden="true" />
-            Continue lesson
-          </Link>
+          {canEdit && lessonCount === 0 ? (
+            <button
+              type="button"
+              onClick={onAddLesson}
+              className="flex items-center justify-center gap-2 w-full px-4 py-2 bg-green-button text-green-button-text rounded-lg text-sm font-medium hover:opacity-90 transition-opacity focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-accent"
+            >
+              <Plus className="w-4 h-4" aria-hidden="true" />
+              Add first lesson
+            </button>
+          ) : (
+            <Link
+              to={getContinueLessonUrl(courseId, unit, unitProgress)}
+              className="flex items-center justify-center gap-2 w-full px-4 py-2 bg-green-button text-green-button-text rounded-lg text-sm font-medium hover:opacity-90 transition-opacity focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-accent"
+            >
+              <Play className="w-4 h-4 fill-current" aria-hidden="true" />
+              Continue lesson
+            </Link>
+          )}
         </div>
       )}
     </div>

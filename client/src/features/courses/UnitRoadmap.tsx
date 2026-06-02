@@ -16,6 +16,7 @@ interface UnitRoadmapProps {
   progress: CourseProgress | null;
   canEdit: boolean;
   onEditUnit: (unit: Unit) => void;
+  onAddLesson?: (unit: Unit) => void;
 }
 
 function computeUnitStates(
@@ -68,6 +69,7 @@ export default function UnitRoadmap({
   progress,
   canEdit,
   onEditUnit,
+  onAddLesson,
 }: UnitRoadmapProps) {
   if (units.length === 0) {
     return (
@@ -106,6 +108,7 @@ export default function UnitRoadmap({
                 state={state}
                 canEdit={canEdit}
                 onEditUnit={() => onEditUnit(unit)}
+                onAddLesson={onAddLesson ? () => onAddLesson(unit) : undefined}
               />
             </div>
           </li>
