@@ -65,6 +65,7 @@ const defaultParams = {
   resources: [] as LessonResource[],
   tools: [] as LessonTool[],
   completedIds: new Set<string>(),
+  canEdit: false,
   setActiveStepKey: vi.fn(),
 };
 
