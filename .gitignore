@@ -143,3 +143,5 @@ vite.config.ts.timestamp-*
 worktrees/
 
 task.md
+
+plans/
