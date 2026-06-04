@@ -70,7 +70,6 @@ model User {
   lessonCompletions     LessonCompletion[]
   unitCompletions       UnitCompletion[]
   assignmentCompletions AssignmentCompletion[]
-  vocabFlashCards            StudentVocabFlashCard[]
   vocabAssignmentFlashCards  StudentVocabAssignmentFlashCard[]
 
   @@map("user")
@@ -214,7 +213,6 @@ model LessonTool {
 
   lesson         Lesson                   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
   completions    LessonToolCompletion[]
-  vocabFlashCards StudentVocabFlashCard[]
 
   @@index([lessonId])
   @@map("lesson_tool")
@@ -485,16 +483,3 @@ model AssignmentCompletion {
   @@map("assignment_completion")
 }
 
-model StudentVocabFlashCard {
-  id        String   @id @default(uuid())
-  userId    String
-  toolId    String
-  createdAt DateTime @default(now())
-
-  user User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  tool LessonTool @relation(fields: [toolId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, toolId])
-  @@index([userId])
-  @@map("student_vocab_flash_card")
-}
