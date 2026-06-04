@@ -20,7 +20,7 @@ export default function VocabAssignmentForm({ entries, onEntriesChange }: SubFor
     onEntriesChange(next);
   }
 
-  function updateEntry(idx: number, field: keyof VocabEntry, value: string) {
+  function updateEntry(idx: number, field: 'term' | 'definition' | 'example', value: string) {
     const next = entries.map((e, i) => i === idx ? { ...e, [field]: value } : e);
     onEntriesChange(next);
   }

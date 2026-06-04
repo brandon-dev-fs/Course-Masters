@@ -35,7 +35,7 @@ export default function LessonAssignmentContent({
     );
   }
   if (assignment.type === 'vocab' && assignment.vocabAssignment) {
-    return <VocabAssignmentView entries={assignment.vocabAssignment.entries} />;
+    return <VocabAssignmentView entries={assignment.vocabAssignment.entries} lessonId={assignment.lessonId} />;
   }
   if (assignment.type === 'practice_problem' && assignment.practiceProblemAssignment) {
     return (

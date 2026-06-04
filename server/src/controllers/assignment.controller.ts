@@ -48,4 +48,23 @@ export const assignmentController = {
     await assignmentService.markIncomplete(assignmentId, userId);
     res.status(204).send();
   }),
+
+  getSavedVocabEntryFlashCards: asyncHandler(async (req: Request, res: Response) => {
+    const lessonId = req.params['lessonId'] as string;
+    const userId = req.user!.id;
+    res.json(await assignmentService.getSavedVocabEntryFlashCards(lessonId, userId));
+  }),
+
+  saveVocabEntryFlashCard: asyncHandler(async (req: Request, res: Response) => {
+    const entryId = req.params['entryId'] as string;
+    const userId = req.user!.id;
+    res.status(201).json(await assignmentService.saveVocabEntryFlashCard(entryId, userId));
+  }),
+
+  removeVocabEntryFlashCard: asyncHandler(async (req: Request, res: Response) => {
+    const entryId = req.params['entryId'] as string;
+    const userId = req.user!.id;
+    await assignmentService.removeVocabEntryFlashCard(entryId, userId);
+    res.status(204).send();
+  }),
 };

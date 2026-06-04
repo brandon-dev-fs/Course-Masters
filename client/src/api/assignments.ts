@@ -111,4 +111,13 @@ export const assignmentsApi = {
 
   uncomplete: (assignmentId: string): Promise<void> =>
     apiClient.delete<void>(`/assignments/${assignmentId}/complete`),
+
+  getSavedVocabEntryFlashCards: (lessonId: string): Promise<VocabEntry[]> =>
+    apiClient.get<VocabEntry[]>(`/lessons/${lessonId}/assignments/vocab-flashcards`),
+
+  saveVocabEntryFlashCard: (entryId: string): Promise<void> =>
+    apiClient.post<void>(`/vocab-entries/${entryId}/flashcard`, {}),
+
+  removeVocabEntryFlashCard: (entryId: string): Promise<void> =>
+    apiClient.delete<void>(`/vocab-entries/${entryId}/flashcard`),
 };

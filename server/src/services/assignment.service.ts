@@ -10,7 +10,11 @@ const ASSIGNMENT_INCLUDE = {
   noteAssignment: true,
   videoAssignment: true,
   readingAssignment: true,
-  vocabAssignment: true,
+  vocabAssignment: {
+    include: {
+      entries: { orderBy: { order: 'asc' as const } },
+    },
+  },
   practiceProblemAssignment: {
     include: {
       questions: { orderBy: { order: 'asc' as const } },
@@ -109,9 +113,20 @@ export const assignmentService = {
           },
         });
       } else if (data.type === 'vocab') {
-        await tx.vocabAssignment.create({
-          data: { assignmentId: assignment.id, entries: data.entries },
+        const va = await tx.vocabAssignment.create({
+          data: { assignmentId: assignment.id },
         });
+        if (data.entries.length > 0) {
+          await tx.vocabAssignmentEntry.createMany({
+            data: data.entries.map((e, i) => ({
+              vocabAssignmentId: va.id,
+              term: e.term,
+              definition: e.definition,
+              example: e.example ?? null,
+              order: i + 1,
+            })),
+          });
+        }
       } else if (data.type === 'practice_problem') {
         const ppa = await tx.practiceProblemAssignment.create({
           data: {
@@ -176,10 +191,28 @@ export const assignmentService = {
           await tx.readingAssignment.update({ where: { assignmentId }, data: readingUpdates });
         }
       } else if (assignment.type === AssignmentType.vocab && data.entries !== undefined) {
-        await tx.vocabAssignment.update({
-          where: { assignmentId },
-          data: { entries: data.entries },
-        });
+        const va = await tx.vocabAssignment.findUnique({ where: { assignmentId } });
+        if (va) {
+          const incomingIds = data.entries.filter(e => e.id).map(e => e.id!);
+          // Delete entries not present in the incoming list
+          await tx.vocabAssignmentEntry.deleteMany({
+            where: { vocabAssignmentId: va.id, id: { notIn: incomingIds } },
+          });
+          // Update existing or create new entries
+          for (let i = 0; i < data.entries.length; i++) {
+            const e = data.entries[i];
+            if (e.id) {
+              await tx.vocabAssignmentEntry.update({
+                where: { id: e.id },
+                data: { term: e.term, definition: e.definition, example: e.example ?? null, order: i + 1 },
+              });
+            } else {
+              await tx.vocabAssignmentEntry.create({
+                data: { vocabAssignmentId: va.id, term: e.term, definition: e.definition, example: e.example ?? null, order: i + 1 },
+              });
+            }
+          }
+        }
       } else if (assignment.type === AssignmentType.practice_problem) {
         const ppaUpdates: { passingPercentage?: number | null } = {};
         if (data.passingPercentage !== undefined) ppaUpdates.passingPercentage = data.passingPercentage;
@@ -298,5 +331,27 @@ export const assignmentService = {
     await prisma.assignmentCompletion.delete({
       where: { userId_assignmentId: { userId, assignmentId } },
     });
+  },
+
+  async getSavedVocabEntryFlashCards(lessonId: string, userId: string) {
+    const saved = await prisma.studentVocabAssignmentFlashCard.findMany({
+      where: { userId, entry: { vocabAssignment: { assignment: { lessonId } } } },
+      include: { entry: true },
+    });
+    return saved.map(s => s.entry);
+  },
+
+  async saveVocabEntryFlashCard(entryId: string, userId: string) {
+    const entry = await prisma.vocabAssignmentEntry.findUnique({ where: { id: entryId } });
+    if (!entry) throw new NotFoundError('Vocab entry not found');
+    return prisma.studentVocabAssignmentFlashCard.create({ data: { userId, entryId } });
+  },
+
+  async removeVocabEntryFlashCard(entryId: string, userId: string) {
+    const record = await prisma.studentVocabAssignmentFlashCard.findUnique({
+      where: { userId_entryId: { userId, entryId } },
+    });
+    if (!record) throw new NotFoundError('Saved vocab entry not found');
+    await prisma.studentVocabAssignmentFlashCard.delete({ where: { userId_entryId: { userId, entryId } } });
   },
 };

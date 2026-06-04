@@ -330,6 +330,7 @@ export interface ReadingAssignmentData {
 }
 
 export interface VocabEntry {
+  id?: string;   // present for existing entries from DB, absent for new form entries
   term: string;
   definition: string;
   example?: string;

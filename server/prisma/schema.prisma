@@ -70,7 +70,8 @@ model User {
   lessonCompletions     LessonCompletion[]
   unitCompletions       UnitCompletion[]
   assignmentCompletions AssignmentCompletion[]
-  vocabFlashCards       StudentVocabFlashCard[]
+  vocabFlashCards            StudentVocabFlashCard[]
+  vocabAssignmentFlashCards  StudentVocabAssignmentFlashCard[]
 
   @@map("user")
 }
@@ -405,11 +406,42 @@ model ReadingAssignment {
 model VocabAssignment {
   id           String @id @default(uuid())
   assignmentId String @unique
-  entries      Json
 
-  assignment Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  assignment Assignment           @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  entries    VocabAssignmentEntry[]
 
   @@map("vocab_assignment")
+}
+
+model VocabAssignmentEntry {
+  id                String   @id @default(uuid())
+  vocabAssignmentId String
+  term              String
+  definition        String
+  example           String?
+  order             Int
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  vocabAssignment VocabAssignment                   @relation(fields: [vocabAssignmentId], references: [id], onDelete: Cascade)
+  savedBy         StudentVocabAssignmentFlashCard[]
+
+  @@index([vocabAssignmentId])
+  @@map("vocab_assignment_entry")
+}
+
+model StudentVocabAssignmentFlashCard {
+  id        String   @id @default(uuid())
+  userId    String
+  entryId   String
+  createdAt DateTime @default(now())
+
+  user  User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  entry VocabAssignmentEntry @relation(fields: [entryId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, entryId])
+  @@index([userId])
+  @@map("student_vocab_assignment_flash_card")
 }
 
 model PracticeProblemAssignment {

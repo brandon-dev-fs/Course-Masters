@@ -10,7 +10,7 @@ import { courseProgressRouter, unitProgressRouter } from './progress.routes.js';
 import { lessonCompletionsRouter } from './resource-completion.routes.js';
 import { lessonCompleteRouter, unitCompleteRouter } from './completion.routes.js';
 import youtubeRouter from './youtube.routes.js';
-import { lessonAssignmentsRouter, assignmentsRouter } from './assignment.routes.js';
+import { lessonAssignmentsRouter, assignmentsRouter, vocabEntriesRouter } from './assignment.routes.js';
 import userRouter from './user.routes.js';
 import { authenticate } from '../middleware/authenticate.js';
 
@@ -48,6 +48,7 @@ router.use('/assessments', assessmentsRouter);
 // Assignments
 router.use('/lessons/:lessonId/assignments', lessonAssignmentsRouter);
 router.use('/assignments', assignmentsRouter);
+router.use('/vocab-entries', vocabEntriesRouter);
 
 // Users (admin-only soft-delete)
 router.use('/users', userRouter);

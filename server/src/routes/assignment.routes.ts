@@ -14,6 +14,9 @@ export const lessonAssignmentsRouter = Router({ mergeParams: true });
 
 lessonAssignmentsRouter.get('/', assignmentController.getAll);
 
+// vocab flashcards must be registered before /:assignmentId to avoid conflict
+lessonAssignmentsRouter.get('/vocab-flashcards', assignmentController.getSavedVocabEntryFlashCards);
+
 // reorder must be registered before /:assignmentId to avoid conflict
 lessonAssignmentsRouter.put(
   '/reorder',
@@ -51,3 +54,11 @@ assignmentsRouter.delete(
 assignmentsRouter.post('/:assignmentId/complete', assignmentController.complete);
 
 assignmentsRouter.delete('/:assignmentId/complete', assignmentController.uncomplete);
+
+// ── /vocab-entries ────────────────────────────────────────────────────────────
+
+export const vocabEntriesRouter = Router();
+
+vocabEntriesRouter.post('/:entryId/flashcard', assignmentController.saveVocabEntryFlashCard);
+
+vocabEntriesRouter.delete('/:entryId/flashcard', assignmentController.removeVocabEntryFlashCard);
