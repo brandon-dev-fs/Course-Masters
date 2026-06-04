@@ -9,13 +9,14 @@ import type { LessonTool } from '../../api/types.js';
 interface VocabFormProps {
   initial?: LessonTool;
   nextOrder?: number;
-  onSubmit: (data: { term: string; definition: string; order: number }) => Promise<void>;
+  onSubmit: (data: { term: string; definition: string; example?: string; order: number }) => Promise<void>;
   onCancel: () => void;
 }
 
 export default function VocabForm({ initial, nextOrder = 1, onSubmit, onCancel }: VocabFormProps) {
   const [term, setTerm] = useState(initial?.type === 'vocab' ? (initial.content.term ?? '') : '');
   const [definition, setDefinition] = useState(initial?.type === 'vocab' ? (initial.content.definition ?? '') : '');
+  const [example, setExample] = useState(initial?.type === 'vocab' ? (initial.content.example ?? '') : '');
   const [order, setOrder] = useState(initial?.order ?? nextOrder);
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -26,7 +27,7 @@ export default function VocabForm({ initial, nextOrder = 1, onSubmit, onCancel }
     setError('');
     try {
       if (!term.trim() || !definition.trim()) throw new Error('Term and definition are required');
-      await onSubmit({ term: term.trim(), definition: definition.trim(), order });
+      await onSubmit({ term: term.trim(), definition: definition.trim(), example: example.trim() || undefined, order });
     } catch (err: unknown) {
       setError(err instanceof ApiClientError ? classifyError(err) : err instanceof Error ? err.message : 'Something went wrong');
     } finally {
@@ -38,6 +39,7 @@ export default function VocabForm({ initial, nextOrder = 1, onSubmit, onCancel }
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <Input id="term" label="Term" value={term} onChange={e => setTerm(e.target.value)} placeholder="e.g. Variable" autoFocus />
       <Textarea id="definition" label="Definition" value={definition} onChange={e => setDefinition(e.target.value)} placeholder="A clear, concise explanation..." rows={3} />
+      <Textarea id="example" label="Example sentence (optional)" value={example} onChange={e => setExample(e.target.value)} placeholder="e.g. A variable stores a value that can change." rows={2} />
       <Input id="order" label="Order" type="number" value={order} onChange={e => setOrder(Number(e.target.value))} min={1} />
       {error && <ErrorMessage message={error} />}
       <div className="flex justify-end gap-3 pt-2">

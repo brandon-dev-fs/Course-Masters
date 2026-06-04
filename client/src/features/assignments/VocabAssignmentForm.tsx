@@ -5,7 +5,7 @@ import ErrorMessage from '../../components/ErrorMessage.js';
 
 export default function VocabAssignmentForm({ entries, onEntriesChange }: SubFormProps) {
   function addEntry() {
-    onEntriesChange([...entries, { term: '', definition: '' }]);
+    onEntriesChange([...entries, { term: '', definition: '', example: '' }]);
   }
 
   function removeEntry(idx: number) {
@@ -32,23 +32,33 @@ export default function VocabAssignmentForm({ entries, onEntriesChange }: SubFor
       {entries.map((entry, idx) => (
         <fieldset key={idx} className="rounded-lg border border-border p-3 flex flex-col gap-2">
           <legend className="sr-only">Term {idx + 1}</legend>
-          <div className="flex items-center gap-2">
-            <div className="flex-1 flex gap-2">
+          <div className="flex items-start gap-2">
+            <div className="flex-1 flex flex-col gap-2">
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={entry.term}
+                  onChange={e => updateEntry(idx, 'term', e.target.value)}
+                  placeholder="Term"
+                  className="flex-1 rounded-xl border-2 border-border bg-surface-raised px-3 py-2 text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:border-primary"
+                  aria-label={`Term ${idx + 1}`}
+                />
+                <input
+                  type="text"
+                  value={entry.definition}
+                  onChange={e => updateEntry(idx, 'definition', e.target.value)}
+                  placeholder="Definition"
+                  className="flex-1 rounded-xl border-2 border-border bg-surface-raised px-3 py-2 text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:border-primary"
+                  aria-label={`Definition ${idx + 1}`}
+                />
+              </div>
               <input
                 type="text"
-                value={entry.term}
-                onChange={e => updateEntry(idx, 'term', e.target.value)}
-                placeholder="Term"
-                className="flex-1 rounded-xl border-2 border-border bg-surface-raised px-3 py-2 text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:border-primary"
-                aria-label={`Term ${idx + 1}`}
-              />
-              <input
-                type="text"
-                value={entry.definition}
-                onChange={e => updateEntry(idx, 'definition', e.target.value)}
-                placeholder="Definition"
-                className="flex-1 rounded-xl border-2 border-border bg-surface-raised px-3 py-2 text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:border-primary"
-                aria-label={`Definition ${idx + 1}`}
+                value={entry.example ?? ''}
+                onChange={e => updateEntry(idx, 'example', e.target.value)}
+                placeholder="Example sentence (optional)"
+                className="w-full rounded-xl border-2 border-border bg-surface-raised px-3 py-2 text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:border-primary"
+                aria-label={`Example sentence for term ${idx + 1}`}
               />
             </div>
             <div className="flex items-center gap-0.5 shrink-0">

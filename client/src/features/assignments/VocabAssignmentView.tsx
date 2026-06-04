@@ -15,6 +15,9 @@ export default function VocabAssignmentView({ entries }: VocabAssignmentViewProp
         <div key={i} className="py-3">
           <dt className="text-sm font-semibold text-foreground">{entry.term}</dt>
           <dd className="text-sm text-muted-foreground pl-4 mt-0.5">{entry.definition}</dd>
+          {entry.example && (
+            <dd className="text-sm text-muted-foreground pl-4 mt-1 italic border-l-2 border-border">{entry.example}</dd>
+          )}
         </div>
       ))}
     </dl>

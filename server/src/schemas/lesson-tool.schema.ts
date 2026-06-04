@@ -16,6 +16,7 @@ const practiceProblemContentSchema = z.object({
 const vocabContentSchema = z.object({
   term: z.string().min(1, 'term is required'),
   definition: z.string().min(1, 'definition is required'),
+  example: z.string().optional(),
 });
 
 // ── Create schema (discriminated union) ───────────────────────────────────

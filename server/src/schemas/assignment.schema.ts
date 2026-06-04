@@ -83,6 +83,7 @@ export const createAssignmentSchema = z.discriminatedUnion('type', [
         z.object({
           term: z.string().min(1),
           definition: z.string().min(1),
+          example: z.string().optional(),
         }),
       )
       .min(1),
@@ -116,6 +117,7 @@ export const updateAssignmentSchema = z.object({
       z.object({
         term: z.string().min(1),
         definition: z.string().min(1),
+        example: z.string().optional(),
       }),
     )
     .optional(),

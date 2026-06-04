@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { lessonToolsApi } from '../../api/lesson-tools.js';
-import type { LessonTool } from '../../api/types.js';
+import type { LessonTool, StudyCard } from '../../api/types.js';
 import useResourceList from '../../hooks/useResourceList.js';
 import useCanEdit from '../../hooks/useCanEdit.js';
 import FlashCardComponent from './FlashCard.js';
@@ -34,6 +34,7 @@ export default function FlashCardList({ lessonId }: { lessonId: string }) {
     lessonId, byOrder,
   );
   const [studying, setStudying] = useState(false);
+  const [studyCards, setStudyCards] = useState<StudyCard[]>([]);
   const [editMode, setEditMode] = useState(false);
 
   async function handleUpdate(id: string, data: { front: string; back: string }) {
@@ -46,7 +47,28 @@ export default function FlashCardList({ lessonId }: { lessonId: string }) {
     setStudying(false);
   }
 
-  function handleStudyMode() {
+  async function handleStudyMode() {
+    const teacherCards: StudyCard[] = cards
+      .filter((c): c is LessonTool & { type: 'flash_card' } => c.type === 'flash_card')
+      .map(c => ({ id: c.id, front: c.content.front, back: c.content.back }));
+
+    let vocabCards: StudyCard[] = [];
+    try {
+      const saved = await lessonToolsApi.getSavedVocabFlashCards(lessonId);
+      vocabCards = saved
+        .filter((t): t is LessonTool & { type: 'vocab' } => t.type === 'vocab')
+        .map(t => ({ id: t.id, front: t.content.term, back: t.content.definition }));
+    } catch {
+      // students only — ignore if not available
+    }
+
+    const seen = new Set<string>();
+    const merged: StudyCard[] = [];
+    for (const card of [...teacherCards, ...vocabCards]) {
+      if (!seen.has(card.id)) { seen.add(card.id); merged.push(card); }
+    }
+
+    setStudyCards(merged);
     setStudying(true);
     setEditMode(false);
   }
@@ -96,7 +118,7 @@ export default function FlashCardList({ lessonId }: { lessonId: string }) {
         </div>
       )}
 
-      {studying && <FlashCardStudyMode cards={cards} onExit={() => setStudying(false)} />}
+      {studying && <FlashCardStudyMode cards={studyCards} onExit={() => setStudying(false)} />}
 
       {showAdd && (
         <Modal title="Add Flash Card" onClose={() => setShowAdd(false)}>

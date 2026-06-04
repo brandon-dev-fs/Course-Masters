@@ -125,6 +125,13 @@ export interface PracticeProblemContent {
 export interface VocabContent {
   term: string;
   definition: string;
+  example?: string;
+}
+
+export interface StudyCard {
+  id: string;
+  front: string;
+  back: string;
 }
 
 export interface FlashCardTool {
@@ -325,6 +332,7 @@ export interface ReadingAssignmentData {
 export interface VocabEntry {
   term: string;
   definition: string;
+  example?: string;
 }
 
 export interface VocabAssignmentData {

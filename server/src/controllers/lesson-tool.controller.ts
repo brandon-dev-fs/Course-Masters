@@ -22,4 +22,19 @@ export const lessonToolController = {
     await lessonToolService.remove(req.params['toolId'] as string);
     res.status(204).send();
   }),
+
+  getSavedVocabFlashCards: asyncHandler(async (req: Request, res: Response) => {
+    const lessonId = req.params['lessonId'] as string;
+    res.json(await lessonToolService.getSavedVocabFlashCards(lessonId, req.user!.id));
+  }),
+
+  saveVocabFlashCard: asyncHandler(async (req: Request, res: Response) => {
+    const toolId = req.params['toolId'] as string;
+    res.status(201).json(await lessonToolService.saveVocabFlashCard(toolId, req.user!.id));
+  }),
+
+  removeVocabFlashCard: asyncHandler(async (req: Request, res: Response) => {
+    await lessonToolService.removeVocabFlashCard(req.params['toolId'] as string, req.user!.id);
+    res.status(204).send();
+  }),
 };
