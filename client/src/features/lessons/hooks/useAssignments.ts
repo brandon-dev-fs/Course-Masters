@@ -88,7 +88,6 @@ interface UseAssignmentsParams {
   resources: LessonResource[];
   tools: LessonTool[];
   completedIds: Set<string>;
-  canEdit: boolean;
   setActiveStepKey: (key: string) => void;
 }
 
@@ -117,7 +116,6 @@ export default function useAssignments({
   resources,
   tools,
   completedIds,
-  canEdit,
   setActiveStepKey,
 }: UseAssignmentsParams): UseAssignmentsReturn {
   const { data: fetchedAssignments } = useFetch<Assignment[]>(
@@ -189,15 +187,9 @@ export default function useAssignments({
     [assignments],
   );
 
-  const availableTools = useMemo((): StudentToolType[] => {
-    // Teachers always see all panels so they can add new tools even on empty lessons.
-    if (canEdit) return ['notes', 'flashcards', 'vocab', 'practice'];
-    const result: StudentToolType[] = ['notes'];
-    if (tools.some(t => t.type === 'flash_card')) result.push('flashcards');
-    if (tools.some(t => t.type === 'practice_problem')) result.push('practice');
-    if (tools.some(t => t.type === 'vocab')) result.push('vocab');
-    return result;
-  }, [tools, canEdit]);
+  // All four panels are always available. Teachers need them to add new tools; students
+  // always see consistent navigation — panels show their own empty states when empty.
+  const availableTools = useMemo((): StudentToolType[] => ['notes', 'flashcards', 'vocab', 'practice'], []);
 
   const incompleteRequired = useMemo(
     () => assignmentItems.filter(

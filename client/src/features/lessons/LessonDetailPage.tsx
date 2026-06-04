@@ -116,7 +116,7 @@ export default function LessonDetailPage() {
     deletingAssignmentId, setDeletingAssignmentId,
     handleCreateAssignment, handleUpdateAssignment, handleDeleteAssignment,
     handleMoveAssignment, handleToggleAssignmentCompletion,
-  } = useAssignments({ lessonId, lesson, resources, tools, completedIds, canEdit, setActiveStepKey });
+  } = useAssignments({ lessonId, lesson, resources, tools, completedIds, setActiveStepKey });
 
   function handleToggleSidebar() {
     setSidebarCollapsed(prev => {

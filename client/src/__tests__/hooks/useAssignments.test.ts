@@ -65,7 +65,6 @@ const defaultParams = {
   resources: [] as LessonResource[],
   tools: [] as LessonTool[],
   completedIds: new Set<string>(),
-  canEdit: false,
   setActiveStepKey: vi.fn(),
 };
 
@@ -336,21 +335,11 @@ describe('useAssignments', () => {
       expect(result.current.completedAssignmentIds.has('a-1')).toBe(true);
     });
 
-    it('availableTools always includes "notes"', async () => {
+    it('availableTools always includes all four panel types', async () => {
       const { result } = renderHook(() => useAssignments(defaultParams));
       await waitFor(() => expect(assignmentsApiMock.getAll).toHaveBeenCalled());
 
-      expect(result.current.availableTools).toContain('notes');
-    });
-
-    it('availableTools includes "flashcards" when tools contain flash_card type', async () => {
-      const tools: LessonTool[] = [
-        { id: 't-1', type: 'flash_card', title: 'FC', content: { front: 'Q', back: 'A' }, order: 1, lessonId: 'lesson-1', isRequired: false },
-      ];
-      const { result } = renderHook(() => useAssignments({ ...defaultParams, tools }));
-      await waitFor(() => expect(assignmentsApiMock.getAll).toHaveBeenCalled());
-
-      expect(result.current.availableTools).toContain('flashcards');
+      expect(result.current.availableTools).toEqual(['notes', 'flashcards', 'vocab', 'practice']);
     });
 
     it('assignmentItems is empty when lesson is null', async () => {
