@@ -29,10 +29,4 @@ export const lessonToolsApi = {
     apiClient.put<LessonTool>(`/tools/${id}`, data),
   delete: (id: string) => apiClient.delete<void>(`/tools/${id}`),
 
-  getSavedVocabFlashCards: (lessonId: string) =>
-    apiClient.get<LessonTool[]>(`/lessons/${lessonId}/tools/vocab-flashcards`),
-  saveVocabFlashCard: (toolId: string) =>
-    apiClient.post<void>(`/tools/${toolId}/vocab-flashcard`, {}),
-  removeVocabFlashCard: (toolId: string) =>
-    apiClient.delete<void>(`/tools/${toolId}/vocab-flashcard`),
 };
