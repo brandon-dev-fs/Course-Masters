@@ -9,7 +9,7 @@ import ErrorMessage from '../../components/ErrorMessage.js';
 import AssignmentTypePicker from './AssignmentTypePicker.js';
 import NoteAssignmentForm from './NoteAssignmentForm.js';
 import VideoAssignmentForm from './VideoAssignmentForm.js';
-import ReadingAssignmentForm from './ReadingAssignmentForm.js';
+import ExternalLinkAssignmentForm from './ExternalLinkAssignmentForm.js';
 import VocabAssignmentForm from './VocabAssignmentForm.js';
 import PracticeProblemAssignmentForm from './PracticeProblemAssignmentForm.js';
 import PracticeProblemMetaFields from './PracticeProblemMetaFields.js';
@@ -57,7 +57,7 @@ interface TypeConfig {
 export const TYPE_CONFIG: Record<AssignmentType, TypeConfig> = {
   note:             { label: 'Note',             icon: FileText,     MetaFields: NoteAssignmentForm },
   video:            { label: 'Video',             icon: Video,        MetaFields: VideoAssignmentForm },
-  reading:          { label: 'Reading',           icon: ExternalLink, MetaFields: ReadingAssignmentForm },
+  reading:          { label: 'External Link',      icon: ExternalLink, MetaFields: ExternalLinkAssignmentForm },
   vocab:            { label: 'Vocab',             icon: BookMarked,   nextLabel: 'Terms',
                       ItemsForm: VocabAssignmentForm },
   practice_problem: { label: 'Practice Problem',  icon: Brain,        nextLabel: 'Questions',
