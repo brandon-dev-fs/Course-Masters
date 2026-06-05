@@ -7,6 +7,7 @@ import {
   updateAssignmentSchema,
   reorderAssignmentsSchema,
 } from '../schemas/assignment.schema.js';
+import { bookmarkRouter } from './bookmark.routes.js';
 
 // ── /lessons/:lessonId/assignments ───────────────────────────────────────────
 
@@ -54,6 +55,9 @@ assignmentsRouter.delete(
 assignmentsRouter.post('/:assignmentId/complete', assignmentController.complete);
 
 assignmentsRouter.delete('/:assignmentId/complete', assignmentController.uncomplete);
+
+// Bookmark sub-router — must be registered before /:assignmentId catch-all routes
+assignmentsRouter.use('/:assignmentId/bookmark', bookmarkRouter);
 
 // ── /vocab-entries ────────────────────────────────────────────────────────────
 
