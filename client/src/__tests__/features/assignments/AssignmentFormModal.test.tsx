@@ -38,7 +38,7 @@ describe('AssignmentFormModal', () => {
     renderModal();
     expect(screen.getByText('Note')).toBeInTheDocument();
     expect(screen.getByText('Video')).toBeInTheDocument();
-    expect(screen.getByText('Reading')).toBeInTheDocument();
+    expect(screen.getByText('External Link')).toBeInTheDocument();
     expect(screen.getByText('Vocab')).toBeInTheDocument();
     expect(screen.getByText('Practice Problem')).toBeInTheDocument();
   });
