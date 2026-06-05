@@ -7,7 +7,6 @@ import { requireCourseOwnership } from '../middleware/authorize-resource.js';
 
 export const lessonToolsRouter = Router({ mergeParams: true });
 lessonToolsRouter.get('/', validateQuery(lessonToolQuerySchema), lessonToolController.getAll);
-lessonToolsRouter.get('/vocab-flashcards', lessonToolController.getSavedVocabFlashCards);
 lessonToolsRouter.post(
   '/',
   authorize('teacher', 'admin'),
@@ -30,5 +29,3 @@ toolsRouter.delete(
   requireCourseOwnership('tool', (req) => req.params['toolId'] as string),
   lessonToolController.remove,
 );
-toolsRouter.post('/:toolId/vocab-flashcard', lessonToolController.saveVocabFlashCard);
-toolsRouter.delete('/:toolId/vocab-flashcard', lessonToolController.removeVocabFlashCard);

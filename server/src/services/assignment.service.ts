@@ -6,21 +6,38 @@ import type { CreateAssignmentInput, UpdateAssignmentInput } from '../schemas/as
 
 // ── Prisma include shape reused across queries ───────────────────────────────
 
-const ASSIGNMENT_INCLUDE = {
-  noteAssignment: true,
-  videoAssignment: true,
-  readingAssignment: true,
-  vocabAssignment: {
-    include: {
-      entries: { orderBy: { order: 'asc' as const } },
+function buildAssignmentInclude(userId: string | null) {
+  return {
+    noteAssignment: true,
+    videoAssignment: true,
+    readingAssignment: true,
+    vocabAssignment: {
+      include: {
+        entries: { orderBy: { order: 'asc' as const } },
+      },
     },
-  },
-  practiceProblemAssignment: {
-    include: {
-      questions: { orderBy: { order: 'asc' as const } },
+    practiceProblemAssignment: {
+      include: {
+        questions: { orderBy: { order: 'asc' as const } },
+      },
     },
-  },
-} as const;
+    ...(userId
+      ? {
+          bookmarks: {
+            where: { userId },
+            select: { id: true, note: true, updatedAt: true },
+          },
+        }
+      : {}),
+  } as const;
+}
+
+// Normalize the bookmarks array (filtered by userId) to a single bookmark or null
+function normalizeBookmark(
+  bookmarks: Array<{ id: string; note: string; updatedAt: Date }> | undefined,
+) {
+  return bookmarks && bookmarks.length > 0 ? bookmarks[0] : null;
+}
 
 // ── Service ──────────────────────────────────────────────────────────────────
 
@@ -31,7 +48,7 @@ export const assignmentService = {
     const assignments = await prisma.assignment.findMany({
       where: { lessonId },
       orderBy: { order: 'asc' },
-      include: ASSIGNMENT_INCLUDE,
+      include: buildAssignmentInclude(userId),
     });
 
     const completedSet = new Set<string>();
@@ -46,7 +63,14 @@ export const assignmentService = {
       completions.forEach((c) => completedSet.add(c.assignmentId));
     }
 
-    return assignments.map((a) => ({ ...a, completed: completedSet.has(a.id) }));
+    return assignments.map((a) => {
+      const { bookmarks, ...rest } = a as typeof a & { bookmarks?: Array<{ id: string; note: string; updatedAt: Date }> };
+      return {
+        ...rest,
+        completed: completedSet.has(a.id),
+        bookmark: normalizeBookmark(bookmarks),
+      };
+    });
   },
 
   async findById(assignmentId: string, userId: string | null) {
@@ -54,7 +78,7 @@ export const assignmentService = {
     // through the assertExists delegate without losing the typed return shape.
     const assignment = await prisma.assignment.findUnique({
       where: { id: assignmentId },
-      include: ASSIGNMENT_INCLUDE,
+      include: buildAssignmentInclude(userId),
     });
     if (!assignment) throw new NotFoundError('Assignment not found');
 
@@ -66,7 +90,12 @@ export const assignmentService = {
       completed = !!completion;
     }
 
-    return { ...assignment, completed };
+    const { bookmarks, ...rest } = assignment as typeof assignment & { bookmarks?: Array<{ id: string; note: string; updatedAt: Date }> };
+    return {
+      ...rest,
+      completed,
+      bookmark: normalizeBookmark(bookmarks),
+    };
   },
 
   async create(lessonId: string, data: CreateAssignmentInput) {
