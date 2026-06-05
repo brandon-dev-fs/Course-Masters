@@ -71,6 +71,8 @@ model User {
   unitCompletions       UnitCompletion[]
   assignmentCompletions AssignmentCompletion[]
   vocabAssignmentFlashCards  StudentVocabAssignmentFlashCard[]
+  activityBookmarks     ActivityBookmark[]
+  checklistItems        LessonChecklistItem[]
 
   @@map("user")
 }
@@ -170,13 +172,14 @@ model Lesson {
   updatedAt   DateTime  @updatedAt
   deletedAt   DateTime?
 
-  unit        Unit             @relation(fields: [unitId], references: [id], onDelete: Cascade)
-  resources   LessonResource[]
-  tools       LessonTool[]
-  assessment  Assessment?
+  unit         Unit              @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  resources    LessonResource[]
+  tools        LessonTool[]
+  assessment   Assessment?
   studentNotes StudentNote[]
-  completions LessonCompletion[]
-  assignments Assignment[]
+  completions  LessonCompletion[]
+  assignments  Assignment[]
+  checklistItems LessonChecklistItem[]
 
   @@index([unitId])
   @@map("lesson")
@@ -362,6 +365,7 @@ model Assignment {
   vocabAssignment           VocabAssignment?
   practiceProblemAssignment PracticeProblemAssignment?
   completions               AssignmentCompletion[]
+  bookmarks                 ActivityBookmark[]
 
   @@unique([lessonId, order])
   @@index([lessonId])
@@ -481,5 +485,38 @@ model AssignmentCompletion {
   @@index([userId])
   @@index([assignmentId])
   @@map("assignment_completion")
+}
+
+model ActivityBookmark {
+  id           String   @id @default(uuid())
+  userId       String
+  assignmentId String
+  note         String   @db.VarChar(500)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  assignment Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, assignmentId])
+  @@index([userId])
+  @@map("activity_bookmark")
+}
+
+model LessonChecklistItem {
+  id        String   @id @default(uuid())
+  userId    String
+  lessonId  String
+  text      String   @db.VarChar(200)
+  checked   Boolean  @default(false)
+  order     Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@index([userId, lessonId])
+  @@map("lesson_checklist_item")
 }
 
