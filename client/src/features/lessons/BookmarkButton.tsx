@@ -4,7 +4,7 @@ import { Bookmark, BookmarkCheck, X } from 'lucide-react';
 
 import { bookmarksApi } from '../../api/bookmarks.js';
 import type { Bookmark as BookmarkType } from '../../api/types.js';
-import { classifyError } from '../../api/client.js';
+import { ApiClientError, classifyError } from '../../api/client.js';
 import Button from '../../components/Button.js';
 import ErrorMessage from '../../components/ErrorMessage.js';
 import LoadingSpinner from '../../components/LoadingSpinner.js';
@@ -82,7 +82,7 @@ export default function BookmarkButton({
       onBookmarkChange(updated);
       close();
     } catch (err: unknown) {
-      setError(classifyError(err));
+      setError(err instanceof ApiClientError ? classifyError(err) : 'Something went wrong');
     } finally {
       setSaving(false);
     }
@@ -96,7 +96,7 @@ export default function BookmarkButton({
       onBookmarkChange(null);
       close();
     } catch (err: unknown) {
-      setError(classifyError(err));
+      setError(err instanceof ApiClientError ? classifyError(err) : 'Something went wrong');
     } finally {
       setDeleting(false);
     }

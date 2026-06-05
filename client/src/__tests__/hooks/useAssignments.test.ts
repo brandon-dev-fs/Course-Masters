@@ -50,6 +50,7 @@ function makeAssignment(overrides: Partial<Assignment> = {}): Assignment {
     createdAt: '2024-01-01T00:00:00Z',
     updatedAt: '2024-01-01T00:00:00Z',
     completed: false,
+    bookmark: null,
     noteAssignment: null,
     videoAssignment: null,
     readingAssignment: null,
@@ -339,7 +340,7 @@ describe('useAssignments', () => {
       const { result } = renderHook(() => useAssignments(defaultParams));
       await waitFor(() => expect(assignmentsApiMock.getAll).toHaveBeenCalled());
 
-      expect(result.current.availableTools).toEqual(['notes', 'flashcards', 'vocab', 'practice']);
+      expect(result.current.availableTools).toEqual(['notes', 'flashcards', 'vocab', 'checklist']);
     });
 
     it('assignmentItems is empty when lesson is null', async () => {

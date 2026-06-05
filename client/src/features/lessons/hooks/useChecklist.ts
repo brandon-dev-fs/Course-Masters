@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { checklistApi } from '../../../api/checklist.js';
 import type { ChecklistItem } from '../../../api/checklist.js';
-import { classifyError } from '../../../api/client.js';
+import { ApiClientError, classifyError } from '../../../api/client.js';
 import useFetch from '../../../hooks/useFetch.js';
 
 export interface UseChecklistReturn {
@@ -47,7 +47,7 @@ export default function useChecklist(lessonId: string): UseChecklistReturn {
       setItems(prev => prev.map(i => i.id === itemId ? updated : i));
     } catch (err: unknown) {
       setItems(snapshot);
-      setError(classifyError(err));
+      setError(err instanceof ApiClientError ? classifyError(err) : 'Something went wrong');
     }
   }, [items]);
 
@@ -59,7 +59,7 @@ export default function useChecklist(lessonId: string): UseChecklistReturn {
       setItems(prev => prev.map(i => i.id === itemId ? updated : i));
     } catch (err: unknown) {
       setItems(snapshot);
-      setError(classifyError(err));
+      setError(err instanceof ApiClientError ? classifyError(err) : 'Something went wrong');
     }
   }, [items]);
 
@@ -71,7 +71,7 @@ export default function useChecklist(lessonId: string): UseChecklistReturn {
       await checklistApi.delete(itemId);
     } catch (err: unknown) {
       setItems(snapshot);
-      setError(classifyError(err));
+      setError(err instanceof ApiClientError ? classifyError(err) : 'Something went wrong');
     } finally {
       setDeletingItemId(null);
     }
@@ -96,7 +96,7 @@ export default function useChecklist(lessonId: string): UseChecklistReturn {
       setItems(updated.sort((a, b) => a.order - b.order));
     } catch (err: unknown) {
       setItems(snapshot);
-      setError(classifyError(err));
+      setError(err instanceof ApiClientError ? classifyError(err) : 'Something went wrong');
     }
   }, [items, lessonId]);
 

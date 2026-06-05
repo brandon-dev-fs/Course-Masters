@@ -73,7 +73,7 @@ export default function ExternalLinkAssignmentView({
           <span className="text-xs text-muted-foreground">~ {estimatedMinutes} min</span>
         )}
         <div className="flex-1" />
-        {isStudent && assignmentId && (
+        {isStudent && assignmentId && onBookmarkChange && (
           <BookmarkButton
             assignmentId={assignmentId}
             bookmark={bookmark ?? null}

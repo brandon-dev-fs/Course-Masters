@@ -56,6 +56,7 @@ const noteAssignment: Assignment = {
   createdAt: '2024-01-01',
   updatedAt: '2024-01-01',
   completed: false,
+  bookmark: null,
   noteAssignment: { id: 'na1', content: { type: 'doc', content: [] } },
   videoAssignment: null,
   readingAssignment: null,
@@ -80,6 +81,8 @@ const defaultProps = {
   onToolDeleted: vi.fn(),
   onToolUpdated: vi.fn(),
   onToggleAssignmentCompletion: vi.fn(),
+  onBookmarkChange: vi.fn(),
+  isStudent: false,
   onPlanEdit: vi.fn(),
 };
 
