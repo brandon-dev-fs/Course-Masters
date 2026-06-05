@@ -354,6 +354,12 @@ export interface PracticeProblemAssignmentData {
   questions: PracticeQuestion[];
 }
 
+export interface Bookmark {
+  id: string;
+  note: string;
+  updatedAt: string;
+}
+
 export interface Assignment {
   id: string;
   lessonId: string;
@@ -369,6 +375,7 @@ export interface Assignment {
   readingAssignment: ReadingAssignmentData | null;
   vocabAssignment: VocabAssignmentData | null;
   practiceProblemAssignment: PracticeProblemAssignmentData | null;
+  bookmark: Bookmark | null;
 }
 
 export interface AssignmentCompletion {
