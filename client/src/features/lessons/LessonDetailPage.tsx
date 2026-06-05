@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import useDisclosure from '../../hooks/useDisclosure.js';
+import { useAuth } from '../../context/AuthContext.js';
 import { Menu, ArrowLeft, Settings } from 'lucide-react';
 import { assessmentsApi } from '../../api/assessments.js';
 import { lessonResourcesApi } from '../../api/lesson-resources.js';
@@ -108,6 +109,9 @@ export default function LessonDetailPage() {
     handleMoveTool,
   } = useTools(lessonId);
 
+  const { user } = useAuth();
+  const isStudent = user?.role === 'student';
+
   const {
     assignments,
     assignmentItems, completedAssignmentIds, incompleteRequired, availableTools,
@@ -115,7 +119,7 @@ export default function LessonDetailPage() {
     editingAssignment, setEditingAssignment,
     deletingAssignmentId, setDeletingAssignmentId,
     handleCreateAssignment, handleUpdateAssignment, handleDeleteAssignment,
-    handleMoveAssignment, handleToggleAssignmentCompletion,
+    handleMoveAssignment, handleToggleAssignmentCompletion, handleBookmarkChange,
   } = useAssignments({ lessonId, lesson, resources, tools, completedIds, setActiveStepKey });
 
   function handleToggleSidebar() {
@@ -209,8 +213,8 @@ export default function LessonDetailPage() {
 
   const currentUnit = units.find(u => u.id === unitId);
 
-  // Mobile tab bar excludes practice problems
-  const mobileAvailableTools = availableTools.filter((t): t is StudentToolType => t !== 'practice');
+  // Mobile tab bar uses the same available tools as desktop
+  const mobileAvailableTools = availableTools;
 
   return (
     <>
@@ -391,6 +395,8 @@ export default function LessonDetailPage() {
                         onToolDeleted={id => setTools(prev => prev.filter(t => t.id !== id))}
                         onToolUpdated={updated => setTools(prev => prev.map(t => t.id === updated.id ? updated : t))}
                         onToggleAssignmentCompletion={handleToggleAssignmentCompletion}
+                        onBookmarkChange={handleBookmarkChange}
+                        isStudent={isStudent}
                         onPlanEdit={planEditDisclosure.open}
                       />
                     </AssignmentSection>

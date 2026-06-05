@@ -38,7 +38,7 @@ describe('AssignmentFormModal', () => {
     renderModal();
     expect(screen.getByText('Note')).toBeInTheDocument();
     expect(screen.getByText('Video')).toBeInTheDocument();
-    expect(screen.getByText('Reading')).toBeInTheDocument();
+    expect(screen.getByText('External Link')).toBeInTheDocument();
     expect(screen.getByText('Vocab')).toBeInTheDocument();
     expect(screen.getByText('Practice Problem')).toBeInTheDocument();
   });
@@ -81,7 +81,15 @@ describe('AssignmentFormModal', () => {
       order: 1,
       lessonId: 'l1',
       isRequired: false,
-      videoAssignment: { url: 'https://youtube.com/watch?v=abc', title: 'Video Title' },
+      createdAt: '2024-01-01',
+      updatedAt: '2024-01-01',
+      completed: false,
+      bookmark: null,
+      noteAssignment: null,
+      readingAssignment: null,
+      vocabAssignment: null,
+      practiceProblemAssignment: null,
+      videoAssignment: { id: 'va1', url: 'https://youtube.com/watch?v=abc', title: 'Video Title' },
     };
     renderModal({ initial });
     expect(screen.getByText('Edit Video')).toBeInTheDocument();
