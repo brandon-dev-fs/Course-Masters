@@ -1,11 +1,11 @@
 import { z } from 'zod';
 
 export const createBookmarkSchema = z.object({
-  note: z.string().min(1).max(500),
+  note: z.string().max(500).optional(),
 });
 
 export const updateBookmarkSchema = z.object({
-  note: z.string().min(1).max(500),
+  note: z.string().max(500).optional(),
 });
 
 export type CreateBookmarkInput = z.infer<typeof createBookmarkSchema>;

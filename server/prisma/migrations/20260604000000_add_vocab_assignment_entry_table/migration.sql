@@ -40,7 +40,7 @@ ALTER TABLE "student_vocab_assignment_flash_card" ADD CONSTRAINT "student_vocab_
 -- AddForeignKey
 ALTER TABLE "student_vocab_assignment_flash_card" ADD CONSTRAINT "student_vocab_assignment_flash_card_entryId_fkey" FOREIGN KEY ("entryId") REFERENCES "vocab_assignment_entry"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
--- AlterTable: Migrate existing JSON entries then drop the column
+-- DataMigration: Migrate existing JSON entries to the new table
 INSERT INTO "vocab_assignment_entry" ("id", "vocabAssignmentId", "term", "definition", "example", "order", "createdAt", "updatedAt")
 SELECT
   gen_random_uuid()::text,
@@ -56,5 +56,3 @@ FROM "vocab_assignment" va,
 WHERE va."entries" IS NOT NULL
   AND va."entries"::text != 'null'
   AND jsonb_array_length(va."entries"::jsonb) > 0;
-
-ALTER TABLE "vocab_assignment" DROP COLUMN "entries";
