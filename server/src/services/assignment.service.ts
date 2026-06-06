@@ -34,7 +34,7 @@ function buildAssignmentInclude(userId: string | null) {
 
 // Normalize the bookmarks array (filtered by userId) to a single bookmark or null
 function normalizeBookmark(
-  bookmarks: Array<{ id: string; note: string; updatedAt: Date }> | undefined,
+  bookmarks: Array<{ id: string; note: string | null; updatedAt: Date }> | undefined,
 ) {
   return bookmarks && bookmarks.length > 0 ? bookmarks[0] : null;
 }
@@ -64,7 +64,7 @@ export const assignmentService = {
     }
 
     return assignments.map((a) => {
-      const { bookmarks, ...rest } = a as typeof a & { bookmarks?: Array<{ id: string; note: string; updatedAt: Date }> };
+      const { bookmarks, ...rest } = a as typeof a & { bookmarks?: Array<{ id: string; note: string | null; updatedAt: Date }> };
       return {
         ...rest,
         completed: completedSet.has(a.id),
@@ -90,7 +90,7 @@ export const assignmentService = {
       completed = !!completion;
     }
 
-    const { bookmarks, ...rest } = assignment as typeof assignment & { bookmarks?: Array<{ id: string; note: string; updatedAt: Date }> };
+    const { bookmarks, ...rest } = assignment as typeof assignment & { bookmarks?: Array<{ id: string; note: string | null; updatedAt: Date }> };
     return {
       ...rest,
       completed,
@@ -232,7 +232,7 @@ export const assignmentService = {
             const e = data.entries[i];
             if (e.id) {
               await tx.vocabAssignmentEntry.update({
-                where: { id: e.id },
+                where: { id: e.id, vocabAssignmentId: va.id },
                 data: { term: e.term, definition: e.definition, example: e.example ?? null, order: i + 1 },
               });
             } else {
@@ -365,7 +365,12 @@ export const assignmentService = {
   async getSavedVocabEntryFlashCards(lessonId: string, userId: string) {
     const saved = await prisma.studentVocabAssignmentFlashCard.findMany({
       where: { userId, entry: { vocabAssignment: { assignment: { lessonId } } } },
-      include: { entry: true },
+      orderBy: { entry: { order: 'asc' } },
+      select: {
+        entry: {
+          select: { id: true, term: true, definition: true, example: true, order: true },
+        },
+      },
     });
     return saved.map(s => s.entry);
   },

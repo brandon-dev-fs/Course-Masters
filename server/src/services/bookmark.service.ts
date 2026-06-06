@@ -17,15 +17,14 @@ export const bookmarkService = {
       where: { assignmentId, userId },
       select: BOOKMARK_SELECT,
     });
-    if (!record) throw new NotFoundError('Bookmark not found');
-    return record;
+    return record ?? null;
   },
 
   async create(assignmentId: string, userId: string, data: CreateBookmarkInput) {
     await assertExists(prisma.assignment, assignmentId, 'Assignment');
     // Let Prisma P2002 bubble to 409 via errorHandler if bookmark already exists
     return prisma.activityBookmark.create({
-      data: { assignmentId, userId, note: data.note },
+      data: { assignmentId, userId, note: data.note ?? null },
       select: BOOKMARK_SELECT,
     });
   },
@@ -34,8 +33,8 @@ export const bookmarkService = {
     await assertExists(prisma.assignment, assignmentId, 'Assignment');
     return prisma.activityBookmark.upsert({
       where: { userId_assignmentId: { userId, assignmentId } },
-      create: { userId, assignmentId, note: data.note },
-      update: { note: data.note },
+      create: { userId, assignmentId, note: data.note ?? null },
+      update: { note: data.note ?? null },
       select: BOOKMARK_SELECT,
     });
   },
