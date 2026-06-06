@@ -190,7 +190,7 @@ export default function useAssignments({
 
   // All four panels are always available. Teachers need them to add new tools; students
   // always see consistent navigation — panels show their own empty states when empty.
-  const availableTools = useMemo((): StudentToolType[] => ['notes', 'flashcards', 'vocab', 'checklist'], []);
+  const availableTools = useMemo((): StudentToolType[] => ['notes', 'flashcards', 'checklist', 'bookmarks'], []);
 
   const incompleteRequired = useMemo(
     () => assignmentItems.filter(

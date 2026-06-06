@@ -432,6 +432,8 @@ export default function LessonDetailPage() {
         availableTools={availableTools}
         onSwitchTool={setActiveTool}
         onClose={() => setActiveTool(null)}
+        assignments={assignments}
+        onNavigateToAssignment={(id) => setActiveStepKey(`assignment:${id}`)}
       />
 
       {settingsDisclosure.isOpen && (
