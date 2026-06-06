@@ -1,13 +1,8 @@
 import { apiClient } from './client.js';
 
-export interface ChecklistItem {
-  id: string;
-  text: string;
-  checked: boolean;
-  order: number;
-  createdAt: string;
-  updatedAt: string;
-}
+import type { ChecklistItem } from './types.js';
+
+export type { ChecklistItem };
 
 export const checklistApi = {
   getAll: (lessonId: string): Promise<ChecklistItem[]> =>
