@@ -1,8 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { ExternalLink, AlertTriangle } from 'lucide-react';
 
-import type { Bookmark } from '../../api/types.js';
-import BookmarkButton from '../lessons/BookmarkButton.js';
 import Button from '../../components/Button.js';
 import LoadingSpinner from '../../components/LoadingSpinner.js';
 
@@ -10,10 +8,6 @@ interface ExternalLinkAssignmentViewProps {
   url: string;
   description?: string | null;
   estimatedMinutes?: number | null;
-  bookmark?: Bookmark | null;
-  assignmentId: string;
-  isStudent?: boolean;
-  onBookmarkChange?: (assignmentId: string, bookmark: Bookmark | null) => void;
 }
 
 type IframeStatus = 'loading' | 'loaded' | 'failed';
@@ -22,10 +16,6 @@ export default function ExternalLinkAssignmentView({
   url,
   description,
   estimatedMinutes,
-  bookmark,
-  assignmentId,
-  isStudent,
-  onBookmarkChange,
 }: ExternalLinkAssignmentViewProps) {
   const [iframeStatus, setIframeStatus] = useState<IframeStatus>('loading');
   const [showEmbed, setShowEmbed] = useState(false);
@@ -59,10 +49,6 @@ export default function ExternalLinkAssignmentView({
     setIframeStatus('failed');
   }
 
-  function handleBookmarkChange(updated: Bookmark | null) {
-    onBookmarkChange?.(assignmentId, updated);
-  }
-
   return (
     <div className="flex flex-col gap-4">
       {/* Header row */}
@@ -73,13 +59,6 @@ export default function ExternalLinkAssignmentView({
           <span className="text-xs text-muted-foreground">~ {estimatedMinutes} min</span>
         )}
         <div className="flex-1" />
-        {isStudent && assignmentId && onBookmarkChange && (
-          <BookmarkButton
-            assignmentId={assignmentId}
-            bookmark={bookmark ?? null}
-            onBookmarkChange={handleBookmarkChange}
-          />
-        )}
         <a
           href={url}
           target="_blank"

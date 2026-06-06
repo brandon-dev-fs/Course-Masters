@@ -336,11 +336,11 @@ describe('useAssignments', () => {
       expect(result.current.completedAssignmentIds.has('a-1')).toBe(true);
     });
 
-    it('availableTools always includes all four panel types', async () => {
+    it('availableTools includes all four panel types', async () => {
       const { result } = renderHook(() => useAssignments(defaultParams));
       await waitFor(() => expect(assignmentsApiMock.getAll).toHaveBeenCalled());
 
-      expect(result.current.availableTools).toEqual(['notes', 'flashcards', 'vocab', 'checklist']);
+      expect(result.current.availableTools).toEqual(['notes', 'flashcards', 'checklist', 'bookmarks']);
     });
 
     it('assignmentItems is empty when lesson is null', async () => {

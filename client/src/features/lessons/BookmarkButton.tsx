@@ -7,7 +7,15 @@ import type { Bookmark as BookmarkType } from '../../api/types.js';
 import { ApiClientError, classifyError } from '../../api/client.js';
 import Button from '../../components/Button.js';
 import ErrorMessage from '../../components/ErrorMessage.js';
-import LoadingSpinner from '../../components/LoadingSpinner.js';
+
+function InlineSpinner() {
+  return (
+    <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+    </svg>
+  );
+}
 
 interface BookmarkButtonProps {
   assignmentId: string;
@@ -156,7 +164,7 @@ export default function BookmarkButton({
             maxLength={500}
             rows={4}
             aria-label="Bookmark note"
-            className="w-full text-sm bg-surface rounded-lg border border-border p-2 resize-none focus:outline-none focus:ring-2 focus:ring-primary"
+            className="w-full text-sm text-foreground bg-surface rounded-lg border border-border p-2 resize-none focus:outline-none focus:ring-2 focus:ring-primary"
           />
           <p className={`text-xs text-right ${atLimit ? 'text-destructive' : 'text-muted-foreground'}`}>
             {note.length}/500
@@ -173,7 +181,7 @@ export default function BookmarkButton({
               onClick={handleDelete}
               disabled={isBusy}
             >
-              {deleting ? <LoadingSpinner /> : 'Delete'}
+              {deleting ? <InlineSpinner /> : 'Delete'}
             </Button>
           )}
           <Button
@@ -182,7 +190,7 @@ export default function BookmarkButton({
             onClick={handleSave}
             disabled={isBusy || note.trim().length === 0}
           >
-            {saving ? <LoadingSpinner /> : 'Save'}
+            {saving ? <InlineSpinner /> : 'Save'}
           </Button>
         </div>
       </div>
