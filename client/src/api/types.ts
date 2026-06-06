@@ -384,3 +384,15 @@ export interface AssignmentCompletion {
   assignmentId: string;
   completedAt: string;
 }
+
+// ─── Checklist ───────────────────────────────────────────────────────────────
+
+export interface ChecklistItem {
+  id: string;
+  lessonId: string;
+  text: string;
+  checked: boolean;
+  order: number;
+  createdAt: string;
+  updatedAt: string;
+}

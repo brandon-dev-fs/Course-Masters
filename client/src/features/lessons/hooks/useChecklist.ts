@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 
 import { checklistApi } from '../../../api/checklist.js';
-import type { ChecklistItem } from '../../../api/checklist.js';
 import { ApiClientError, classifyError } from '../../../api/client.js';
+import type { ChecklistItem } from '../../../api/types.js';
 import useFetch from '../../../hooks/useFetch.js';
 
 export interface UseChecklistReturn {
@@ -18,7 +18,7 @@ export interface UseChecklistReturn {
 }
 
 export default function useChecklist(lessonId: string): UseChecklistReturn {
-  const { data: fetchedItems, loading } = useFetch<ChecklistItem[]>(
+  const { data: fetchedItems, loading, error: fetchError } = useFetch<ChecklistItem[]>(
     () => checklistApi.getAll(lessonId),
     [lessonId],
   );
@@ -33,6 +33,11 @@ export default function useChecklist(lessonId: string): UseChecklistReturn {
       setItems([...fetchedItems].sort((a, b) => a.order - b.order));
     }
   }, [fetchedItems]);
+
+  // Propagate initial fetch errors into shared error state
+  useEffect(() => {
+    if (fetchError) setError(fetchError);
+  }, [fetchError]);
 
   const addItem = useCallback(async (text: string) => {
     const created = await checklistApi.create(lessonId, text);
