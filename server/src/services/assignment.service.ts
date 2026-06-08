@@ -34,7 +34,7 @@ function buildAssignmentInclude(userId: string | null) {
 
 // Normalize the bookmarks array (filtered by userId) to a single bookmark or null
 function normalizeBookmark(
-  bookmarks: Array<{ id: string; note: string | null; updatedAt: Date }> | undefined,
+  bookmarks: Array<{ id: string; note: string; updatedAt: Date }> | undefined,
 ) {
   return bookmarks && bookmarks.length > 0 ? bookmarks[0] : null;
 }
@@ -64,7 +64,7 @@ export const assignmentService = {
     }
 
     return assignments.map((a) => {
-      const { bookmarks, ...rest } = a as typeof a & { bookmarks?: Array<{ id: string; note: string | null; updatedAt: Date }> };
+      const { bookmarks, ...rest } = a as typeof a & { bookmarks?: Array<{ id: string; note: string; updatedAt: Date }> };
       return {
         ...rest,
         completed: completedSet.has(a.id),
@@ -90,7 +90,7 @@ export const assignmentService = {
       completed = !!completion;
     }
 
-    const { bookmarks, ...rest } = assignment as typeof assignment & { bookmarks?: Array<{ id: string; note: string | null; updatedAt: Date }> };
+    const { bookmarks, ...rest } = assignment as typeof assignment & { bookmarks?: Array<{ id: string; note: string; updatedAt: Date }> };
     return {
       ...rest,
       completed,
@@ -363,6 +363,9 @@ export const assignmentService = {
   },
 
   async getSavedVocabEntryFlashCards(lessonId: string, userId: string) {
+    const lesson = await prisma.lesson.findFirst({ where: { id: lessonId, deletedAt: null } });
+    if (!lesson) throw new NotFoundError('Lesson not found');
+
     const saved = await prisma.studentVocabAssignmentFlashCard.findMany({
       where: { userId, entry: { vocabAssignment: { assignment: { lessonId } } } },
       orderBy: { entry: { order: 'asc' } },
