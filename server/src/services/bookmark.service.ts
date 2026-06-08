@@ -13,18 +13,19 @@ const BOOKMARK_SELECT = {
 
 export const bookmarkService = {
   async getByAssignment(assignmentId: string, userId: string) {
-    const record = await prisma.activityBookmark.findFirst({
+    const bookmark = await prisma.activityBookmark.findFirst({
       where: { assignmentId, userId },
       select: BOOKMARK_SELECT,
     });
-    return record ?? null;
+    if (!bookmark) throw new NotFoundError('Bookmark not found');
+    return bookmark;
   },
 
   async create(assignmentId: string, userId: string, data: CreateBookmarkInput) {
     await assertExists(prisma.assignment, assignmentId, 'Assignment');
     // Let Prisma P2002 bubble to 409 via errorHandler if bookmark already exists
     return prisma.activityBookmark.create({
-      data: { assignmentId, userId, note: data.note ?? null },
+      data: { assignmentId, userId, note: data.note },
       select: BOOKMARK_SELECT,
     });
   },
@@ -33,8 +34,8 @@ export const bookmarkService = {
     await assertExists(prisma.assignment, assignmentId, 'Assignment');
     return prisma.activityBookmark.upsert({
       where: { userId_assignmentId: { userId, assignmentId } },
-      create: { userId, assignmentId, note: data.note ?? null },
-      update: { note: data.note ?? null },
+      create: { userId, assignmentId, note: data.note },
+      update: { note: data.note },
       select: BOOKMARK_SELECT,
     });
   },

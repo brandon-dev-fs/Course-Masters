@@ -378,7 +378,10 @@ export const assignmentService = {
   async saveVocabEntryFlashCard(entryId: string, userId: string) {
     const entry = await prisma.vocabAssignmentEntry.findUnique({ where: { id: entryId } });
     if (!entry) throw new NotFoundError('Vocab entry not found');
-    return prisma.studentVocabAssignmentFlashCard.create({ data: { userId, entryId } });
+    return prisma.studentVocabAssignmentFlashCard.create({
+      data: { userId, entryId },
+      select: { id: true, entryId: true, createdAt: true },
+    });
   },
 
   async removeVocabEntryFlashCard(entryId: string, userId: string) {
