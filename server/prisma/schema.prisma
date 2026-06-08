@@ -491,7 +491,7 @@ model ActivityBookmark {
   id           String   @id @default(uuid())
   userId       String
   assignmentId String
-  note         String?  @db.VarChar(500)
+  note         String   @db.VarChar(500)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
