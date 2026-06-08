@@ -441,3 +441,119 @@ describe('assignmentService.reorder', () => {
     ).rejects.toMatchObject({ code: 'INVALID_REORDER' });
   });
 });
+
+// ---------------------------------------------------------------------------
+// getSavedVocabEntryFlashCards
+// ---------------------------------------------------------------------------
+
+describe('assignmentService.getSavedVocabEntryFlashCards', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('throws NotFoundError when lesson does not exist', async () => {
+    prismaMock.lesson.findFirst.mockResolvedValue(null);
+
+    await expect(
+      assignmentService.getSavedVocabEntryFlashCards(LESSON_ID, USER_ID),
+    ).rejects.toThrow(NotFoundError);
+  });
+
+  it('returns mapped entry objects from saved flash cards', async () => {
+    prismaMock.lesson.findFirst.mockResolvedValue(mockLesson);
+
+    const savedFlashCards = [
+      {
+        entry: { id: 'entry-1', term: 'cat', definition: 'a small animal', example: null, order: 1 },
+      },
+      {
+        entry: { id: 'entry-2', term: 'dog', definition: 'a large animal', example: 'The dog barked.', order: 2 },
+      },
+    ];
+    prismaMock.studentVocabAssignmentFlashCard.findMany.mockResolvedValue(savedFlashCards);
+
+    const result = await assignmentService.getSavedVocabEntryFlashCards(LESSON_ID, USER_ID);
+
+    expect(prismaMock.studentVocabAssignmentFlashCard.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { userId: USER_ID, entry: { vocabAssignment: { assignment: { lessonId: LESSON_ID } } } },
+      }),
+    );
+    expect(result).toEqual([
+      { id: 'entry-1', term: 'cat', definition: 'a small animal', example: null, order: 1 },
+      { id: 'entry-2', term: 'dog', definition: 'a large animal', example: 'The dog barked.', order: 2 },
+    ]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// saveVocabEntryFlashCard
+// ---------------------------------------------------------------------------
+
+describe('assignmentService.saveVocabEntryFlashCard', () => {
+  const ENTRY_ID = 'entry-1';
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('throws NotFoundError when vocab entry does not exist', async () => {
+    prismaMock.vocabAssignmentEntry.findUnique.mockResolvedValue(null);
+
+    await expect(
+      assignmentService.saveVocabEntryFlashCard(ENTRY_ID, USER_ID),
+    ).rejects.toThrow(NotFoundError);
+  });
+
+  it('creates and returns the flash card record with id, entryId, and createdAt only', async () => {
+    prismaMock.vocabAssignmentEntry.findUnique.mockResolvedValue({ id: ENTRY_ID } as never);
+    const created = { id: 'fc-1', entryId: ENTRY_ID, createdAt: new Date() };
+    prismaMock.studentVocabAssignmentFlashCard.create.mockResolvedValue(created);
+
+    const result = await assignmentService.saveVocabEntryFlashCard(ENTRY_ID, USER_ID);
+
+    expect(prismaMock.studentVocabAssignmentFlashCard.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: { userId: USER_ID, entryId: ENTRY_ID },
+        select: { id: true, entryId: true, createdAt: true },
+      }),
+    );
+    expect(result).toEqual(created);
+    // userId must NOT be present in the returned shape
+    expect(result).not.toHaveProperty('userId');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// removeVocabEntryFlashCard
+// ---------------------------------------------------------------------------
+
+describe('assignmentService.removeVocabEntryFlashCard', () => {
+  const ENTRY_ID = 'entry-1';
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('throws NotFoundError when saved flash card record does not exist', async () => {
+    prismaMock.studentVocabAssignmentFlashCard.findUnique.mockResolvedValue(null);
+
+    await expect(
+      assignmentService.removeVocabEntryFlashCard(ENTRY_ID, USER_ID),
+    ).rejects.toThrow(NotFoundError);
+  });
+
+  it('deletes the record when it exists', async () => {
+    const record = { id: 'fc-1', userId: USER_ID, entryId: ENTRY_ID, createdAt: new Date() };
+    prismaMock.studentVocabAssignmentFlashCard.findUnique.mockResolvedValue(record);
+    prismaMock.studentVocabAssignmentFlashCard.delete.mockResolvedValue(record);
+
+    await assignmentService.removeVocabEntryFlashCard(ENTRY_ID, USER_ID);
+
+    expect(prismaMock.studentVocabAssignmentFlashCard.delete).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { userId_entryId: { userId: USER_ID, entryId: ENTRY_ID } },
+      }),
+    );
+  });
+});
