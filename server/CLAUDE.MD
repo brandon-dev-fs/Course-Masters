@@ -1,6 +1,7 @@
 # Server CLAUDE.md
 
 ## Tech Stack
+
 - **Runtime**: Node.js with tsx (ESM, TypeScript executed directly)
 - **Framework**: Express 5
 - **ORM**: Prisma 6 + PostgreSQL
@@ -16,7 +17,7 @@
 ```
 server/
   prisma/
-    schema.prisma          # All 15 models, enums, @@map directives
+    schema.prisma          # All 29 models, enums, @@map directives
     migrations/            # Migration history
     seed.ts                # Seed script
   src/
@@ -34,6 +35,8 @@ server/
       student-note.routes.ts
       assessment.routes.ts
       assignment.routes.ts
+      bookmark.routes.ts     # Activity bookmarks
+      checklist.routes.ts    # Lesson checklist items
       completion.routes.ts
       resource-completion.routes.ts
       progress.routes.ts
@@ -91,6 +94,7 @@ errorHandler                        // LAST — four-arg signature required by E
 ## Route Organization
 
 All API routes are prefixed `/api`. The root router (`routes/index.ts`):
+
 - Exposes `GET /health` without auth
 - Applies `authenticate()` to everything below
 - Mounts sub-routers at resource paths
@@ -98,13 +102,6 @@ All API routes are prefixed `/api`. The root router (`routes/index.ts`):
 Sub-routers that access parent route params (e.g., `:courseId` from a parent router) **must** be created with `Router({ mergeParams: true })`. Without it, parent params are undefined.
 
 Progress routes are mounted at full absolute paths on the root router — not nested under a `/courses` sub-router — because nested `:unitId` params get lost when layering routers.
-
-```ts
-// Correct
-router.use('/courses/:courseId/units/:unitId/progress', unitProgressRouter);
-
-// Wrong — do not nest under a courseRouter that already has /:courseId
-```
 
 ## Architecture: Routes → Controllers → Services
 
@@ -128,7 +125,7 @@ Checks `req.user.role` against the allowed roles array. Returns `403 FORBIDDEN` 
 Teacher-only ownership enforcement. Issues one Prisma query (single JOIN) to walk up the hierarchy to the course's `authorId`. Admin bypasses the query entirely. Students bypass (they have no write access by role). Throws `NotFoundError` (not 403) when the resource doesn't exist — prevents existence leaking.
 
 ### requireSelf(getUserId)
-Ensures a student can only operate on their own records. Admin bypasses. If `getUserId` returns `undefined`, the controller stamps `req.user.id` by construction — no check needed.
+Ensures a student can only operate on their own records. Admin bypasses.
 
 ### requireStudentRole()
 Ensures only students can submit assessment attempts (teachers/admins blocked).
@@ -136,8 +133,7 @@ Ensures only students can submit assessment attempts (teachers/admins blocked).
 ### better-auth setup (lib/auth.ts)
 - Email/password enabled, default role: `student`
 - Admin plugin with access control for `course`, `content`, `user` resource types
-- Handles: `/api/auth/*` (login, logout, register, session)
-- `UserRole` Prisma enum values (`student`, `teacher`, `admin`) must match better-auth role strings
+- `UserRole` Prisma enum values must match better-auth role strings
 
 ## Request Validation
 
@@ -149,7 +145,7 @@ Schemas in `src/schemas/`. Apply `validate(schema)` for body, `validateQuery(sch
 
 **Soft deletes**: Course, Unit, Lesson, Assessment have `deletedAt DateTime?`. Always filter `where: { deletedAt: null }` on reads. Use `findFirst` (not `findUnique`) when combining `id` with `deletedAt: null`.
 
-**Soft delete cascades**: implemented manually in `utils/softDelete.ts` using `$transaction`. The helpers (`softDeleteCourse`, `softDeleteUnit`, `softDeleteLesson`, `softDeleteUser`) use `updateMany` for batch operations to avoid N+1. Always call within `prisma.$transaction(async tx => { ... })`.
+**Soft delete cascades**: implemented manually in `utils/softDelete.ts` using `$transaction`. The helpers (`softDeleteCourse`, `softDeleteUnit`, `softDeleteLesson`, `softDeleteUser`) use `updateMany` for batch operations to avoid N+1.
 
 **assertExists utility**: for simple existence checks on non-soft-deleted models:
 ```ts
@@ -157,42 +153,35 @@ const record = await assertExists(prisma.lessonResource, id, 'Resource');
 ```
 Not suitable for soft-deleted models — use `findFirst({ where: { id, deletedAt: null } })` manually.
 
-**Payload types**: derive from `Prisma.ModelGetPayload<{ include: ... }>` for typed service return values that stay in sync with schema changes automatically.
+**Payload types**: derive from `Prisma.ModelGetPayload<{ include: ... }>` for typed service return values.
 
-**Transactions**: use `prisma.$transaction(async tx => { ... })` for multi-step writes. The `tx` parameter type is `Omit<PrismaClient, '$connect' | ...>` (see `softDelete.ts`).
+**Transactions**: use `prisma.$transaction(async tx => { ... })` for multi-step writes. Never mix `tx` and global `prisma` inside a transaction.
 
 ## Error Handling
 
-All errors return the same envelope:
-```json
-{ "error": { "code": "SNAKE_CASE_CODE", "message": "Human readable", "details": {} } }
-```
-
 The `errorHandler` middleware handles:
+
 | Error type | Status | Code |
 |---|---|---|
 | `AppError` (and subclasses) | `err.statusCode` | `err.code` |
 | Prisma `P2025` | 404 | `NOT_FOUND` |
 | Prisma `P2002` | 409 | `CONFLICT` |
 | Prisma `P2003` | 409 | `CONFLICT` |
-| Prisma `P2014` | 409 | `CONFLICT` |
 | Prisma `P2034` | 409 | `TRANSACTION_CONFLICT` |
 | `PrismaClientValidationError` | 400 | `VALIDATION_ERROR` |
 | Unhandled | 500 | `INTERNAL_ERROR` |
 
-Use typed subclasses — never raw `AppError` for 404/400/409: `throw new NotFoundError('Course not found')`, `throw new ValidationError(msg, details)`, `throw new ConflictError(msg)`. Use raw `AppError` only for 403: `throw new AppError('FORBIDDEN', msg, 403)`.
-
-Wrap every async handler with `asyncHandler()` — it forwards thrown errors to `next()`, reaching `errorHandler`.
+Use typed subclasses: `throw new NotFoundError('...')`, `throw new ValidationError(msg, details)`, `throw new ConflictError(msg)`. Raw `AppError` only for 403: `throw new AppError('FORBIDDEN', msg, 403)`.
 
 ## Response Shape Conventions
 
 - Success: `envelopeMiddleware` wraps `res.json(payload)` → `{ data: payload }`
-- Error: `errorHandler` writes `{ error: { code, message, details? } }` — envelope is bypassed for `statusCode >= 400`
-- 204 responses use `res.status(204).send()` — `res.json()` is never called, envelope is never triggered
+- Error: `errorHandler` writes `{ error: { code, message, details? } }` — envelope bypassed for `statusCode >= 400`
+- 204: `res.status(204).send()` — never call `res.json()` for deletes
 
 ## Logging
 
-Structured JSON via pino (`src/lib/logger.ts`). Log level from `LOG_LEVEL` env var (default: `info`). Import as `import { logger } from '../lib/logger.js'`. Always pass context as first arg: `logger.info({ port }, 'Server started')`. Sensitive fields (`password`, `token`, `secret`, `authorization`, `req.headers.cookie`, `req.body.password`, etc.) are redacted. Never use `console.log` in production code. Auth route bodies are stripped by the pino-http serializer. Every request gets a UUID at `req.requestId` (forwarded as `X-Request-Id`) reused by pino-http for log correlation.
+Structured JSON via pino (`src/lib/logger.ts`). Import as `import { logger } from '../lib/logger.js'`. Always pass context as first arg: `logger.info({ courseId }, 'Course created')`. Sensitive fields are redacted. Never use `console.log` in production code.
 
 ## Environment Variables (server/.env)
 
@@ -205,8 +194,6 @@ Structured JSON via pino (`src/lib/logger.ts`). Log level from `LOG_LEVEL` env v
 | `CLIENT_URL` | no (localhost:5000) | Allowed CORS origin |
 | `LOG_LEVEL` | no (info) | pino log level |
 
-Validated by Zod in `config.ts` at startup — server will not start with invalid config.
-
 ## TypeScript Conventions
 
 - All imports use `.js` extension (required for Node ESM)
@@ -214,16 +201,15 @@ Validated by Zod in `config.ts` at startup — server will not start with invali
 - `req.user!` (non-null assertion) is safe after `authenticate()` middleware
 - Schema types inferred with `z.infer<typeof schema>` — never written by hand
 - `Prisma.ModelGetPayload<...>` for complex include-typed return values
-- No `any` except `syllabus: z.any()` (intentional freeform JSON field)
+- No `any` except intentional freeform JSON fields
 
 ## Domain-Specific Gotchas
 
-- **Soft deletes on assessments**: assessments have `deletedAt` but are retrieved with `findFirst` (not `findUnique`) so `deletedAt: null` can be combined with the parent FK filter.
-- **Assessment JSON content**: `LessonResource.content`, `LessonTool.content`, and `AssessmentQuestion.content` are freeform `Json` columns — no server-side shape enforcement beyond the type enum. Grading logic reads `content.correctIndex`, `content.correctAnswer`, `content.acceptedAnswers[]`, `content.pairs` depending on question type.
-- **StudentNote unique constraint**: `(lessonId, userId)` — one note per student per lesson. Prisma will throw `P2002` on duplicate; the error handler returns 409.
+- **Soft deletes on assessments**: use `findFirst` (not `findUnique`) so `deletedAt: null` can be combined with the parent FK filter.
+- **Assessment JSON content**: `LessonResource.content`, `LessonTool.content`, and `AssessmentQuestion.content` are freeform `Json` columns. Grading reads `content.correctIndex`, `content.correctAnswer`, `content.acceptedAnswers[]`, `content.pairs` depending on question type.
+- **StudentNote unique constraint**: `(lessonId, userId)` — one note per student per lesson. Prisma throws `P2002` on duplicate → 409.
 - **Assessment attempts**: only the most recent attempt counts for progress. Query with `orderBy: { createdAt: 'desc' }, take: 1`.
-- **Progress scoring**: lesson complete = `lesson_quiz` exists + latest attempt `passed === true`. Course % = `Math.round((completedLessons / totalLessons) * 90)`, then 100 if `course_exam` passed.
-- **Assessment pass threshold**: 80% (`PASS_THRESHOLD = 0.8` in `assessment.service.ts`). Grading is always server-side.
+- **Progress scoring**: lesson complete = `lesson_quiz` exists + latest attempt `passed === true`. Course % = `Math.round((completedLessons / totalLessons) * 90)`, then 100 if `course_exam` passed. Unit % = `Math.round((completedLessons / totalLessons) * 100)`. Pass threshold is 80%.
 - **Seed command**: `node --env-file=.env --import=tsx/esm prisma/seed.ts` — do NOT use `prisma db seed`.
 
 ---
@@ -234,67 +220,26 @@ Validated by Zod in `config.ts` at startup — server will not start with invali
 Vitest with `node` environment. No DOM simulation — tests run in plain Node.js context.
 
 ### Running Tests
+
 | Command | Description |
 |---|---|
 | `npm test -w server` | Single-run, no coverage (fast feedback) |
 | `npm run test:watch -w server` | Watch mode for local development |
 | `npm run test:coverage -w server` | Single-run with V8 coverage + threshold enforcement |
 
-Or from within `server/`:
-| Command | Description |
-|---|---|
-| `npm test` | Single-run, no coverage |
-| `npm run test:watch` | Watch mode |
-| `npm run test:coverage` | Coverage with threshold |
-
-### File Naming and Directory Structure
-
-```
-server/src/__tests__/
-  mocks/
-    prisma.ts           # Shared Prisma mock factory (prismaMock)
-  services/
-    *.service.test.ts   # Service layer tests
-  controllers/
-    *.controller.test.ts
-  middleware/
-    *.test.ts
-  utils/
-    *.test.ts
-```
-
-- Test files: `*.test.ts`
-- Location: `server/src/__tests__/<layer>/<name>.test.ts` where `<layer>` is `services`, `controllers`, `middleware`, or `utils`
-- One test file per source module
-- Test file names mirror the source file: `assessment.service.ts` → `assessment.service.test.ts`
+### File Location and Naming
+Test files: `server/src/__tests__/<layer>/<name>.test.ts` where `<layer>` is `services`, `controllers`, `middleware`, `schemas`, or `utils`. One test file per source module. Names mirror the source: `assessment.service.ts` → `assessment.service.test.ts`.
 
 ### Mocking Prisma
-
-The Prisma singleton (`src/lib/prisma.ts`) must be mocked in every test file that exercises service code. Use the shared proxy-based mock factory:
+Mock the Prisma singleton via the shared proxy factory at `src/__tests__/mocks/prisma.ts`:
 
 ```ts
-import type { Prisma, ModelName } from '@prisma/client';
 import { prismaMock } from '../mocks/prisma.js';
-
 vi.mock('../../lib/prisma.js', () => ({ default: prismaMock }));
-
-// Configure return values per test
 prismaMock.assessment.findFirst.mockResolvedValue(makeAssessment());
 ```
 
-### Fixture Typing
-
-Use Prisma-inferred types for test fixtures — never `Record<string, unknown>` or `any`. This ensures schema changes surface as compile errors in tests:
-
-```ts
-import type { Prisma, AssessmentQuestion } from '@prisma/client';
-
-type AssessmentWithQuestions = Prisma.AssessmentGetPayload<{ include: { questions: true } }>;
-
-function makeQuestion(overrides: Partial<AssessmentQuestion>): AssessmentQuestion { ... }
-function makeAssessment(overrides: Partial<AssessmentWithQuestions> = {}): AssessmentWithQuestions { ... }
-```
+Use Prisma-inferred types for fixtures (`Prisma.AssessmentGetPayload<{ include: ... }>`) to ensure schema changes surface as compile errors.
 
 ### Coverage Threshold
-
-The 70% threshold is enforced only by `test:coverage` (`vitest run --coverage`), not by `npm test`. The aggregate will be below 70% until broader test coverage is added — this is expected while establishing the infrastructure. `json-summary` reporter is included for future CI integration.
+70% enforced by `npm run test:coverage` only — not by `npm test`.

@@ -1,140 +1,126 @@
 # Course Masters — Client
 
-React 19 + Vite + TypeScript frontend for the Course Masters self-directed learning platform. Communicates with the Express API server via a Vite dev proxy and presents a full course management and study interface.
+React 19 + Vite + TypeScript frontend for the Course Masters self-directed learning platform. Communicates with the Express API server via a Vite dev proxy.
 
 ## Tech Stack
 
 | Technology | Version | Purpose |
 |---|---|---|
 | React | 19 | UI rendering |
-| React Router | v7 | Client-side routing |
-| Tailwind CSS | v4 | Utility-first styling via `@tailwindcss/vite` plugin |
-| TypeScript | 5.x | Static typing |
-| Vite | 6.x | Dev server and bundler |
+| React Router | 7 | Client-side routing |
+| TypeScript | 5 | Static typing |
+| Tailwind CSS | 4 | Utility-first styling via `@tailwindcss/vite` plugin |
+| Vite | 6 | Dev server and bundler |
+| better-auth | 1.5 | Session-based authentication |
+| Tiptap | 3 | Rich text editor with KaTeX math support |
+| lucide-react | — | SVG icons |
 
 ## Scripts
 
-```bash
-npm run dev       # Start the Vite dev server on port 5000
-npm run build     # Type-check with tsc, then produce a production build
-npm run preview   # Serve the production build locally for inspection
-```
+| Script | Description |
+|---|---|
+| `npm run dev` | Start Vite dev server on port 5000 |
+| `npm run build` | Type-check and produce a production build |
+| `npm run preview` | Serve the production build locally |
+| `npm test` | Run tests once (Vitest + jsdom) |
+| `npm run test:watch` | Watch mode |
+| `npm run test:coverage` | Run with V8 coverage (70% threshold) |
 
-These scripts should be run from the client workspace directory, or from the monorepo root via `npm run dev --workspace=client`.
+## Dev Server
+
+Runs on **port 5000**. All `/api` requests are proxied to `http://localhost:5002` (the Express backend) — no CORS configuration needed during development.
 
 ## Project Structure
 
 ```
 src/
-  api/              # API layer — typed fetch wrapper and per-resource modules
-    client.ts       # Core fetch wrapper; parses errors into typed ApiError shapes
-    types.ts        # Shared TypeScript interfaces for all API resources
-    courses.ts
-    units.ts
-    lessons.ts
-    notes.ts
-    flashcards.ts
-    practice-problems.ts
-    quizzes.ts
-    tests.ts
-    exams.ts
-    progress.ts
+  api/                  # All server communication
+    client.ts           # Core fetch wrapper (apiClient), ApiClientError, classifyError
+    types.ts            # All shared TypeScript interfaces and discriminated unions
+    auth.ts             # better-auth client instance (authClient)
+    assessments.ts, assignments.ts, bookmarks.ts, checklist.ts
+    courses.ts, lesson-resources.ts, lesson-tools.ts, lessons.ts
+    progress.ts, resource-completions.ts, student-notes.ts, units.ts
 
-  components/       # Shared, reusable UI primitives
-    Layout.tsx      # App shell — nav bar and <Outlet />
-    Button.tsx
-    Input.tsx
-    Textarea.tsx
-    Modal.tsx
-    ConfirmDialog.tsx
-    ErrorMessage.tsx
-    EmptyState.tsx
-    LoadingSpinner.tsx
-    Tabs.tsx
+  components/           # Shared UI primitives (never recreate inline)
+    Button, Input, Textarea, Modal, ConfirmDialog, ErrorMessage, LoadingSpinner,
+    EmptyState, CardActions, RichTextEditor, Tabs, Tooltip, LessonStatusIcon,
+    ResourceCompletionCheckbox, ErrorBoundary, Layout, Footer, MobileDrawer
 
   context/
-    ThemeContext.tsx # Light/dark mode state; persists choice to localStorage
+    AuthContext.tsx      # useAuth() — user, isLoading, login, register, logout, refreshUser
+    ThemeContext.tsx     # useTheme() — theme, toggleTheme
 
-  features/         # Feature-based modules, each owning its own pages, forms, and components
-    courses/        # Course list page, detail page, course card, course form
-    units/          # Unit detail page, unit list, unit form
-    lessons/        # Lesson detail page, lesson list, lesson form
-    notes/          # Note card, note list, note form
-    flashcards/     # Flash card, flash card list, flash card form, study mode
-    practice-problems/  # Practice problem card, list, and form
-    assessments/    # Shared assessment components — form, taker, results, question editor
-    quizzes/        # Lesson-level quiz section
-    tests/          # Unit-level test section
-    exams/          # Course-level final exam section
-    progress/       # Progress bar, course/unit progress cards, lesson status badge
+  features/             # Feature modules with pages, forms, and components
+    assessments/        # Shared quiz/test/exam UI (AssessmentSection → AssessmentTaker → AssessmentForm)
+    assignments/        # Assignment forms and views
+    auth/               # LoginPage, RegisterPage, ProfilePage, AdminUsersPage
+    courses/            # CourseDetailPage, CourseCard, CourseForm
+    exams/              # ExamCard
+    flashcards/         # FlashCard CRUD and study mode
+    home/               # HomePage, HeroSection, LandingPage
+    lessons/            # LessonDetailPage, LessonForm, sidebars
+    notes/              # NoteEditor (Tiptap-based)
+    practice-problems/  # PracticeProblemCard, form, list
+    progress/           # ProgressBar, UnitProgressCard, LessonStatusBadge, ResumeBar
+    student-notes/      # StudentNotePanel, StudentToolsBar, StudentMaterialsModal
+    tests/              # UnitTestCard
+    units/              # UnitCard, UnitForm, UnitList
+    videos/             # VideoCard, VideoForm, VideoList (YouTube embeds)
+    vocab/              # VocabCard, VocabForm, VocabList
 
-  App.tsx           # Route definitions
-  main.tsx          # React DOM entry point
-  index.css         # Tailwind import, @theme tokens, light/dark CSS custom properties
+  hooks/                # Shared hooks across features
+    useFetch, useResourceList, useOrderedList, useAssessment
+    useCanEdit, useCalculator, useDisclosure, useMediaQuery, useYouTubeTitle
 ```
 
-## Key Features
+## Routing
 
-- **Course / Unit / Lesson CRUD** — Create, edit, and delete courses, units within courses, and lessons within units. Each level has its own detail page and inline forms.
-- **Study materials** — Each lesson supports notes, flash cards, and practice problems, all manageable from the lesson detail page.
-- **Flash card study mode** — `FlashCardStudyMode` presents cards one at a time with a flip interaction, allowing focused review of a lesson's flash card set.
-- **Assessments** — Three tiers of multiple-choice assessment: lesson-level quizzes, unit-level tests, and a course-level final exam. A shared `AssessmentTaker` component handles question flow and answer selection; `AssessmentResults` displays score and pass/fail outcome.
-- **Progress tracking** — `CourseProgressCard` and `UnitProgressCard` display completion percentages, lesson quiz status, and whether unit tests and the final exam have been passed.
-- **Light / dark theme** — Toggle persists to `localStorage`. No page reload required.
+Defined in `App.tsx` using React Router v7. Authenticated routes are wrapped with `<RequireAuth>`. The `<Layout>` component renders the sticky nav and `<Outlet>`.
+
+| Path | Component | Auth |
+|---|---|---|
+| `/` | HomePage (LandingPage or CourseListPage) | None |
+| `/login` | LoginPage | None |
+| `/register` | RegisterPage | None |
+| `/courses/:courseId` | CourseDetailPage | Required |
+| `/courses/:courseId/units/:unitId/lessons/:lessonId` | LessonDetailPage | Required |
+| `/profile` | ProfilePage | Required |
+| `/admin/users` | AdminUsersPage | Required + admin role |
+
+## State Management
+
+No global store (no Redux, Zustand, etc.):
+
+1. **App-wide context**: `AuthContext` (session + auth operations) and `ThemeContext` (light/dark mode). Read via `useAuth()` / `useTheme()`.
+2. **Page-level**: Each page uses `useState` + `useEffect` to fetch and manage its own data.
+3. **Domain hooks**: `useFetch` (single fetch with cancellation), `useResourceList` (CRUD list pattern), `useOrderedList` (drag-to-reorder with optimistic updates), `useAssessment` (unified assessment flow).
 
 ## API Layer
 
-All HTTP communication goes through `src/api/client.ts`, a thin wrapper around the native `fetch` API. It:
+All HTTP requests go through `src/api/client.ts` (`apiClient`). It includes `credentials: 'include'` automatically, unwraps the `{ data: T }` envelope, and throws typed `ApiClientError` on non-2xx responses. On 401, dispatches `auth:unauthorized` to clear the session in `AuthContext`.
 
-- Prefixes every request with `/api` (resolved to `http://localhost:5002` by the Vite proxy during development).
-- Attaches `Content-Type: application/json` on requests with a body.
-- Parses non-OK responses and throws a typed `ApiError` (`{ code, message, details? }`) so components can branch on `error.code` rather than inspecting raw HTTP status codes.
-
-Individual resource modules (`courses.ts`, `units.ts`, etc.) import the client and export typed functions such as `getCourses()`, `createUnit()`, and `deleteLesson()`. All response payloads are typed against the interfaces in `src/api/types.ts`.
+Auth operations (login, register, session) go through `authClient` from `better-auth/react`. Never use `apiClient` for auth routes.
 
 ## Theming
 
-Tailwind v4's `@theme inline` block in `src/index.css` maps semantic design tokens (e.g., `--color-background`, `--color-primary`) to CSS custom properties. The actual values of those custom properties are defined in two rulesets:
+Tailwind v4 with CSS custom properties. **Never use `dark:` prefixes** — all mode switching is CSS variable-based.
 
-- `:root` — light theme defaults.
-- `.dark` — dark theme overrides, applied to the `<html>` element by `ThemeContext`.
+- Tokens defined in `src/index.css` via `@theme inline` block.
+- `:root` defines light-mode values; `.dark` (applied to `<html>` by `ThemeContext`) overrides them.
+- Key tokens: `bg-background`, `bg-surface`, `bg-surface-raised`, `bg-primary` (#047857 light / #10B981 dark), `bg-accent` (#2563EB light / #60A5FA dark), `bg-destructive`, `text-foreground`, `text-muted-foreground`, `border-border`.
+- Shadow utilities: `shadow-warm-sm`, `shadow-warm-md`, `shadow-warm-lg`.
+- Fonts: Nunito (body) and Nunito Sans — applied globally, no utility classes needed.
 
-Because the Tailwind tokens reference CSS custom properties at runtime rather than at build time, toggling the `.dark` class on `<html>` automatically re-resolves every utility that uses a semantic token. There is no need for `dark:` variant prefixes in component markup.
+## Testing
 
-### Color Tokens
+Vitest with `jsdom` environment and React Testing Library. Test files in `src/__tests__/<layer>/` (hooks, components, context, api, utils).
 
-| Token | Light | Dark |
-|---|---|---|
-| `--color-primary` | `#138808` (India green) | `#17a009` |
-| `--color-accent` | `#085287` (Ocean blue) | `#0a6db5` |
-| `--color-background` | `#ffffff` | `#1e1e24` |
-| `--color-surface` | `#ebebef` | `#27272e` |
-| `--color-surface-raised` | `#ffffff` | `#2f2f38` |
-| `--color-foreground` | `#1e1e24` | `#f0f0f3` |
-| `--color-border` | `#dddde2` | `#3a3a46` |
-| `--color-destructive` | `#dc2626` | `#ef4444` |
+Key test utilities:
+- `setup/renderWithProviders.tsx` — full provider tree wrapper (AuthProvider + MemoryRouter)
+- `mocks/apiClient.mock.ts`, `mocks/authClient.mock.ts` — mock factories
+- `mocks/authContext.mock.ts` — `makeAuthContext()`, `makeStudentUser()`, `makeTeacherUser()`, `makeAdminUser()`
 
-## Dev Server and Proxy
+Use `renderWithProviders` for component tests needing the full provider tree. For hooks that only need synchronous auth state, use `AuthContext.Provider` directly with `makeAuthContext()`.
 
-The Vite dev server runs on **port 5000**. Any request beginning with `/api` is proxied to `http://localhost:5002` (the Express server), so no CORS configuration is required during development. The proxy is defined in `vite.config.ts`:
-
-```ts
-server: {
-  port: 5000,
-  proxy: {
-    '/api': 'http://localhost:5002',
-  },
-},
-```
-
-## Error Handling
-
-- Components catch errors from API calls via `try/catch` and display user-friendly messages using `ErrorMessage` or inline state.
-- Errors are always parsed into the standard `ApiError` shape before being surfaced to the UI — raw error objects and stack traces are never displayed.
-- Transient errors (network failures, validation rejections) are intended for a toast/notification system; form-level validation errors are shown inline.
-
-## Architecture Notes
-
-- React Context is kept scoped and modular — there is no single global store. `ThemeContext` is the only app-wide context; feature state is managed locally within pages or passed as props.
-- Components are primarily presentational. Data fetching and mutations live in page-level components and are passed down.
-- The monorepo root runs both workspaces concurrently with `npm run dev`. Start there rather than running the client in isolation unless you are working on purely UI concerns with mocked data.
+Coverage threshold: 70%, enforced only by `npm run test:coverage`.

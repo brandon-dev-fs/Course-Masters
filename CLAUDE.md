@@ -83,10 +83,13 @@ User
  └── Course (authorId)
       └── Unit (courseId)
            └── Lesson (unitId)
-                ├── LessonResource  (type: note | video | lecture)
-                ├── LessonTool      (type: flash_card | practice_problem | vocab)
-                ├── StudentNote     (unique per userId + lessonId)
-                ├── Assessment      (type: lesson_quiz)
+                ├── LessonResource      (type: note | video | lecture)
+                ├── LessonTool          (type: flash_card | practice_problem | vocab)
+                ├── StudentNote         (unique per userId + lessonId)
+                ├── Assignment          (type: note | video | reading | vocab | practice_problem)
+                ├── LessonChecklistItem (per userId + lessonId)
+                ├── ActivityBookmark    (marks assignments for later review)
+                ├── Assessment          (type: lesson_quiz)
                 └── LessonCompletion
       ├── Assessment (type: unit_quiz)
       └── UnitCompletion
@@ -99,7 +102,9 @@ Auth tables (managed by better-auth): `User`, `Session`, `Account`, `Verificatio
 
 **Content as JSON**: `LessonResource.content`, `LessonTool.content`, and `AssessmentQuestion.content` are freeform `Json` columns. Shape is determined by the `type` enum value — see server/CLAUDE.md for grading logic per question type.
 
-**Enums**: `UserRole` (student/teacher/admin), `AssessmentType` (lesson_quiz/unit_quiz/course_exam), `QuestionType` (multiple_choice/true_false/matching/fill_in_blank), `ResourceType` (note/video/lecture), `ToolType` (flash_card/practice_problem/vocab).
+**Enums**: `UserRole` (student/teacher/admin), `AssessmentType` (lesson_quiz/unit_quiz/course_exam), `QuestionType` (multiple_choice/true_false/matching/fill_in_blank), `ResourceType` (note/video/lecture), `ToolType` (flash_card/practice_problem/vocab), `AssignmentType` (note/video/reading/vocab/practice_problem).
+
+Key completion models: `LessonResourceCompletion`, `LessonToolCompletion`, `AssignmentCompletion` (all track per userId).
 
 ---
 
@@ -157,13 +162,24 @@ Completions:   POST   /lessons/:lessonId/complete
                POST   /units/:unitId/complete
                DELETE /units/:unitId/complete
 
-Res. Complete: GET  /lessons/:lessonId/resource-completions
-               POST /lessons/:lessonId/resource-completions
+Assignments:   GET  /lessons/:lessonId/assignments
+               POST /lessons/:lessonId/assignments
+               PUT  /assignments/:assignmentId
+               DELETE /assignments/:assignmentId
+
+Checklist:     GET  /lessons/:lessonId/checklist
+               POST /lessons/:lessonId/checklist
+               DELETE /checklist-items/:itemId
+
+Res. Complete: GET  /lessons/:lessonId/completions
+               POST /lessons/:lessonId/completions
 
 Progress:      GET  /courses/:courseId/progress
                GET  /courses/:courseId/units/:unitId/progress
 
 YouTube:       GET  /youtube/title
+
+Users:         DELETE /users/:userId
 
 Auth:          ALL  /auth/*   (handled by better-auth)
 ```
@@ -201,7 +217,7 @@ Ownership is enforced server-side via `requireCourseOwnership()` middleware, whi
 - **Resource completion**: tracked per `(userId, resourceId)` — students mark individual resources done.
 - **Lesson completion**: `POST /lessons/:lessonId/complete` — requires the lesson's `lesson_quiz` attempt to have `passed === true` (if a quiz exists).
 - **Unit completion**: `POST /units/:unitId/complete`.
-- **Course progress %**: `Math.round((completedLessons / totalLessons) * 90)`, capped at 100 if `course_exam` passed. Pass threshold is 80% (`PASS_THRESHOLD = 0.8`).
+- **Course progress %**: `Math.round((completedLessons / totalLessons) * 90)`, capped at 100 if `course_exam` passed. **Unit progress %**: `Math.round((completedLessons / totalLessons) * 100)`. Pass threshold is 80%.
 - Only the most recent assessment attempt counts for pass/fail status.
 
 ---
