@@ -21,9 +21,8 @@ const mockLesson: Lesson = {
   title: 'Intro Lesson',
   description: 'A lesson',
   order: 1,
-  createdAt: '2024-01-01',
-  updatedAt: '2024-01-01',
   objective: 'Learn basics',
+  planContent: {},
 };
 
 const videoResource: LessonResource = {

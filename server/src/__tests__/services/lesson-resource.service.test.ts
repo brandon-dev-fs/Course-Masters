@@ -77,7 +77,7 @@ describe('lessonResourceService.create', () => {
     const resource = makeResource();
     prismaMock.lessonResource.create.mockResolvedValue(resource);
 
-    const input = { type: 'note' as const, title: 'Test', content: {}, order: 1, isRequired: false };
+    const input = { type: 'note' as const, title: 'Test', content: { body: {} }, order: 1 };
     const result = await lessonResourceService.create(LESSON_ID, input);
 
     expect(prismaMock.lessonResource.create).toHaveBeenCalledWith(
@@ -91,7 +91,7 @@ describe('lessonResourceService.create', () => {
   it('throws NotFoundError when lesson does not exist', async () => {
     prismaMock.lesson.findUnique.mockResolvedValue(null);
 
-    const input = { type: 'note' as const, title: 'Test', content: {}, order: 1, isRequired: false };
+    const input = { type: 'note' as const, title: 'Test', content: { body: {} }, order: 1 };
 
     await expect(lessonResourceService.create(LESSON_ID, input)).rejects.toThrow(NotFoundError);
   });

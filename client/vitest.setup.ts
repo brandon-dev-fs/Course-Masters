@@ -1,4 +1,4 @@
-import '@testing-library/jest-dom';
+import '@testing-library/jest-dom/vitest';
 
 // Stub window.matchMedia — jsdom does not implement it.
 // Components that call useMediaQuery or check window.matchMedia directly

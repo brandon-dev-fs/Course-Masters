@@ -49,7 +49,9 @@ function createPrismaProxy() {
     },
   });
 
-  return proxy;
+  return proxy as unknown as Record<string, Record<string, ReturnType<typeof vi.fn>>> & {
+    $transaction: ReturnType<typeof vi.fn>;
+  };
 }
 
 export const prismaMock = createPrismaProxy();

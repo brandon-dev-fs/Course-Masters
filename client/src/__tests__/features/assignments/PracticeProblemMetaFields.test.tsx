@@ -7,14 +7,18 @@ const defaultProps = {
   displayTitle: '',
   description: '',
   estimatedMinutes: '',
-  entries: [],
   passingPercentage: '',
+  entries: [],
+  noteContent: null,
+  questions: [],
   onUrlChange: vi.fn(),
   onDisplayTitleChange: vi.fn(),
   onDescriptionChange: vi.fn(),
   onEstimatedMinutesChange: vi.fn(),
-  onEntriesChange: vi.fn(),
   onPassingPercentageChange: vi.fn(),
+  onEntriesChange: vi.fn(),
+  onNoteContentChange: vi.fn(),
+  onQuestionsChange: vi.fn(),
 };
 
 describe('PracticeProblemMetaFields', () => {

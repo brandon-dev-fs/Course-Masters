@@ -9,8 +9,13 @@ const { apiClientMock } = vi.hoisted(() => ({
 }));
 vi.mock('../../../api/client.js', () => ({
   apiClient: apiClientMock,
-  ApiClientError: class ApiClientError extends Error {},
-  classifyError: (e: unknown) => String(e),
+  ApiClientError: class ApiClientError extends Error {
+    constructor(public readonly code: string, message: string) {
+      super(message);
+      this.name = 'ApiClientError';
+    }
+  },
+  classifyError: (e: unknown) => e instanceof Error ? e.message : String(e),
 }));
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -93,7 +98,7 @@ describe('UnitForm', () => {
 
   it('shows API error when onSubmit rejects with ApiClientError', async () => {
     const { ApiClientError } = await import('../../../api/client.js');
-    const onSubmit = vi.fn().mockRejectedValueOnce(new ApiClientError('Something went wrong'));
+    const onSubmit = vi.fn().mockRejectedValueOnce(new ApiClientError('MOCK_ERROR', 'Something went wrong'));
     render(<UnitForm onSubmit={onSubmit} onCancel={vi.fn()} />);
     fireEvent.change(screen.getByLabelText(/title/i), { target: { value: 'My Unit' } });
     fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'My desc' } });

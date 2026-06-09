@@ -10,8 +10,8 @@ import UnitLessonSidebar from '../../../features/lessons/UnitLessonSidebar.js';
 import type { Lesson } from '../../../api/types.js';
 
 const lessons: Lesson[] = [
-  { id: 'l1', unitId: 'u1', title: 'Lesson 1', description: '', order: 1, createdAt: '2024-01-01', updatedAt: '2024-01-01', objective: '', planContent: {} },
-  { id: 'l2', unitId: 'u1', title: 'Lesson 2', description: '', order: 2, createdAt: '2024-01-01', updatedAt: '2024-01-01', objective: '', planContent: {} },
+  { id: 'l1', unitId: 'u1', title: 'Lesson 1', description: '', order: 1, objective: '', planContent: {} },
+  { id: 'l2', unitId: 'u1', title: 'Lesson 2', description: '', order: 2, objective: '', planContent: {} },
 ];
 
 describe('UnitLessonSidebar', () => {
@@ -78,5 +78,64 @@ describe('UnitLessonSidebar', () => {
     renderSidebar();
     // "Lessons" heading appears in the mobile drawer header and (when not collapsed) in the desktop sidebar
     expect(screen.getAllByText('Lessons').length).toBeGreaterThan(0);
+  });
+
+  it('marks completed lessons with a completion icon', () => {
+    renderSidebar({ completedLessonIds: new Set(['l2']) });
+    // Lesson 2 is completed — it still renders its title
+    expect(screen.getAllByText('Lesson 2').length).toBeGreaterThan(0);
+    // Lesson 2 renders as a Link (not the current-div), visible in the DOM
+    const links = screen.getAllByRole('link');
+    const l2Links = links.filter(l => l.getAttribute('href')?.includes('l2'));
+    expect(l2Links.length).toBeGreaterThan(0);
+  });
+
+  it('treats current lesson as a non-link div when unitTestActive is false', () => {
+    renderSidebar({ unitTestActive: false });
+    // l1 is currentLessonId; when unitTestActive=false it renders as a highlighted div, not a Link
+    const links = screen.queryAllByRole('link');
+    const l1Links = links.filter(l => l.getAttribute('href')?.includes('l1'));
+    expect(l1Links.length).toBe(0);
+  });
+
+  it('treats current lesson as a link when unitTestActive is true', () => {
+    renderSidebar({ unitTestActive: true, onUnitTestClick: vi.fn() });
+    // When unitTestActive=true, isCurrent=false for l1, so it becomes a Link
+    const links = screen.getAllByRole('link');
+    const l1Links = links.filter(l => l.getAttribute('href')?.includes('l1'));
+    expect(l1Links.length).toBeGreaterThan(0);
+  });
+
+  it('shows expand button when collapsed', () => {
+    renderSidebar({ collapsed: true, onToggle: vi.fn() });
+    expect(screen.getAllByLabelText('Expand sidebar').length).toBeGreaterThan(0);
+  });
+
+  it('calls onToggle when collapse toggle is clicked', () => {
+    const onToggle = vi.fn();
+    renderSidebar({ collapsed: false, onToggle });
+    fireEvent.click(screen.getByLabelText('Collapse sidebar'));
+    expect(onToggle).toHaveBeenCalledOnce();
+  });
+
+  it('renders mobile drawer dialog when mobileOpen is true', () => {
+    renderSidebar({ mobileOpen: true, onMobileClose: vi.fn() });
+    expect(screen.getByRole('dialog')).toBeTruthy();
+  });
+
+  it('calls onMobileClose when drawer close button is clicked', () => {
+    const onMobileClose = vi.fn();
+    renderSidebar({ mobileOpen: true, onMobileClose });
+    const closeButtons = screen.getAllByLabelText('Close navigation');
+    fireEvent.click(closeButtons[closeButtons.length - 1]);
+    expect(onMobileClose).toHaveBeenCalled();
+  });
+
+  it('calls onMobileClose when lesson is clicked in mobile drawer', () => {
+    const onMobileClose = vi.fn();
+    renderSidebar({ mobileOpen: true, onMobileClose });
+    const links = screen.getAllByRole('link');
+    fireEvent.click(links[0]);
+    expect(onMobileClose).toHaveBeenCalled();
   });
 });

@@ -93,7 +93,7 @@ describe('checklistService.create', () => {
     vi.clearAllMocks();
     prismaMock.lesson.findFirst.mockResolvedValue(mockLesson);
     prismaMock.lessonChecklistItem.aggregate.mockResolvedValue(
-      { _max: { order: 0 } } as unknown as Awaited<ReturnType<typeof prismaMock.lessonChecklistItem.aggregate>>,
+      { _max: { order: 0 } } as never,
     );
   });
 

@@ -15,9 +15,9 @@ function makeItem(overrides: Partial<TestItem> = {}): TestItem {
 
 function makeApi() {
   return {
-    create: vi.fn(),
-    update: vi.fn(),
-    delete: vi.fn(),
+    create: vi.fn<(data: Partial<TestItem>) => Promise<TestItem>>(),
+    update: vi.fn<(id: string, data: Partial<TestItem>) => Promise<TestItem>>(),
+    delete: vi.fn<(id: string) => Promise<void>>(),
   };
 }
 

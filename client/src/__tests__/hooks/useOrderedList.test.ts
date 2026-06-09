@@ -1,7 +1,8 @@
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import type { Mock } from 'vitest';
 import useOrderedList from '../../hooks/useOrderedList.js';
-import type { OrderedItem } from '../../hooks/useOrderedList.js';
+import type { OrderedItem, PersistFn } from '../../hooks/useOrderedList.js';
 
 interface TestItem extends OrderedItem {
   id: string;
@@ -16,11 +17,11 @@ const makeItems = (): TestItem[] => [
 ];
 
 describe('useOrderedList', () => {
-  let persistFn: ReturnType<typeof vi.fn>;
+  let persistFn: Mock<PersistFn<TestItem>>;
 
   beforeEach(() => {
     vi.clearAllMocks();
-    persistFn = vi.fn().mockResolvedValue(undefined);
+    persistFn = vi.fn<PersistFn<TestItem>>().mockResolvedValue(undefined);
   });
 
   describe('initial state', () => {

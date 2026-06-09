@@ -23,7 +23,7 @@ describe('softDeleteLesson', () => {
       lesson: { update: vi.fn().mockResolvedValue({ id: 'lesson-1' }) },
     };
 
-    await softDeleteLesson(tx as Parameters<typeof softDeleteLesson>[0], 'lesson-1');
+    await softDeleteLesson(tx as unknown as Parameters<typeof softDeleteLesson>[0], 'lesson-1');
 
     expect(tx.assessment.updateMany).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -38,7 +38,7 @@ describe('softDeleteLesson', () => {
       lesson: { update: vi.fn().mockResolvedValue({ id: 'lesson-1' }) },
     };
 
-    await softDeleteLesson(tx as Parameters<typeof softDeleteLesson>[0], 'lesson-1');
+    await softDeleteLesson(tx as unknown as Parameters<typeof softDeleteLesson>[0], 'lesson-1');
 
     expect(tx.lesson.update).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -65,7 +65,7 @@ describe('softDeleteLesson', () => {
       },
     };
 
-    await softDeleteLesson(tx as Parameters<typeof softDeleteLesson>[0], 'lesson-1');
+    await softDeleteLesson(tx as unknown as Parameters<typeof softDeleteLesson>[0], 'lesson-1');
 
     expect(callOrder).toEqual(['assessment.updateMany', 'lesson.update']);
   });
@@ -79,7 +79,7 @@ describe('softDeleteUnit', () => {
       unit: { update: vi.fn().mockResolvedValue({ id: 'unit-1' }) },
     };
 
-    await softDeleteUnit(tx as Parameters<typeof softDeleteUnit>[0], 'unit-1');
+    await softDeleteUnit(tx as unknown as Parameters<typeof softDeleteUnit>[0], 'unit-1');
 
     expect(tx.assessment.updateMany).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -98,7 +98,7 @@ describe('softDeleteUnit', () => {
       unit: { update: vi.fn().mockResolvedValue({ id: 'unit-1' }) },
     };
 
-    await softDeleteUnit(tx as Parameters<typeof softDeleteUnit>[0], 'unit-1');
+    await softDeleteUnit(tx as unknown as Parameters<typeof softDeleteUnit>[0], 'unit-1');
 
     expect(tx.lesson.updateMany).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -117,7 +117,7 @@ describe('softDeleteUnit', () => {
       unit: { update: vi.fn().mockResolvedValue({ id: 'unit-1' }) },
     };
 
-    await softDeleteUnit(tx as Parameters<typeof softDeleteUnit>[0], 'unit-1');
+    await softDeleteUnit(tx as unknown as Parameters<typeof softDeleteUnit>[0], 'unit-1');
 
     // assessment.updateMany should be called twice: once for unit-level, once for lesson-level
     expect(tx.assessment.updateMany).toHaveBeenCalledTimes(2);
@@ -130,7 +130,7 @@ describe('softDeleteUnit', () => {
       unit: { update: vi.fn().mockResolvedValue({ id: 'unit-1' }) },
     };
 
-    await softDeleteUnit(tx as Parameters<typeof softDeleteUnit>[0], 'unit-1');
+    await softDeleteUnit(tx as unknown as Parameters<typeof softDeleteUnit>[0], 'unit-1');
 
     expect(tx.unit.update).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -150,7 +150,7 @@ describe('softDeleteUnit', () => {
       unit: { update: vi.fn().mockResolvedValue({ id: 'unit-1' }) },
     };
 
-    await softDeleteUnit(tx as Parameters<typeof softDeleteUnit>[0], 'unit-1');
+    await softDeleteUnit(tx as unknown as Parameters<typeof softDeleteUnit>[0], 'unit-1');
 
     expect(tx.lesson.updateMany).not.toHaveBeenCalled();
   });
@@ -165,7 +165,7 @@ describe('softDeleteCourse', () => {
       course: { update: vi.fn().mockResolvedValue({ id: 'course-1' }) },
     };
 
-    await softDeleteCourse(tx as Parameters<typeof softDeleteCourse>[0], 'course-1');
+    await softDeleteCourse(tx as unknown as Parameters<typeof softDeleteCourse>[0], 'course-1');
 
     expect(tx.assessment.updateMany).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -188,7 +188,7 @@ describe('softDeleteCourse', () => {
       course: { update: vi.fn().mockResolvedValue({ id: 'course-1' }) },
     };
 
-    await softDeleteCourse(tx as Parameters<typeof softDeleteCourse>[0], 'course-1');
+    await softDeleteCourse(tx as unknown as Parameters<typeof softDeleteCourse>[0], 'course-1');
 
     expect(tx.unit.updateMany).toHaveBeenCalled();
     expect(tx.lesson.updateMany).toHaveBeenCalled();
@@ -202,7 +202,7 @@ describe('softDeleteCourse', () => {
       course: { update: vi.fn().mockResolvedValue({ id: 'course-1' }) },
     };
 
-    await softDeleteCourse(tx as Parameters<typeof softDeleteCourse>[0], 'course-1');
+    await softDeleteCourse(tx as unknown as Parameters<typeof softDeleteCourse>[0], 'course-1');
 
     expect(tx.course.update).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -226,7 +226,7 @@ describe('softDeleteCourse', () => {
       course: { update: vi.fn().mockResolvedValue({ id: 'course-1' }) },
     };
 
-    await softDeleteCourse(tx as Parameters<typeof softDeleteCourse>[0], 'course-1');
+    await softDeleteCourse(tx as unknown as Parameters<typeof softDeleteCourse>[0], 'course-1');
 
     expect(tx.unit.updateMany).not.toHaveBeenCalled();
     expect(tx.lesson.updateMany).not.toHaveBeenCalled();
@@ -243,7 +243,7 @@ describe('softDeleteUser', () => {
       user: { update: vi.fn().mockResolvedValue({ id: 'user-1' }) },
     };
 
-    await softDeleteUser(tx as Parameters<typeof softDeleteUser>[0], 'user-1');
+    await softDeleteUser(tx as unknown as Parameters<typeof softDeleteUser>[0], 'user-1');
 
     expect(tx.user.update).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -265,7 +265,7 @@ describe('softDeleteUser', () => {
       user: { update: vi.fn().mockResolvedValue({ id: 'user-1' }) },
     };
 
-    await softDeleteUser(tx as Parameters<typeof softDeleteUser>[0], 'user-1');
+    await softDeleteUser(tx as unknown as Parameters<typeof softDeleteUser>[0], 'user-1');
 
     expect(tx.course.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -285,7 +285,7 @@ describe('softDeleteUser', () => {
       user: { update: vi.fn().mockResolvedValue({ id: 'user-1' }) },
     };
 
-    await softDeleteUser(tx as Parameters<typeof softDeleteUser>[0], 'user-1');
+    await softDeleteUser(tx as unknown as Parameters<typeof softDeleteUser>[0], 'user-1');
 
     expect(tx.course.update).not.toHaveBeenCalled();
   });

@@ -18,6 +18,8 @@ const courseWithUnits: Course = {
   title: 'My Course',
   description: 'desc',
   authorId: 'author1',
+  createdAt: '2024-01-01',
+  updatedAt: '2024-01-01',
   units: [unit1],
 };
 
@@ -26,6 +28,8 @@ const emptyCourse: Course = {
   title: 'Empty Course',
   description: '',
   authorId: 'author1',
+  createdAt: '2024-01-01',
+  updatedAt: '2024-01-01',
   units: [],
 };
 

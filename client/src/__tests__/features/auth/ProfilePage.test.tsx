@@ -152,4 +152,63 @@ describe('ProfilePage', () => {
     fireEvent.click(screen.getByRole('button', { name: /change password/i }));
     expect(await screen.findByText(/at least 8 characters/i)).toBeInTheDocument();
   });
+
+  it('cancels name edit and returns to view mode', async () => {
+    authClientMock.getSession.mockResolvedValue({ data: { user: makeTeacherUser() }, error: null });
+    renderWithProviders(<ProfilePage />);
+    fireEvent.click(await screen.findByRole('button', { name: /edit name/i }));
+    fireEvent.click(screen.getByRole('button', { name: /cancel/i }));
+    expect(await screen.findByRole('button', { name: /edit name/i })).toBeInTheDocument();
+  });
+
+  it('saves name successfully and calls updateUser', async () => {
+    authClientMock.getSession.mockResolvedValue({ data: { user: makeTeacherUser() }, error: null });
+    authClientMock.updateUser.mockResolvedValue({ data: null, error: null });
+    renderWithProviders(<ProfilePage />);
+    fireEvent.click(await screen.findByRole('button', { name: /edit name/i }));
+    const input = screen.getByDisplayValue('Teacher');
+    fireEvent.change(input, { target: { value: 'New Name' } });
+    fireEvent.click(screen.getByRole('button', { name: /save name/i }));
+    await waitFor(() => expect(authClientMock.updateUser).toHaveBeenCalledWith({ name: 'New Name' }));
+  });
+
+  it('shows API error when name update fails', async () => {
+    authClientMock.getSession.mockResolvedValue({ data: { user: makeTeacherUser() }, error: null });
+    authClientMock.updateUser.mockResolvedValue({ data: null, error: { message: 'Server rejected' } });
+    renderWithProviders(<ProfilePage />);
+    fireEvent.click(await screen.findByRole('button', { name: /edit name/i }));
+    fireEvent.click(screen.getByRole('button', { name: /save name/i }));
+    expect(await screen.findByText(/server rejected/i)).toBeInTheDocument();
+  });
+
+  it('changes password successfully', async () => {
+    authClientMock.getSession.mockResolvedValue({ data: { user: makeTeacherUser() }, error: null });
+    authClientMock.changePassword.mockResolvedValue({ data: null, error: null });
+    renderWithProviders(<ProfilePage />);
+    await screen.findAllByText('Change Password');
+    fireEvent.change(screen.getByLabelText(/current password/i), { target: { value: 'oldpass123' } });
+    fireEvent.change(screen.getByLabelText(/^new password/i), { target: { value: 'newpass123' } });
+    fireEvent.change(screen.getByLabelText(/confirm new password/i), { target: { value: 'newpass123' } });
+    fireEvent.click(screen.getByRole('button', { name: /change password/i }));
+    expect(await screen.findByText(/password changed successfully/i)).toBeInTheDocument();
+  });
+
+  it('shows API error when password change fails', async () => {
+    authClientMock.getSession.mockResolvedValue({ data: { user: makeTeacherUser() }, error: null });
+    authClientMock.changePassword.mockResolvedValue({ data: null, error: { message: 'Incorrect current password' } });
+    renderWithProviders(<ProfilePage />);
+    await screen.findAllByText('Change Password');
+    fireEvent.change(screen.getByLabelText(/current password/i), { target: { value: 'wrongpass' } });
+    fireEvent.change(screen.getByLabelText(/^new password/i), { target: { value: 'newpass123' } });
+    fireEvent.change(screen.getByLabelText(/confirm new password/i), { target: { value: 'newpass123' } });
+    fireEvent.click(screen.getByRole('button', { name: /change password/i }));
+    expect(await screen.findByText(/incorrect current password/i)).toBeInTheDocument();
+  });
+
+  it('shows error when courses fail to load', async () => {
+    authClientMock.getSession.mockResolvedValue({ data: { user: makeTeacherUser() }, error: null });
+    apiClientMock.get.mockRejectedValue(new Error('Failed to load courses'));
+    renderWithProviders(<ProfilePage />);
+    expect(await screen.findByText(/failed to load courses/i)).toBeInTheDocument();
+  });
 });

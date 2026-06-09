@@ -13,12 +13,18 @@ const defaultProps = {
   displayTitle: '',
   description: '',
   estimatedMinutes: '',
+  passingPercentage: '',
   entries: sampleEntries,
+  noteContent: null,
+  questions: [],
   onUrlChange: vi.fn(),
   onDisplayTitleChange: vi.fn(),
   onDescriptionChange: vi.fn(),
   onEstimatedMinutesChange: vi.fn(),
+  onPassingPercentageChange: vi.fn(),
   onEntriesChange: vi.fn(),
+  onNoteContentChange: vi.fn(),
+  onQuestionsChange: vi.fn(),
 };
 
 describe('VocabAssignmentForm', () => {

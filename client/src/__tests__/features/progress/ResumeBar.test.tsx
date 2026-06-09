@@ -17,12 +17,14 @@ const unit: Unit = {
 
 const progressWithIncomplete: CourseProgress = {
   completedLessons: 0,
+  completedUnits: 0,
   totalLessons: 1,
+  totalUnits: 1,
   percentComplete: 0,
   examPassed: false,
-  totalUnits: 1,
+  examScore: null,
   units: [
-    { unitId: 'u1', lessons: [] },
+    { unitId: 'u1', title: 'Unit 1', order: 1, isComplete: false, totalLessons: 1, completedLessons: 0, testPassed: false, lessons: [] },
   ],
 };
 
@@ -69,13 +71,15 @@ describe('ResumeBar', () => {
     };
     const progressAllDone: CourseProgress = {
       completedLessons: 2,
+      completedUnits: 2,
       totalLessons: 2,
+      totalUnits: 2,
       percentComplete: 90,
       examPassed: false,
-      totalUnits: 2,
+      examScore: null,
       units: [
-        { unitId: 'u1', lessons: [{ lessonId: 'l1', quizPassed: true }] },
-        { unitId: 'u2', lessons: [{ lessonId: 'l2', quizPassed: true }] },
+        { unitId: 'u1', title: 'Unit 1', order: 1, isComplete: true, totalLessons: 1, completedLessons: 1, testPassed: true, lessons: [{ lessonId: 'l1', hasQuiz: true, attempted: true, quizPassed: true }] },
+        { unitId: 'u2', title: 'Unit 2', order: 2, isComplete: true, totalLessons: 1, completedLessons: 1, testPassed: true, lessons: [{ lessonId: 'l2', hasQuiz: true, attempted: true, quizPassed: true }] },
       ],
     };
     render(
@@ -89,11 +93,13 @@ describe('ResumeBar', () => {
   it('renders nothing when all lessons and exam complete', () => {
     const progressComplete: CourseProgress = {
       completedLessons: 1,
+      completedUnits: 1,
       totalLessons: 1,
+      totalUnits: 1,
       percentComplete: 100,
       examPassed: true,
-      totalUnits: 1,
-      units: [{ unitId: 'u1', lessons: [{ lessonId: 'l1', quizPassed: true }] }],
+      examScore: 95,
+      units: [{ unitId: 'u1', title: 'Unit 1', order: 1, isComplete: true, totalLessons: 1, completedLessons: 1, testPassed: true, lessons: [{ lessonId: 'l1', hasQuiz: true, attempted: true, quizPassed: true }] }],
     };
     const { container } = render(
       <MemoryRouter>

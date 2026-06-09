@@ -145,6 +145,21 @@ describe('HomePage', () => {
     });
   });
 
+  it('shows clear search button when query is set and clears on click', async () => {
+    authClientMock.getSession.mockResolvedValue(sessionFor(TEACHER));
+    apiClientMock.get.mockResolvedValue(SAMPLE_COURSES);
+    renderWithProviders(<HomePage />);
+    await screen.findByText('Algebra Essentials');
+    fireEvent.change(screen.getByRole('textbox', { name: /search courses/i }), {
+      target: { value: 'Algebra' },
+    });
+    const clearBtn = await screen.findByRole('button', { name: /clear search/i });
+    fireEvent.click(clearBtn);
+    await waitFor(() => {
+      expect(screen.getByText('English Grammar Fundamentals')).toBeInTheDocument();
+    });
+  });
+
   // --- Error state ---
 
   it('shows error message when course fetch fails', async () => {

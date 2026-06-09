@@ -74,7 +74,7 @@ describe('lessonToolService.create', () => {
     const tool = makeTool();
     prismaMock.lessonTool.create.mockResolvedValue(tool);
 
-    const input = { type: 'flash_card' as const, title: 'Test', content: {}, order: 1, isRequired: false };
+    const input = { type: 'flash_card' as const, title: 'Test', content: { front: 'Front text', back: 'Back text' }, order: 1 };
     const result = await lessonToolService.create(LESSON_ID, input);
 
     expect(prismaMock.lessonTool.create).toHaveBeenCalledWith(
@@ -88,7 +88,7 @@ describe('lessonToolService.create', () => {
   it('throws NotFoundError when lesson does not exist', async () => {
     prismaMock.lesson.findUnique.mockResolvedValue(null);
 
-    const input = { type: 'flash_card' as const, title: 'Test', content: {}, order: 1, isRequired: false };
+    const input = { type: 'flash_card' as const, title: 'Test', content: { front: 'Front text', back: 'Back text' }, order: 1 };
 
     await expect(lessonToolService.create(LESSON_ID, input)).rejects.toThrow(NotFoundError);
   });

@@ -17,7 +17,8 @@ function makeCourse(overrides: Partial<Course> = {}): Course {
   return {
     id: COURSE_ID,
     title: 'Test Course',
-    description: null,
+    description: 'Test description',
+    syllabus: null,
     authorId: USER_ID,
     deletedAt: null,
     createdAt: new Date(),
@@ -110,7 +111,7 @@ describe('courseService.create', () => {
     const course = makeCourse();
     prismaMock.course.create.mockResolvedValue(course);
 
-    const result = await courseService.create({ title: 'New Course' }, USER_ID);
+    const result = await courseService.create({ title: 'New Course', description: 'Test course description' }, USER_ID);
 
     expect(prismaMock.course.create).toHaveBeenCalledWith(
       expect.objectContaining({

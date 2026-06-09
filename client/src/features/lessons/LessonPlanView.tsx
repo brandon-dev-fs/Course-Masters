@@ -12,7 +12,7 @@ interface LessonPlanViewProps {
 }
 
 export default function LessonPlanView({ lesson, isComplete, onToggleComplete, canEdit, onEdit }: LessonPlanViewProps) {
-  const hasContent = lesson.objective || lesson.planContent;
+  const hasContent = lesson.objective || (lesson.planContent != null && Object.keys(lesson.planContent).length > 0);
 
   if (!hasContent && !canEdit) {
     return <EmptyState title="No lesson plan" description="No lesson plan has been added to this lesson yet." />;

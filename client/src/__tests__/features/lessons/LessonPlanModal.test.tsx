@@ -14,9 +14,8 @@ const mockLesson: Lesson = {
   title: 'Intro Lesson',
   description: 'A lesson',
   order: 1,
-  createdAt: '2024-01-01',
-  updatedAt: '2024-01-01',
   objective: 'Learn the basics',
+  planContent: {},
 };
 
 describe('LessonPlanModal', () => {
@@ -75,7 +74,7 @@ describe('LessonPlanModal', () => {
   });
 
   it('renders empty objective when lesson has no objective', () => {
-    const lessonWithoutObjective = { ...mockLesson, objective: undefined };
+    const lessonWithoutObjective = { ...mockLesson, objective: '' };
     renderModal(lessonWithoutObjective);
     const textarea = screen.getByPlaceholderText(/what will students learn/i);
     expect(textarea).toHaveValue('');

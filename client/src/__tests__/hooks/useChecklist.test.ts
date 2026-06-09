@@ -278,6 +278,189 @@ describe('useChecklist', () => {
     });
   });
 
+  describe('updateItemText', () => {
+    it('calls checklistApi.update with itemId and text', async () => {
+      const item = makeItem({ id: 'item-1', text: 'Old text' });
+      checklistApiMock.getAll.mockResolvedValueOnce([item]);
+      checklistApiMock.update.mockResolvedValueOnce({ ...item, text: 'New text' });
+
+      const { result } = renderHook(() => useChecklist(LESSON_ID));
+      await waitFor(() => expect(result.current.items).toHaveLength(1));
+
+      await act(async () => {
+        await result.current.updateItemText('item-1', 'New text');
+      });
+
+      expect(checklistApiMock.update).toHaveBeenCalledWith('item-1', { text: 'New text' });
+    });
+
+    it('optimistically updates item text before the API resolves', async () => {
+      const item = makeItem({ id: 'item-1', text: 'Old text' });
+      checklistApiMock.getAll.mockResolvedValueOnce([item]);
+      let resolveUpdate!: (value: ChecklistItem) => void;
+      checklistApiMock.update.mockReturnValueOnce(
+        new Promise<ChecklistItem>(res => { resolveUpdate = res; }),
+      );
+
+      const { result } = renderHook(() => useChecklist(LESSON_ID));
+      await waitFor(() => expect(result.current.items).toHaveLength(1));
+
+      act(() => {
+        void result.current.updateItemText('item-1', 'New text');
+      });
+
+      expect(result.current.items[0].text).toBe('New text');
+
+      await act(async () => { resolveUpdate({ ...item, text: 'New text' }); });
+    });
+
+    it('updates item with the server response', async () => {
+      const item = makeItem({ id: 'item-1', text: 'Old text' });
+      const updated = makeItem({ id: 'item-1', text: 'New text', updatedAt: '2024-06-01T00:00:00Z' });
+      checklistApiMock.getAll.mockResolvedValueOnce([item]);
+      checklistApiMock.update.mockResolvedValueOnce(updated);
+
+      const { result } = renderHook(() => useChecklist(LESSON_ID));
+      await waitFor(() => expect(result.current.items).toHaveLength(1));
+
+      await act(async () => {
+        await result.current.updateItemText('item-1', 'New text');
+      });
+
+      expect(result.current.items[0].updatedAt).toBe('2024-06-01T00:00:00Z');
+    });
+
+    it('rolls back optimistic update and sets error on API failure', async () => {
+      const item = makeItem({ id: 'item-1', text: 'Old text' });
+      checklistApiMock.getAll.mockResolvedValueOnce([item]);
+      checklistApiMock.update.mockRejectedValueOnce(new Error('Network error'));
+
+      const { result } = renderHook(() => useChecklist(LESSON_ID));
+      await waitFor(() => expect(result.current.items).toHaveLength(1));
+
+      await act(async () => {
+        await result.current.updateItemText('item-1', 'New text');
+      });
+
+      expect(result.current.items[0].text).toBe('Old text');
+      expect(result.current.error).toBeTruthy();
+    });
+  });
+
+  describe('moveItem', () => {
+    it('moves item up by swapping with the previous item and calling reorder', async () => {
+      const items = [
+        makeItem({ id: 'item-1', order: 1 }),
+        makeItem({ id: 'item-2', order: 2 }),
+      ];
+      checklistApiMock.getAll.mockResolvedValueOnce(items);
+      checklistApiMock.reorder.mockResolvedValueOnce([
+        { ...items[1], order: 1 },
+        { ...items[0], order: 2 },
+      ]);
+
+      const { result } = renderHook(() => useChecklist(LESSON_ID));
+      await waitFor(() => expect(result.current.items).toHaveLength(2));
+
+      await act(async () => {
+        await result.current.moveItem('item-2', 'up');
+      });
+
+      expect(checklistApiMock.reorder).toHaveBeenCalledWith(LESSON_ID, ['item-2', 'item-1']);
+    });
+
+    it('moves item down by swapping with the next item and calling reorder', async () => {
+      const items = [
+        makeItem({ id: 'item-1', order: 1 }),
+        makeItem({ id: 'item-2', order: 2 }),
+      ];
+      checklistApiMock.getAll.mockResolvedValueOnce(items);
+      checklistApiMock.reorder.mockResolvedValueOnce([
+        { ...items[1], order: 1 },
+        { ...items[0], order: 2 },
+      ]);
+
+      const { result } = renderHook(() => useChecklist(LESSON_ID));
+      await waitFor(() => expect(result.current.items).toHaveLength(2));
+
+      await act(async () => {
+        await result.current.moveItem('item-1', 'down');
+      });
+
+      expect(checklistApiMock.reorder).toHaveBeenCalledWith(LESSON_ID, ['item-2', 'item-1']);
+    });
+
+    it('does nothing when moving the first item up', async () => {
+      const items = [makeItem({ id: 'item-1', order: 1 })];
+      checklistApiMock.getAll.mockResolvedValueOnce(items);
+
+      const { result } = renderHook(() => useChecklist(LESSON_ID));
+      await waitFor(() => expect(result.current.items).toHaveLength(1));
+
+      await act(async () => {
+        await result.current.moveItem('item-1', 'up');
+      });
+
+      expect(checklistApiMock.reorder).not.toHaveBeenCalled();
+    });
+
+    it('does nothing when moving the last item down', async () => {
+      const items = [makeItem({ id: 'item-1', order: 1 })];
+      checklistApiMock.getAll.mockResolvedValueOnce(items);
+
+      const { result } = renderHook(() => useChecklist(LESSON_ID));
+      await waitFor(() => expect(result.current.items).toHaveLength(1));
+
+      await act(async () => {
+        await result.current.moveItem('item-1', 'down');
+      });
+
+      expect(checklistApiMock.reorder).not.toHaveBeenCalled();
+    });
+
+    it('updates items from the server reorder response', async () => {
+      const items = [
+        makeItem({ id: 'item-1', order: 1 }),
+        makeItem({ id: 'item-2', order: 2 }),
+      ];
+      const reordered = [
+        { ...items[1], order: 1 },
+        { ...items[0], order: 2 },
+      ];
+      checklistApiMock.getAll.mockResolvedValueOnce(items);
+      checklistApiMock.reorder.mockResolvedValueOnce(reordered);
+
+      const { result } = renderHook(() => useChecklist(LESSON_ID));
+      await waitFor(() => expect(result.current.items).toHaveLength(2));
+
+      await act(async () => {
+        await result.current.moveItem('item-1', 'down');
+      });
+
+      expect(result.current.items[0].id).toBe('item-2');
+      expect(result.current.items[1].id).toBe('item-1');
+    });
+
+    it('rolls back and sets error on API failure', async () => {
+      const items = [
+        makeItem({ id: 'item-1', order: 1 }),
+        makeItem({ id: 'item-2', order: 2 }),
+      ];
+      checklistApiMock.getAll.mockResolvedValueOnce(items);
+      checklistApiMock.reorder.mockRejectedValueOnce(new Error('Network error'));
+
+      const { result } = renderHook(() => useChecklist(LESSON_ID));
+      await waitFor(() => expect(result.current.items).toHaveLength(2));
+
+      await act(async () => {
+        await result.current.moveItem('item-1', 'down');
+      });
+
+      expect(result.current.items[0].id).toBe('item-1');
+      expect(result.current.error).toBeTruthy();
+    });
+  });
+
   describe('return shape', () => {
     it('exposes all expected return fields', async () => {
       const { result } = renderHook(() => useChecklist(LESSON_ID));

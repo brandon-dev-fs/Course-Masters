@@ -230,7 +230,7 @@ describe('assignmentService.create', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     prismaMock.lesson.findUnique.mockResolvedValue(mockLesson);
-    prismaMock.assignment.aggregate.mockResolvedValue({ _max: { order: 0 } } as unknown as Awaited<ReturnType<typeof prismaMock.assignment.aggregate>>);
+    prismaMock.assignment.aggregate.mockResolvedValue({ _max: { order: 0 } } as never);
     prismaMock.assignment.create.mockResolvedValue(mockAssignment);
     // findById at end of create
     prismaMock.assignment.findUnique.mockResolvedValue(ASSIGNMENT_WITH_RELATIONS);
@@ -278,13 +278,15 @@ describe('assignmentService.create', () => {
   });
 
   it('creates a vocab assignment', async () => {
-    prismaMock.vocabAssignment.create.mockResolvedValue({} as never);
+    prismaMock.vocabAssignment.create.mockResolvedValue({ id: 'va-1' } as never);
+    prismaMock.vocabAssignmentEntry.createMany.mockResolvedValue({ count: 1 });
     await assignmentService.create(LESSON_ID, {
       type: 'vocab', title: 'Vocab', entries: [{ term: 'cat', definition: 'animal' }],
     });
     expect(prismaMock.vocabAssignment.create).toHaveBeenCalledWith(
-      expect.objectContaining({ data: expect.objectContaining({ entries: [{ term: 'cat', definition: 'animal' }] }) }),
+      expect.objectContaining({ data: expect.objectContaining({ assignmentId: ASSIGNMENT_ID }) }),
     );
+    expect(prismaMock.vocabAssignmentEntry.createMany).toHaveBeenCalled();
   });
 
   it('creates a practice_problem assignment with questions', async () => {
@@ -293,7 +295,7 @@ describe('assignmentService.create', () => {
     await assignmentService.create(LESSON_ID, {
       type: 'practice_problem',
       title: 'Practice',
-      questions: [{ type: 'multiple_choice', order: 0, content: { options: ['A'], correctIndex: 0 } }],
+      questions: [{ type: 'multiple_choice', order: 0, content: { question: 'Test question?', options: ['A'], correctIndex: 0 } }],
     });
     expect(prismaMock.practiceProblemAssignment.create).toHaveBeenCalled();
     expect(prismaMock.practiceProblemQuestion.createMany).toHaveBeenCalled();
@@ -310,7 +312,7 @@ describe('assignmentService.create', () => {
 
   it('uses nextOrder = 1 when no prior assignments exist', async () => {
     prismaMock.noteAssignment.create.mockResolvedValue({} as never);
-    prismaMock.assignment.aggregate.mockResolvedValue({ _max: { order: null } } as unknown as Awaited<ReturnType<typeof prismaMock.assignment.aggregate>>);
+    prismaMock.assignment.aggregate.mockResolvedValue({ _max: { order: null } } as never);
 
     await assignmentService.create(LESSON_ID, { type: 'note', title: 'First', content: {} });
 
@@ -374,11 +376,14 @@ describe('assignmentService.update', () => {
 
   it('updates vocab entries', async () => {
     prismaMock.assignment.findUnique.mockResolvedValue({ ...ASSIGNMENT_WITH_RELATIONS, type: 'vocab' });
-    prismaMock.vocabAssignment.update.mockResolvedValue({} as never);
+    prismaMock.vocabAssignment.findUnique.mockResolvedValue({ id: 'va-1' } as never);
+    prismaMock.vocabAssignmentEntry.deleteMany.mockResolvedValue({ count: 0 });
+    prismaMock.vocabAssignmentEntry.create.mockResolvedValue({} as never);
 
     await assignmentService.update(ASSIGNMENT_ID, { entries: [{ term: 'dog', definition: 'animal' }] });
 
-    expect(prismaMock.vocabAssignment.update).toHaveBeenCalled();
+    expect(prismaMock.vocabAssignmentEntry.deleteMany).toHaveBeenCalled();
+    expect(prismaMock.vocabAssignmentEntry.create).toHaveBeenCalled();
   });
 
   it('updates practice_problem questions when provided', async () => {
@@ -393,7 +398,7 @@ describe('assignmentService.update', () => {
     prismaMock.practiceProblemQuestion.createMany.mockResolvedValue({ count: 1 });
 
     await assignmentService.update(ASSIGNMENT_ID, {
-      questions: [{ type: 'multiple_choice', order: 0, content: {} }],
+      questions: [{ type: 'multiple_choice', order: 0, content: { question: 'Test?', options: ['a', 'b'], correctIndex: 0 } }],
     });
 
     expect(prismaMock.practiceProblemQuestion.deleteMany).toHaveBeenCalled();
@@ -421,7 +426,7 @@ describe('assignmentService.reorder', () => {
 
   it('updates order for each assignment', async () => {
     prismaMock.$transaction.mockImplementation((cb: (tx: typeof prismaMock) => Promise<unknown>) =>
-      cb({ ...prismaMock, $queryRaw: vi.fn().mockResolvedValue([{ id: ASSIGNMENT_ID }]) } as typeof prismaMock),
+      cb({ ...prismaMock, $queryRaw: vi.fn().mockResolvedValue([{ id: ASSIGNMENT_ID }]) } as unknown as typeof prismaMock),
     );
 
     await assignmentService.reorder(LESSON_ID, [ASSIGNMENT_ID]);
@@ -433,7 +438,7 @@ describe('assignmentService.reorder', () => {
 
   it('throws AppError when provided IDs do not match lesson assignments', async () => {
     prismaMock.$transaction.mockImplementation((cb: (tx: typeof prismaMock) => Promise<unknown>) =>
-      cb({ ...prismaMock, $queryRaw: vi.fn().mockResolvedValue([{ id: 'other-id' }]) } as typeof prismaMock),
+      cb({ ...prismaMock, $queryRaw: vi.fn().mockResolvedValue([{ id: 'other-id' }]) } as unknown as typeof prismaMock),
     );
 
     await expect(

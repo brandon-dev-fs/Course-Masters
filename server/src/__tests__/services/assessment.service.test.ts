@@ -723,7 +723,7 @@ describe('assessmentService.getAttempts', () => {
     prismaMock.assessmentAttempt.count.mockResolvedValue(3);
     prismaMock.assessmentAttempt.findMany.mockResolvedValue([
       { id: 'att-1', score: 0.9, passed: true, createdAt: new Date() },
-    ] as unknown as Awaited<ReturnType<typeof prismaMock.assessmentAttempt.findMany>>);
+    ] as never);
 
     const result = await assessmentService.getAttempts(ASSESSMENT_ID, USER_ID, 1, 20);
 
@@ -743,7 +743,7 @@ describe('assessmentService.bulkUpdateCalculator', () => {
     vi.clearAllMocks();
     prismaMock.assessment.findFirst.mockResolvedValue(makeAssessment());
     prismaMock.assessmentQuestion.findMany.mockResolvedValue(
-      [{ id: 'q-1' }] as unknown as Awaited<ReturnType<typeof prismaMock.assessmentQuestion.findMany>>,
+      [{ id: 'q-1' }] as never,
     );
     prismaMock.assessmentQuestion.updateMany.mockResolvedValue({ count: 1 });
     prismaMock.assessment.findUnique.mockResolvedValue(makeAssessment());
@@ -762,7 +762,7 @@ describe('assessmentService.bulkUpdateCalculator', () => {
   it('throws AppError when question IDs do not all belong to assessment', async () => {
     // 1 found but 2 requested
     prismaMock.assessmentQuestion.findMany.mockResolvedValue(
-      [{ id: 'q-1' }] as unknown as Awaited<ReturnType<typeof prismaMock.assessmentQuestion.findMany>>,
+      [{ id: 'q-1' }] as never,
     );
     await expect(
       assessmentService.bulkUpdateCalculator(ASSESSMENT_ID, {
