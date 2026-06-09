@@ -14,7 +14,7 @@ vi.mock('../../../api/client.js', () => ({
 }));
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import LessonForm from '../../../features/lessons/LessonForm.js';
 
 describe('LessonForm', () => {
@@ -55,5 +55,44 @@ describe('LessonForm', () => {
     render(<LessonForm onSubmit={vi.fn()} onCancel={vi.fn()} />);
     fireEvent.click(screen.getByRole('button', { name: /add lesson/i }));
     expect(await screen.findByText(/title is required/i)).toBeInTheDocument();
+  });
+
+  it('shows description required error when title filled but description empty', async () => {
+    render(<LessonForm onSubmit={vi.fn()} onCancel={vi.fn()} />);
+    fireEvent.change(screen.getByLabelText(/title/i), { target: { value: 'My Lesson' } });
+    fireEvent.click(screen.getByRole('button', { name: /add lesson/i }));
+    expect(await screen.findByText(/description is required/i)).toBeInTheDocument();
+  });
+
+  it('calls onSubmit with trimmed title and description', async () => {
+    const onSubmit = vi.fn().mockResolvedValue(undefined);
+    render(<LessonForm onSubmit={onSubmit} onCancel={vi.fn()} nextOrder={3} />);
+    fireEvent.change(screen.getByLabelText(/title/i), { target: { value: '  My Lesson  ' } });
+    fireEvent.change(screen.getByLabelText(/description/i), { target: { value: '  My Desc  ' } });
+    fireEvent.click(screen.getByRole('button', { name: /add lesson/i }));
+    await waitFor(() =>
+      expect(onSubmit).toHaveBeenCalledWith({ title: 'My Lesson', description: 'My Desc', order: 3 }),
+    );
+  });
+
+  it('pre-fills fields from initial prop', () => {
+    render(
+      <LessonForm
+        initial={{ id: 'l1', title: 'Existing', description: 'Old desc', order: 2, unitId: 'u1', objective: '', planContent: {} }}
+        onSubmit={vi.fn()}
+        onCancel={vi.fn()}
+      />,
+    );
+    expect(screen.getByDisplayValue('Existing')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('Old desc')).toBeInTheDocument();
+  });
+
+  it('shows error message when onSubmit rejects', async () => {
+    const onSubmit = vi.fn().mockRejectedValueOnce(new Error('Server rejected'));
+    render(<LessonForm onSubmit={onSubmit} onCancel={vi.fn()} />);
+    fireEvent.change(screen.getByLabelText(/title/i), { target: { value: 'Title' } });
+    fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'Desc' } });
+    fireEvent.click(screen.getByRole('button', { name: /add lesson/i }));
+    expect(await screen.findByText(/server rejected/i)).toBeInTheDocument();
   });
 });

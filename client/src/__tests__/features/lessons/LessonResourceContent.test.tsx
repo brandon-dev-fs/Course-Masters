@@ -8,7 +8,7 @@ vi.mock('../../../components/RichTextEditor.js', () => ({
 }));
 
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
 import LessonResourceContent from '../../../features/lessons/LessonResourceContent.js';
@@ -108,5 +108,48 @@ describe('LessonResourceContent', () => {
       </MemoryRouter>,
     );
     expect(container.firstChild).toBeNull();
+  });
+
+  it('shows Edit and Delete buttons when canEdit is true', () => {
+    render(
+      <MemoryRouter>
+        <LessonResourceContent resource={videoResource} {...defaultProps} canEdit={true} />
+      </MemoryRouter>,
+    );
+    expect(screen.getByRole('button', { name: /edit/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /delete/i })).toBeInTheDocument();
+  });
+
+  it('calls onVideoEditStart when Edit is clicked', () => {
+    const onVideoEditStart = vi.fn();
+    render(
+      <MemoryRouter>
+        <LessonResourceContent
+          resource={videoResource}
+          {...defaultProps}
+          canEdit={true}
+          onVideoEditStart={onVideoEditStart}
+        />
+      </MemoryRouter>,
+    );
+    fireEvent.click(screen.getByRole('button', { name: /edit/i }));
+    expect(onVideoEditStart).toHaveBeenCalledWith('r1');
+  });
+
+  it('calls onVideoDeleted when Delete is clicked', async () => {
+    apiClientMock.delete.mockResolvedValueOnce(undefined);
+    const onVideoDeleted = vi.fn();
+    render(
+      <MemoryRouter>
+        <LessonResourceContent
+          resource={videoResource}
+          {...defaultProps}
+          canEdit={true}
+          onVideoDeleted={onVideoDeleted}
+        />
+      </MemoryRouter>,
+    );
+    fireEvent.click(screen.getByRole('button', { name: /delete/i }));
+    await waitFor(() => expect(onVideoDeleted).toHaveBeenCalledWith('r1'));
   });
 });
