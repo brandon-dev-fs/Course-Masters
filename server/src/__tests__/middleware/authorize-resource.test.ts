@@ -46,7 +46,7 @@ describe('requireCourseOwnership', () => {
   ) {
     mw(
       req as Parameters<ReturnType<typeof requireCourseOwnership>>[0],
-      res as Parameters<ReturnType<typeof requireCourseOwnership>>[1],
+      res as unknown as Parameters<ReturnType<typeof requireCourseOwnership>>[1],
       next,
     );
     await Promise.resolve();
@@ -111,7 +111,7 @@ describe('requireCourseOwnership', () => {
     const middleware = requireCourseOwnership('course', (r) => r.params['courseId'] as string);
     await middleware(
       req as Parameters<ReturnType<typeof requireCourseOwnership>>[0],
-      res as Parameters<ReturnType<typeof requireCourseOwnership>>[1],
+      res as unknown as Parameters<ReturnType<typeof requireCourseOwnership>>[1],
       next,
     );
 
@@ -128,7 +128,7 @@ describe('requireCourseOwnership', () => {
     const middleware = requireCourseOwnership('course', (r) => r.params['courseId'] as string);
     await middleware(
       req as Parameters<ReturnType<typeof requireCourseOwnership>>[0],
-      res as Parameters<ReturnType<typeof requireCourseOwnership>>[1],
+      res as unknown as Parameters<ReturnType<typeof requireCourseOwnership>>[1],
       next,
     );
 
@@ -145,7 +145,7 @@ describe('requireCourseOwnership', () => {
     const middleware = requireCourseOwnership('course', (r) => r.params['courseId'] as string);
     await middleware(
       req as Parameters<ReturnType<typeof requireCourseOwnership>>[0],
-      res as Parameters<ReturnType<typeof requireCourseOwnership>>[1],
+      res as unknown as Parameters<ReturnType<typeof requireCourseOwnership>>[1],
       next,
     );
 
@@ -172,7 +172,7 @@ describe('requireSelf', () => {
     const middleware = requireSelf((r) => r.params['userId'] as string);
     await middleware(
       req as Parameters<ReturnType<typeof requireSelf>>[0],
-      res as Parameters<ReturnType<typeof requireSelf>>[1],
+      res as unknown as Parameters<ReturnType<typeof requireSelf>>[1],
       next,
     );
 
@@ -188,7 +188,7 @@ describe('requireSelf', () => {
     const middleware = requireSelf((r) => r.params['userId'] as string);
     await middleware(
       req as Parameters<ReturnType<typeof requireSelf>>[0],
-      res as Parameters<ReturnType<typeof requireSelf>>[1],
+      res as unknown as Parameters<ReturnType<typeof requireSelf>>[1],
       next,
     );
 
@@ -206,7 +206,7 @@ describe('requireSelf', () => {
     const middleware = requireSelf((r) => r.params['userId'] as string);
     await middleware(
       req as Parameters<ReturnType<typeof requireSelf>>[0],
-      res as Parameters<ReturnType<typeof requireSelf>>[1],
+      res as unknown as Parameters<ReturnType<typeof requireSelf>>[1],
       next,
     );
 
@@ -221,7 +221,7 @@ describe('requireSelf', () => {
     const middleware = requireSelf(() => undefined);
     await middleware(
       req as Parameters<ReturnType<typeof requireSelf>>[0],
-      res as Parameters<ReturnType<typeof requireSelf>>[1],
+      res as unknown as Parameters<ReturnType<typeof requireSelf>>[1],
       next,
     );
 
@@ -250,7 +250,7 @@ describe('requireStudentRole', () => {
     const middleware = requireStudentRole();
     await middleware(
       req as Parameters<ReturnType<typeof requireStudentRole>>[0],
-      res as Parameters<ReturnType<typeof requireStudentRole>>[1],
+      res as unknown as Parameters<ReturnType<typeof requireStudentRole>>[1],
       next,
     );
 
@@ -268,7 +268,7 @@ describe('requireStudentRole', () => {
     const middleware = requireStudentRole();
     await middleware(
       req as Parameters<ReturnType<typeof requireStudentRole>>[0],
-      res as Parameters<ReturnType<typeof requireStudentRole>>[1],
+      res as unknown as Parameters<ReturnType<typeof requireStudentRole>>[1],
       next,
     );
 
@@ -288,7 +288,7 @@ describe('requireStudentRole', () => {
     const middleware = requireStudentRole();
     await middleware(
       req as Parameters<ReturnType<typeof requireStudentRole>>[0],
-      res as Parameters<ReturnType<typeof requireStudentRole>>[1],
+      res as unknown as Parameters<ReturnType<typeof requireStudentRole>>[1],
       next,
     );
 

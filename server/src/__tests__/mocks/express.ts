@@ -1,6 +1,7 @@
+import type { Request } from 'express';
 import { vi } from 'vitest';
 
-export function makeReq(overrides: Record<string, unknown> = {}) {
+export function makeReq(overrides: Record<string, unknown> = {}): Request {
   return {
     user: null,
     session: null,
@@ -12,13 +13,13 @@ export function makeReq(overrides: Record<string, unknown> = {}) {
     method: 'GET',
     requestId: 'req-test-id',
     ...overrides,
-  };
+  } as unknown as Request;
 }
 
 export function makeRes() {
-  const res: Record<string, ReturnType<typeof vi.fn>> & { statusCode: number; locals: Record<string, unknown> } = {
+  const res = {
     statusCode: 200,
-    locals: {},
+    locals: {} as Record<string, unknown>,
     status: vi.fn(),
     json: vi.fn(),
     send: vi.fn(),

@@ -17,7 +17,7 @@ import { auth } from '../../lib/auth.js';
 import { authenticate } from '../../middleware/authenticate.js';
 import { makeReq, makeRes, makeNext } from '../mocks/express.js';
 
-const mockGetSession = auth.api.getSession as ReturnType<typeof vi.fn>;
+const mockGetSession = auth.api.getSession as unknown as ReturnType<typeof vi.fn>;
 
 const mockUser = {
   id: 'user-1',
@@ -58,7 +58,7 @@ describe('authenticate', () => {
 
     await middleware(
       req as Parameters<ReturnType<typeof authenticate>>[0],
-      res as Parameters<ReturnType<typeof authenticate>>[1],
+      res as unknown as Parameters<ReturnType<typeof authenticate>>[1],
       next,
     );
 
@@ -72,7 +72,7 @@ describe('authenticate', () => {
 
     await middleware(
       req as Parameters<ReturnType<typeof authenticate>>[0],
-      res as Parameters<ReturnType<typeof authenticate>>[1],
+      res as unknown as Parameters<ReturnType<typeof authenticate>>[1],
       next,
     );
 
@@ -86,7 +86,7 @@ describe('authenticate', () => {
 
     await middleware(
       req as Parameters<ReturnType<typeof authenticate>>[0],
-      res as Parameters<ReturnType<typeof authenticate>>[1],
+      res as unknown as Parameters<ReturnType<typeof authenticate>>[1],
       next,
     );
 
@@ -105,7 +105,7 @@ describe('authenticate', () => {
 
     await middleware(
       req as Parameters<ReturnType<typeof authenticate>>[0],
-      res as Parameters<ReturnType<typeof authenticate>>[1],
+      res as unknown as Parameters<ReturnType<typeof authenticate>>[1],
       next,
     );
 
@@ -119,7 +119,7 @@ describe('authenticate', () => {
 
     await middleware(
       req as Parameters<ReturnType<typeof authenticate>>[0],
-      res as Parameters<ReturnType<typeof authenticate>>[1],
+      res as unknown as Parameters<ReturnType<typeof authenticate>>[1],
       next,
     );
 

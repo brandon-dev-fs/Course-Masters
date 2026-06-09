@@ -18,7 +18,7 @@ describe('authorize', () => {
 
     middleware(
       req as Parameters<ReturnType<typeof authorize>>[0],
-      res as Parameters<ReturnType<typeof authorize>>[1],
+      res as unknown as Parameters<ReturnType<typeof authorize>>[1],
       next,
     );
 
@@ -32,7 +32,7 @@ describe('authorize', () => {
 
     middleware(
       req as Parameters<ReturnType<typeof authorize>>[0],
-      res as Parameters<ReturnType<typeof authorize>>[1],
+      res as unknown as Parameters<ReturnType<typeof authorize>>[1],
       next,
     );
 
@@ -46,7 +46,7 @@ describe('authorize', () => {
 
     middleware(
       req as Parameters<ReturnType<typeof authorize>>[0],
-      res as Parameters<ReturnType<typeof authorize>>[1],
+      res as unknown as Parameters<ReturnType<typeof authorize>>[1],
       next,
     );
 
@@ -65,7 +65,7 @@ describe('authorize', () => {
 
     middleware(
       req as Parameters<ReturnType<typeof authorize>>[0],
-      res as Parameters<ReturnType<typeof authorize>>[1],
+      res as unknown as Parameters<ReturnType<typeof authorize>>[1],
       next,
     );
 
@@ -84,7 +84,7 @@ describe('authorize', () => {
 
     middleware(
       req as Parameters<ReturnType<typeof authorize>>[0],
-      res as Parameters<ReturnType<typeof authorize>>[1],
+      res as unknown as Parameters<ReturnType<typeof authorize>>[1],
       next,
     );
 
@@ -97,7 +97,7 @@ describe('authorize', () => {
 
     middleware(
       req as Parameters<ReturnType<typeof authorize>>[0],
-      res as Parameters<ReturnType<typeof authorize>>[1],
+      res as unknown as Parameters<ReturnType<typeof authorize>>[1],
       next,
     );
 

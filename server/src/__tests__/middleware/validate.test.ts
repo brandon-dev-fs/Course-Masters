@@ -27,7 +27,7 @@ describe('validate', () => {
 
     middleware(
       req as Parameters<ReturnType<typeof validate>>[0],
-      res as Parameters<ReturnType<typeof validate>>[1],
+      res as unknown as Parameters<ReturnType<typeof validate>>[1],
       next,
     );
 
@@ -41,7 +41,7 @@ describe('validate', () => {
 
     middleware(
       req as Parameters<ReturnType<typeof validate>>[0],
-      res as Parameters<ReturnType<typeof validate>>[1],
+      res as unknown as Parameters<ReturnType<typeof validate>>[1],
       next,
     );
 
@@ -54,7 +54,7 @@ describe('validate', () => {
 
     middleware(
       req as Parameters<ReturnType<typeof validate>>[0],
-      res as Parameters<ReturnType<typeof validate>>[1],
+      res as unknown as Parameters<ReturnType<typeof validate>>[1],
       next,
     );
 
@@ -69,7 +69,7 @@ describe('validate', () => {
 
     middleware(
       req as Parameters<ReturnType<typeof validate>>[0],
-      res as Parameters<ReturnType<typeof validate>>[1],
+      res as unknown as Parameters<ReturnType<typeof validate>>[1],
       next,
     );
 
@@ -83,7 +83,7 @@ describe('validate', () => {
 
     middleware(
       req as Parameters<ReturnType<typeof validate>>[0],
-      res as Parameters<ReturnType<typeof validate>>[1],
+      res as unknown as Parameters<ReturnType<typeof validate>>[1],
       next,
     );
 
@@ -97,7 +97,7 @@ describe('validate', () => {
 
     middleware(
       req as Parameters<ReturnType<typeof validate>>[0],
-      res as Parameters<ReturnType<typeof validate>>[1],
+      res as unknown as Parameters<ReturnType<typeof validate>>[1],
       next,
     );
 
@@ -128,7 +128,7 @@ describe('validateQuery', () => {
 
     middleware(
       req as Parameters<ReturnType<typeof validateQuery>>[0],
-      res as Parameters<ReturnType<typeof validateQuery>>[1],
+      res as unknown as Parameters<ReturnType<typeof validateQuery>>[1],
       next,
     );
 
@@ -142,7 +142,7 @@ describe('validateQuery', () => {
 
     middleware(
       req as Parameters<ReturnType<typeof validateQuery>>[0],
-      res as Parameters<ReturnType<typeof validateQuery>>[1],
+      res as unknown as Parameters<ReturnType<typeof validateQuery>>[1],
       next,
     );
 
@@ -155,7 +155,7 @@ describe('validateQuery', () => {
 
     middleware(
       req as Parameters<ReturnType<typeof validateQuery>>[0],
-      res as Parameters<ReturnType<typeof validateQuery>>[1],
+      res as unknown as Parameters<ReturnType<typeof validateQuery>>[1],
       next,
     );
 
@@ -170,7 +170,7 @@ describe('validateQuery', () => {
 
     middleware(
       req as Parameters<ReturnType<typeof validateQuery>>[0],
-      res as Parameters<ReturnType<typeof validateQuery>>[1],
+      res as unknown as Parameters<ReturnType<typeof validateQuery>>[1],
       next,
     );
 
@@ -184,7 +184,7 @@ describe('validateQuery', () => {
 
     middleware(
       req as Parameters<ReturnType<typeof validateQuery>>[0],
-      res as Parameters<ReturnType<typeof validateQuery>>[1],
+      res as unknown as Parameters<ReturnType<typeof validateQuery>>[1],
       next,
     );
 

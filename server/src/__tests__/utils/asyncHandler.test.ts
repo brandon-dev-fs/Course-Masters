@@ -20,7 +20,7 @@ describe('asyncHandler', () => {
     });
     const wrapped = asyncHandler(handler as Parameters<typeof asyncHandler>[0]);
 
-    wrapped(req as Parameters<typeof wrapped>[0], res as Parameters<typeof wrapped>[1], next);
+    wrapped(req as Parameters<typeof wrapped>[0], res as unknown as Parameters<typeof wrapped>[1], next);
 
     // Wait for the promise to resolve
     await new Promise(resolve => setImmediate(resolve));
@@ -34,7 +34,7 @@ describe('asyncHandler', () => {
     const handler = vi.fn().mockRejectedValue(error);
     const wrapped = asyncHandler(handler as Parameters<typeof asyncHandler>[0]);
 
-    wrapped(req as Parameters<typeof wrapped>[0], res as Parameters<typeof wrapped>[1], next);
+    wrapped(req as Parameters<typeof wrapped>[0], res as unknown as Parameters<typeof wrapped>[1], next);
 
     await new Promise(resolve => setImmediate(resolve));
 
@@ -46,7 +46,7 @@ describe('asyncHandler', () => {
     const handler = vi.fn().mockResolvedValue(undefined);
     const wrapped = asyncHandler(handler as Parameters<typeof asyncHandler>[0]);
 
-    wrapped(req as Parameters<typeof wrapped>[0], res as Parameters<typeof wrapped>[1], next);
+    wrapped(req as Parameters<typeof wrapped>[0], res as unknown as Parameters<typeof wrapped>[1], next);
 
     await new Promise(resolve => setImmediate(resolve));
 
@@ -60,7 +60,7 @@ describe('asyncHandler', () => {
     });
     const wrapped = asyncHandler(handler as Parameters<typeof asyncHandler>[0]);
 
-    wrapped(req as Parameters<typeof wrapped>[0], res as Parameters<typeof wrapped>[1], next);
+    wrapped(req as Parameters<typeof wrapped>[0], res as unknown as Parameters<typeof wrapped>[1], next);
 
     await new Promise(resolve => setImmediate(resolve));
 

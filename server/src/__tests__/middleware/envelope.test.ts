@@ -17,7 +17,7 @@ describe('envelopeMiddleware', () => {
   it('calls next() to continue the middleware chain', () => {
     envelopeMiddleware(
       req as Parameters<typeof envelopeMiddleware>[0],
-      res as Parameters<typeof envelopeMiddleware>[1],
+      res as unknown as Parameters<typeof envelopeMiddleware>[1],
       next,
     );
 
@@ -37,7 +37,7 @@ describe('envelopeMiddleware', () => {
 
     envelopeMiddleware(
       req as Parameters<typeof envelopeMiddleware>[0],
-      freshRes as Parameters<typeof envelopeMiddleware>[1],
+      freshRes as unknown as Parameters<typeof envelopeMiddleware>[1],
       next,
     );
 
@@ -59,7 +59,7 @@ describe('envelopeMiddleware', () => {
 
     envelopeMiddleware(
       req as Parameters<typeof envelopeMiddleware>[0],
-      freshRes as Parameters<typeof envelopeMiddleware>[1],
+      freshRes as unknown as Parameters<typeof envelopeMiddleware>[1],
       next,
     );
 
@@ -82,7 +82,7 @@ describe('envelopeMiddleware', () => {
 
     envelopeMiddleware(
       req as Parameters<typeof envelopeMiddleware>[0],
-      freshRes as Parameters<typeof envelopeMiddleware>[1],
+      freshRes as unknown as Parameters<typeof envelopeMiddleware>[1],
       next,
     );
 
@@ -103,7 +103,7 @@ describe('envelopeMiddleware', () => {
 
     envelopeMiddleware(
       req as Parameters<typeof envelopeMiddleware>[0],
-      freshRes as Parameters<typeof envelopeMiddleware>[1],
+      freshRes as unknown as Parameters<typeof envelopeMiddleware>[1],
       next,
     );
 

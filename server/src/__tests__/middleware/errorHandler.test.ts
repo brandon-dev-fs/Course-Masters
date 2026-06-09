@@ -33,7 +33,7 @@ describe('errorHandler', () => {
     errorHandler(
       err,
       req as Parameters<typeof errorHandler>[1],
-      res as Parameters<typeof errorHandler>[2],
+      res as unknown as Parameters<typeof errorHandler>[2],
       next,
     );
   }

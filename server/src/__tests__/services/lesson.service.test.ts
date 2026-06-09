@@ -12,7 +12,9 @@ function makeLesson(overrides: Partial<Lesson> = {}): Lesson {
     id: 'lesson-1',
     unitId: 'unit-1',
     title: 'Test Lesson',
-    description: null,
+    description: 'Test description',
+    objective: '',
+    planContent: {},
     order: 1,
     deletedAt: null,
     createdAt: new Date(),
@@ -104,7 +106,7 @@ describe('lessonService.create', () => {
     const lesson = makeLesson();
     prismaMock.lesson.create.mockResolvedValue(lesson);
 
-    const result = await lessonService.create(UNIT_ID, { title: 'New Lesson', order: 1 });
+    const result = await lessonService.create(UNIT_ID, { title: 'New Lesson', description: 'Desc', objective: '', planContent: {}, order: 1 });
 
     expect(prismaMock.lesson.create).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -117,7 +119,7 @@ describe('lessonService.create', () => {
   it('throws NotFoundError when unit does not exist', async () => {
     prismaMock.unit.findFirst.mockResolvedValue(null);
 
-    await expect(lessonService.create(UNIT_ID, { title: 'New Lesson', order: 1 })).rejects.toThrow(NotFoundError);
+    await expect(lessonService.create(UNIT_ID, { title: 'New Lesson', description: 'Desc', objective: '', planContent: {}, order: 1 })).rejects.toThrow(NotFoundError);
   });
 });
 
