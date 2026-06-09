@@ -50,6 +50,7 @@ function makeAssignment(overrides: Partial<Assignment> = {}): Assignment {
     createdAt: '2024-01-01T00:00:00Z',
     updatedAt: '2024-01-01T00:00:00Z',
     completed: false,
+    bookmark: null,
     noteAssignment: null,
     videoAssignment: null,
     readingAssignment: null,
@@ -335,21 +336,11 @@ describe('useAssignments', () => {
       expect(result.current.completedAssignmentIds.has('a-1')).toBe(true);
     });
 
-    it('availableTools always includes "notes"', async () => {
+    it('availableTools includes all four panel types', async () => {
       const { result } = renderHook(() => useAssignments(defaultParams));
       await waitFor(() => expect(assignmentsApiMock.getAll).toHaveBeenCalled());
 
-      expect(result.current.availableTools).toContain('notes');
-    });
-
-    it('availableTools includes "flashcards" when tools contain flash_card type', async () => {
-      const tools: LessonTool[] = [
-        { id: 't-1', type: 'flash_card', title: 'FC', content: { front: 'Q', back: 'A' }, order: 1, lessonId: 'lesson-1', isRequired: false },
-      ];
-      const { result } = renderHook(() => useAssignments({ ...defaultParams, tools }));
-      await waitFor(() => expect(assignmentsApiMock.getAll).toHaveBeenCalled());
-
-      expect(result.current.availableTools).toContain('flashcards');
+      expect(result.current.availableTools).toEqual(['notes', 'flashcards', 'checklist', 'bookmarks']);
     });
 
     it('assignmentItems is empty when lesson is null', async () => {

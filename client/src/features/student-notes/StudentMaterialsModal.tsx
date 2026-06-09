@@ -5,8 +5,9 @@ import type { StudentToolType } from './StudentToolsBar.js';
 import { TOOL_META } from './StudentToolsBar.js';
 import StudentNotePanel from './StudentNotePanel.js';
 import FlashCardList from '../flashcards/FlashCardList.js';
-import PracticeProblemList from '../practice-problems/PracticeProblemList.js';
-import VocabList from '../vocab/VocabList.js';
+import ChecklistPanel from '../lessons/ChecklistPanel.js';
+import BookmarksPanel from '../lessons/BookmarksPanel.js';
+import type { Assignment } from '../../api/types.js';
 
 interface StudentMaterialsModalProps {
   lessonId: string;
@@ -15,6 +16,8 @@ interface StudentMaterialsModalProps {
   availableTools: StudentToolType[];
   onSwitchTool: (tool: StudentToolType) => void;
   onClose: () => void;
+  assignments?: Assignment[];
+  onNavigateToAssignment?: (assignmentId: string) => void;
 }
 
 type Position = { x: number; y: number };
@@ -32,6 +35,7 @@ function defaultPosition(): Position {
 
 export default function StudentMaterialsModal({
   lessonId, isOpen, activeTool, availableTools, onSwitchTool, onClose,
+  assignments = [], onNavigateToAssignment,
 }: StudentMaterialsModalProps) {
   const [position, setPosition] = useState<Position>(defaultPosition);
   const [size, setSize] = useState<Size>({ width: DEFAULT_W, height: DEFAULT_H });
@@ -139,8 +143,13 @@ export default function StudentMaterialsModal({
       <div className="flex-1 overflow-y-auto min-h-0">
         {activeTool === 'notes' && <StudentNotePanel lessonId={lessonId} />}
         {activeTool === 'flashcards' && <div className="p-3"><FlashCardList lessonId={lessonId} /></div>}
-        {activeTool === 'practice' && <div className="p-3"><PracticeProblemList lessonId={lessonId} /></div>}
-        {activeTool === 'vocab' && <div className="p-3"><VocabList lessonId={lessonId} /></div>}
+        {activeTool === 'checklist' && <div className="p-3"><ChecklistPanel lessonId={lessonId} /></div>}
+        {activeTool === 'bookmarks' && (
+          <BookmarksPanel
+            assignments={assignments}
+            onNavigate={(id) => { onNavigateToAssignment?.(id); onClose(); }}
+          />
+        )}
       </div>
 
       {/* Resize handle — bottom-right corner */}

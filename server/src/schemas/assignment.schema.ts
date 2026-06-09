@@ -83,6 +83,7 @@ export const createAssignmentSchema = z.discriminatedUnion('type', [
         z.object({
           term: z.string().min(1),
           definition: z.string().min(1),
+          example: z.string().optional(),
         }),
       )
       .min(1),
@@ -110,12 +111,14 @@ export const updateAssignmentSchema = z.object({
   // reading
   description: z.string().optional(),
   estimatedMinutes: z.number().int().min(1).optional(),
-  // vocab
+  // vocab — id is optional: present for existing entries, absent for new ones
   entries: z
     .array(
       z.object({
+        id: z.string().optional(),
         term: z.string().min(1),
         definition: z.string().min(1),
+        example: z.string().optional(),
       }),
     )
     .optional(),

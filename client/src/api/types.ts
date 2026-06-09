@@ -125,6 +125,13 @@ export interface PracticeProblemContent {
 export interface VocabContent {
   term: string;
   definition: string;
+  example?: string;
+}
+
+export interface StudyCard {
+  id: string;
+  front: string;
+  back: string;
 }
 
 export interface FlashCardTool {
@@ -323,8 +330,10 @@ export interface ReadingAssignmentData {
 }
 
 export interface VocabEntry {
+  id?: string;   // present for existing entries from DB, absent for new form entries
   term: string;
   definition: string;
+  example?: string;
 }
 
 export interface VocabAssignmentData {
@@ -345,6 +354,12 @@ export interface PracticeProblemAssignmentData {
   questions: PracticeQuestion[];
 }
 
+export interface Bookmark {
+  id: string;
+  note: string;
+  updatedAt: string;
+}
+
 export interface Assignment {
   id: string;
   lessonId: string;
@@ -360,6 +375,7 @@ export interface Assignment {
   readingAssignment: ReadingAssignmentData | null;
   vocabAssignment: VocabAssignmentData | null;
   practiceProblemAssignment: PracticeProblemAssignmentData | null;
+  bookmark: Bookmark | null;
 }
 
 export interface AssignmentCompletion {
@@ -367,4 +383,16 @@ export interface AssignmentCompletion {
   userId: string;
   assignmentId: string;
   completedAt: string;
+}
+
+// ─── Checklist ───────────────────────────────────────────────────────────────
+
+export interface ChecklistItem {
+  id: string;
+  lessonId: string;
+  text: string;
+  checked: boolean;
+  order: number;
+  createdAt: string;
+  updatedAt: string;
 }

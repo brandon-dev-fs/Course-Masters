@@ -1,16 +1,12 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import FlashCardStudyMode from '../../../features/flashcards/FlashCardStudyMode.js';
-import type { LessonTool } from '../../../api/types.js';
+import type { StudyCard } from '../../../api/types.js';
 
-const makeCard = (i: number): LessonTool => ({
+const makeCard = (i: number): StudyCard => ({
   id: `card-${i}`,
-  type: 'flash_card',
-  title: `Card ${i}`,
-  content: { front: `Front ${i}`, back: `Back ${i}` },
-  order: i,
-  lessonId: 'l1',
-  isRequired: false,
+  front: `Front ${i}`,
+  back: `Back ${i}`,
 });
 
 const cards = [makeCard(1), makeCard(2), makeCard(3)];

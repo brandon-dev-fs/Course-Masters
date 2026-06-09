@@ -11,13 +11,14 @@ import LoadingSpinner from '../../components/LoadingSpinner.js';
 import ErrorMessage from '../../components/ErrorMessage.js';
 import EmptyState from '../../components/EmptyState.js';
 
-type VocabCreateInput = { type: 'vocab'; title: string; content: { term: string; definition: string }; order: number };
-type VocabUpdateInput = { content?: { term: string; definition: string }; order?: number };
+type VocabCreateInput = { type: 'vocab'; title: string; content: { term: string; definition: string; example?: string }; order: number };
+type VocabUpdateInput = { content?: { term: string; definition: string; example?: string }; order?: number };
 
 const byOrder = (a: LessonTool, b: LessonTool) => a.order - b.order;
 
 export default function VocabList({ lessonId }: { lessonId: string }) {
   const canEdit = useCanEdit();
+
   const {
     items: vocabs, loading, error,
     showAdd, setShowAdd, editing, setEditing, deleting, setDeleting,
@@ -66,8 +67,8 @@ export default function VocabList({ lessonId }: { lessonId: string }) {
         <Modal title="Add Vocabulary Term" onClose={() => setShowAdd(false)}>
           <VocabForm
             nextOrder={vocabs.length + 1}
-            onSubmit={async ({ term, definition, order }) =>
-              handleAdd({ type: 'vocab', title: term, content: { term, definition }, order })
+            onSubmit={async ({ term, definition, example, order }) =>
+              handleAdd({ type: 'vocab', title: term, content: { term, definition, example }, order })
             }
             onCancel={() => setShowAdd(false)}
           />
@@ -77,8 +78,8 @@ export default function VocabList({ lessonId }: { lessonId: string }) {
         <Modal title="Edit Vocabulary Term" onClose={() => setEditing(null)}>
           <VocabForm
             initial={editing}
-            onSubmit={async ({ term, definition, order }) =>
-              handleUpdate({ content: { term, definition }, order })
+            onSubmit={async ({ term, definition, example, order }) =>
+              handleUpdate({ content: { term, definition, example }, order })
             }
             onCancel={() => setEditing(null)}
           />

@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import VocabCard from '../../../features/vocab/VocabCard.js';
 import type { LessonTool } from '../../../api/types.js';
 
@@ -8,6 +8,16 @@ const vocabTool: LessonTool = {
   type: 'vocab',
   title: 'Variable',
   content: { term: 'Variable', definition: 'A named storage location in memory.' },
+  order: 1,
+  lessonId: 'l1',
+  isRequired: false,
+};
+
+const vocabWithExample: LessonTool = {
+  id: 't1',
+  type: 'vocab',
+  title: 'Variable',
+  content: { term: 'Variable', definition: 'A named storage location in memory.', example: 'let x = 5 declares a variable.' },
   order: 1,
   lessonId: 'l1',
   isRequired: false,
@@ -46,5 +56,15 @@ describe('VocabCard', () => {
     const noDef = { ...vocabTool, content: { term: 'Variable' } } as unknown as LessonTool;
     render(<VocabCard vocab={noDef} />);
     expect(screen.getByText('Variable')).toBeInTheDocument();
+  });
+
+  it('renders example sentence when present', () => {
+    render(<VocabCard vocab={vocabWithExample} />);
+    expect(screen.getByText('let x = 5 declares a variable.')).toBeInTheDocument();
+  });
+
+  it('does not render example block when absent', () => {
+    render(<VocabCard vocab={vocabTool} />);
+    expect(screen.queryByText(/declares a variable/i)).not.toBeInTheDocument();
   });
 });

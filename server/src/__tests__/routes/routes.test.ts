@@ -55,7 +55,16 @@ vi.mock('../../controllers/user.controller.js', () => ({
   userController: makeController(['remove']),
 }));
 vi.mock('../../controllers/assignment.controller.js', () => ({
-  assignmentController: makeController(['getAll', 'getOne', 'create', 'update', 'remove', 'reorder', 'complete', 'uncomplete']),
+  assignmentController: makeController([
+    'getAll', 'getOne', 'create', 'update', 'remove', 'reorder', 'complete', 'uncomplete',
+    'getSavedVocabEntryFlashCards', 'saveVocabEntryFlashCard', 'removeVocabEntryFlashCard',
+  ]),
+}));
+vi.mock('../../controllers/bookmark.controller.js', () => ({
+  bookmarkController: makeController(['getOne', 'create', 'upsert', 'remove']),
+}));
+vi.mock('../../controllers/checklist.controller.js', () => ({
+  checklistController: makeController(['getAll', 'create', 'update', 'remove', 'reorder']),
 }));
 
 // ── Middleware ─────────────────────────────────────────────────────────────

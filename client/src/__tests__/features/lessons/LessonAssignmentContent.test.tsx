@@ -17,6 +17,7 @@ const baseAssignment: Assignment = {
   createdAt: '2024-01-01',
   updatedAt: '2024-01-01',
   completed: false,
+  bookmark: null,
   noteAssignment: null,
   videoAssignment: null,
   readingAssignment: null,
@@ -26,6 +27,7 @@ const baseAssignment: Assignment = {
 
 describe('LessonAssignmentContent', () => {
   const onToggle = vi.fn().mockResolvedValue(undefined);
+  const onBookmarkChange = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -37,7 +39,7 @@ describe('LessonAssignmentContent', () => {
       type: 'note',
       noteAssignment: { id: 'na1', content: { type: 'doc', content: [] } },
     };
-    render(<LessonAssignmentContent assignment={assignment} onToggleAssignmentCompletion={onToggle} />);
+    render(<LessonAssignmentContent assignment={assignment} onToggleAssignmentCompletion={onToggle} onBookmarkChange={onBookmarkChange} isStudent={false} />);
     expect(screen.getByTestId('rich-text-editor')).toBeInTheDocument();
   });
 
@@ -47,7 +49,7 @@ describe('LessonAssignmentContent', () => {
       type: 'video',
       videoAssignment: { id: 'va1', url: 'https://www.youtube.com/watch?v=abc', title: 'Test Video' },
     };
-    render(<LessonAssignmentContent assignment={assignment} onToggleAssignmentCompletion={onToggle} />);
+    render(<LessonAssignmentContent assignment={assignment} onToggleAssignmentCompletion={onToggle} onBookmarkChange={onBookmarkChange} isStudent={false} />);
     expect(screen.getByText('Test Video')).toBeInTheDocument();
   });
 
@@ -57,7 +59,7 @@ describe('LessonAssignmentContent', () => {
       type: 'reading',
       readingAssignment: { id: 'ra1', url: 'https://example.com', description: 'Read this article', estimatedMinutes: 10 },
     };
-    render(<LessonAssignmentContent assignment={assignment} onToggleAssignmentCompletion={onToggle} />);
+    render(<LessonAssignmentContent assignment={assignment} onToggleAssignmentCompletion={onToggle} onBookmarkChange={onBookmarkChange} isStudent={false} />);
     expect(screen.getByText('Read this article')).toBeInTheDocument();
   });
 
@@ -70,13 +72,13 @@ describe('LessonAssignmentContent', () => {
         entries: [{ term: 'Variable', definition: 'A named storage' }],
       },
     };
-    render(<LessonAssignmentContent assignment={assignment} onToggleAssignmentCompletion={onToggle} />);
+    render(<LessonAssignmentContent assignment={assignment} onToggleAssignmentCompletion={onToggle} onBookmarkChange={onBookmarkChange} isStudent={false} />);
     expect(screen.getByText('Variable')).toBeInTheDocument();
   });
 
   it('renders null when assignment has no data', () => {
     const { container } = render(
-      <LessonAssignmentContent assignment={baseAssignment} onToggleAssignmentCompletion={onToggle} />,
+      <LessonAssignmentContent assignment={baseAssignment} onToggleAssignmentCompletion={onToggle} onBookmarkChange={onBookmarkChange} isStudent={false} />,
     );
     expect(container.firstChild).toBeNull();
   });
@@ -84,7 +86,7 @@ describe('LessonAssignmentContent', () => {
   it('renders null for unknown assignment type', () => {
     const assignment = { ...baseAssignment, type: 'unknown' as 'note' };
     const { container } = render(
-      <LessonAssignmentContent assignment={assignment} onToggleAssignmentCompletion={onToggle} />,
+      <LessonAssignmentContent assignment={assignment} onToggleAssignmentCompletion={onToggle} onBookmarkChange={onBookmarkChange} isStudent={false} />,
     );
     expect(container.firstChild).toBeNull();
   });

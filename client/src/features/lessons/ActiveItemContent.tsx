@@ -1,4 +1,4 @@
-import type { Assignment, LessonResource, LessonTool } from '../../api/types.js';
+import type { Assignment, Bookmark, LessonResource, LessonTool } from '../../api/types.js';
 import type { AssignmentItem } from './AssignmentSection.js';
 import LessonPlanView from './LessonPlanView.js';
 import LessonResourceContent from './LessonResourceContent.js';
@@ -34,6 +34,8 @@ interface ActiveItemContentProps {
   onToolDeleted: (id: string) => void;
   onToolUpdated: (updated: LessonTool) => void;
   onToggleAssignmentCompletion: (assignment: Assignment) => Promise<void>;
+  onBookmarkChange: (assignmentId: string, bookmark: Bookmark | null) => void;
+  isStudent: boolean;
   onPlanEdit: () => void;
 }
 
@@ -55,6 +57,8 @@ export default function ActiveItemContent({
   onToolDeleted,
   onToolUpdated,
   onToggleAssignmentCompletion,
+  onBookmarkChange,
+  isStudent,
   onPlanEdit,
 }: ActiveItemContentProps) {
   if (item.kind === 'lessonPlan') {
@@ -122,6 +126,8 @@ export default function ActiveItemContent({
       <LessonAssignmentContent
         assignment={assignment}
         onToggleAssignmentCompletion={onToggleAssignmentCompletion}
+        onBookmarkChange={onBookmarkChange}
+        isStudent={isStudent}
       />
     );
   }

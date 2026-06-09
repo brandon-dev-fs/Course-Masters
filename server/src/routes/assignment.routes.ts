@@ -7,12 +7,16 @@ import {
   updateAssignmentSchema,
   reorderAssignmentsSchema,
 } from '../schemas/assignment.schema.js';
+import { bookmarkRouter } from './bookmark.routes.js';
 
 // ── /lessons/:lessonId/assignments ───────────────────────────────────────────
 
 export const lessonAssignmentsRouter = Router({ mergeParams: true });
 
 lessonAssignmentsRouter.get('/', assignmentController.getAll);
+
+// vocab flashcards must be registered before /:assignmentId to avoid conflict
+lessonAssignmentsRouter.get('/vocab-flashcards', assignmentController.getSavedVocabEntryFlashCards);
 
 // reorder must be registered before /:assignmentId to avoid conflict
 lessonAssignmentsRouter.put(
@@ -51,3 +55,14 @@ assignmentsRouter.delete(
 assignmentsRouter.post('/:assignmentId/complete', assignmentController.complete);
 
 assignmentsRouter.delete('/:assignmentId/complete', assignmentController.uncomplete);
+
+// Bookmark sub-router — must be registered before /:assignmentId catch-all routes
+assignmentsRouter.use('/:assignmentId/bookmark', bookmarkRouter);
+
+// ── /vocab-entries ────────────────────────────────────────────────────────────
+
+export const vocabEntriesRouter = Router();
+
+vocabEntriesRouter.post('/:entryId/flashcard', assignmentController.saveVocabEntryFlashCard);
+
+vocabEntriesRouter.delete('/:entryId/flashcard', assignmentController.removeVocabEntryFlashCard);

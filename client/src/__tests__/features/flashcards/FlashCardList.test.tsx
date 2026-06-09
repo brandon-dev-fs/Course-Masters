@@ -103,14 +103,14 @@ describe('FlashCardList', () => {
     apiClientMock.get.mockResolvedValue([flashCard]);
     renderWithProviders(<FlashCardList lessonId="l1" />);
     fireEvent.click(await screen.findByText('Study Mode'));
-    expect(screen.getByTestId('study-mode')).toBeInTheDocument();
+    expect(await screen.findByTestId('study-mode')).toBeInTheDocument();
   });
 
   it('exits study mode when onExit is called', async () => {
     apiClientMock.get.mockResolvedValue([flashCard]);
     renderWithProviders(<FlashCardList lessonId="l1" />);
     fireEvent.click(await screen.findByText('Study Mode'));
-    fireEvent.click(screen.getByText('Exit Study Mode'));
+    fireEvent.click(await screen.findByText('Exit Study Mode'));
     expect(screen.queryByTestId('study-mode')).not.toBeInTheDocument();
   });
 

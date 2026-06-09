@@ -61,8 +61,8 @@ export default function LessonToolModals({
       <Modal title="Edit Vocab Term" onClose={onClose}>
         <VocabForm
           initial={editingTool}
-          onSubmit={async ({ term, definition, order }) => {
-            const updated = await lessonToolsApi.update(editingTool.id, { title: term, content: { term, definition }, order });
+          onSubmit={async ({ term, definition, example, order }) => {
+            const updated = await lessonToolsApi.update(editingTool.id, { title: term, content: { term, definition, example }, order });
             onToolUpdated(updated);
             onClose();
           }}

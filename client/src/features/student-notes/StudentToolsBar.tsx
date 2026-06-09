@@ -1,12 +1,12 @@
-import { NotebookPen, Layers, Brain, BookOpen } from 'lucide-react';
+import { NotebookPen, Layers, CheckSquare, Bookmark } from 'lucide-react';
 
-export type StudentToolType = 'notes' | 'flashcards' | 'practice' | 'vocab';
+export type StudentToolType = 'notes' | 'flashcards' | 'checklist' | 'bookmarks';
 
 export const TOOL_META: Record<StudentToolType, { label: string; longLabel: string; Icon: React.ComponentType<{ className?: string }> }> = {
-  notes:      { label: 'Notes',    longLabel: 'My Notes',          Icon: NotebookPen },
-  flashcards: { label: 'Cards',    longLabel: 'Flash Cards',       Icon: Layers },
-  practice:   { label: 'Practice', longLabel: 'Practice Problems', Icon: Brain },
-  vocab:      { label: 'Vocab',    longLabel: 'Vocabulary',        Icon: BookOpen },
+  notes:     { label: 'Notes',     longLabel: 'My Notes',    Icon: NotebookPen },
+  flashcards: { label: 'Cards',    longLabel: 'Flash Cards', Icon: Layers },
+  checklist: { label: 'List',      longLabel: 'Checklist',   Icon: CheckSquare },
+  bookmarks: { label: 'Bookmarks', longLabel: 'Bookmarks',   Icon: Bookmark },
 };
 
 interface StudentToolsBarProps {

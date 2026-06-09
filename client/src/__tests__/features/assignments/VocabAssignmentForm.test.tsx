@@ -42,7 +42,7 @@ describe('VocabAssignmentForm', () => {
     fireEvent.click(screen.getByText('Add term'));
     expect(defaultProps.onEntriesChange).toHaveBeenCalledWith([
       ...sampleEntries,
-      { term: '', definition: '' },
+      { term: '', definition: '', example: '' },
     ]);
   });
 

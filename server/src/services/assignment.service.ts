@@ -6,17 +6,38 @@ import type { CreateAssignmentInput, UpdateAssignmentInput } from '../schemas/as
 
 // ── Prisma include shape reused across queries ───────────────────────────────
 
-const ASSIGNMENT_INCLUDE = {
-  noteAssignment: true,
-  videoAssignment: true,
-  readingAssignment: true,
-  vocabAssignment: true,
-  practiceProblemAssignment: {
-    include: {
-      questions: { orderBy: { order: 'asc' as const } },
+function buildAssignmentInclude(userId: string | null) {
+  return {
+    noteAssignment: true,
+    videoAssignment: true,
+    readingAssignment: true,
+    vocabAssignment: {
+      include: {
+        entries: { orderBy: { order: 'asc' as const } },
+      },
     },
-  },
-} as const;
+    practiceProblemAssignment: {
+      include: {
+        questions: { orderBy: { order: 'asc' as const } },
+      },
+    },
+    ...(userId
+      ? {
+          bookmarks: {
+            where: { userId },
+            select: { id: true, note: true, updatedAt: true },
+          },
+        }
+      : {}),
+  } as const;
+}
+
+// Normalize the bookmarks array (filtered by userId) to a single bookmark or null
+function normalizeBookmark(
+  bookmarks: Array<{ id: string; note: string; updatedAt: Date }> | undefined,
+) {
+  return bookmarks && bookmarks.length > 0 ? bookmarks[0] : null;
+}
 
 // ── Service ──────────────────────────────────────────────────────────────────
 
@@ -27,7 +48,7 @@ export const assignmentService = {
     const assignments = await prisma.assignment.findMany({
       where: { lessonId },
       orderBy: { order: 'asc' },
-      include: ASSIGNMENT_INCLUDE,
+      include: buildAssignmentInclude(userId),
     });
 
     const completedSet = new Set<string>();
@@ -42,7 +63,14 @@ export const assignmentService = {
       completions.forEach((c) => completedSet.add(c.assignmentId));
     }
 
-    return assignments.map((a) => ({ ...a, completed: completedSet.has(a.id) }));
+    return assignments.map((a) => {
+      const { bookmarks, ...rest } = a as typeof a & { bookmarks?: Array<{ id: string; note: string; updatedAt: Date }> };
+      return {
+        ...rest,
+        completed: completedSet.has(a.id),
+        bookmark: normalizeBookmark(bookmarks),
+      };
+    });
   },
 
   async findById(assignmentId: string, userId: string | null) {
@@ -50,7 +78,7 @@ export const assignmentService = {
     // through the assertExists delegate without losing the typed return shape.
     const assignment = await prisma.assignment.findUnique({
       where: { id: assignmentId },
-      include: ASSIGNMENT_INCLUDE,
+      include: buildAssignmentInclude(userId),
     });
     if (!assignment) throw new NotFoundError('Assignment not found');
 
@@ -62,7 +90,12 @@ export const assignmentService = {
       completed = !!completion;
     }
 
-    return { ...assignment, completed };
+    const { bookmarks, ...rest } = assignment as typeof assignment & { bookmarks?: Array<{ id: string; note: string; updatedAt: Date }> };
+    return {
+      ...rest,
+      completed,
+      bookmark: normalizeBookmark(bookmarks),
+    };
   },
 
   async create(lessonId: string, data: CreateAssignmentInput) {
@@ -109,9 +142,20 @@ export const assignmentService = {
           },
         });
       } else if (data.type === 'vocab') {
-        await tx.vocabAssignment.create({
-          data: { assignmentId: assignment.id, entries: data.entries },
+        const va = await tx.vocabAssignment.create({
+          data: { assignmentId: assignment.id },
         });
+        if (data.entries.length > 0) {
+          await tx.vocabAssignmentEntry.createMany({
+            data: data.entries.map((e, i) => ({
+              vocabAssignmentId: va.id,
+              term: e.term,
+              definition: e.definition,
+              example: e.example ?? null,
+              order: i + 1,
+            })),
+          });
+        }
       } else if (data.type === 'practice_problem') {
         const ppa = await tx.practiceProblemAssignment.create({
           data: {
@@ -176,10 +220,28 @@ export const assignmentService = {
           await tx.readingAssignment.update({ where: { assignmentId }, data: readingUpdates });
         }
       } else if (assignment.type === AssignmentType.vocab && data.entries !== undefined) {
-        await tx.vocabAssignment.update({
-          where: { assignmentId },
-          data: { entries: data.entries },
-        });
+        const va = await tx.vocabAssignment.findUnique({ where: { assignmentId } });
+        if (va) {
+          const incomingIds = data.entries.filter(e => e.id).map(e => e.id!);
+          // Delete entries not present in the incoming list
+          await tx.vocabAssignmentEntry.deleteMany({
+            where: { vocabAssignmentId: va.id, id: { notIn: incomingIds } },
+          });
+          // Update existing or create new entries
+          for (let i = 0; i < data.entries.length; i++) {
+            const e = data.entries[i];
+            if (e.id) {
+              await tx.vocabAssignmentEntry.update({
+                where: { id: e.id, vocabAssignmentId: va.id },
+                data: { term: e.term, definition: e.definition, example: e.example ?? null, order: i + 1 },
+              });
+            } else {
+              await tx.vocabAssignmentEntry.create({
+                data: { vocabAssignmentId: va.id, term: e.term, definition: e.definition, example: e.example ?? null, order: i + 1 },
+              });
+            }
+          }
+        }
       } else if (assignment.type === AssignmentType.practice_problem) {
         const ppaUpdates: { passingPercentage?: number | null } = {};
         if (data.passingPercentage !== undefined) ppaUpdates.passingPercentage = data.passingPercentage;
@@ -298,5 +360,38 @@ export const assignmentService = {
     await prisma.assignmentCompletion.delete({
       where: { userId_assignmentId: { userId, assignmentId } },
     });
+  },
+
+  async getSavedVocabEntryFlashCards(lessonId: string, userId: string) {
+    const lesson = await prisma.lesson.findFirst({ where: { id: lessonId, deletedAt: null } });
+    if (!lesson) throw new NotFoundError('Lesson not found');
+
+    const saved = await prisma.studentVocabAssignmentFlashCard.findMany({
+      where: { userId, entry: { vocabAssignment: { assignment: { lessonId } } } },
+      orderBy: { entry: { order: 'asc' } },
+      select: {
+        entry: {
+          select: { id: true, term: true, definition: true, example: true, order: true },
+        },
+      },
+    });
+    return saved.map(s => s.entry);
+  },
+
+  async saveVocabEntryFlashCard(entryId: string, userId: string) {
+    const entry = await prisma.vocabAssignmentEntry.findUnique({ where: { id: entryId } });
+    if (!entry) throw new NotFoundError('Vocab entry not found');
+    return prisma.studentVocabAssignmentFlashCard.create({
+      data: { userId, entryId },
+      select: { id: true, entryId: true, createdAt: true },
+    });
+  },
+
+  async removeVocabEntryFlashCard(entryId: string, userId: string) {
+    const record = await prisma.studentVocabAssignmentFlashCard.findUnique({
+      where: { userId_entryId: { userId, entryId } },
+    });
+    if (!record) throw new NotFoundError('Saved vocab entry not found');
+    await prisma.studentVocabAssignmentFlashCard.delete({ where: { userId_entryId: { userId, entryId } } });
   },
 };

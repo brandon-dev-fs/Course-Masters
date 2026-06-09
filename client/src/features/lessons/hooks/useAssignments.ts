@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { assignmentsApi } from '../../../api/assignments.js';
 import type { CreateAssignmentPayload, UpdateAssignmentPayload } from '../../../api/assignments.js';
-import type { Assignment, Lesson, LessonResource, LessonTool } from '../../../api/types.js';
+import type { Assignment, Bookmark, Lesson, LessonResource, LessonTool } from '../../../api/types.js';
 import type { AssignmentItem } from '../AssignmentSection.js';
 import type { StudentToolType } from '../../student-notes/StudentToolsBar.js';
 import useFetch from '../../../hooks/useFetch.js';
@@ -108,6 +108,7 @@ interface UseAssignmentsReturn {
   handleDeleteAssignment: (assignmentId: string, assignmentItems: AssignmentItem[], activeIdx: number) => Promise<void>;
   handleMoveAssignment: (id: string, direction: 'up' | 'down') => Promise<void>;
   handleToggleAssignmentCompletion: (assignment: Assignment) => Promise<void>;
+  handleBookmarkChange: (assignmentId: string, bookmark: Bookmark | null) => void;
 }
 
 export default function useAssignments({
@@ -187,13 +188,9 @@ export default function useAssignments({
     [assignments],
   );
 
-  const availableTools = useMemo((): StudentToolType[] => {
-    const result: StudentToolType[] = ['notes'];
-    if (tools.some(t => t.type === 'flash_card')) result.push('flashcards');
-    if (tools.some(t => t.type === 'practice_problem')) result.push('practice');
-    if (tools.some(t => t.type === 'vocab')) result.push('vocab');
-    return result;
-  }, [tools]);
+  // All four panels are always available. Teachers need them to add new tools; students
+  // always see consistent navigation — panels show their own empty states when empty.
+  const availableTools = useMemo((): StudentToolType[] => ['notes', 'flashcards', 'checklist', 'bookmarks'], []);
 
   const incompleteRequired = useMemo(
     () => assignmentItems.filter(
@@ -225,6 +222,19 @@ export default function useAssignments({
     const prevItem = filteredItems[Math.max(0, activeIdx - 1)];
     setActiveStepKey(prevItem?.key ?? 'lessonPlan');
   }, [setActiveStepKey]);
+
+  const handleBookmarkChange = useCallback(
+    (assignmentId: string, bookmark: Bookmark | null) => {
+      setAssignments(prev =>
+        prev.map(a =>
+          a.id === assignmentId
+            ? { ...a, bookmark: bookmark ?? null }
+            : a
+        )
+      );
+    },
+    [],
+  );
 
   const handleToggleAssignmentCompletion = useCallback(async (assignment: Assignment) => {
     const wasComplete = assignment.completed;
@@ -261,5 +271,6 @@ export default function useAssignments({
     handleDeleteAssignment,
     handleMoveAssignment,
     handleToggleAssignmentCompletion,
+    handleBookmarkChange,
   };
 }

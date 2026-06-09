@@ -4,7 +4,7 @@ import Textarea from '../../components/Textarea.js';
 import ErrorMessage from '../../components/ErrorMessage.js';
 import type { SubFormProps } from './AssignmentFormModal.js';
 
-export default function ReadingAssignmentForm({
+export default function ExternalLinkAssignmentForm({
   url, description, estimatedMinutes,
   onUrlChange, onDescriptionChange, onEstimatedMinutesChange,
 }: SubFormProps) {

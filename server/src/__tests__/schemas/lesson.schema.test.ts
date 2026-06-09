@@ -38,18 +38,23 @@ describe('createLessonSchema', () => {
     expect(createLessonSchema.safeParse({ ...valid, order: -1 }).success).toBe(false);
   });
 
-  it('rejects missing objective', () => {
+  it('accepts missing objective (optional with default)', () => {
     const { objective: _ob, ...rest } = valid;
-    expect(createLessonSchema.safeParse(rest).success).toBe(false);
+    const result = createLessonSchema.safeParse(rest);
+    expect(result.success).toBe(true);
+    if (result.success) expect(result.data.objective).toBe('');
   });
 
-  it('rejects empty objective', () => {
-    expect(createLessonSchema.safeParse({ ...valid, objective: '' }).success).toBe(false);
+  it('accepts empty objective (optional — no min length constraint)', () => {
+    const result = createLessonSchema.safeParse({ ...valid, objective: '' });
+    expect(result.success).toBe(true);
   });
 
-  it('rejects missing planContent', () => {
+  it('accepts missing planContent (optional with default)', () => {
     const { planContent: _pc, ...rest } = valid;
-    expect(createLessonSchema.safeParse(rest).success).toBe(false);
+    const result = createLessonSchema.safeParse(rest);
+    expect(result.success).toBe(true);
+    if (result.success) expect(result.data.planContent).toEqual({});
   });
 
   it('accepts planContent as any record', () => {
@@ -71,7 +76,7 @@ describe('updateLessonSchema', () => {
     expect(updateLessonSchema.safeParse({ title: '' }).success).toBe(false);
   });
 
-  it('rejects empty objective when provided', () => {
-    expect(updateLessonSchema.safeParse({ objective: '' }).success).toBe(false);
+  it('accepts empty objective when provided (no min length on objective)', () => {
+    expect(updateLessonSchema.safeParse({ objective: '' }).success).toBe(true);
   });
 });

@@ -3,7 +3,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import StudentToolsBar from '../../../features/student-notes/StudentToolsBar.js';
 import type { StudentToolType } from '../../../features/student-notes/StudentToolsBar.js';
 
-const allTools: StudentToolType[] = ['notes', 'flashcards', 'practice', 'vocab'];
+const allTools: StudentToolType[] = ['notes', 'flashcards', 'checklist'];
 
 describe('StudentToolsBar', () => {
   it('returns null when quiz is active', () => {

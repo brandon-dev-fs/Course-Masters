@@ -28,4 +28,5 @@ export const lessonToolsApi = {
   update: (id: string, data: UpdateToolInput) =>
     apiClient.put<LessonTool>(`/tools/${id}`, data),
   delete: (id: string) => apiClient.delete<void>(`/tools/${id}`),
+
 };

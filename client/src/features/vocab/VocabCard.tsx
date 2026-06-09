@@ -14,6 +14,7 @@ export default function VocabCard({ vocab, onEdit, onDelete }: VocabCardProps) {
   }
   const term = vocab.content.term ?? vocab.title;
   const definition = vocab.content.definition ?? '';
+  const example = vocab.content.example;
 
   return (
     <div className="rounded-lg bg-surface border border-border p-4 group shadow-warm-sm hover:border-primary/30 transition-all">
@@ -23,8 +24,15 @@ export default function VocabCard({ vocab, onEdit, onDelete }: VocabCardProps) {
           <div className="flex-1">
             <p className="text-foreground font-semibold text-sm">{term}</p>
             <p className="text-muted-foreground text-sm mt-1">{definition}</p>
+            {example && (
+              <p className="text-muted-foreground text-sm mt-2 italic border-l-2 border-border pl-3">{example}</p>
+            )}
           </div>
-          {onEdit && onDelete && <CardActions onEdit={onEdit} onDelete={onDelete} />}
+          {onEdit && onDelete && (
+            <div className="shrink-0">
+              <CardActions onEdit={onEdit} onDelete={onDelete} />
+            </div>
+          )}
         </div>
       </div>
     </div>
