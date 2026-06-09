@@ -9,8 +9,13 @@ const { apiClientMock } = vi.hoisted(() => ({
 }));
 vi.mock('../../../api/client.js', () => ({
   apiClient: apiClientMock,
-  ApiClientError: class ApiClientError extends Error {},
-  classifyError: (e: unknown) => String(e),
+  ApiClientError: class ApiClientError extends Error {
+    constructor(public readonly code: string, message: string) {
+      super(message);
+      this.name = 'ApiClientError';
+    }
+  },
+  classifyError: (e: unknown) => e instanceof Error ? e.message : String(e),
 }));
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
