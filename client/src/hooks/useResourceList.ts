@@ -1,4 +1,5 @@
 import { type Dispatch, type SetStateAction, useEffect, useRef, useState } from 'react';
+import { ApiClientError, classifyError } from '../api/client.js';
 
 interface ResourceApi<T, C, U> {
   create: (data: C) => Promise<T>;
@@ -40,7 +41,7 @@ export default function useResourceList<T extends { id: string }, C, U>(
   useEffect(() => {
     fetchRef.current()
       .then(setItems)
-      .catch((err: unknown) => setError(err instanceof Error ? err.message : 'Failed to load'))
+      .catch((err: unknown) => setError(err instanceof ApiClientError ? classifyError(err) : 'Failed to load'))
       .finally(() => setLoading(false));
   }, [key]);
 

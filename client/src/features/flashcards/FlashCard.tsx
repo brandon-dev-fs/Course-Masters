@@ -10,8 +10,11 @@ interface FlashCardProps {
 }
 
 export default function FlashCard({ card, editMode = false, onUpdate, onDelete }: FlashCardProps) {
-  const cardFront = (card.content.front as string) ?? '';
-  const cardBack = (card.content.back as string) ?? '';
+  if (card.type !== 'flash_card') {
+    return <p className="text-sm text-muted-foreground">Unsupported tool type.</p>;
+  }
+  const cardFront = card.content.front ?? '';
+  const cardBack = card.content.back ?? '';
 
   const [flipped, setFlipped] = useState(false);
   const [front, setFront] = useState(cardFront);

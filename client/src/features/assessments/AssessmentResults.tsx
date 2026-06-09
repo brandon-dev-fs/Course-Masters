@@ -12,13 +12,16 @@ export default function AssessmentResults({ result, onRetake, onDismiss }: Asses
 
   return (
     <div className="flex flex-col items-center gap-4 py-4 text-center">
-      <div className={`text-6xl font-bold ${result.passed ? 'text-accent' : 'text-destructive'}`}>
+      <div
+        aria-describedby="assessment-result-status"
+        className={`text-6xl font-bold ${result.passed ? 'text-accent' : 'text-destructive'}`}
+      >
         {pct}%
       </div>
 
       <div>
-        <p className={`text-lg font-semibold ${result.passed ? 'text-accent' : 'text-destructive'}`}>
-          {result.passed ? '✓ Passed!' : '✗ Not passed'}
+        <p id="assessment-result-status" className={`text-lg font-semibold ${result.passed ? 'text-accent' : 'text-destructive'}`}>
+          {result.passed ? <><span aria-hidden="true">✓</span> Passed!</> : <><span aria-hidden="true">✗</span> Not passed</>}
         </p>
         <p className="text-sm text-muted-foreground mt-1">
           {result.correctCount} / {result.totalQuestions} correct &middot; 80% required to pass

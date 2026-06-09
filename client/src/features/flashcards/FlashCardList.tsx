@@ -1,8 +1,9 @@
 import { useState } from 'react';
+
 import { lessonToolsApi } from '../../api/lesson-tools.js';
-import type { LessonTool } from '../../api/types.js';
-import { useAuth } from '../../context/AuthContext.js';
+import type { LessonTool, StudyCard } from '../../api/types.js';
 import useResourceList from '../../hooks/useResourceList.js';
+import useCanEdit from '../../hooks/useCanEdit.js';
 import FlashCardComponent from './FlashCard.js';
 import FlashCardStudyMode from './FlashCardStudyMode.js';
 import FlashCardForm from './FlashCardForm.js';
@@ -19,8 +20,7 @@ type CardUpdateInput = { content?: { front: string; back: string }; order?: numb
 const byOrder = (a: LessonTool, b: LessonTool) => a.order - b.order;
 
 export default function FlashCardList({ lessonId }: { lessonId: string }) {
-  const { user } = useAuth();
-  const canEdit = user?.role === 'teacher' || user?.role === 'admin';
+  const canEdit = useCanEdit();
   const {
     items: cards, loading, error,
     showAdd, setShowAdd, deleting, setDeleting,
@@ -35,6 +35,7 @@ export default function FlashCardList({ lessonId }: { lessonId: string }) {
     lessonId, byOrder,
   );
   const [studying, setStudying] = useState(false);
+  const [studyCards, setStudyCards] = useState<StudyCard[]>([]);
   const [editMode, setEditMode] = useState(false);
 
   async function handleUpdate(id: string, data: { front: string; back: string }) {
@@ -48,6 +49,11 @@ export default function FlashCardList({ lessonId }: { lessonId: string }) {
   }
 
   function handleStudyMode() {
+    const teacherCards: StudyCard[] = cards
+      .filter((c): c is LessonTool & { type: 'flash_card' } => c.type === 'flash_card')
+      .map(c => ({ id: c.id, front: c.content.front, back: c.content.back }));
+
+    setStudyCards(teacherCards);
     setStudying(true);
     setEditMode(false);
   }
@@ -59,17 +65,15 @@ export default function FlashCardList({ lessonId }: { lessonId: string }) {
     <div>
       <div className="flex items-center gap-2 justify-end mb-4">
         {cards.length > 0 && (
+          <Button variant="accent" size="sm" onClick={handleStudyMode}>Study Mode</Button>
+        )}
+        {cards.length > 0 && canEdit && (
           <>
-            <Button variant="accent" size="sm" onClick={handleStudyMode}>Study Mode</Button>
-            {canEdit && (
-              <>
-                <span className="w-px h-4 bg-border" />
-                <Button size="sm" onClick={() => setShowAdd(true)}>+ Add Card</Button>
-                <Button variant={editMode ? 'danger' : 'secondary'} size="sm" onClick={handleToggleEdit}>
-                  {editMode ? 'Done Editing' : 'Edit Cards'}
-                </Button>
-              </>
-            )}
+            <span className="w-px h-4 bg-border" />
+            <Button size="sm" onClick={() => setShowAdd(true)}>+ Add Card</Button>
+            <Button variant={editMode ? 'danger' : 'secondary'} size="sm" onClick={handleToggleEdit}>
+              {editMode ? 'Done Editing' : 'Edit Cards'}
+            </Button>
           </>
         )}
         {cards.length === 0 && canEdit && (
@@ -97,7 +101,7 @@ export default function FlashCardList({ lessonId }: { lessonId: string }) {
         </div>
       )}
 
-      {studying && <FlashCardStudyMode cards={cards} onExit={() => setStudying(false)} />}
+      {studying && <FlashCardStudyMode cards={studyCards} onExit={() => setStudying(false)} />}
 
       {showAdd && (
         <Modal title="Add Flash Card" onClose={() => setShowAdd(false)}>

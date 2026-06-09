@@ -1,13 +1,23 @@
 import express from 'express';
 import cors from 'cors';
-import rateLimit from 'express-rate-limit';
+import swaggerUi from 'swagger-ui-express';
 import { toNodeHandler } from 'better-auth/node';
 import { auth } from './lib/auth.js';
 import router from './routes/index.js';
 import { errorHandler } from './middleware/errorHandler.js';
+import { envelopeMiddleware } from './middleware/envelope.js';
+import { requestIdMiddleware } from './middleware/requestId.js';
+import { httpLogger } from './middleware/httpLogger.js';
+import { authLimiter, apiLimiter } from './middleware/rateLimiter.js';
 import { config } from './config.js';
+import { swaggerDocument } from './swagger.js';
 
 const app = express();
+
+// Trust the first proxy hop (nginx / Docker networking) so express-rate-limit
+// uses the real client IP from X-Forwarded-For rather than the proxy IP.
+// Without this all clients behind a reverse proxy share one rate-limit bucket.
+app.set('trust proxy', 1);
 
 app.use(
 	cors({
@@ -16,19 +26,23 @@ app.use(
 	}),
 );
 
-// Rate limit auth endpoints — 20 requests per 15 minutes per IP
-const authLimiter = rateLimit({
-	windowMs: 15 * 60 * 1000,
-	max: 20,
-	standardHeaders: true,
-	legacyHeaders: false,
-	message: { error: { code: 'RATE_LIMITED', message: 'Too many requests, please try again later.' } },
-});
+// 1. Attach a unique request ID to every request and set X-Request-Id header
+app.use(requestIdMiddleware);
+
+// 2. Structured HTTP request/response logging via pino-http
+app.use(httpLogger);
+
+// 3. Rate-limit auth endpoints — 20 requests per 15 minutes per IP
 // Better Auth handles its own body parsing — mount BEFORE express.json()
 // Rate limiter is chained inline to avoid path-stripping side effects from app.use()
 app.all('/api/auth/*splat', authLimiter, toNodeHandler(auth));
 
+// 4. Broad API rate limit — 300 requests per 15 minutes per IP
+app.use('/api', apiLimiter);
+
 app.use(express.json());
+app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+app.use('/api', envelopeMiddleware);
 app.use('/api', router);
 app.use(errorHandler);
 

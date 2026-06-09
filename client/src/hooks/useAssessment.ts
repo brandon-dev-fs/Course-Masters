@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import type { Assessment, AttemptResult, AttemptSummary } from '../api/types.js';
+import { ApiClientError, classifyError } from '../api/client.js';
+import type { Assessment, AttemptResult, AttemptSummary, PaginatedAttempts } from '../api/types.js';
 import type { QuestionDraft } from '../features/assessments/QuestionEditor.js';
 
 type View = 'idle' | 'creating' | 'taking' | 'results';
@@ -9,7 +10,7 @@ interface AssessmentApi {
   create: (parentId: string, data: { questions: QuestionDraft[] }) => Promise<Assessment>;
   update?: (assessmentId: string, data: { questions: QuestionDraft[] }) => Promise<Assessment>;
   submitAttempt: (id: string, answers: unknown[]) => Promise<AttemptResult>;
-  getAttempts?: (id: string) => Promise<AttemptSummary[]>;
+  getAttempts?: (id: string) => Promise<PaginatedAttempts>;
 }
 
 export default function useAssessment(api: AssessmentApi, parentId: string) {
@@ -23,13 +24,17 @@ export default function useAssessment(api: AssessmentApi, parentId: string) {
   useEffect(() => {
     api.get(parentId)
       .then(setAssessment)
-      .catch((err: unknown) => setError(err instanceof Error ? err.message : 'Failed to load'))
+      .catch((err: unknown) => setError(err instanceof ApiClientError ? classifyError(err) : 'Failed to load'))
       .finally(() => setLoading(false));
   }, [parentId]);
 
   useEffect(() => {
     if (assessment && api.getAttempts) {
-      api.getAttempts(assessment.id).then(setAttempts).catch(() => {});
+      api.getAttempts(assessment.id)
+        .then((res) => setAttempts(res.data))
+        .catch((err: unknown) => {
+          setError(err instanceof ApiClientError ? classifyError(err) : 'Failed to load attempt history');
+        });
     }
   }, [assessment]);
 
@@ -51,7 +56,11 @@ export default function useAssessment(api: AssessmentApi, parentId: string) {
     const res = await api.submitAttempt(assessment.id, answers);
     setResult(res);
     if (api.getAttempts) {
-      api.getAttempts(assessment.id).then(setAttempts).catch(() => {});
+      api.getAttempts(assessment.id)
+        .then((res) => setAttempts(res.data))
+        .catch(() => {
+          // Non-fatal: attempt history refresh after submit; user already has results
+        });
     }
     setView('results');
   }

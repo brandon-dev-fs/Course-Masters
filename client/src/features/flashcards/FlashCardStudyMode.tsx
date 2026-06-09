@@ -1,15 +1,15 @@
 import { useState } from 'react';
-import type { LessonTool } from '../../api/types.js';
-import FlashCardComponent from './FlashCard.js';
+import type { StudyCard } from '../../api/types.js';
 import Button from '../../components/Button.js';
 
 interface FlashCardStudyModeProps {
-  cards: LessonTool[];
+  cards: StudyCard[];
   onExit: () => void;
 }
 
 export default function FlashCardStudyMode({ cards, onExit }: FlashCardStudyModeProps) {
   const [index, setIndex] = useState(0);
+  const [flipped, setFlipped] = useState(false);
   const [seen, setSeen] = useState<Set<string>>(new Set());
 
   if (cards.length === 0) return null;
@@ -19,11 +19,15 @@ export default function FlashCardStudyMode({ cards, onExit }: FlashCardStudyMode
 
   function next() {
     setSeen(prev => new Set([...prev, current.id]));
+    setFlipped(false);
     if (!isLast) setIndex(i => i + 1);
   }
 
   function prev() {
-    if (index > 0) setIndex(i => i - 1);
+    if (index > 0) {
+      setFlipped(false);
+      setIndex(i => i - 1);
+    }
   }
 
   return (
@@ -35,8 +39,28 @@ export default function FlashCardStudyMode({ cards, onExit }: FlashCardStudyMode
           <Button variant="ghost" size="sm" onClick={onExit}>✕ Exit</Button>
         </div>
 
-        <div className="mb-6" style={{ minHeight: '200px' }}>
-          {current && <FlashCardComponent card={current} />}
+        <div className="mb-6 relative cursor-pointer" style={{ perspective: '1000px', minHeight: '200px' }} onClick={() => setFlipped(f => !f)}>
+          <div
+            className="relative w-full transition-transform duration-500"
+            style={{ transformStyle: 'preserve-3d', transform: flipped ? 'rotateY(180deg)' : 'rotateY(0deg)', minHeight: '200px' }}
+          >
+            <div
+              className="absolute inset-0 flex flex-col justify-center rounded-2xl bg-surface border-2 border-border p-5"
+              style={{ backfaceVisibility: 'hidden' }}
+            >
+              <p className="text-xs text-muted-foreground mb-2 uppercase tracking-wide">Front</p>
+              <p className="text-foreground font-medium">{current.front}</p>
+              <p className="text-xs text-muted-foreground mt-auto pt-2">Click to flip</p>
+            </div>
+            <div
+              className="absolute inset-0 flex flex-col justify-center rounded-2xl bg-accent-subtle border-2 border-accent/30 p-5"
+              style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
+            >
+              <p className="text-xs text-accent mb-2 uppercase tracking-wide">Back</p>
+              <p className="text-foreground">{current.back}</p>
+              <p className="text-xs text-muted-foreground mt-auto pt-2">Click to flip back</p>
+            </div>
+          </div>
         </div>
 
         <div className="flex justify-center gap-4">

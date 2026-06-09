@@ -38,6 +38,14 @@ enum ToolType {
   vocab
 }
 
+enum AssignmentType {
+  note
+  video
+  reading
+  vocab
+  practice_problem
+}
+
 model User {
   id            String    @id
   name          String
@@ -50,15 +58,21 @@ model User {
   banExpires    DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+  deletedAt     DateTime?
 
-  sessions            Session[]
-  accounts            Account[]
-  courses             Course[]
-  assessmentAttempts  AssessmentAttempt[]
-  studentNotes        StudentNote[]
-  resourceCompletions LessonResourceCompletion[]
-  lessonCompletions   LessonCompletion[]
-  unitCompletions     UnitCompletion[]
+  sessions              Session[]
+  accounts              Account[]
+  courses               Course[]
+  assessmentAttempts    AssessmentAttempt[]
+  studentNotes          StudentNote[]
+  resourceCompletions   LessonResourceCompletion[]
+  toolCompletions       LessonToolCompletion[]
+  lessonCompletions     LessonCompletion[]
+  unitCompletions       UnitCompletion[]
+  assignmentCompletions AssignmentCompletion[]
+  vocabAssignmentFlashCards  StudentVocabAssignmentFlashCard[]
+  activityBookmarks     ActivityBookmark[]
+  checklistItems        LessonChecklistItem[]
 
   @@map("user")
 }
@@ -110,27 +124,32 @@ model Verification {
 }
 
 model Course {
-  id          String   @id @default(uuid())
+  id          String    @id @default(uuid())
   title       String
   description String
   syllabus    Json?
   authorId    String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
 
   author     User        @relation(fields: [authorId], references: [id], onDelete: Cascade)
   units      Unit[]
   assessment Assessment?
 
   @@index([authorId])
+  @@map("course")
 }
 
 model Unit {
-  id          String @id @default(uuid())
+  id          String    @id @default(uuid())
   title       String
   description String
   order       Int
   courseId    String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
 
   course     Course          @relation(fields: [courseId], references: [id], onDelete: Cascade)
   lessons    Lesson[]
@@ -138,64 +157,79 @@ model Unit {
   completions UnitCompletion[]
 
   @@index([courseId])
+  @@map("unit")
 }
 
 model Lesson {
-  id          String @id @default(uuid())
+  id          String    @id @default(uuid())
   title       String
   description String
   order       Int
   unitId      String
   objective   String
   planContent Json
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
 
-  unit                Unit                      @relation(fields: [unitId], references: [id], onDelete: Cascade)
-  resources           LessonResource[]
-  tools               LessonTool[]
-  assessment          Assessment?
-  studentNotes        StudentNote[]
-  resourceCompletions LessonResourceCompletion[]
-  completions         LessonCompletion[]
+  unit         Unit              @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  resources    LessonResource[]
+  tools        LessonTool[]
+  assessment   Assessment?
+  studentNotes StudentNote[]
+  completions  LessonCompletion[]
+  assignments  Assignment[]
+  checklistItems LessonChecklistItem[]
 
   @@index([unitId])
+  @@map("lesson")
 }
 
 model LessonResource {
-  id       String       @id @default(uuid())
-  type     ResourceType
-  title    String
-  content  Json
-  order    Int
-  lessonId String
+  id         String       @id @default(uuid())
+  type       ResourceType
+  title      String
+  content    Json
+  order      Int
+  lessonId   String
+  isRequired Boolean      @default(true)
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
 
-  lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  lesson      Lesson                    @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  completions LessonResourceCompletion[]
 
   @@index([lessonId])
   @@map("lesson_resource")
 }
 
 model LessonTool {
-  id       String   @id @default(uuid())
-  type     ToolType
-  title    String
-  content  Json
-  order    Int
-  lessonId String
+  id         String   @id @default(uuid())
+  type       ToolType
+  title      String
+  content    Json
+  order      Int
+  lessonId   String
+  isRequired Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
-  lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  lesson         Lesson                   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  completions    LessonToolCompletion[]
 
   @@index([lessonId])
   @@map("lesson_tool")
 }
 
 model Assessment {
-  id       String         @id @default(uuid())
-  type     AssessmentType
-  lessonId String?        @unique
-  unitId   String?        @unique
-  courseId String?        @unique
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
+  id        String         @id @default(uuid())
+  type      AssessmentType
+  lessonId  String?        @unique
+  unitId    String?        @unique
+  courseId  String?        @unique
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+  deletedAt DateTime?
 
   lesson    Lesson?    @relation(fields: [lessonId], references: [id], onDelete: Cascade)
   unit      Unit?      @relation(fields: [unitId], references: [id], onDelete: Cascade)
@@ -207,12 +241,15 @@ model Assessment {
 }
 
 model AssessmentQuestion {
-  id           String       @id @default(uuid())
-  type         QuestionType @default(multiple_choice)
-  question     String
-  content      Json
-  order        Int
-  assessmentId String
+  id                String       @id @default(uuid())
+  type              QuestionType @default(multiple_choice)
+  question          String
+  content           Json
+  order             Int
+  assessmentId      String
+  calculatorEnabled Boolean      @default(false)
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
 
   assessment Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
 
@@ -249,6 +286,8 @@ model StudentNote {
 
   @@unique([lessonId, userId])
   @@index([userId])
+  @@index([lessonId])
+  @@map("student_note")
 }
 
 model LessonCompletion {
@@ -262,6 +301,7 @@ model LessonCompletion {
 
   @@unique([userId, lessonId])
   @@index([userId])
+  @@index([lessonId])
   @@map("lesson_completion")
 }
 
@@ -276,21 +316,207 @@ model UnitCompletion {
 
   @@unique([userId, unitId])
   @@index([userId])
+  @@index([unitId])
   @@map("unit_completion")
 }
 
 model LessonResourceCompletion {
+  id          String   @id @default(uuid())
+  userId      String
+  resourceId  String
+  completedAt DateTime @default(now())
+
+  user     User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resource LessonResource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, resourceId])
+  @@index([userId])
+  @@map("lesson_resource_completion")
+}
+
+model LessonToolCompletion {
+  id          String   @id @default(uuid())
+  userId      String
+  toolId      String
+  completedAt DateTime @default(now())
+
+  user User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tool LessonTool @relation(fields: [toolId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, toolId])
+  @@index([userId])
+  @@map("lesson_tool_completion")
+}
+
+model Assignment {
+  id        String         @id @default(uuid())
+  lessonId  String
+  order     Int
+  title     String
+  objective String?
+  type      AssignmentType
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  lesson                    Lesson                     @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  noteAssignment            NoteAssignment?
+  videoAssignment           VideoAssignment?
+  readingAssignment         ReadingAssignment?
+  vocabAssignment           VocabAssignment?
+  practiceProblemAssignment PracticeProblemAssignment?
+  completions               AssignmentCompletion[]
+  bookmarks                 ActivityBookmark[]
+
+  @@unique([lessonId, order])
+  @@index([lessonId])
+  @@map("assignment")
+}
+
+model NoteAssignment {
+  id           String @id @default(uuid())
+  assignmentId String @unique
+  content      Json
+
+  assignment Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+
+  @@map("note_assignment")
+}
+
+model VideoAssignment {
+  id           String  @id @default(uuid())
+  assignmentId String  @unique
+  url          String
+  title        String?
+
+  assignment Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+
+  @@map("video_assignment")
+}
+
+model ReadingAssignment {
+  id               String  @id @default(uuid())
+  assignmentId     String  @unique
+  url              String
+  description      String?
+  estimatedMinutes Int?
+
+  assignment Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+
+  @@map("reading_assignment")
+}
+
+model VocabAssignment {
+  id           String @id @default(uuid())
+  assignmentId String @unique
+
+  assignment Assignment           @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  entries    VocabAssignmentEntry[]
+
+  @@map("vocab_assignment")
+}
+
+model VocabAssignmentEntry {
+  id                String   @id @default(uuid())
+  vocabAssignmentId String
+  term              String
+  definition        String
+  example           String?
+  order             Int
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  vocabAssignment VocabAssignment                   @relation(fields: [vocabAssignmentId], references: [id], onDelete: Cascade)
+  savedBy         StudentVocabAssignmentFlashCard[]
+
+  @@index([vocabAssignmentId])
+  @@map("vocab_assignment_entry")
+}
+
+model StudentVocabAssignmentFlashCard {
+  id        String   @id @default(uuid())
+  userId    String
+  entryId   String
+  createdAt DateTime @default(now())
+
+  user  User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  entry VocabAssignmentEntry @relation(fields: [entryId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, entryId])
+  @@index([userId])
+  @@map("student_vocab_assignment_flash_card")
+}
+
+model PracticeProblemAssignment {
+  id                String @id @default(uuid())
+  assignmentId      String @unique
+  passingPercentage Int?
+
+  assignment Assignment              @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  questions  PracticeProblemQuestion[]
+
+  @@map("practice_problem_assignment")
+}
+
+model PracticeProblemQuestion {
+  id                          String               @id @default(uuid())
+  practiceProblemAssignmentId String
+  order                       Int
+  type                        QuestionType
+  content                     Json
+
+  practiceProblemAssignment PracticeProblemAssignment @relation(fields: [practiceProblemAssignmentId], references: [id], onDelete: Cascade)
+
+  @@index([practiceProblemAssignmentId])
+  @@map("practice_problem_question")
+}
+
+model AssignmentCompletion {
   id           String   @id @default(uuid())
   userId       String
-  lessonId     String
-  resourceType String
-  resourceId   String
+  assignmentId String
   completedAt  DateTime @default(now())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  assignment Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, assignmentId])
+  @@index([userId])
+  @@index([assignmentId])
+  @@map("assignment_completion")
+}
+
+model ActivityBookmark {
+  id           String   @id @default(uuid())
+  userId       String
+  assignmentId String
+  note         String   @db.VarChar(500)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  assignment Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, assignmentId])
+  @@index([userId])
+  @@map("activity_bookmark")
+}
+
+model LessonChecklistItem {
+  id        String   @id @default(uuid())
+  userId    String
+  lessonId  String
+  text      String   @db.VarChar(200)
+  checked   Boolean  @default(false)
+  order     Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, resourceType, resourceId])
   @@index([userId, lessonId])
-  @@map("lesson_resource_completions")
+  @@map("lesson_checklist_item")
 }
+

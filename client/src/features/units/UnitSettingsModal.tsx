@@ -14,6 +14,8 @@ interface UnitSettingsModalProps {
 	) => Promise<void>;
 	onDeleteUnit: (unit: Unit) => Promise<void>;
 	initialAdding?: boolean;
+	/** Pre-select a unit into edit mode on open. */
+	unit?: Unit;
 }
 
 export default function UnitSettingsModal({
@@ -23,9 +25,10 @@ export default function UnitSettingsModal({
 	onUpdateUnit,
 	onDeleteUnit,
 	initialAdding = false,
+	unit,
 }: UnitSettingsModalProps) {
 	const [addingUnit, setAddingUnit] = useState(initialAdding);
-	const [editingUnit, setEditingUnit] = useState<Unit | null>(null);
+	const [editingUnit, setEditingUnit] = useState<Unit | null>(unit ?? null);
 	const [deletingUnit, setDeletingUnit] = useState<Unit | null>(null);
 
 	const sorted = [...(course.units ?? [])].sort((a, b) => a.order - b.order);

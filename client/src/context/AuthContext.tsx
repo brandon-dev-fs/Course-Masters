@@ -9,7 +9,7 @@ import {
 import { authClient } from '../api/auth.js';
 import type { AuthUser } from '../api/types.js';
 
-interface AuthContextValue {
+export interface AuthContextValue {
   user: AuthUser | null;
   isLoading: boolean;
   error: string | null;
@@ -108,4 +108,5 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 }
 
+export { AuthContext };
 export const useAuth = () => useContext(AuthContext);

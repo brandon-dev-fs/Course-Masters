@@ -14,7 +14,7 @@ const techChips = [
 
 export default function Footer() {
   return (
-    <footer className="border-t border-border bg-surface mt-16">
+    <footer className="border-t border-border bg-surface">
       <div className="container mx-auto px-6 py-8 max-w-5xl">
         <div className="flex flex-col sm:flex-row items-start gap-6">
           <div className="flex flex-col gap-1 flex-1">

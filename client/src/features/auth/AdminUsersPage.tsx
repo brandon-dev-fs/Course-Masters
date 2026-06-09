@@ -1,11 +1,14 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { authClient } from '../../api/auth.js';
 import type { AuthUser } from '../../api/types.js';
+import Button from '../../components/Button.js';
 import LoadingSpinner from '../../components/LoadingSpinner.js';
 import ErrorMessage from '../../components/ErrorMessage.js';
 
 const ROLES = ['student', 'teacher', 'admin'] as const;
 type Role = (typeof ROLES)[number];
+
+const PAGE_SIZE = 20;
 
 const roleBadge: Record<Role, string> = {
   admin: 'bg-success/10 text-success border border-success/20',
@@ -19,19 +22,28 @@ export default function AdminUsersPage() {
   const [error, setError] = useState<string | null>(null);
   const [changingRole, setChangingRole] = useState<string | null>(null);
   const [roleError, setRoleError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
 
-  useEffect(() => {
+  const fetchUsers = useCallback((currentPage: number) => {
+    setLoading(true);
+    setError(null);
     authClient.admin
-      .listUsers({ query: { limit: 100 } })
+      .listUsers({ query: { limit: PAGE_SIZE, offset: (currentPage - 1) * PAGE_SIZE } })
       .then(({ data, error: err }) => {
         if (err) throw new Error(err.message);
         setUsers((data?.users ?? []) as AuthUser[]);
+        setTotal(data?.total ?? 0);
       })
       .catch((err: unknown) =>
         setError(err instanceof Error ? err.message : 'Failed to load users'),
       )
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    fetchUsers(page);
+  }, [page, fetchUsers]);
 
   async function handleRoleChange(userId: string, role: Role) {
     setChangingRole(userId);
@@ -106,6 +118,31 @@ export default function AdminUsersPage() {
             )}
           </tbody>
         </table>
+
+        <div className="flex items-center justify-between px-4 py-3 border-t border-border">
+          <span className="text-sm text-muted-foreground">
+            {total} user{total !== 1 ? 's' : ''} total
+          </span>
+          <div className="flex gap-2 items-center">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => setPage((p) => p - 1)}
+              disabled={page === 1}
+            >
+              Previous
+            </Button>
+            <span className="text-sm text-muted-foreground">Page {page}</span>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => setPage((p) => p + 1)}
+              disabled={page * PAGE_SIZE >= total}
+            >
+              Next
+            </Button>
+          </div>
+        </div>
       </section>
     </div>
   );

@@ -1,28 +1,31 @@
 import prisma from '../lib/prisma.js';
 import { NotFoundError, AppError } from '../errors/index.js';
+import { softDeleteCourse } from '../utils/softDelete.js';
 import type { CreateCourseInput, UpdateCourseInput } from '../schemas/course.schema.js';
 
 export const courseService = {
   async findAll() {
     return prisma.course.findMany({
+      where: { deletedAt: null },
       orderBy: { createdAt: 'desc' },
       include: {
         author: { select: { id: true, name: true } },
-        _count: { select: { units: true } },
+        _count: { select: { units: { where: { deletedAt: null } } } },
       },
     });
   },
 
   async findById(id: string) {
-    const course = await prisma.course.findUnique({
-      where: { id },
+    const course = await prisma.course.findFirst({
+      where: { id, deletedAt: null },
       include: {
         author: { select: { id: true, name: true } },
         units: {
+          where: { deletedAt: null },
           orderBy: { order: 'asc' },
           include: {
-            lessons: { orderBy: { order: 'asc' } },
-            _count: { select: { lessons: true } },
+            lessons: { where: { deletedAt: null }, orderBy: { order: 'asc' } },
+            _count: { select: { lessons: { where: { deletedAt: null } } } },
           },
         },
       },
@@ -48,6 +51,8 @@ export const courseService = {
     if (course.authorId !== userId && userRole !== 'admin') {
       throw new AppError('FORBIDDEN', 'You can only delete your own courses', 403);
     }
-    await prisma.course.delete({ where: { id } });
+    await prisma.$transaction(async tx => {
+      await softDeleteCourse(tx, id);
+    });
   },
 };

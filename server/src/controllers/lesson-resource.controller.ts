@@ -1,12 +1,13 @@
 import { Request, Response } from 'express';
 import { ResourceType } from '@prisma/client';
+import { LessonResourceQuery } from '../schemas/lesson-resource.schema.js';
 import { lessonResourceService } from '../services/lesson-resource.service.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 
 export const lessonResourceController = {
   getAll: asyncHandler(async (req: Request, res: Response) => {
     const lessonId = req.params['lessonId'] as string;
-    const type = req.query['type'] as ResourceType | undefined;
+    const { type } = res.locals['validatedQuery'] as LessonResourceQuery;
     res.json(await lessonResourceService.findAllByLesson(lessonId, type));
   }),
 

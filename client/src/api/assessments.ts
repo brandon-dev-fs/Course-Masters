@@ -1,11 +1,12 @@
 import { apiClient } from './client.js';
-import type { Assessment, AttemptResult, AttemptSummary } from './types.js';
+import type { Assessment, AttemptResult, AttemptSummary, PaginatedAttempts } from './types.js';
 
 interface QuestionInput {
   type?: string;
   question: string;
   content: Record<string, unknown>;
   order: number;
+  calculatorEnabled?: boolean;
 }
 
 interface AssessmentInput {
@@ -31,8 +32,14 @@ export const assessmentsApi = {
   update: (assessmentId: string, data: AssessmentInput) =>
     apiClient.put<Assessment>(`/assessments/${assessmentId}`, data),
 
-  getAttempts: (assessmentId: string) =>
-    apiClient.get<AttemptSummary[]>(`/assessments/${assessmentId}/attempts`),
+  getAttempts: (assessmentId: string, page = 1, pageSize = 20) =>
+    apiClient.get<PaginatedAttempts>(`/assessments/${assessmentId}/attempts?page=${page}&pageSize=${pageSize}`),
   submitAttempt: (assessmentId: string, answers: unknown[]) =>
     apiClient.post<AttemptResult>(`/assessments/${assessmentId}/attempts`, { answers }),
+
+  bulkUpdateCalculator: (
+    assessmentId: string,
+    data: { questionIds: string[]; calculatorEnabled: boolean },
+  ) =>
+    apiClient.patch<Assessment>(`/assessments/${assessmentId}/questions/calculator`, data),
 };

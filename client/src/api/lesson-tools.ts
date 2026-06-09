@@ -13,6 +13,7 @@ interface UpdateToolInput {
   title?: string;
   content?: Record<string, unknown>;
   order?: number;
+  isRequired?: boolean;
 }
 
 export const lessonToolsApi = {
@@ -27,4 +28,5 @@ export const lessonToolsApi = {
   update: (id: string, data: UpdateToolInput) =>
     apiClient.put<LessonTool>(`/tools/${id}`, data),
   delete: (id: string) => apiClient.delete<void>(`/tools/${id}`),
+
 };

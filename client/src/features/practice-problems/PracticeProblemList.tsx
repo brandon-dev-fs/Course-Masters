@@ -1,7 +1,7 @@
 import { lessonToolsApi } from '../../api/lesson-tools.js';
 import type { LessonTool } from '../../api/types.js';
-import { useAuth } from '../../context/AuthContext.js';
 import useResourceList from '../../hooks/useResourceList.js';
+import useCanEdit from '../../hooks/useCanEdit.js';
 import PracticeProblemCard from './PracticeProblemCard.js';
 import PracticeProblemForm from './PracticeProblemForm.js';
 import Modal from '../../components/Modal.js';
@@ -18,8 +18,7 @@ type ProblemUpdateInput = { content?: Record<string, unknown>; order?: number };
 const byOrder = (a: LessonTool, b: LessonTool) => a.order - b.order;
 
 export default function PracticeProblemList({ lessonId }: { lessonId: string }) {
-  const { user } = useAuth();
-  const canEdit = user?.role === 'teacher' || user?.role === 'admin';
+  const canEdit = useCanEdit();
   const {
     items: problems, loading, error,
     showAdd, setShowAdd, editing, setEditing, deleting, setDeleting,
@@ -38,7 +37,7 @@ export default function PracticeProblemList({ lessonId }: { lessonId: string }) 
     return {
       type: 'practice_problem',
       title: draft.question.slice(0, 80),
-      content: { question: draft.question, ...draft.content },
+      content: { question: draft.question, ...draft.content, calculatorEnabled: draft.calculatorEnabled ?? false },
       order: draft.order,
     };
   }
@@ -87,7 +86,7 @@ export default function PracticeProblemList({ lessonId }: { lessonId: string }) 
           <PracticeProblemForm
             initial={editing}
             onSubmit={async (draft) =>
-              handleUpdate({ content: { question: draft.question, ...draft.content }, order: draft.order })
+              handleUpdate({ content: { question: draft.question, ...draft.content, calculatorEnabled: draft.calculatorEnabled ?? false }, order: draft.order })
             }
             onCancel={() => setEditing(null)}
           />

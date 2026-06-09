@@ -1,12 +1,11 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { Loader2 } from 'lucide-react';
 import Input from '../../components/Input.js';
 import Button from '../../components/Button.js';
+import ErrorMessage from '../../components/ErrorMessage.js';
+import { ApiClientError, classifyError } from '../../api/client.js';
 import type { LessonResource } from '../../api/types.js';
-import { apiClient } from '../../api/client.js';
-import useFormSubmit from '../../hooks/useFormSubmit.js';
-
-const youtubeUrlRegex = /^https?:\/\/(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)[\w-]+/;
+import useYouTubeTitle from '../../hooks/useYouTubeTitle.js';
 
 interface VideoFormProps {
   initial?: LessonResource;
@@ -17,30 +16,30 @@ interface VideoFormProps {
 
 export default function VideoForm({ initial, nextOrder = 1, onSubmit, onCancel }: VideoFormProps) {
   const [title, setTitle] = useState(initial?.title ?? '');
-  const [url, setUrl] = useState((initial?.content?.url as string) ?? '');
+  const [url, setUrl] = useState(initial?.type === 'video' ? (initial.content.url ?? '') : '');
   const [order, setOrder] = useState(initial?.order ?? nextOrder);
-  const [fetchingTitle, setFetchingTitle] = useState(false);
   const titleTouched = useRef(!!initial?.title);
-  const { error, submitting, handleSubmit } = useFormSubmit(async () => {
-    if (!title.trim()) throw new Error('Title is required');
-    if (!url.trim()) throw new Error('YouTube URL is required');
-    await onSubmit({ title: title.trim(), url: url.trim(), order });
-  });
+  const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
-  async function handleUrlBlur() {
-    const trimmed = url.trim();
-    if (!trimmed || !youtubeUrlRegex.test(trimmed) || titleTouched.current) return;
+  const onTitleFetched = useCallback((fetched: string) => {
+    setTitle(fetched);
+  }, []);
 
-    setFetchingTitle(true);
+  const { fetchingTitle, handleUrlBlur } = useYouTubeTitle({ url, titleTouched, onTitleFetched });
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setSubmitting(true);
+    setError('');
     try {
-      const { title: fetched } = await apiClient.get<{ title: string }>(
-        `/youtube/title?url=${encodeURIComponent(trimmed)}`,
-      );
-      if (fetched && !titleTouched.current) setTitle(fetched);
-    } catch {
-      // Silently ignore — user can type the title manually
+      if (!title.trim()) throw new Error('Title is required');
+      if (!url.trim()) throw new Error('YouTube URL is required');
+      await onSubmit({ title: title.trim(), url: url.trim(), order });
+    } catch (err: unknown) {
+      setError(err instanceof ApiClientError ? classifyError(err) : err instanceof Error ? err.message : 'Something went wrong');
     } finally {
-      setFetchingTitle(false);
+      setSubmitting(false);
     }
   }
 
@@ -61,7 +60,7 @@ export default function VideoForm({ initial, nextOrder = 1, onSubmit, onCancel }
         )}
       </div>
       <Input id="order" label="Order" type="number" value={order} onChange={e => setOrder(Number(e.target.value))} min={1} />
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      {error && <ErrorMessage message={error} />}
       <div className="flex justify-end gap-3 pt-2">
         <Button type="button" variant="secondary" onClick={onCancel} disabled={submitting}>Cancel</Button>
         <Button type="submit" disabled={submitting || fetchingTitle}>{submitting ? 'Saving...' : initial?.id ? 'Save Changes' : 'Add Video'}</Button>

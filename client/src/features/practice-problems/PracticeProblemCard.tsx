@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Brain } from 'lucide-react';
 import type { LessonTool } from '../../api/types.js';
 import Button from '../../components/Button.js';
 import CardActions from '../../components/CardActions.js';
+import CalculatorPanel from '../assessments/CalculatorPanel.js';
 
 interface PracticeProblemCardProps {
   problem: LessonTool;
@@ -11,12 +12,18 @@ interface PracticeProblemCardProps {
 }
 
 export default function PracticeProblemCard({ problem, onEdit, onDelete }: PracticeProblemCardProps) {
-  const question = (problem.content.question as string) ?? problem.title;
-  const options = (problem.content.options as string[]) ?? [];
-  const correctIndex = (problem.content.correctIndex as number) ?? 0;
+  if (problem.type !== 'practice_problem') {
+    return <p className="text-sm text-muted-foreground">Unsupported tool type.</p>;
+  }
+  const question = problem.content.question ?? problem.title;
+  const options = problem.content.options ?? [];
+  const correctIndex = problem.content.correctIndex ?? 0;
+  const calculatorEnabled = problem.content.calculatorEnabled ?? false;
 
   const [selected, setSelected] = useState<number | null>(null);
   const [checked, setChecked] = useState(false);
+  const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
+  const calcTriggerRef = useRef<HTMLButtonElement>(null);
 
   const isCorrect = checked && selected === correctIndex;
 
@@ -38,6 +45,25 @@ export default function PracticeProblemCard({ problem, onEdit, onDelete }: Pract
         </div>
         {onEdit && onDelete && <CardActions onEdit={onEdit} onDelete={onDelete} />}
       </div>
+
+      {calculatorEnabled && (
+        <>
+          <button
+            ref={calcTriggerRef}
+            type="button"
+            aria-expanded={isCalculatorOpen}
+            aria-controls={`calculator-panel-${problem.id}`}
+            aria-label={isCalculatorOpen ? 'Close calculator' : 'Open calculator'}
+            onClick={() => setIsCalculatorOpen(prev => !prev)}
+            className="inline-flex items-center justify-center gap-2 font-semibold transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 bg-surface hover:bg-surface-raised text-foreground border border-border shadow-warm-sm px-3 py-1.5 text-sm rounded-xl self-start w-full sm:w-auto min-h-[44px] sm:min-h-0 mb-2"
+          >
+            🧮 {isCalculatorOpen ? 'Close calculator' : 'Calculator'}
+          </button>
+          {isCalculatorOpen && (
+            <CalculatorPanel onClose={() => setIsCalculatorOpen(false)} triggerRef={calcTriggerRef} panelId={`calculator-panel-${problem.id}`} />
+          )}
+        </>
+      )}
 
       <div className="flex flex-col gap-2 mb-3">
         {options.map((option, i) => {

@@ -1,12 +1,12 @@
 import { Request, Response } from 'express';
-import { ToolType } from '@prisma/client';
+import { LessonToolQuery } from '../schemas/lesson-tool.schema.js';
 import { lessonToolService } from '../services/lesson-tool.service.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 
 export const lessonToolController = {
   getAll: asyncHandler(async (req: Request, res: Response) => {
     const lessonId = req.params['lessonId'] as string;
-    const type = req.query['type'] as ToolType | undefined;
+    const { type } = res.locals['validatedQuery'] as LessonToolQuery;
     res.json(await lessonToolService.findAllByLesson(lessonId, type));
   }),
 

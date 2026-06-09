@@ -1,7 +1,7 @@
 import { lessonToolsApi } from '../../api/lesson-tools.js';
 import type { LessonTool } from '../../api/types.js';
-import { useAuth } from '../../context/AuthContext.js';
 import useResourceList from '../../hooks/useResourceList.js';
+import useCanEdit from '../../hooks/useCanEdit.js';
 import VocabCard from './VocabCard.js';
 import VocabForm from './VocabForm.js';
 import Modal from '../../components/Modal.js';
@@ -11,14 +11,14 @@ import LoadingSpinner from '../../components/LoadingSpinner.js';
 import ErrorMessage from '../../components/ErrorMessage.js';
 import EmptyState from '../../components/EmptyState.js';
 
-type VocabCreateInput = { type: 'vocab'; title: string; content: { term: string; definition: string }; order: number };
-type VocabUpdateInput = { content?: { term: string; definition: string }; order?: number };
+type VocabCreateInput = { type: 'vocab'; title: string; content: { term: string; definition: string; example?: string }; order: number };
+type VocabUpdateInput = { content?: { term: string; definition: string; example?: string }; order?: number };
 
 const byOrder = (a: LessonTool, b: LessonTool) => a.order - b.order;
 
 export default function VocabList({ lessonId }: { lessonId: string }) {
-  const { user } = useAuth();
-  const canEdit = user?.role === 'teacher' || user?.role === 'admin';
+  const canEdit = useCanEdit();
+
   const {
     items: vocabs, loading, error,
     showAdd, setShowAdd, editing, setEditing, deleting, setDeleting,
@@ -67,8 +67,8 @@ export default function VocabList({ lessonId }: { lessonId: string }) {
         <Modal title="Add Vocabulary Term" onClose={() => setShowAdd(false)}>
           <VocabForm
             nextOrder={vocabs.length + 1}
-            onSubmit={async ({ term, definition, order }) =>
-              handleAdd({ type: 'vocab', title: term, content: { term, definition }, order })
+            onSubmit={async ({ term, definition, example, order }) =>
+              handleAdd({ type: 'vocab', title: term, content: { term, definition, example }, order })
             }
             onCancel={() => setShowAdd(false)}
           />
@@ -78,8 +78,8 @@ export default function VocabList({ lessonId }: { lessonId: string }) {
         <Modal title="Edit Vocabulary Term" onClose={() => setEditing(null)}>
           <VocabForm
             initial={editing}
-            onSubmit={async ({ term, definition, order }) =>
-              handleUpdate({ content: { term, definition }, order })
+            onSubmit={async ({ term, definition, example, order }) =>
+              handleUpdate({ content: { term, definition, example }, order })
             }
             onCancel={() => setEditing(null)}
           />
@@ -88,7 +88,7 @@ export default function VocabList({ lessonId }: { lessonId: string }) {
       {deleting && (
         <ConfirmDialog
           title="Delete Term"
-          message={`Delete "${(deleting.content?.term as string) ?? deleting.title}"?`}
+          message={`Delete "${deleting.type === 'vocab' ? (deleting.content.term ?? deleting.title) : deleting.title}"?`}
           onConfirm={handleDelete}
           onClose={() => setDeleting(null)}
         />

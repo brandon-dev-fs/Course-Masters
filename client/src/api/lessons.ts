@@ -5,7 +5,7 @@ export const lessonsApi = {
   getAll: (unitId: string) => apiClient.get<Lesson[]>(`/units/${unitId}/lessons`),
   getOne: (unitId: string, lessonId: string) =>
     apiClient.get<Lesson>(`/units/${unitId}/lessons/${lessonId}`),
-  create: (unitId: string, data: { title: string; order: number }) =>
+  create: (unitId: string, data: { title: string; description: string; order: number }) =>
     apiClient.post<Lesson>(`/units/${unitId}/lessons`, data),
   update: (unitId: string, lessonId: string, data: {
     title?: string;

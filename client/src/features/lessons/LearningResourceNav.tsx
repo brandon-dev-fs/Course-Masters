@@ -78,10 +78,10 @@ export default function LearningResourceNav({ resources, activeResourceKey, onRe
                 >
                   <Icon className="w-3.5 h-3.5 shrink-0" />
                   <span>{resource.title}</span>
-                  {isComplete && <Check className="w-3.5 h-3.5 text-green-500 shrink-0" />}
+                  {isComplete && <Check className="w-3.5 h-3.5 text-green-primary shrink-0" />}
                 </button>
                 {canEdit && isDeletable && (
-                  <div className="flex items-center opacity-0 group-hover/item:opacity-100 transition-opacity">
+                  <div className="flex items-center">
                     {isReorderable && (
                       <>
                         <button

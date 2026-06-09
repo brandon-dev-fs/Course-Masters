@@ -1,386 +1,484 @@
-import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { Settings } from 'lucide-react';
-import { lessonsApi } from '../../api/lessons.js';
-import { unitsApi } from '../../api/units.js';
-import { coursesApi } from '../../api/courses.js';
+import { useState, useRef } from 'react';
+import { useParams, Link } from 'react-router-dom';
+import useDisclosure from '../../hooks/useDisclosure.js';
+import { useAuth } from '../../context/AuthContext.js';
+import { Menu, ArrowLeft, Settings } from 'lucide-react';
+import { assessmentsApi } from '../../api/assessments.js';
 import { lessonResourcesApi } from '../../api/lesson-resources.js';
 import { lessonToolsApi } from '../../api/lesson-tools.js';
 import { resourceCompletionsApi } from '../../api/resource-completions.js';
-import type { Lesson, LessonResource, ResourceCompletionItem } from '../../api/types.js';
-import { useAuth } from '../../context/AuthContext.js';
+import type { UpdateAssignmentPayload } from '../../api/assignments.js';
+import useLesson from './hooks/useLesson.js';
+import useResources from './hooks/useResources.js';
+import useTools from './hooks/useTools.js';
+import useAssignments, { completionKeyOf } from './hooks/useAssignments.js';
+import type { AssignmentItem } from './AssignmentSection.js';
 import UnitLessonSidebar from './UnitLessonSidebar.js';
-import LearningResourceNav from './LearningResourceNav.js';
-import type { LearningResource } from './LearningResourceNav.js';
-import PracticeResourceSidebar, { PracticeResourceMobileBar } from './PracticeResourceSidebar.js';
-import LessonPlanView from './LessonPlanView.js';
-import VideoCard from '../videos/VideoCard.js';
-import VideoForm from '../videos/VideoForm.js';
-import NoteEditor from '../notes/NoteEditor.js';
-import VocabList from '../vocab/VocabList.js';
-import FlashCardList from '../flashcards/FlashCardList.js';
-import PracticeProblemList from '../practice-problems/PracticeProblemList.js';
-import QuizSection from '../quizzes/QuizSection.js';
-import StudentNotePanel from '../student-notes/StudentNotePanel.js';
+import ActiveItemContent from './ActiveItemContent.js';
+import LessonToolModals from './LessonToolModals.js';
 import LessonSettingsModal from './LessonSettingsModal.js';
 import LessonPlanModal from './LessonPlanModal.js';
 import LoadingSpinner from '../../components/LoadingSpinner.js';
 import ErrorMessage from '../../components/ErrorMessage.js';
-import ResourceCompletionCheckbox from '../../components/ResourceCompletionCheckbox.js';
+import AssignmentStepper from './AssignmentStepper.js';
+import type { StepperItem } from './AssignmentStepper.js';
+import AssignmentSection from './AssignmentSection.js';
+import StudentToolsBar from '../student-notes/StudentToolsBar.js';
+import type { StudentToolType } from '../student-notes/StudentToolsBar.js';
+import StudentMaterialsModal from '../student-notes/StudentMaterialsModal.js';
+import AssignmentFormModal from '../assignments/AssignmentFormModal.js';
+import ConfirmDialog from '../../components/ConfirmDialog.js';
+import AssessmentSection from '../assessments/AssessmentSection.js';
+import ErrorBoundary from '../../components/ErrorBoundary.js';
+
+function contentAreaFallback(_error: Error, _reset: () => void) {
+  return (
+    <div className="rounded-lg bg-surface border border-border p-4 text-sm text-muted-foreground flex flex-col gap-3">
+      <p>Something went wrong loading this content.</p>
+      <div className="flex gap-3">
+        <a
+          href={window.location.href}
+          className="text-primary underline text-sm"
+        >
+          Reload page
+        </a>
+        <button
+          type="button"
+          onClick={() => window.history.back()}
+          className="text-sm text-muted-foreground underline hover:text-foreground"
+        >
+          Go back
+        </button>
+      </div>
+    </div>
+  );
+}
+
+const testApi = {
+  get: assessmentsApi.getUnitQuiz,
+  create: assessmentsApi.createUnitQuiz,
+  update: assessmentsApi.update,
+  submitAttempt: assessmentsApi.submitAttempt,
+  getAttempts: assessmentsApi.getAttempts,
+};
+
+function readSidebarCollapsed(): boolean {
+  try {
+    return localStorage.getItem('cm-sidebar-collapsed') === 'true';
+  } catch {
+    return false;
+  }
+}
+
+function writeSidebarCollapsed(value: boolean): void {
+  try {
+    localStorage.setItem('cm-sidebar-collapsed', String(value));
+  } catch {
+    // ignore — localStorage unavailable
+  }
+}
 
 export default function LessonDetailPage() {
   const { courseId, unitId, lessonId } = useParams<{ courseId: string; unitId: string; lessonId: string }>();
-  const navigate = useNavigate();
+
+  // Cross-cutting UI state
+  const [activeStepKey, setActiveStepKey] = useState('lessonPlan');
+  const [activeTool, setActiveTool] = useState<StudentToolType | null>(null);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(readSidebarCollapsed);
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
+  const settingsDisclosure = useDisclosure();
+  const planEditDisclosure = useDisclosure();
+  const hamburgerRef = useRef<HTMLButtonElement>(null);
+
+  const {
+    lesson, courseTitle, units, unitLessons, unitProgress,
+    loading, error, canEdit,
+    handleAddLesson, handleUpdate, handleDelete,
+  } = useLesson({ courseId, unitId, lessonId }, settingsDisclosure.close);
+
+  const {
+    resources, completionsData, completedIds,
+    editingVideoId, newNoteIdRef,
+    setResources, setCompletionsData, setEditingVideoId,
+    handleToggleCompletion, handleMoveResource,
+  } = useResources(lessonId);
+
+  const {
+    tools, editingTool,
+    setTools, setEditingTool,
+    handleMoveTool,
+  } = useTools(lessonId);
+
   const { user } = useAuth();
-  const canEdit = user?.role === 'teacher' || user?.role === 'admin';
+  const isStudent = user?.role === 'student';
 
-  const [lesson, setLesson] = useState<Lesson | null>(null);
-  const [courseTitle, setCourseTitle] = useState('');
-  const [unitTitle, setUnitTitle] = useState('');
-  const [unitLessons, setUnitLessons] = useState<Lesson[]>([]);
-  const [videos, setVideos] = useState<LessonResource[]>([]);
-  const [notes, setNotes] = useState<LessonResource[]>([]);
-  const [completions, setCompletions] = useState<ResourceCompletionItem[]>([]);
-  const [hasVocabSection, setHasVocabSection] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [activeResourceKey, setActiveResourceKey] = useState('lessonPlan');
-  const [showSettings, setShowSettings] = useState(false);
-  const [showPlanEdit, setShowPlanEdit] = useState(false);
-  const newNoteIdRef = useRef<string | null>(null);
+  const {
+    assignments,
+    assignmentItems, completedAssignmentIds, incompleteRequired, availableTools,
+    isAddingAssignment, setIsAddingAssignment,
+    editingAssignment, setEditingAssignment,
+    deletingAssignmentId, setDeletingAssignmentId,
+    handleCreateAssignment, handleUpdateAssignment, handleDeleteAssignment,
+    handleMoveAssignment, handleToggleAssignmentCompletion, handleBookmarkChange,
+  } = useAssignments({ lessonId, lesson, resources, tools, completedIds, setActiveStepKey });
 
-  useEffect(() => {
-    if (!unitId || !lessonId || !courseId) return;
-    setLoading(true);
-    setError('');
-    Promise.all([
-      lessonsApi.getOne(unitId, lessonId),
-      unitsApi.getOne(courseId, unitId),
-      coursesApi.getOne(courseId),
-      lessonsApi.getAll(unitId),
-      lessonResourcesApi.getAll(lessonId, 'video'),
-      lessonResourcesApi.getAll(lessonId, 'note'),
-      lessonToolsApi.getAll(lessonId, 'vocab'),
-      resourceCompletionsApi.get(lessonId),
-    ])
-      .then(([lessonData, unitData, courseData, lessons, vids, nts, voc, comp]) => {
-        setLesson(lessonData);
-        setCourseTitle(courseData.title);
-        setUnitTitle(unitData.title);
-        setUnitLessons(lessons);
-        setVideos(vids.sort((a, b) => a.order - b.order));
-        setNotes(nts.sort((a, b) => a.order - b.order));
-        setHasVocabSection(voc.length > 0);
-        setCompletions(comp.completions);
-        setActiveResourceKey('lessonPlan');
-      })
-      .catch((err: unknown) => setError(err instanceof Error ? err.message : 'Failed to load lesson'))
-      .finally(() => setLoading(false));
-  }, [unitId, lessonId, courseId]);
-
-  // Build learning resources array
-  const learningResources = useMemo<LearningResource[]>(() => {
-    const resources: LearningResource[] = [];
-    resources.push({ key: 'lessonPlan', type: 'lessonPlan', title: 'Lesson Plan', id: lessonId ?? '' });
-
-    const interleaved: LearningResource[] = [
-      ...videos.map(v => ({ key: `video:${v.id}`, type: 'video' as const, title: v.title, id: v.id })),
-      ...notes.map(n => ({ key: `note:${n.id}`, type: 'note' as const, title: n.title, id: n.id })),
-    ];
-    interleaved.sort((a, b) => {
-      const orderOf = (r: LearningResource): number => {
-        if (r.type === 'video') return videos.find(v => v.id === r.id)!.order;
-        return notes.find(n => n.id === r.id)!.order;
-      };
-      return orderOf(a) - orderOf(b);
+  function handleToggleSidebar() {
+    setSidebarCollapsed(prev => {
+      const next = !prev;
+      writeSidebarCollapsed(next);
+      return next;
     });
-    resources.push(...interleaved);
-
-    if (hasVocabSection) {
-      resources.push({ key: 'vocab', type: 'vocab', title: 'Vocabulary', id: lessonId ?? '' });
-    }
-
-    return resources;
-  }, [videos, notes, lessonId, hasVocabSection]);
-
-  const completedKeys = useMemo(() => {
-    const keys = new Set<string>();
-    for (const c of completions) {
-      if (c.resourceType === 'lessonPlan') keys.add('lessonPlan');
-      else if (c.resourceType === 'vocab') keys.add('vocab');
-      else keys.add(`${c.resourceType}:${c.resourceId}`);
-    }
-    return keys;
-  }, [completions]);
-
-  const allResourcesComplete = useMemo(
-    () => learningResources.every(r => completedKeys.has(r.key)),
-    [learningResources, completedKeys],
-  );
-
-  const handleToggleCompletion = useCallback(async (resourceType: string, resourceId: string) => {
-    if (!lessonId) return;
-    const result = await resourceCompletionsApi.toggle(lessonId, resourceType, resourceId);
-    setCompletions(result.completions);
-  }, [lessonId]);
-
-  async function handleUpdate(data: { title: string; description?: string; order: number; objective?: string; planContent?: Record<string, unknown> }) {
-    if (!unitId || !lessonId) return;
-    const updated = await lessonsApi.update(unitId, lessonId, data);
-    setLesson(updated);
-    setShowSettings(false);
   }
 
-  async function handleDelete() {
-    if (!unitId || !lessonId) return;
-    await lessonsApi.delete(unitId, lessonId);
-    navigate(`/courses/${courseId}`);
+  function handleMobileClose() {
+    setMobileDrawerOpen(false);
+    hamburgerRef.current?.focus();
   }
 
-  async function handleDeleteResource(resource: LearningResource) {
-    if (resource.type === 'note') {
-      await lessonResourcesApi.delete(resource.id);
-      setNotes(prev => prev.filter(n => n.id !== resource.id));
-    } else if (resource.type === 'video') {
-      await lessonResourcesApi.delete(resource.id);
-      setVideos(prev => prev.filter(v => v.id !== resource.id));
-    } else if (resource.type === 'vocab') {
-      setHasVocabSection(false);
+  async function handleToggleRequired(item: AssignmentItem) {
+    if (!lessonId || !item.id) return;
+    const newRequired = !item.isRequired;
+    if (item.kind === 'resource') {
+      const updated = await lessonResourcesApi.update(item.id, { isRequired: newRequired });
+      setResources(prev => prev.map(r => r.id === item.id ? updated : r));
+    } else if (item.kind === 'tool') {
+      const updated = await lessonToolsApi.update(item.id, { isRequired: newRequired });
+      setTools(prev => prev.map(t => t.id === item.id ? updated : t));
     }
-    if (activeResourceKey === resource.key || activeResourceKey === `edit-video:${resource.id}`) {
-      setActiveResourceKey('lessonPlan');
-    }
-  }
-
-  async function handleMoveResource(resource: LearningResource, direction: 'left' | 'right') {
-    const reorderable = learningResources.filter(r => r.type !== 'lessonPlan' && r.type !== 'vocab');
-    const idx = reorderable.findIndex(r => r.key === resource.key);
-    const targetIdx = direction === 'left' ? idx - 1 : idx + 1;
-    if (targetIdx < 0 || targetIdx >= reorderable.length) return;
-
-    const other = reorderable[targetIdx];
-    const orderOf = (r: LearningResource): number => {
-      if (r.type === 'video') return videos.find(v => v.id === r.id)!.order;
-      return notes.find(n => n.id === r.id)!.order;
-    };
-    const orderA = orderOf(resource);
-    const orderB = orderOf(other);
-
-    const applyOrder = async (r: LearningResource, newOrder: number) => {
-      if (r.type === 'video') {
-        const updated = await lessonResourcesApi.update(r.id, { order: newOrder });
-        setVideos(prev => prev.map(v => v.id === r.id ? updated : v).sort((a, b) => a.order - b.order));
-      } else if (r.type === 'note') {
-        const updated = await lessonResourcesApi.update(r.id, { order: newOrder });
-        setNotes(prev => prev.map(n => n.id === r.id ? updated : n).sort((a, b) => a.order - b.order));
-      }
-    };
-
-    await Promise.all([applyOrder(resource, orderB), applyOrder(other, orderA)]);
-  }
-
-  async function handleAddResource(type: 'note' | 'lecture' | 'video' | 'vocab') {
-    if (!lessonId) return;
-    if (type === 'note' || type === 'lecture') {
-      const emptyDoc = { type: 'doc', content: [{ type: 'paragraph' }] };
-      const note = await lessonResourcesApi.create(lessonId, {
-        type,
-        title: type === 'lecture' ? 'New Lecture' : 'New Note',
-        content: { body: emptyDoc },
-        order: videos.length + notes.length + 1,
-      });
-      newNoteIdRef.current = note.id;
-      setNotes(prev => [...prev, note]);
-      setActiveResourceKey(`note:${note.id}`);
-    } else if (type === 'video') {
-      setActiveResourceKey('add-video');
-    } else {
-      setHasVocabSection(true);
-      setActiveResourceKey('vocab');
-    }
+    const fresh = await resourceCompletionsApi.get(lessonId);
+    setCompletionsData(fresh);
   }
 
   if (loading) return <LoadingSpinner />;
   if (error) return <ErrorMessage message={error} />;
   if (!lesson) return null;
 
-  const practiceResource = activeResourceKey === 'flashcards' || activeResourceKey === 'practice' ? activeResourceKey : null;
-  const isQuiz = activeResourceKey === 'quiz';
+  const isQuizActive = activeStepKey === 'quiz';
+  const unitTestActive = activeStepKey === 'unit-test';
+  const activeItem = assignmentItems.find(item => item.key === activeStepKey) ?? assignmentItems[0];
+  const activeIdx = assignmentItems.findIndex(item => item.key === activeItem?.key);
 
-  function renderContent() {
-    if (isQuiz) return <QuizSection lessonId={lesson!.id} />;
-    if (activeResourceKey === 'flashcards') return <FlashCardList lessonId={lesson!.id} />;
-    if (activeResourceKey === 'practice') return <PracticeProblemList lessonId={lesson!.id} />;
-    if (activeResourceKey === 'lessonPlan') {
-      return (
-        <LessonPlanView
-          lesson={lesson!}
-          isComplete={completedKeys.has('lessonPlan')}
-          onToggleComplete={() => handleToggleCompletion('lessonPlan', lesson!.id)}
-          canEdit={canEdit}
-          onEdit={() => setShowPlanEdit(true)}
-        />
-      );
-    }
-    if (activeResourceKey === 'vocab') {
-      return (
-        <div className="flex flex-col gap-4">
-          <VocabList lessonId={lesson!.id} />
-          <div className="pt-2 border-t border-border">
-            <ResourceCompletionCheckbox
-              isComplete={completedKeys.has('vocab')}
-              onToggle={() => handleToggleCompletion('vocab', lesson!.id)}
-            />
-          </div>
-        </div>
-      );
-    }
-    if (activeResourceKey === 'add-video') {
-      return (
-        <VideoForm
-          nextOrder={videos.length + notes.length + 1}
-          onSubmit={async ({ title, url, order }) => {
-            const video = await lessonResourcesApi.create(lesson!.id, {
-              type: 'video',
-              title,
-              content: { url },
-              order,
-            });
-            setVideos(prev => [...prev, video].sort((a, b) => a.order - b.order));
-            setActiveResourceKey(`video:${video.id}`);
-          }}
-          onCancel={() => setActiveResourceKey('lessonPlan')}
-        />
-      );
-    }
-    if (activeResourceKey.startsWith('video:')) {
-      const videoId = activeResourceKey.slice(6);
-      const video = videos.find(v => v.id === videoId);
-      if (!video) return null;
-      return (
-        <VideoCard
-          video={video}
-          isComplete={completedKeys.has(activeResourceKey)}
-          onToggleComplete={() => handleToggleCompletion('video', video.id)}
-          onEdit={canEdit ? () => setActiveResourceKey(`edit-video:${video.id}`) : undefined}
-          onDelete={canEdit ? async () => {
-            await lessonResourcesApi.delete(video.id);
-            setVideos(prev => prev.filter(v => v.id !== video.id));
-            setActiveResourceKey('lessonPlan');
-          } : undefined}
-        />
-      );
-    }
-    if (activeResourceKey.startsWith('edit-video:')) {
-      const videoId = activeResourceKey.slice(11);
-      const video = videos.find(v => v.id === videoId);
-      if (!video) return null;
-      return (
-        <VideoForm
-          initial={video}
-          onSubmit={async ({ title, url, order }) => {
-            const updated = await lessonResourcesApi.update(video.id, { title, content: { url }, order });
-            setVideos(prev => prev.map(v => v.id === video.id ? updated : v).sort((a, b) => a.order - b.order));
-            setActiveResourceKey(`video:${video.id}`);
-          }}
-          onCancel={() => setActiveResourceKey(`video:${video.id}`)}
-        />
-      );
-    }
-    if (activeResourceKey.startsWith('note:')) {
-      const noteId = activeResourceKey.slice(5);
-      const note = notes.find(n => n.id === noteId);
-      if (!note) return null;
-      const isNew = newNoteIdRef.current === note.id;
-      if (isNew) newNoteIdRef.current = null;
-      return (
-        <NoteEditor
-          key={note.id}
-          note={note}
-          isComplete={completedKeys.has(activeResourceKey)}
-          onToggleComplete={() => handleToggleCompletion('note', note.id)}
-          onUpdate={updated => setNotes(prev => prev.map(n => n.id === updated.id ? updated : n))}
-          initialEditing={isNew}
-        />
-      );
-    }
-    return null;
+  const quizUnlocked = completionsData.requiredItems
+    .filter(r => r.isRequired)
+    .every(r => completedIds.has(r.resourceId));
+  const quizPassed = unitProgress?.lessons.find(l => l.lessonId === lesson.id)?.quizPassed ?? false;
+  const allLessonsComplete = unitProgress
+    ? unitProgress.totalLessons > 0 && unitProgress.completedLessons === unitProgress.totalLessons
+    : false;
+  const completedLessonIds = new Set(
+    unitProgress?.lessons.filter(l => l.quizPassed).map(l => l.lessonId) ?? []
+  );
+
+  const stepperItems: StepperItem[] = assignmentItems.map(item => ({
+    key: item.key,
+    title: item.title,
+    kind: item.kind,
+    completionId: completionKeyOf(item, lesson.id),
+    resourceType: item.resourceType,
+    toolType: item.toolType,
+    assignmentType: item.assignmentType,
+  }));
+
+  const sortedResources = [...resources].sort((a, b) => a.order - b.order);
+  const sortedTools = [...tools].sort((a, b) => a.order - b.order);
+  const sortedAssignments = [...assignments].sort((a, b) => a.order - b.order);
+  let onMoveUp: (() => void) | undefined;
+  let onMoveDown: (() => void) | undefined;
+  if (activeItem?.kind === 'resource') {
+    const ri = sortedResources.findIndex(r => r.id === activeItem.id);
+    if (ri > 0) onMoveUp = () => handleMoveResource(activeItem.id!, 'up');
+    if (ri < sortedResources.length - 1) onMoveDown = () => handleMoveResource(activeItem.id!, 'down');
+  } else if (activeItem?.kind === 'tool') {
+    const ti = sortedTools.findIndex(t => t.id === activeItem.id);
+    if (ti > 0) onMoveUp = () => handleMoveTool(activeItem.id!, 'up');
+    if (ti < sortedTools.length - 1) onMoveDown = () => handleMoveTool(activeItem.id!, 'down');
+  } else if (activeItem?.kind === 'assignment') {
+    const ai = sortedAssignments.findIndex(a => a.id === activeItem.id);
+    if (ai > 0) onMoveUp = () => handleMoveAssignment(activeItem.id!, 'up');
+    if (ai < sortedAssignments.length - 1) onMoveDown = () => handleMoveAssignment(activeItem.id!, 'down');
   }
+
+  const isComplete = !activeItem ? false
+    : activeItem.kind === 'quiz' ? quizPassed
+    : activeItem.kind === 'assignment' && activeItem.id ? completedAssignmentIds.has(activeItem.id)
+    : activeItem.id ? completedIds.has(activeItem.id) : false;
+
+  const activeAssignment = activeItem?.kind === 'assignment'
+    ? assignments.find(a => a.id === activeItem.id)
+    : undefined;
+
+  const onToggleCompletion = activeAssignment
+    ? () => handleToggleAssignmentCompletion(activeAssignment)
+    : () => activeItem && handleToggleCompletion(activeItem);
+
+  const currentUnit = units.find(u => u.id === unitId);
+
+  // Mobile tab bar uses the same available tools as desktop
+  const mobileAvailableTools = availableTools;
 
   return (
     <>
-      <div className="relative -mx-4 -mt-8 -mb-8 flex flex-col lg:flex-row min-h-[calc(100vh-4.5rem)]" style={{ width: '100vw', left: '50%', marginLeft: '-50vw' }}>
-        <UnitLessonSidebar
-          lessons={unitLessons}
-          currentLessonId={lesson.id}
-          courseId={courseId!}
-          unitId={unitId!}
-          courseTitle={courseTitle}
-          unitTitle={unitTitle}
-        />
-
-        <div className="flex-1 flex flex-col min-w-0">
-          <header className="flex items-center justify-between gap-4 px-4 py-3 border-b border-border">
-            <div className="flex flex-col min-w-0">
-              <h1 className="text-xl font-bold text-foreground truncate">{lesson.order}. {lesson.title}</h1>
-              {lesson.description && (
-                <p className="text-sm text-muted-foreground truncate">{lesson.description}</p>
-              )}
-            </div>
-            {canEdit && (
-              <button
-                onClick={() => setShowSettings(true)}
-                className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-surface-raised transition-colors shrink-0"
-                aria-label="Lesson settings"
-              >
-                <Settings className="w-5 h-5" />
-              </button>
-            )}
-          </header>
-
-          <LearningResourceNav
-            resources={learningResources}
-            activeResourceKey={activeResourceKey}
-            onResourceChange={setActiveResourceKey}
-            completedKeys={completedKeys}
-            quizUnlocked={allResourcesComplete}
-            canEdit={canEdit}
-            onAddResource={handleAddResource}
-            onDeleteResource={handleDeleteResource}
-            onMoveResource={handleMoveResource}
-          />
-
-          <PracticeResourceMobileBar
-            activeResource={practiceResource}
-            onResourceChange={setActiveResourceKey}
-          />
-
-          <main className="flex-1 overflow-y-auto px-4 py-4">
-            {renderContent()}
-          </main>
+      <div
+        className="relative -mx-4 flex flex-col flex-1"
+        style={{ width: '100vw', left: '50%', marginLeft: '-50vw' }}
+      >
+        {/* Desktop top bar */}
+        <div className="hidden lg:flex items-center gap-2 px-4 py-2 bg-surface border-b border-border shrink-0">
+          <h1 className="sr-only">{lesson.title}</h1>
+          <Link
+            to={`/courses/${courseId}`}
+            className="flex items-center gap-1.5 text-sm text-primary hover:underline font-medium"
+            aria-label={`Back to ${currentUnit?.title ?? courseTitle}`}
+          >
+            <ArrowLeft className="w-3.5 h-3.5 shrink-0" />
+            {currentUnit?.title ?? courseTitle}
+          </Link>
+          <div className="flex-1" />
+          {canEdit && (
+            <button
+              onClick={settingsDisclosure.open}
+              className="p-1.5 rounded text-muted-foreground hover:text-foreground hover:bg-surface-raised transition-colors shrink-0"
+              aria-label="Lesson settings"
+            >
+              <Settings className="w-4 h-4" />
+            </button>
+          )}
         </div>
 
-        <PracticeResourceSidebar
-          activeResource={practiceResource}
-          onResourceChange={setActiveResourceKey}
+        {/* Mobile header */}
+        <div className="lg:hidden flex flex-col bg-surface border-b border-border shrink-0">
+          {/* Row 1: back arrow + course name + hamburger */}
+          <div className="flex items-center gap-2 px-4 py-2">
+            <Link
+              to={`/courses/${courseId}`}
+              className="text-primary shrink-0"
+              aria-label={`Back to ${courseTitle}`}
+            >
+              <ArrowLeft className="w-4 h-4" />
+            </Link>
+            <Link
+              to={`/courses/${courseId}`}
+              className="text-xs text-primary hover:underline flex-1 truncate"
+            >
+              {courseTitle}
+            </Link>
+            <button
+              ref={hamburgerRef}
+              onClick={() => setMobileDrawerOpen(true)}
+              className="p-1.5 rounded text-muted-foreground hover:text-foreground hover:bg-surface-raised transition-colors shrink-0"
+              aria-label="Open lesson navigation"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+          </div>
+          {/* Row 2: lesson title + settings */}
+          <div className="flex items-center gap-2 px-4 pb-2">
+            <h1 className="text-base font-bold text-foreground flex-1">{lesson.title}</h1>
+            {canEdit && (
+              <button
+                onClick={settingsDisclosure.open}
+                className="p-1.5 rounded text-muted-foreground hover:text-foreground hover:bg-surface-raised transition-colors shrink-0"
+                aria-label="Lesson settings"
+              >
+                <Settings className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Panel row — flex-col on mobile, flex-row on desktop */}
+        <div className="flex flex-col lg:flex-row flex-1 min-h-0">
+          <UnitLessonSidebar
+            lessons={unitLessons}
+            currentLessonId={lesson.id}
+            courseId={courseId!}
+            unitId={unitId!}
+            courseTitle={courseTitle}
+            unitTitle={currentUnit?.title ?? ''}
+            units={units}
+            canEdit={canEdit}
+            onAddLesson={handleAddLesson}
+            onUnitTestClick={() => setActiveStepKey('unit-test')}
+            unitTestActive={unitTestActive}
+            onLessonClick={() => setActiveStepKey('lessonPlan')}
+            collapsed={sidebarCollapsed}
+            mobileOpen={mobileDrawerOpen}
+            onMobileClose={handleMobileClose}
+            completedLessonIds={completedLessonIds}
+            onToggle={handleToggleSidebar}
+          />
+
+          <div className="flex flex-col flex-1 min-w-0 min-h-0">
+            {!unitTestActive && (
+              <AssignmentStepper
+                items={stepperItems}
+                activeStepKey={activeStepKey}
+                completedIds={completedIds}
+                completedAssignmentIds={completedAssignmentIds}
+                quizUnlocked={quizUnlocked}
+                quizPassed={quizPassed}
+                onStepClick={setActiveStepKey}
+                onAdd={canEdit ? () => setIsAddingAssignment(true) : undefined}
+              />
+            )}
+
+            <ErrorBoundary fallback={contentAreaFallback}>
+              <main
+                id="lesson-content"
+                className="flex-1 min-w-0 overflow-y-auto px-4 py-6 pb-24 lg:pb-6"
+              >
+                {/* Scoped live region announces only step changes, not every child mutation */}
+                <span
+                  aria-live="polite"
+                  aria-atomic="true"
+                  className="sr-only"
+                >
+                  {activeItem?.title ?? ''}
+                </span>
+                {unitTestActive ? (
+                  <AssessmentSection
+                    parentId={unitId!}
+                    api={testApi}
+                    label="Unit Test"
+                    createLabel="Create Test"
+                    takeLabel="Take Test"
+                    retakeLabel="Retake Test"
+                    modalTitle="Unit Test"
+                    resultsTitle="Test Results"
+                    displayMode="inline"
+                    canEdit={canEdit}
+                    unlocked={allLessonsComplete}
+                    lockedMessage="Complete all lessons to unlock the unit test."
+                  />
+                ) : (
+                  activeItem && (
+                    <AssignmentSection
+                      key={activeItem.key}
+                      item={activeItem}
+                      isComplete={isComplete}
+                      isLocked={activeItem.kind === 'quiz' && !quizUnlocked}
+                      canEdit={canEdit}
+                      isFirst={activeIdx === 0}
+                      isLast={activeIdx === assignmentItems.length - 1}
+                      incompleteRequired={incompleteRequired}
+                      onToggleCompletion={onToggleCompletion}
+                      onToggleRequired={() => handleToggleRequired(activeItem)}
+                      onMoveUp={onMoveUp}
+                      onMoveDown={onMoveDown}
+                      onPrev={() => { const p = assignmentItems[activeIdx - 1]; if (p) setActiveStepKey(p.key); }}
+                      onNext={() => { const n = assignmentItems[activeIdx + 1]; if (n) setActiveStepKey(n.key); }}
+                      onEdit={canEdit && activeItem.kind === 'assignment' && activeAssignment
+                        ? () => setEditingAssignment(activeAssignment)
+                        : undefined}
+                      onDelete={canEdit && activeItem.kind === 'assignment' && activeItem.id
+                        ? () => setDeletingAssignmentId(activeItem.id)
+                        : undefined}
+                    >
+                      <ActiveItemContent
+                        item={activeItem}
+                        lesson={lesson}
+                        resources={resources}
+                        tools={tools}
+                        assignments={assignments}
+                        canEdit={canEdit}
+                        editingVideoId={editingVideoId}
+                        newNoteIdRef={newNoteIdRef}
+                        onVideoEditStart={id => setEditingVideoId(id)}
+                        onVideoEditCancel={() => setEditingVideoId(null)}
+                        onVideoUpdated={updated => {
+                          setResources(prev => prev.map(r => r.id === updated.id ? updated : r).sort((a, b) => a.order - b.order));
+                          setEditingVideoId(null);
+                        }}
+                        onVideoDeleted={id => setResources(prev => prev.filter(r => r.id !== id))}
+                        onNoteUpdated={updated => setResources(prev => prev.map(r => r.id === updated.id ? updated : r))}
+                        onEditTool={t => setEditingTool(t)}
+                        onToolDeleted={id => setTools(prev => prev.filter(t => t.id !== id))}
+                        onToolUpdated={updated => setTools(prev => prev.map(t => t.id === updated.id ? updated : t))}
+                        onToggleAssignmentCompletion={handleToggleAssignmentCompletion}
+                        onBookmarkChange={handleBookmarkChange}
+                        isStudent={isStudent}
+                        onPlanEdit={planEditDisclosure.open}
+                      />
+                    </AssignmentSection>
+                  )
+                )}
+              </main>
+            </ErrorBoundary>
+          </div>
+
+          <StudentToolsBar
+            availableTools={availableTools}
+            activeTool={activeTool}
+            onOpenTool={tool => setActiveTool(prev => prev === tool ? null : tool)}
+            isQuizActive={isQuizActive}
+            mode="desktop"
+          />
+        </div>
+
+        {/* Mobile bottom tab bar */}
+        <StudentToolsBar
+          availableTools={mobileAvailableTools}
+          activeTool={activeTool}
+          onOpenTool={tool => setActiveTool(prev => prev === tool ? null : tool)}
+          isQuizActive={isQuizActive}
+          mode="mobile"
         />
       </div>
 
-      <StudentNotePanel lessonId={lesson.id} disabled={isQuiz} />
+      <StudentMaterialsModal
+        lessonId={lesson.id}
+        isOpen={activeTool !== null}
+        activeTool={activeTool}
+        availableTools={availableTools}
+        onSwitchTool={setActiveTool}
+        onClose={() => setActiveTool(null)}
+        assignments={assignments}
+        onNavigateToAssignment={(id) => setActiveStepKey(`assignment:${id}`)}
+      />
 
-      {showSettings && (
+      {settingsDisclosure.isOpen && (
         <LessonSettingsModal
           lesson={lesson}
-          onClose={() => setShowSettings(false)}
+          onClose={settingsDisclosure.close}
           onUpdate={handleUpdate}
           onDelete={handleDelete}
         />
       )}
-      {showPlanEdit && (
+      {planEditDisclosure.isOpen && (
         <LessonPlanModal
           lesson={lesson}
-          onClose={() => setShowPlanEdit(false)}
+          onClose={planEditDisclosure.close}
           onUpdate={handleUpdate}
+        />
+      )}
+
+      <LessonToolModals
+        canEdit={canEdit}
+        editingTool={editingTool}
+        onClose={() => setEditingTool(null)}
+        onToolUpdated={updated => setTools(prev => prev.map(t => t.id === updated.id ? updated : t).sort((a, b) => a.order - b.order))}
+      />
+
+      {canEdit && isAddingAssignment && (
+        <AssignmentFormModal
+          onSubmit={async payload => { await handleCreateAssignment(payload as Parameters<typeof handleCreateAssignment>[0]); }}
+          onClose={() => setIsAddingAssignment(false)}
+        />
+      )}
+      {canEdit && editingAssignment !== null && (
+        <AssignmentFormModal
+          initial={editingAssignment}
+          onSubmit={async payload => { await handleUpdateAssignment(editingAssignment.id, payload as UpdateAssignmentPayload); }}
+          onClose={() => setEditingAssignment(null)}
+        />
+      )}
+      {canEdit && deletingAssignmentId !== null && (
+        <ConfirmDialog
+          title="Delete assignment?"
+          message={`This will permanently delete "${assignments.find(a => a.id === deletingAssignmentId)?.title ?? 'this assignment'}" and cannot be undone.`}
+          confirmLabel="Delete"
+          onConfirm={() => handleDeleteAssignment(deletingAssignmentId, assignmentItems, activeIdx)}
+          onClose={() => setDeletingAssignmentId(null)}
         />
       )}
     </>

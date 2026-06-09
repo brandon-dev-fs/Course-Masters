@@ -1,4 +1,5 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300..800;1,300..800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Nunito+Sans:ital,opsz,wght@0,6..12,200..1000;1,6..12,200..1000&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap');
 @import 'tailwindcss';
 
 /*
@@ -34,30 +35,82 @@
   --color-destructive-foreground: var(--destructive-foreground);
   --color-success:                var(--success);
   --color-warning:                var(--warning);
+
+  /* Named brand tokens */
+  --color-green-primary:            var(--green-primary);
+  --color-green-primary-foreground: var(--green-primary-foreground);
+  --color-green-surface:            var(--green-surface);
+  --color-green-surface-text:       var(--green-surface-text);
+  --color-green-button:             var(--green-button);
+  --color-green-button-text:        var(--green-button-text);
+
+  --color-blue-accent:              var(--blue-accent);
+  --color-blue-accent-foreground:   var(--blue-accent-foreground);
+  --color-blue-surface:             var(--blue-surface);
+  --color-blue-surface-text:        var(--blue-surface-text);
+
+  --color-orange-accent:            var(--orange-accent);
+  --color-orange-accent-foreground: var(--orange-accent-foreground);
+  --color-orange-surface:           var(--orange-surface);
+  --color-orange-surface-text:      var(--orange-surface-text);
+
+  /* Surface and text tokens */
+  --color-border-subtle:            var(--border-subtle);
+  --color-text-primary:             var(--text-primary);
+  --color-text-secondary:           var(--text-secondary);
+
+  /* Hero section */
+  --color-hero-deep:                var(--hero-deep);
 }
 
 /* ─── Light theme (default) ─────────────────────────────────────────────── */
 :root {
-  /* Brand */
-  --primary:            #138808;  /* India green */
-  --primary-foreground: #ffffff;
-  --primary-subtle:     #e8f5e4;  /* Green wash for badges/active tabs */
-  --accent:             #085287;  /* Ocean blue */
-  --accent-foreground:  #ffffff;
-  --accent-subtle:      #e0eef8;  /* Blue wash */
+  /* Brand — named tokens */
+  --green-primary:             #047857;
+  --green-primary-foreground:  #FFFFFF;
+  --green-surface:             #ECFDF5;
+  --green-surface-text:        #065F46;
+  --green-button:              #047857;
+  --green-button-text:         #FFFFFF;
+
+  --blue-accent:               #2563EB;
+  --blue-accent-foreground:    #FFFFFF;
+  --blue-surface:              #EFF6FF;
+  --blue-surface-text:         #1E40AF;
+
+  --orange-accent:             #EA580C;
+  --orange-accent-foreground:  #FFFFFF;
+  --orange-surface:            #FFF7ED;
+  --orange-surface-text:       #9A3412;
+
+  /* Surface and text tokens */
+  --border-subtle:             #F3F4F6;
+  --text-primary:              #111827;
+  --text-secondary:            #6B7280;
+
+  /* Hero section token (theme-invariant — dark navy, distinct from #09090B page bg) */
+  --hero-deep:                 #0f172a;
+
+  /* Brand — generic aliases (backward compatibility) */
+  --primary:            var(--green-primary);
+  --primary-foreground: var(--green-primary-foreground);
+  --primary-subtle:     var(--green-surface);
+  --accent:             var(--blue-accent);
+  --accent-foreground:  var(--blue-accent-foreground);
+  --accent-subtle:      var(--blue-surface);
   --charcoal:           #2c2c35;  /* Third brand color */
   --charcoal-foreground: #ffffff;
 
-  /* Surfaces — warm off-white tones */
-  --background:         #faf9f7;  /* Warm cream */
-  --foreground:         #1e1e24;
-  --surface:            #f0ede8;  /* Cards, sidebars */
-  --surface-raised:     #ffffff;  /* Elevated cards, modals */
-  --border:             #e0dbd4;
+  /* Surfaces */
+  --background:         #FFFFFF;
+  --foreground:         #111827;
+  --surface:            #F9FAFB;  /* Cards, sidebars */
+  --surface-raised:     #FFFFFF;  /* Elevated cards, modals */
+  --border:             #E4E4E7;
 
   /* Text */
-  --muted:              #f0ede8;
-  --muted-foreground:   #6e6860;  /* Warm mid-gray */
+  --muted:              #F9FAFB;
+  --muted-foreground:   #6B7280;
 
   /* Status */
   --destructive:            #dc2626;
@@ -65,39 +118,62 @@
   --success:                #16a34a;
   --warning:                #d97706;
 
-  /* Shadows — warm-tinted */
-  --shadow-sm: 0 1px 3px rgba(44, 36, 28, 0.08), 0 1px 2px rgba(44, 36, 28, 0.04);
-  --shadow-md: 0 4px 12px rgba(44, 36, 28, 0.10), 0 2px 4px rgba(44, 36, 28, 0.06);
-  --shadow-lg: 0 10px 30px rgba(44, 36, 28, 0.12), 0 4px 10px rgba(44, 36, 28, 0.08);
+  /* Shadows */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.10), 0 2px 4px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.12), 0 4px 10px rgba(0, 0, 0, 0.08);
 }
 
 /* ─── Dark theme ─────────────────────────────────────────────────────────── */
 .dark {
-  /* Brand — slightly brightened for contrast on dark backgrounds */
-  --primary:            #17a009;
-  --primary-foreground: #ffffff;
-  --primary-subtle:     #1a3318;
-  --accent:             #0a6db5;
-  --accent-foreground:  #ffffff;
-  --accent-subtle:      #0f2a40;
+  /* Brand — named tokens */
+  --green-primary:             #10B981;
+  --green-primary-foreground:  #FFFFFF;
+  --green-surface:             rgba(4, 120, 87, 0.15);
+  --green-surface-text:        #6EE7B7;
+  --green-button:              #047857;  /* invariant — same as light */
+  --green-button-text:         #FFFFFF;
+
+  --blue-accent:               #60A5FA;
+  --blue-accent-foreground:    #FFFFFF;
+  --blue-surface:              rgba(37, 99, 235, 0.15);
+  --blue-surface-text:         #93C5FD;
+
+  --orange-accent:             #FB923C;
+  --orange-accent-foreground:  #FFFFFF;
+  --orange-surface:            rgba(234, 88, 12, 0.15);
+  --orange-surface-text:       #FDBA74;
+
+  /* Surface and text tokens */
+  --border-subtle:             rgba(255, 255, 255, 0.06);
+  --text-primary:              #F9FAFB;
+  --text-secondary:            #A1A1AA;
+
+  /* Brand — generic aliases (backward compatibility) */
+  --primary:            var(--green-primary);
+  --primary-foreground: var(--green-primary-foreground);
+  --primary-subtle:     #1a3318;  /* dark-mode surface: opaque, not rgba — dark bg needs solid color */
+  --accent:             var(--blue-accent);
+  --accent-foreground:  var(--blue-accent-foreground);
+  --accent-subtle:      #0f2a40;  /* dark-mode surface: opaque, not rgba */
   --charcoal:           #4a4a56;
   --charcoal-foreground: #ffffff;
 
-  /* Surfaces — warm-tinted darks */
-  --background:         #1a1917;
-  --foreground:         #f0f0f3;
-  --surface:            #242220;  /* Cards, panels */
-  --surface-raised:     #2e2c29;  /* Modals, dropdowns */
-  --border:             #3d3a36;
+  /* Surfaces */
+  --background:         #09090B;
+  --foreground:         #F9FAFB;
+  --surface:            #18181B;  /* Cards, panels */
+  --surface-raised:     #27272A;  /* Modals, dropdowns */
+  --border:             #27272A;
 
   /* Text */
-  --muted:              #242220;
-  --muted-foreground:   #9090a0;
+  --muted:              #18181B;
+  --muted-foreground:   #A1A1AA;
 
   /* Status */
   --destructive:            #ef4444;
   --destructive-foreground: #ffffff;
-  --success:                #22c55e;
+  --success:                #16a34a;
   --warning:                #f59e0b;
 
   /* Shadows — subtle on dark */
@@ -108,7 +184,7 @@
 
 /* ─── Base typography ─────────────────────────────────────────────────────── */
 html {
-  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  font-family: 'Nunito', 'Nunito Sans', system-ui, sans-serif;
 }
 
 /* ─── Shadow utilities ────────────────────────────────────────────────────── */
@@ -127,6 +203,16 @@ html {
 .pencil-draw {
   animation: pencil-draw 1.6s ease-in-out infinite;
   transform-origin: left center;
+}
+
+/* ─── Mobile drawer slide-in animation ───────────────────────────────────── */
+@keyframes slide-in-right {
+  from { transform: translateX(100%); }
+  to   { transform: translateX(0); }
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 300ms ease-in-out forwards;
 }
 
 /* ─── Rich text editor content ───────────────────────────────────────────── */
@@ -156,4 +242,13 @@ html {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* Hide scrollbar while preserving scroll functionality */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
