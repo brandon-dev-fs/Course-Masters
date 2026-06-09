@@ -139,9 +139,6 @@ vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 
 # Claude 
-.claude/misc/*worktrees/
+.claude/
 worktrees/
-
-task.md
-
 plans/

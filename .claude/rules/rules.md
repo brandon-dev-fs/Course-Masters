@@ -9,12 +9,58 @@ Loaded by every agent. High-level software development best practices and workfl
 - Read scoped rules from `.claude/rules/` for domain-specific conventions defined by the user.
 - Load scoped rules on-demand based on the files you encounter.
 
+### CLAUDE.md section tagging (token optimization)
+
+To reduce how much of `CLAUDE.md` each agent reads, developers can tag sections with role markers. Agents search for their relevant tag and read only that section.
+
+**Supported tags:**
+
+- `<!-- @backend -->` — backend framework, error handling, validation, logging
+- `<!-- @frontend -->` — UI framework, components, state, styling
+- `<!-- @data -->` — database, ORM, migrations, queries
+- `<!-- @api -->` — API conventions, versioning, response shapes
+- `<!-- @design -->` — design system, tokens, accessibility
+- `<!-- @testing -->` — test framework, commands, coverage
+
+**Agent reading rules:**
+
+- Backend agents: read `@backend`, `@data`, `@api` sections only
+- Frontend agents: read `@frontend`, `@api`, `@design` sections only
+- Review/security agents: read `@backend`, `@data`, `@api` sections only
+- QA agent: read `@testing` section only
+- If a tag is absent, read the full `CLAUDE.md`
+
+**Example CLAUDE.md structure:**
+
+```markdown
+# Project Overview
+
+<always read by all agents — keep this short>
+
+<!-- @backend -->
+
+## Backend
+
+...
+
+<!-- /@backend -->
+
+<!-- @frontend -->
+
+## Frontend
+
+...
+
+<!-- /@frontend -->
+```
+
 ## Context budget
 
-- Start with this file and `CLAUDE.md` only. Load scoped rules lazily.
-- Read only the files listed in your skill's input contract plus the relevant spec.
+- Start with this file only. Read only the tagged section of `CLAUDE.md` relevant to your role.
+- Load scoped rules lazily — only when you encounter files in that domain.
+- Read only the files listed in your skill's input contract.
 - Do not read full chat history.
-- Do not read other specs' artifacts unless the current spec's frontmatter `depends_on` references them.
+- For implementation: read only the task's `### Implementation Notes` and the task description — not the full plan section prose.
 
 ## Dialog-driven questions
 
@@ -23,23 +69,24 @@ Loaded by every agent. High-level software development best practices and workfl
 
 ## Artifact paths
 
+All workflow artifacts live in the **project-local** `.claude/workflows/` directory and version with the code. This is separate from user-global `~/.claude/` where commands, skills, and agents may live.
+
 ```
-.claude/specs/<id>/spec.md
-.claude/designs/<id>/wireframe.md
-.claude/plans/<id>/frontend-plan.md
-.claude/plans/<id>/backend-plan.md
-.claude/plans/<id>/api-contract.md
-.claude/reviews/<id>/code-review.md
-.claude/reviews/<id>/security-review.md
-.claude/tests/<id>/test-report.md
+<project>/.claude/workflows/
+├── specs/<id>/spec.md
+├── designs/<id>/wireframe.md
+├── plans/<id>/frontend-plan.md
+├── plans/<id>/backend-plan.md
+├── plans/<id>/api-contract.md
+├── reviews/<id>/code-review.md
+├── reviews/<id>/security-review.md
 ```
 
 ## File ownership
 
-- Architect agents write only to `.claude/specs/<id>/`, `.claude/designs/<id>/`, or `.claude/plans/<id>/`.
-- Reviewer agents write only to `.claude/reviews/<id>/`.
-- QA agent writes only to `.claude/tests/<id>/`.
-- Coder agents write only to source code and test paths in their assigned worktree. They never modify `.claude/` artifacts.
+- Architect agents write only to `.claude/workflows/specs/<id>/`, `.claude/workflows/designs/<id>/`, or `.claude/workflows/plans/<id>/`.
+- Reviewer agents write only to `.claude/workflows/reviews/<id>/`.
+- Coder agents write only to source code paths in their assigned worktree. They never modify `.claude/` artifacts.
 - No agent writes to `config.yaml`, `CLAUDE.md`, or any file under `.claude/rules/`.
 
 ## Approval gates
@@ -58,7 +105,6 @@ Loaded by every agent. High-level software development best practices and workfl
 ## Auto-approval thresholds
 
 - Reviewer skills auto-approve only if zero issues at `medium` or above.
-- Test skill auto-approves only if all tests pass and coverage ≥ `min_coverage` from `config.yaml`.
 
 ## Branching and protected branches
 
@@ -81,7 +127,7 @@ Every artifact begins with YAML frontmatter:
 ---
 id: <prefix>-<####>
 title: Brief feature name
-stage: spec | design | implementation | review | test
+stage: spec | design | implementation | review
 status: pending | approved | rejected
 # optional: approver: human | agent
 # optional: approved_at: 2026-04-15T10:30:00Z
@@ -139,9 +185,8 @@ These apply regardless of tech stack:
 
 ### Testing
 
-- Write tests alongside new code, not as an afterthought.
-- Tests should be deterministic — no flaky tests in CI.
-- Test behavior, not implementation details.
+- Testing is enforced by CI on PR open. The workflow does not run tests.
+- Write code that is testable — pure functions, clear boundaries, no hidden side effects.
 
 ### Code quality
 

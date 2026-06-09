@@ -16,7 +16,9 @@ client/src/
 │   ├── client.ts     # Core fetch wrapper (apiClient), ApiClientError, classifyError
 │   ├── types.ts      # All shared TypeScript interfaces and discriminated unions
 │   ├── auth.ts       # better-auth client instance (authClient)
-│   └── *.ts          # Per-resource modules (courses, units, lessons, assessments, etc.)
+│   ├── assessments.ts, assignments.ts, bookmarks.ts, checklist.ts
+│   ├── courses.ts, lesson-resources.ts, lesson-tools.ts, lessons.ts
+│   └── progress.ts, resource-completions.ts, student-notes.ts, units.ts
 ├── components/       # Shared, reusable UI primitives (never recreate inline)
 ├── context/
 │   ├── AuthContext.tsx   # useAuth() hook — user, login, register, logout, refreshUser
@@ -72,14 +74,14 @@ Routes are defined in `App.tsx` using React Router `<Routes>`. All authenticated
 ### Shared Components (`src/components/`)
 Always use these — never recreate inline:
 
-`Button` (variant: primary/secondary/danger/ghost/accent; size: sm/md/lg), `Input`, `Textarea`, `Modal` (isOpen+onClose), `ConfirmDialog` (item+onConfirm+onCancel), `ErrorMessage`, `LoadingSpinner`, `EmptyState`, `CardActions` (edit/delete), `RichTextEditor` (Tiptap+KaTeX, Tiptap JSON), `Tabs`, `Tooltip`, `LessonStatusIcon`, `ResourceCompletionCheckbox`, `ErrorBoundary` (fallback render prop).
+`Button` (variant: primary/secondary/danger/ghost/accent; size: sm/md/lg), `Input`, `Textarea`, `Modal` (isOpen+onClose), `ConfirmDialog` (item+onConfirm+onCancel), `ErrorMessage`, `LoadingSpinner`, `EmptyState`, `CardActions` (edit/delete), `RichTextEditor` (Tiptap+KaTeX, Tiptap JSON), `Tabs`, `Tooltip`, `LessonStatusIcon`, `ResourceCompletionCheckbox`, `ErrorBoundary` (fallback render prop), `Layout` (app shell — nav + outlet), `Footer`, `MobileDrawer` (responsive nav drawer).
 
 ## State Management
 
 No global state store (no Redux, Zustand, etc.). State lives in:
 1. **Context** — `AuthContext` (session) and `ThemeContext` (dark/light). Read-only from components via `useAuth()` / `useTheme()`.
 2. **Page-level `useState` + `useEffect`** — each page fetches its own data.
-3. **Domain hooks** — `useResourceList`, `useFetch`, `useOrderedList`, `useAssessment` encapsulate local state for specific patterns.
+3. **Domain hooks** — `useFetch`, `useResourceList`, `useOrderedList`, `useAssessment` encapsulate local state for specific patterns. Also: `useCanEdit` (true if teacher/admin), `useCalculator` (assessment calculator), `useDisclosure` (open/close toggle), `useMediaQuery` (responsive breakpoints), `useYouTubeTitle` (fetches video title from URL).
 
 ## Data Fetching
 
@@ -154,8 +156,8 @@ Use `canEdit` to conditionally show edit/delete UI. Use `user?.role === 'admin'`
 | `bg-background` / `text-foreground` | Page background and primary text |
 | `bg-surface` | Cards, sidebars, panels |
 | `bg-surface-raised` | Modals, dropdowns, elevated elements |
-| `bg-primary` / `text-primary` | Brand green (#138808 light) |
-| `bg-accent` / `text-accent` | Brand blue (#085287 light) |
+| `bg-primary` / `text-primary` | Brand green (#047857 light / #10B981 dark) |
+| `bg-accent` / `text-accent` | Brand blue (#2563EB light / #60A5FA dark) |
 | `bg-charcoal` | Third brand color |
 | `bg-destructive` / `text-destructive` | Error/delete states |
 | `text-muted-foreground` | Secondary/helper text |
@@ -247,102 +249,26 @@ Never build separate quiz/test/exam UI — always use the shared `AssessmentSect
 Vitest with `jsdom` environment. React Testing Library for component and hook rendering.
 
 ### Running Tests
+
 | Command | Description |
 |---|---|
 | `npm test -w client` | Single-run, no coverage (fast feedback) |
 | `npm run test:watch -w client` | Watch mode for local development |
 | `npm run test:coverage -w client` | Single-run with V8 coverage + threshold enforcement |
 
-Or from within `client/`:
-| Command | Description |
-|---|---|
-| `npm test` | Single-run, no coverage |
-| `npm run test:watch` | Watch mode |
-| `npm run test:coverage` | Coverage with threshold |
+### Structure
+Test files in `client/src/__tests__/<layer>/` where `<layer>` is `hooks`, `components`, `context`, `api`, or `utils`. One test file per source module; names mirror the source file (`useFetch.ts` → `useFetch.test.ts`).
 
-### File Naming and Directory Structure
+Key files:
+- `setup/renderWithProviders.tsx` — wraps components with full provider tree (AuthProvider + MemoryRouter)
+- `mocks/apiClient.mock.ts` — `createApiClientMock()` factory + `apiClientMock` singleton
+- `mocks/authClient.mock.ts` — `authClientMock` singleton
+- `mocks/authContext.mock.ts` — `makeAuthContext()`, `makeStudentUser()`, `makeTeacherUser()`, `makeAdminUser()`
 
-```
-client/src/__tests__/
-  setup/
-    renderWithProviders.tsx     # Full provider tree wrapper (AuthProvider + MemoryRouter)
-  mocks/
-    apiClient.mock.ts           # createApiClientMock() factory + apiClientMock singleton
-    authClient.mock.ts          # authClientMock singleton
-    authContext.mock.ts         # makeAuthContext(), makeStudentUser(), makeTeacherUser(), makeAdminUser()
-    reactRouter.mock.ts         # createNavigateMock() helper
-  hooks/
-    *.test.ts / *.test.tsx      # Hook tests
-  components/                  # Component tests
-  context/                     # Context tests
-  api/                         # API module tests
-  utils/                       # Utility tests
-```
-
-- Test files: `*.test.ts` for hooks/utilities, `*.test.tsx` for components and hooks using JSX wrappers
-- Location: `client/src/__tests__/<layer>/<name>.test.{ts,tsx}` where `<layer>` is `hooks`, `components`, `context`, `api`, or `utils`
-- Mock files use the `.mock.ts` infix convention: `apiClient.mock.ts`, `authClient.mock.ts`
-- One test file per source module; names mirror the source file
-
-### `renderWithProviders` Pattern
-
-Use for component tests needing the full provider tree (AuthProvider + MemoryRouter). Control auth state via `authClientMock.getSession`:
-
-```tsx
-import { renderWithProviders } from '../setup/renderWithProviders.js';
-vi.mock('../../api/auth.js', () => ({ authClient: authClientMock }));
-
-authClientMock.getSession.mockResolvedValue({ data: { user: makeTeacherUser() }, error: null });
-const { getByText } = renderWithProviders(<MyComponent />);
-```
-
-### Direct `AuthContext.Provider` Pattern (hook tests)
-
-For hooks that only need synchronous auth state, use `AuthContext.Provider` directly to avoid async `getSession` wait:
-
-```tsx
-import { AuthContext } from '../../context/AuthContext.js';
-import { makeAuthContext, makeTeacherUser } from '../mocks/authContext.mock.js';
-
-renderHook(() => useCanEdit(), {
-  wrapper: ({ children }) => (
-    <AuthContext.Provider value={makeAuthContext({ user: makeTeacherUser() })}>
-      {children}
-    </AuthContext.Provider>
-  ),
-});
-```
-
-### Mocking `apiClient` and `authClient`
-
-```ts
-import { apiClientMock } from '../mocks/apiClient.mock.js';
-vi.mock('../../api/client.js', () => ({ apiClient: apiClientMock }));
-apiClientMock.get.mockResolvedValue({ id: '1' });
-```
-
-Always use `mockResolvedValueOnce` / `mockRejectedValueOnce` for per-test overrides to avoid state leaking between tests.
-
-### Wrapping State Updates in `act()`
-
-State updates triggered by test code (not user events) must be wrapped in `act()`:
-
-```ts
-import { act } from '@testing-library/react';
-act(() => { result.current.reload(); });
-await waitFor(() => expect(result.current.loading).toBe(false));
-```
-
-### Global Test Setup (`vitest.setup.ts`)
-
-- `@testing-library/jest-dom` matchers loaded globally (`.toBeInTheDocument()`, `.toHaveTextContent()`, etc.)
-- `window.matchMedia` stubbed — jsdom does not implement it
-- `ResizeObserver` stubbed — jsdom does not implement it
-- `vi.clearAllMocks()` runs after each test (also enforced via `clearMocks: true` in config)
+Use `renderWithProviders` for component tests needing the full provider tree. For hooks that only need synchronous auth state, use `AuthContext.Provider` directly with `makeAuthContext()` to avoid async `getSession` delays.
 
 ### Coverage Threshold
-
-The 70% threshold is enforced only by `test:coverage`, not by `npm test`. Coverage will be below 70% until broader tests are added — expected while establishing the infrastructure.
+70% enforced by `test:coverage` only — not by `npm test`. Below 70% while infrastructure is being established.
 
 ---
 

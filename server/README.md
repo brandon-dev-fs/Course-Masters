@@ -1,10 +1,6 @@
 # Course Masters — Server
 
-REST API backend for the Course Masters self-directed learning application.
-
-## Overview
-
-Express 5 + TypeScript REST API serving the Course Masters client. Built as an ESM module, it uses Prisma 6 for database access against PostgreSQL, Zod for request validation, and tsx for zero-config TypeScript execution in development. All routes are mounted under `/api`.
+REST API backend for the Course Masters self-directed learning platform.
 
 ## Tech Stack
 
@@ -14,189 +10,121 @@ Express 5 + TypeScript REST API serving the Course Masters client. Built as an E
 | TypeScript | 5 | Language (ESM output) |
 | Prisma | 6 | ORM and migrations |
 | PostgreSQL | — | Primary database |
-| Zod | 3 | Request body validation |
+| better-auth | 1.5 | Session-based authentication |
+| Zod | 3 | Request and env validation |
+| pino | 10 | Structured JSON logging |
+| express-rate-limit | — | API rate limiting |
+| swagger-ui-express | — | OpenAPI docs at `/api/docs` |
 | tsx | 4 | TypeScript execution (dev) |
-| cors | — | Cross-origin request handling |
 
 ## Architecture
 
-The server follows a three-layer pattern:
-
-```
-Route → Controller → Service
-```
-
-- **Routes** — Define endpoints, apply validation middleware, and delegate to controllers.
-- **Controllers** — Handle HTTP concerns: parse request data, call services, send responses.
-- **Services** — Contain all business logic and Prisma database calls. No HTTP objects here.
-
-### Error Handling
-
-A centralized `errorHandler` middleware catches all errors thrown by route handlers. Errors are normalized to a consistent JSON shape before being sent to the client:
-
-```json
-{
-  "error": {
-    "code": "NOT_FOUND",
-    "message": "Course not found",
-    "details": {}
-  }
-}
-```
-
-Typed error classes (`AppError`, `NotFoundError`, `ValidationError`) are thrown from controllers and services. Prisma-specific errors are mapped in the middleware — Prisma internals are never leaked to the client.
+The server follows a three-layer pattern: **Route → Controller → Service**. Routes define endpoints and apply middleware; controllers handle HTTP concerns (extracting params, calling services, sending responses); services contain all business logic and Prisma database access. Errors are normalized through typed classes (`AppError`, `NotFoundError`, `ValidationError`, `ConflictError`) and a centralized error handler. Authentication is session-based via better-auth with three roles: student, teacher, and admin. Four models (Course, Unit, Lesson, Assessment) support soft deletes via a `deletedAt` field.
 
 ## Project Structure
 
 ```
 server/
   prisma/
-    schema.prisma       # Database schema (16 models)
+    schema.prisma       # 29 models + 6 enums
     seed.ts             # Database seed script
-    migrations/         # Prisma migration history
+    migrations/         # Migration history
   src/
-    index.ts            # Entry point — starts HTTP server on port 5002
-    app.ts              # Express app setup (middleware, router, error handler)
-    routes/             # Route definitions, one file per resource
-    controllers/        # HTTP request/response handling
-    services/           # Business logic and database queries
-    schemas/            # Zod validation schemas
-    middleware/         # Express middleware (errorHandler, etc.)
-    errors/             # Typed error classes (AppError, NotFoundError, ValidationError)
+    index.ts            # Entry point — starts HTTP server
+    app.ts              # Express setup: middleware stack, routers, error handler
+    config.ts           # Zod env validation (fails fast on startup)
+    swagger.ts          # OpenAPI document definition
+    routes/             # Route definitions (one file per resource)
+      index.ts          # Root router: health, authenticate(), sub-router mounts
+    controllers/        # HTTP request/response handling (thin layer)
+    services/           # Business logic + all Prisma queries (no HTTP objects)
+    schemas/            # Zod validation schemas and inferred types
+    middleware/
+      authenticate.ts   # Session validation → injects req.user, req.session
+      authorize.ts      # Role-based access control
+      authorize-resource.ts  # Ownership checks (requireCourseOwnership, requireSelf)
+      validate.ts       # Body/query validation via Zod
+      envelope.ts       # Wraps successful responses in { data: payload }
+      errorHandler.ts   # Centralized error handler (last middleware)
+      rateLimiter.ts    # authLimiter (20/15min), apiLimiter (300/15min)
+      requestId.ts      # UUID per request + X-Request-Id header
+      httpLogger.ts     # pino-http structured request logging
+    errors/             # AppError, NotFoundError, ValidationError, ConflictError
+    lib/                # prisma.ts, auth.ts, logger.ts singletons
+    utils/              # asyncHandler, assertExists, softDelete helpers
+    types/
+      express.d.ts      # Augments Request: requestId, user?, session?
 ```
 
-## Database
+## Authentication & Authorization
 
-PostgreSQL via Prisma 6. The schema defines 16 models:
+**Authentication**: Session-based via better-auth (email/password). Sessions stored in `Session` table and validated on every request via `authenticate()` middleware.
 
-- **Users & Courses**: `User`, `Course`, `Unit`, `Lesson`
-- **Lesson Content**: `Note`, `FlashCard`, `PracticeProblem`
-- **Assessments**: `Quiz`, `QuizQuestion`, `QuizAttempt`, `Test`, `TestQuestion`, `TestAttempt`, `FinalExam`, `FinalExamQuestion`, `ExamAttempt`
+**Roles**: `student` (default), `teacher`, `admin`. Middleware chain on write routes: `authorize()` → `requireCourseOwnership()` → `validate()` → controller.
 
-All relationships use cascade deletes — removing a course removes all descendant records.
+**Access patterns**: Students read/enroll; teachers own and manage course content; admins have full access and bypass ownership checks.
 
 ## API Routes
 
-All routes are prefixed with `/api`.
+All routes prefixed `/api`. Health check requires no auth; all others require an active session.
 
-### Health
-
-| Method | Path | Description |
+| Resource | Methods | Paths |
 |---|---|---|
-| GET | `/health` | Health check |
+| Health | GET | `/health` |
+| Courses | GET, POST, PUT, DELETE | `/courses`, `/courses/:courseId` |
+| Units | GET, POST, PUT, DELETE | `/courses/:courseId/units[/:unitId]` |
+| Lessons | GET, POST, PUT, DELETE | `/units/:unitId/lessons[/:lessonId]` |
+| Resources | GET, POST, PUT, DELETE | `/lessons/:lessonId/resources`, `/resources/:id` |
+| Tools | GET, POST, PUT, DELETE | `/lessons/:lessonId/tools`, `/tools/:id` |
+| Student Notes | GET, POST, DELETE | `/lessons/:lessonId/student-notes`, `/student-notes/:id` |
+| Assessments | GET, POST, PUT | `/lessons/:lessonId/assessment`, `/units/:unitId/assessment`, `/courses/:courseId/assessment`, `/assessments/:id` |
+| Assessment Attempts | GET, POST | `/assessments/:id/attempts` |
+| Assignments | GET, POST, PUT, DELETE | `/lessons/:lessonId/assignments`, `/assignments/:id` |
+| Checklist | GET, POST, DELETE | `/lessons/:lessonId/checklist`, `/checklist-items/:id` |
+| Completions | POST, DELETE | `/lessons/:lessonId/complete`, `/units/:unitId/complete` |
+| Resource Completions | GET, POST | `/lessons/:lessonId/completions` |
+| Progress | GET | `/courses/:courseId/progress`, `/courses/:courseId/units/:unitId/progress` |
+| Users | DELETE | `/users/:userId` |
+| YouTube | GET | `/youtube/title` |
+| Auth | ALL | `/auth/*` (handled by better-auth) |
 
-### Courses
+## Database
 
-| Method | Path | Description |
-|---|---|---|
-| GET | `/courses` | List all courses |
-| POST | `/courses` | Create a course |
-| GET | `/courses/:courseId` | Get a course |
-| PUT | `/courses/:courseId` | Update a course |
-| DELETE | `/courses/:courseId` | Delete a course |
+PostgreSQL via Prisma 6. The schema defines **29 models** across these groups:
 
-### Units
+- **Auth**: User, Session, Account, Verification
+- **Content hierarchy**: Course → Unit → Lesson (soft-delete cascade)
+- **Lesson content**: LessonResource, LessonTool (with LessonResourceCompletion, LessonToolCompletion)
+- **Assessments**: Assessment, AssessmentQuestion, AssessmentAttempt
+- **Assignments**: Assignment + subtypes (NoteAssignment, VideoAssignment, ReadingAssignment, VocabAssignment, PracticeProblemAssignment) with VocabAssignmentEntry, PracticeProblemQuestion, StudentVocabAssignmentFlashCard, AssignmentCompletion
+- **Tracking**: StudentNote, LessonCompletion, UnitCompletion, ActivityBookmark, LessonChecklistItem
 
-| Method | Path | Description |
-|---|---|---|
-| GET | `/courses/:courseId/units` | List units for a course |
-| POST | `/courses/:courseId/units` | Create a unit |
-| GET | `/courses/:courseId/units/:unitId` | Get a unit |
-| PUT | `/courses/:courseId/units/:unitId` | Update a unit |
-| DELETE | `/courses/:courseId/units/:unitId` | Delete a unit |
-
-### Lessons
-
-| Method | Path | Description |
-|---|---|---|
-| GET | `/units/:unitId/lessons` | List lessons for a unit |
-| POST | `/units/:unitId/lessons` | Create a lesson |
-| GET | `/units/:unitId/lessons/:lessonId` | Get a lesson |
-| PUT | `/units/:unitId/lessons/:lessonId` | Update a lesson |
-| DELETE | `/units/:unitId/lessons/:lessonId` | Delete a lesson |
-
-### Notes
-
-| Method | Path | Description |
-|---|---|---|
-| GET | `/lessons/:lessonId/notes` | List notes for a lesson |
-| POST | `/lessons/:lessonId/notes` | Create a note |
-| PUT | `/notes/:id` | Update a note |
-| DELETE | `/notes/:id` | Delete a note |
-
-### Flashcards
-
-| Method | Path | Description |
-|---|---|---|
-| GET | `/lessons/:lessonId/flashcards` | List flashcards for a lesson |
-| POST | `/lessons/:lessonId/flashcards` | Create a flashcard |
-| PUT | `/flashcards/:id` | Update a flashcard |
-| DELETE | `/flashcards/:id` | Delete a flashcard |
-
-### Practice Problems
-
-| Method | Path | Description |
-|---|---|---|
-| GET | `/lessons/:lessonId/practice-problems` | List practice problems for a lesson |
-| POST | `/lessons/:lessonId/practice-problems` | Create a practice problem |
-| PUT | `/practice-problems/:id` | Update a practice problem |
-| DELETE | `/practice-problems/:id` | Delete a practice problem |
-
-### Quizzes
-
-| Method | Path | Description |
-|---|---|---|
-| GET | `/lessons/:lessonId/quiz` | Get quiz for a lesson |
-| POST | `/lessons/:lessonId/quiz` | Create quiz for a lesson |
-| POST | `/quizzes/:quizId/attempts` | Submit a quiz attempt |
-
-### Tests
-
-| Method | Path | Description |
-|---|---|---|
-| GET | `/units/:unitId/test` | Get test for a unit |
-| POST | `/units/:unitId/test` | Create test for a unit |
-| POST | `/tests/:testId/attempts` | Submit a test attempt |
-
-### Final Exams
-
-| Method | Path | Description |
-|---|---|---|
-| GET | `/courses/:courseId/final-exam` | Get final exam for a course |
-| POST | `/courses/:courseId/final-exam` | Create final exam for a course |
-| POST | `/exams/:examId/attempts` | Submit an exam attempt |
-
-### Progress
-
-| Method | Path | Description |
-|---|---|---|
-| GET | `/courses/:courseId/progress` | Get progress summary for a course |
-| GET | `/courses/:courseId/units/:unitId/progress` | Get progress summary for a unit |
+All primary keys are UUIDs. Soft deletes (`deletedAt DateTime?`) on Course, Unit, Lesson, Assessment — always filter `where: { deletedAt: null }` on reads.
 
 ## Environment Variables
 
-Create a `.env` file in the `server/` directory (not the project root — Prisma does not support `--env-file`):
+| Variable | Required | Default | Description |
+|---|---|---|---|
+| `DATABASE_URL` | yes | — | PostgreSQL connection string |
+| `SERVER_PORT` | no | 5002 | Express listen port |
+| `NODE_ENV` | no | development | `development` \| `production` \| `test` |
+| `BETTER_AUTH_SECRET` | yes | — | Session signing secret (≥32 chars) |
+| `CLIENT_URL` | no | http://localhost:5000 | Allowed CORS origin |
+| `LOG_LEVEL` | no | info | pino log level |
 
-```
-DATABASE_URL=postgresql://<user>:<password>@<host>:<port>/<database>
-```
-
-This file must be present for both the dev server and all Prisma CLI commands to function.
+Create `server/.env` (not the project root). Validated by Zod at startup — server will not start with invalid config.
 
 ## Scripts
 
-Run these from the `server/` directory, or from the project root using `npm run <script> -w server`.
+Run from the `server/` directory or project root with `-w server`.
 
-| Script | Command | Description |
-|---|---|---|
-| `dev` | `node --env-file=.env --watch --import=tsx/esm src/index.ts` | Start dev server with watch mode |
-| `build` | `tsc` | Compile TypeScript to JavaScript |
-| `db:migrate` | `prisma migrate dev` | Run pending migrations |
-| `db:seed` | `node --env-file=.env --import=tsx/esm prisma/seed.ts` | Seed the database |
-| `db:studio` | `prisma studio` | Open Prisma Studio GUI |
-
-The dev server starts on **port 5002**.
-
-## Authentication
-
-There is no authentication in the current proof-of-concept. All requests resolve to the first user found in the database (the default seeded user). The architecture is stateless and designed to accept a JWT middleware layer in a future iteration.
+| Script | Description |
+|---|---|
+| `npm run dev` | Start dev server with tsx watch mode (port 5002) |
+| `npm run build` | Compile TypeScript |
+| `npm test` | Run tests once (Vitest, no coverage) |
+| `npm run test:watch` | Watch mode |
+| `npm run test:coverage` | Run with V8 coverage (70% threshold) |
+| `npm run db:migrate` | Run pending Prisma migrations |
+| `npm run db:seed` | Seed database (`node --env-file=.env --import=tsx/esm prisma/seed.ts`) |
+| `npm run db:studio` | Open Prisma Studio GUI |

@@ -11,28 +11,20 @@
 
 ### 1. Spec → `/spec <what you want to build>`
 
-Creates `.claude/specs/<prefix>-0001/spec.md`. **Approve it:**
+Creates `.claude/workflows/specs/<id>/spec.md`. **Approve it:**
 ```
-/approve .claude/specs/<prefix>-0001/spec.md
+/approve .claude/workflows/specs/<id>/spec.md
 ```
 
 ### 2. Design → `/design <id>`
 
-Creates plans and wireframes. **Approve each file** listed in the output.
+Creates plans and wireframes with per-section task lists. **Approve each file** listed in the output.
 
 ### 3. Implement → `/implement <id>`
 
-Make sure you're on your feature branch first. Creates temporary worktrees, writes code, merges back. Auto-approved if tests pass and build succeeds.
+Make sure you're on your feature branch first. Executes tasks one at a time. Code and security review runs automatically after each task. Review docs are built during implementation. Auto-approved if all tasks pass review and build succeeds.
 
-### 4. Review → `/review <id>`
-
-Runs code + security review. Auto-approved if no blocking issues.
-
-### 5. Test → `/test <id>`
-
-Runs unit and E2E tests. Auto-approved if all pass.
-
-### 6. PR → `/pr <id>`
+### 4. PR → `/pr <id>`
 
 Opens or generates the pull request. Merge when ready.
 
@@ -40,12 +32,15 @@ Opens or generates the pull request. Merge when ready.
 
 - `/status <id>` — see where a feature stands
 - `/approve <file>` — approve any artifact
+- `/review <id>` — optional re-review after manual changes
 
 ## When something gets rejected
 
-The output tells you what failed and which command to re-run:
+During implementation, code and security review runs after each task automatically. If a task fails review 3 times, it escalates to you.
+
+After implementation, if you want to re-run a full review:
 ```
-/implement <id> .claude/reviews/<id>/code-review.md
+/review <id>
 ```
 
 ## After merge
