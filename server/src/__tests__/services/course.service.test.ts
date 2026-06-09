@@ -18,6 +18,7 @@ function makeCourse(overrides: Partial<Course> = {}): Course {
     id: COURSE_ID,
     title: 'Test Course',
     description: 'Test description',
+    syllabus: null,
     authorId: USER_ID,
     deletedAt: null,
     createdAt: new Date(),

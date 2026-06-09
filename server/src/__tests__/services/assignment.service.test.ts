@@ -230,7 +230,7 @@ describe('assignmentService.create', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     prismaMock.lesson.findUnique.mockResolvedValue(mockLesson);
-    prismaMock.assignment.aggregate.mockResolvedValue({ _max: { order: 0 } } as unknown as Awaited<ReturnType<typeof prismaMock.assignment.aggregate>>);
+    prismaMock.assignment.aggregate.mockResolvedValue({ _max: { order: 0 } } as never);
     prismaMock.assignment.create.mockResolvedValue(mockAssignment);
     // findById at end of create
     prismaMock.assignment.findUnique.mockResolvedValue(ASSIGNMENT_WITH_RELATIONS);
@@ -312,7 +312,7 @@ describe('assignmentService.create', () => {
 
   it('uses nextOrder = 1 when no prior assignments exist', async () => {
     prismaMock.noteAssignment.create.mockResolvedValue({} as never);
-    prismaMock.assignment.aggregate.mockResolvedValue({ _max: { order: null } } as unknown as Awaited<ReturnType<typeof prismaMock.assignment.aggregate>>);
+    prismaMock.assignment.aggregate.mockResolvedValue({ _max: { order: null } } as never);
 
     await assignmentService.create(LESSON_ID, { type: 'note', title: 'First', content: {} });
 
@@ -426,7 +426,7 @@ describe('assignmentService.reorder', () => {
 
   it('updates order for each assignment', async () => {
     prismaMock.$transaction.mockImplementation((cb: (tx: typeof prismaMock) => Promise<unknown>) =>
-      cb({ ...prismaMock, $queryRaw: vi.fn().mockResolvedValue([{ id: ASSIGNMENT_ID }]) } as typeof prismaMock),
+      cb({ ...prismaMock, $queryRaw: vi.fn().mockResolvedValue([{ id: ASSIGNMENT_ID }]) } as unknown as typeof prismaMock),
     );
 
     await assignmentService.reorder(LESSON_ID, [ASSIGNMENT_ID]);
@@ -438,7 +438,7 @@ describe('assignmentService.reorder', () => {
 
   it('throws AppError when provided IDs do not match lesson assignments', async () => {
     prismaMock.$transaction.mockImplementation((cb: (tx: typeof prismaMock) => Promise<unknown>) =>
-      cb({ ...prismaMock, $queryRaw: vi.fn().mockResolvedValue([{ id: 'other-id' }]) } as typeof prismaMock),
+      cb({ ...prismaMock, $queryRaw: vi.fn().mockResolvedValue([{ id: 'other-id' }]) } as unknown as typeof prismaMock),
     );
 
     await expect(

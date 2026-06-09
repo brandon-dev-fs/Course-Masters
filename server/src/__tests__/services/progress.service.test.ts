@@ -134,7 +134,8 @@ function makeCourseData(
   return {
     id: 'course-1',
     title: 'Test Course',
-    description: null,
+    description: 'Test Course',
+    syllabus: null,
     authorId: 'user-1',
     deletedAt: null,
     createdAt: new Date(),
@@ -305,7 +306,7 @@ describe('computeUnitProgress', () => {
       id: 'unit-1',
       courseId: 'course-1',
       title: 'Unit 1',
-      description: null,
+      description: 'Test description',
       order: 1,
       deletedAt: null,
       createdAt: new Date(),
