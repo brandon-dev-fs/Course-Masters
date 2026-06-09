@@ -12,29 +12,25 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
 import LessonResourceContent from '../../../features/lessons/LessonResourceContent.js';
-import type { LessonResource } from '../../../api/types.js';
+import type { LessonResource, NoteResource, VideoResource } from '../../../api/types.js';
 
-const videoResource: LessonResource = {
+const videoResource: VideoResource = {
   id: 'r1',
   lessonId: 'l1',
   type: 'video',
   title: 'Intro Video',
   order: 1,
   isRequired: false,
-  createdAt: '2024-01-01',
-  updatedAt: '2024-01-01',
   content: { url: 'https://www.youtube.com/watch?v=test123' },
 };
 
-const noteResource: LessonResource = {
+const noteResource: NoteResource = {
   id: 'r2',
   lessonId: 'l1',
   type: 'note',
   title: 'Study Note',
   order: 2,
   isRequired: false,
-  createdAt: '2024-01-01',
-  updatedAt: '2024-01-01',
   content: { body: { type: 'doc', content: [] } },
 };
 
@@ -105,7 +101,7 @@ describe('LessonResourceContent', () => {
   });
 
   it('renders null for unknown resource type', () => {
-    const unknownResource = { ...noteResource, type: 'unknown' as 'note' };
+    const unknownResource = { ...noteResource, type: 'unknown' as unknown as 'note' };
     const { container } = render(
       <MemoryRouter>
         <LessonResourceContent resource={unknownResource} {...defaultProps} />

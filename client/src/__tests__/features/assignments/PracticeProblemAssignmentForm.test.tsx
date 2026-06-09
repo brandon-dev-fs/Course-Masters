@@ -18,10 +18,18 @@ import PracticeProblemAssignmentForm, {
   type PracticeQuestionDraft,
 } from '../../../features/assignments/PracticeProblemAssignmentForm.js';
 
+const baseSubFormProps = {
+  noteContent: null, url: '', displayTitle: '', description: '',
+  estimatedMinutes: '', passingPercentage: '', entries: [],
+  onNoteContentChange: () => {}, onUrlChange: () => {}, onDisplayTitleChange: () => {},
+  onDescriptionChange: () => {}, onEstimatedMinutesChange: () => {},
+  onPassingPercentageChange: () => {}, onEntriesChange: () => {},
+};
+
 function Wrapper({ initial = [] }: { initial?: PracticeQuestionDraft[] }) {
   const [questions, setQuestions] = useState(initial);
   return (
-    <PracticeProblemAssignmentForm questions={questions} onQuestionsChange={setQuestions} />
+    <PracticeProblemAssignmentForm {...baseSubFormProps} questions={questions} onQuestionsChange={setQuestions} />
   );
 }
 
@@ -115,6 +123,7 @@ describe('PracticeProblemAssignmentForm', () => {
     const onQuestionsChange = vi.fn();
     render(
       <PracticeProblemAssignmentForm
+        {...baseSubFormProps}
         questions={[baseQuestion]}
         onQuestionsChange={onQuestionsChange}
       />

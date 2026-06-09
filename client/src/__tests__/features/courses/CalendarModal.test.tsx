@@ -52,17 +52,8 @@ describe('CalendarModal', () => {
   });
 
   it('navigates to previous month', () => {
-    // Mock current date to May 2024 for deterministic test
-    const originalDate = Date;
-    global.Date = class extends originalDate {
-      constructor(...args: ConstructorParameters<typeof originalDate>) {
-        if (args.length === 0) {
-          super(2024, 4, 15); // May 2024
-        } else {
-          super(...args);
-        }
-      }
-    } as typeof Date;
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2024, 4, 15)); // May 2024
 
     render(
       <MemoryRouter>
@@ -73,7 +64,7 @@ describe('CalendarModal', () => {
     fireEvent.click(screen.getByLabelText('Previous month'));
     expect(screen.getByText(/april/i)).toBeInTheDocument();
 
-    global.Date = originalDate;
+    vi.useRealTimers();
   });
 
   it('renders unit legend', () => {

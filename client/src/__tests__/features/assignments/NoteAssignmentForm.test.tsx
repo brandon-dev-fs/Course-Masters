@@ -13,13 +13,17 @@ const defaultProps = {
   displayTitle: '',
   description: '',
   estimatedMinutes: '',
+  passingPercentage: '',
   entries: [],
+  questions: [],
   noteContent: { type: 'doc', content: [] },
   onUrlChange: vi.fn(),
   onDisplayTitleChange: vi.fn(),
   onDescriptionChange: vi.fn(),
   onEstimatedMinutesChange: vi.fn(),
+  onPassingPercentageChange: vi.fn(),
   onEntriesChange: vi.fn(),
+  onQuestionsChange: vi.fn(),
   onNoteContentChange: vi.fn(),
 };
 

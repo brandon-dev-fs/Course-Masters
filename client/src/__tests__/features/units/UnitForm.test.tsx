@@ -93,7 +93,7 @@ describe('UnitForm', () => {
 
   it('shows API error when onSubmit rejects with ApiClientError', async () => {
     const { ApiClientError } = await import('../../../api/client.js');
-    const onSubmit = vi.fn().mockRejectedValueOnce(new ApiClientError('Something went wrong'));
+    const onSubmit = vi.fn().mockRejectedValueOnce(new ApiClientError('MOCK_ERROR', 'Something went wrong'));
     render(<UnitForm onSubmit={onSubmit} onCancel={vi.fn()} />);
     fireEvent.change(screen.getByLabelText(/title/i), { target: { value: 'My Unit' } });
     fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'My desc' } });

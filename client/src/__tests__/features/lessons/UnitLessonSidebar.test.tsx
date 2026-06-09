@@ -10,8 +10,8 @@ import UnitLessonSidebar from '../../../features/lessons/UnitLessonSidebar.js';
 import type { Lesson } from '../../../api/types.js';
 
 const lessons: Lesson[] = [
-  { id: 'l1', unitId: 'u1', title: 'Lesson 1', description: '', order: 1, createdAt: '2024-01-01', updatedAt: '2024-01-01', objective: '', planContent: {} },
-  { id: 'l2', unitId: 'u1', title: 'Lesson 2', description: '', order: 2, createdAt: '2024-01-01', updatedAt: '2024-01-01', objective: '', planContent: {} },
+  { id: 'l1', unitId: 'u1', title: 'Lesson 1', description: '', order: 1, objective: '', planContent: {} },
+  { id: 'l2', unitId: 'u1', title: 'Lesson 2', description: '', order: 2, objective: '', planContent: {} },
 ];
 
 describe('UnitLessonSidebar', () => {

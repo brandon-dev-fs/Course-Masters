@@ -1,7 +1,7 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import FlashCard from '../../../features/flashcards/FlashCard.js';
-import type { LessonTool } from '../../../api/types.js';
+import type { LessonTool, FlashCardContent } from '../../../api/types.js';
 
 const flashCardTool: LessonTool = {
   id: 't1',
@@ -24,7 +24,7 @@ describe('FlashCard', () => {
   });
 
   it('renders with missing front/back content (covers ?? fallbacks)', () => {
-    const cardNoContent: LessonTool = { ...flashCardTool, content: {} };
+    const cardNoContent: LessonTool = { ...flashCardTool, content: {} as FlashCardContent };
     render(<FlashCard card={cardNoContent} />);
     // Should render without crashing; empty strings used as fallback
     expect(screen.queryByText(/unsupported/i)).not.toBeInTheDocument();
