@@ -1,8 +1,6 @@
 export type UserRole = 'student' | 'teacher' | 'admin';
 export type AssessmentType = 'lesson_quiz' | 'unit_quiz' | 'course_exam';
 export type QuestionType = 'multiple_choice' | 'true_false' | 'matching' | 'fill_in_blank';
-export type ResourceType = 'note' | 'video' | 'lecture';
-export type ToolType = 'flash_card' | 'practice_problem' | 'vocab';
 
 export interface AuthUser {
   id: string;
@@ -63,70 +61,8 @@ export interface Lesson {
   planContent: Record<string, unknown>;
 }
 
-// ─── LessonResource discriminated union ─────────────────────────────────────
-
 /** Tiptap JSON document shape stored in note and lecture content. */
 export type TiptapJSON = Record<string, unknown>;
-
-export interface NoteContent {
-  body: TiptapJSON;
-}
-
-export interface VideoContent {
-  url: string;
-}
-
-export interface NoteResource {
-  id: string;
-  type: 'note';
-  title: string;
-  content: NoteContent;
-  order: number;
-  lessonId: string;
-  isRequired: boolean;
-}
-
-export interface VideoResource {
-  id: string;
-  type: 'video';
-  title: string;
-  content: VideoContent;
-  order: number;
-  lessonId: string;
-  isRequired: boolean;
-}
-
-export interface LectureResource {
-  id: string;
-  type: 'lecture';
-  title: string;
-  content: NoteContent;
-  order: number;
-  lessonId: string;
-  isRequired: boolean;
-}
-
-export type LessonResource = NoteResource | VideoResource | LectureResource;
-
-// ─── LessonTool discriminated union ─────────────────────────────────────────
-
-export interface FlashCardContent {
-  front: string;
-  back: string;
-}
-
-export interface PracticeProblemContent {
-  question: string;
-  options: string[];
-  correctIndex: number;
-  calculatorEnabled?: boolean;
-}
-
-export interface VocabContent {
-  term: string;
-  definition: string;
-  example?: string;
-}
 
 export interface StudyCard {
   id: string;
@@ -134,47 +70,13 @@ export interface StudyCard {
   back: string;
 }
 
-export interface FlashCardTool {
-  id: string;
-  type: 'flash_card';
-  title: string;
-  content: FlashCardContent;
-  order: number;
-  lessonId: string;
-  isRequired: boolean;
-}
-
-export interface PracticeProblemTool {
-  id: string;
-  type: 'practice_problem';
-  title: string;
-  content: PracticeProblemContent;
-  order: number;
-  lessonId: string;
-  isRequired: boolean;
-}
-
-export interface VocabTool {
-  id: string;
-  type: 'vocab';
-  title: string;
-  content: VocabContent;
-  order: number;
-  lessonId: string;
-  isRequired: boolean;
-}
-
-export type LessonTool = FlashCardTool | PracticeProblemTool | VocabTool;
-
-export interface ResourceCompletionItem {
-  resourceType: string;
-  resourceId: string;
-  isRequired: boolean;
+export interface AssignmentCompletionItem {
+  assignmentId: string;
+  completedAt: string;
 }
 
 export interface CompletionsResponse {
-  completions: ResourceCompletionItem[];
-  requiredItems: ResourceCompletionItem[];
+  completions: AssignmentCompletionItem[];
 }
 
 export interface StudentNote {

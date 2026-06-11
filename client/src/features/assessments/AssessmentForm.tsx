@@ -2,6 +2,7 @@ import { FormEvent, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { ApiClientError, classifyError } from '../../api/client.js';
 import QuestionEditor, { type QuestionDraft } from './QuestionEditor.js';
+import ImportQuestionsModal from './ImportQuestionsModal.js';
 import Button from '../../components/Button.js';
 import ConfirmDialog from '../../components/ConfirmDialog.js';
 import ErrorMessage from '../../components/ErrorMessage.js';
@@ -14,6 +15,13 @@ interface AssessmentFormProps {
   onCancel: () => void;
   /** Present only in edit mode (assessment already persisted). Enables bulk toolbar. */
   assessmentId?: string;
+  /**
+   * When provided, renders an "Import Questions" button in the form toolbar.
+   * Called with the imported question drafts to append to the form state.
+   */
+  onImport?: (questions: AssessmentQuestion[]) => void;
+  /** Lesson ID — required when onImport is provided to know which lesson to import from. */
+  lessonId?: string;
 }
 
 function newQuestion(order: number): QuestionDraft {
@@ -51,13 +59,14 @@ export function toQuestionDraft(q: AssessmentQuestion): QuestionDraft {
   };
 }
 
-export default function AssessmentForm({ initialQuestions, onSubmit, onCancel, assessmentId }: AssessmentFormProps) {
+export default function AssessmentForm({ initialQuestions, onSubmit, onCancel, assessmentId, onImport, lessonId }: AssessmentFormProps) {
   const [questions, setQuestions] = useState<QuestionDraft[]>(
     initialQuestions && initialQuestions.length > 0 ? initialQuestions : [newQuestion(1)]
   );
   const [current, setCurrent] = useState(0);
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [showImport, setShowImport] = useState(false);
 
   // Bulk toolbar state
   const [bulkConfirm, setBulkConfirm] = useState<{ target: boolean; open: boolean } | null>(null);
@@ -102,6 +111,14 @@ export default function AssessmentForm({ initialQuestions, onSubmit, onCancel, a
     } finally {
       setSubmitting(false);
     }
+  }
+
+  function handleQuestionsImported(importedQuestions: AssessmentQuestion[]) {
+    const drafts = importedQuestions.map(toQuestionDraft);
+    setQuestions(prev => [...prev, ...drafts]);
+    setCurrent(questions.length); // navigate to first imported question
+    onImport?.(importedQuestions);
+    setShowImport(false);
   }
 
   // ── Bulk calculator helpers ────────────────────────────────────────────────
@@ -253,10 +270,25 @@ export default function AssessmentForm({ initialQuestions, onSubmit, onCancel, a
         {error && <ErrorMessage message={error} />}
 
         <div className="flex justify-end gap-3 pt-2 border-t border-border">
+          {onImport && lessonId && assessmentId && (
+            <Button type="button" variant="ghost" size="sm" onClick={() => setShowImport(true)} disabled={submitting}>
+              Import Questions
+            </Button>
+          )}
           <Button type="button" variant="secondary" onClick={onCancel} disabled={submitting}>Cancel</Button>
           <Button type="submit" disabled={submitting}>{submitting ? 'Saving…' : 'Save Assessment'}</Button>
         </div>
       </form>
+
+      {/* Import questions modal */}
+      {showImport && lessonId && assessmentId && (
+        <ImportQuestionsModal
+          assessmentId={assessmentId}
+          lessonId={lessonId}
+          onImported={handleQuestionsImported}
+          onClose={() => setShowImport(false)}
+        />
+      )}
 
       {/* Bulk-apply confirmation dialog */}
       {bulkConfirm?.open && (

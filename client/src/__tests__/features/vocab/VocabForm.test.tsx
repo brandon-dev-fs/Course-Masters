@@ -65,11 +65,8 @@ describe('VocabForm', () => {
     const initial = {
       id: 't1',
       type: 'vocab' as const,
-      title: 'Variable',
       content: { term: 'Variable', definition: 'A named storage location.' },
       order: 2,
-      lessonId: 'l1',
-      isRequired: false,
     };
     render(<VocabForm initial={initial} onSubmit={vi.fn()} onCancel={vi.fn()} />);
     expect(screen.getByRole('button', { name: /save changes/i })).toBeInTheDocument();
@@ -79,11 +76,8 @@ describe('VocabForm', () => {
     const initial = {
       id: 't1',
       type: 'vocab' as const,
-      title: 'Variable',
       content: { term: 'Variable', definition: 'A named storage location.' },
       order: 2,
-      lessonId: 'l1',
-      isRequired: false,
     };
     render(<VocabForm initial={initial} onSubmit={vi.fn()} onCancel={vi.fn()} />);
     expect(screen.getByLabelText(/term/i)).toHaveValue('Variable');

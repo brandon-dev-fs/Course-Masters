@@ -4,10 +4,21 @@ import Button from '../../components/Button.js';
 import ErrorMessage from '../../components/ErrorMessage.js';
 import { ApiClientError, classifyError } from '../../api/client.js';
 import QuestionEditor, { type QuestionDraft } from '../assessments/QuestionEditor.js';
-import type { LessonTool } from '../../api/types.js';
+
+interface PracticeProblemInitial {
+  id?: string;
+  type: 'practice_problem';
+  content: {
+    question?: string;
+    options?: string[];
+    correctIndex?: number;
+    calculatorEnabled?: boolean;
+  };
+  order?: number;
+}
 
 interface PracticeProblemFormProps {
-  initial?: LessonTool;
+  initial?: PracticeProblemInitial;
   nextOrder?: number;
   onSubmit: (draft: QuestionDraft) => Promise<void>;
   onCancel: () => void;
