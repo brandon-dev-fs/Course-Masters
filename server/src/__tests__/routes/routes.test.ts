@@ -40,7 +40,7 @@ vi.mock('../../controllers/student-note.controller.js', () => ({
 }));
 vi.mock('../../controllers/assessment.controller.js', () => ({
   createAssessmentController: () => makeController(['get', 'create']),
-  assessmentController: makeController(['update', 'bulkUpdateCalculator', 'getAttempts', 'submitAttempt']),
+  assessmentController: makeController(['update', 'bulkUpdateCalculator', 'getAttempts', 'submitAttempt', 'importQuestions']),
 }));
 vi.mock('../../controllers/completion.controller.js', () => ({
   completionController: makeController(['markLessonComplete', 'removeLessonComplete', 'markUnitComplete', 'removeUnitComplete']),

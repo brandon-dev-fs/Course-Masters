@@ -3,6 +3,35 @@ import prisma from '../lib/prisma.js';
 import { AppError, NotFoundError } from '../errors/index.js';
 import type { BulkUpdateCalculatorInput, CreateAssessmentInput, SubmitAttemptInput } from '../schemas/assessment.schema.js';
 
+// ---------------------------------------------------------------------------
+// Private helper: resolve the courseId of any assessment regardless of type
+// ---------------------------------------------------------------------------
+
+async function resolveAssessmentCourseId(assessment: {
+  lessonId: string | null;
+  unitId: string | null;
+  courseId: string | null;
+}): Promise<string> {
+  if (assessment.courseId) return assessment.courseId;
+  if (assessment.unitId) {
+    const unit = await prisma.unit.findUnique({
+      where: { id: assessment.unitId },
+      select: { courseId: true },
+    });
+    if (!unit) throw new NotFoundError('Unit not found');
+    return unit.courseId;
+  }
+  if (assessment.lessonId) {
+    const lesson = await prisma.lesson.findUnique({
+      where: { id: assessment.lessonId },
+      select: { unit: { select: { courseId: true } } },
+    });
+    if (!lesson) throw new NotFoundError('Lesson not found');
+    return lesson.unit.courseId;
+  }
+  throw new NotFoundError('Assessment has no parent');
+}
+
 const PASS_THRESHOLD = 0.8;
 
 function parentWhere(type: AssessmentType, parentId: string) {
@@ -87,44 +116,6 @@ export const assessmentService = {
     });
     if (!assessment) throw new NotFoundError('Assessment not found');
 
-    if (assessment.type === 'lesson_quiz' && assessment.lessonId) {
-      const lessonId = assessment.lessonId;
-      const [requiredResources, requiredTools] = await Promise.all([
-        prisma.lessonResource.findMany({ where: { lessonId, isRequired: true }, select: { id: true } }),
-        prisma.lessonTool.findMany({ where: { lessonId, isRequired: true }, select: { id: true } }),
-      ]);
-
-      const allRequiredIds = [
-        ...requiredResources.map(r => r.id),
-        ...requiredTools.map(t => t.id),
-      ];
-
-      if (allRequiredIds.length > 0) {
-        const [resourceCompletions, toolCompletions] = await Promise.all([
-          prisma.lessonResourceCompletion.findMany({
-            where: { resource: { lessonId }, userId },
-            select: { resourceId: true },
-          }),
-          prisma.lessonToolCompletion.findMany({
-            where: { tool: { lessonId }, userId },
-            select: { toolId: true },
-          }),
-        ]);
-        const completedIds = new Set([
-          ...resourceCompletions.map(c => c.resourceId),
-          ...toolCompletions.map(c => c.toolId),
-        ]);
-        const allComplete = allRequiredIds.every(id => completedIds.has(id));
-        if (!allComplete) {
-          throw new AppError(
-            'REQUIRED_ASSIGNMENTS_INCOMPLETE',
-            'All required assignments must be completed before taking the quiz',
-            400,
-          );
-        }
-      }
-    }
-
     const { answers } = data;
     let correct = 0;
     assessment.questions.forEach((q, i) => {
@@ -199,5 +190,74 @@ export const assessmentService = {
     });
     if (!result) throw new NotFoundError('Assessment not found');
     return result;
+  },
+
+  async importQuestions(assessmentId: string, practiceProblemAssignmentId: string) {
+    // 1. Verify assessment exists and is not soft-deleted
+    const assessment = await prisma.assessment.findFirst({
+      where: { id: assessmentId, deletedAt: null },
+      select: { id: true, lessonId: true, unitId: true, courseId: true },
+    });
+    if (!assessment) throw new NotFoundError('Assessment not found');
+
+    // 2. Verify practice problem assignment exists and resolve its courseId
+    const ppAssignment = await prisma.practiceProblemAssignment.findUnique({
+      where: { id: practiceProblemAssignmentId },
+      include: {
+        assignment: {
+          include: {
+            lesson: {
+              include: {
+                unit: { select: { courseId: true } },
+              },
+            },
+          },
+        },
+        questions: { orderBy: { order: 'asc' } },
+      },
+    });
+    if (!ppAssignment) {
+      throw new NotFoundError('Practice problem assignment not found');
+    }
+
+    // 3. Resolve the course ID of the assessment
+    const assessmentCourseId = await resolveAssessmentCourseId(assessment);
+
+    // 4. Verify same course
+    const ppCourseId = ppAssignment.assignment.lesson.unit.courseId;
+    if (assessmentCourseId !== ppCourseId) {
+      throw new AppError(
+        'FORBIDDEN',
+        'Practice problem assignment must belong to the same course as the assessment',
+        403,
+      );
+    }
+
+    // 5. Determine next order value
+    const maxOrderResult = await prisma.assessmentQuestion.aggregate({
+      where: { assessmentId },
+      _max: { order: true },
+    });
+    let nextOrder = (maxOrderResult._max.order ?? -1) + 1;
+
+    // 6. Create new AssessmentQuestion records from PracticeProblemQuestion data
+    const newQuestions = await prisma.$transaction(
+      ppAssignment.questions.map((ppq) =>
+        prisma.assessmentQuestion.create({
+          data: {
+            assessmentId,
+            type: ppq.type,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            question: ((ppq.content as any)['question'] as string | undefined) ?? '',
+            content: ppq.content,
+            order: nextOrder++,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            calculatorEnabled: ((ppq.content as any)['calculatorEnabled'] as boolean | undefined) ?? false,
+          },
+        }),
+      ),
+    );
+
+    return newQuestions;
   },
 };

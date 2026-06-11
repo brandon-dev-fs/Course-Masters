@@ -4,6 +4,7 @@ import { assessmentService } from '../services/assessment.service.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { attemptsQuerySchema } from '../schemas/assessment.schema.js';
 import { ValidationError } from '../errors/index.js';
+import type { ImportQuestionsInput } from '../schemas/assessment.schema.js';
 
 export function createAssessmentController(type: AssessmentType, parentParam: string) {
   return {
@@ -52,5 +53,12 @@ export const assessmentController = {
   bulkUpdateCalculator: asyncHandler(async (req: Request, res: Response) => {
     const assessmentId = req.params['assessmentId'] as string;
     res.json(await assessmentService.bulkUpdateCalculator(assessmentId, req.body));
+  }),
+
+  importQuestions: asyncHandler(async (req: Request, res: Response) => {
+    const assessmentId = req.params['assessmentId'] as string;
+    const { practiceProblemAssignmentId } = req.body as ImportQuestionsInput;
+    const questions = await assessmentService.importQuestions(assessmentId, practiceProblemAssignmentId);
+    res.status(201).json(questions);
   }),
 };

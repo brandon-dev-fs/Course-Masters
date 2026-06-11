@@ -26,17 +26,6 @@ enum QuestionType {
   fill_in_blank
 }
 
-enum ResourceType {
-  note
-  video
-  lecture
-}
-
-enum ToolType {
-  flash_card
-  practice_problem
-  vocab
-}
 
 enum AssignmentType {
   note
@@ -65,8 +54,6 @@ model User {
   courses               Course[]
   assessmentAttempts    AssessmentAttempt[]
   studentNotes          StudentNote[]
-  resourceCompletions   LessonResourceCompletion[]
-  toolCompletions       LessonToolCompletion[]
   lessonCompletions     LessonCompletion[]
   unitCompletions       UnitCompletion[]
   assignmentCompletions AssignmentCompletion[]
@@ -173,8 +160,6 @@ model Lesson {
   deletedAt   DateTime?
 
   unit         Unit              @relation(fields: [unitId], references: [id], onDelete: Cascade)
-  resources    LessonResource[]
-  tools        LessonTool[]
   assessment   Assessment?
   studentNotes StudentNote[]
   completions  LessonCompletion[]
@@ -185,41 +170,6 @@ model Lesson {
   @@map("lesson")
 }
 
-model LessonResource {
-  id         String       @id @default(uuid())
-  type       ResourceType
-  title      String
-  content    Json
-  order      Int
-  lessonId   String
-  isRequired Boolean      @default(true)
-  createdAt  DateTime     @default(now())
-  updatedAt  DateTime     @updatedAt
-
-  lesson      Lesson                    @relation(fields: [lessonId], references: [id], onDelete: Cascade)
-  completions LessonResourceCompletion[]
-
-  @@index([lessonId])
-  @@map("lesson_resource")
-}
-
-model LessonTool {
-  id         String   @id @default(uuid())
-  type       ToolType
-  title      String
-  content    Json
-  order      Int
-  lessonId   String
-  isRequired Boolean  @default(true)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-
-  lesson         Lesson                   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
-  completions    LessonToolCompletion[]
-
-  @@index([lessonId])
-  @@map("lesson_tool")
-}
 
 model Assessment {
   id        String         @id @default(uuid())
@@ -320,33 +270,6 @@ model UnitCompletion {
   @@map("unit_completion")
 }
 
-model LessonResourceCompletion {
-  id          String   @id @default(uuid())
-  userId      String
-  resourceId  String
-  completedAt DateTime @default(now())
-
-  user     User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  resource LessonResource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, resourceId])
-  @@index([userId])
-  @@map("lesson_resource_completion")
-}
-
-model LessonToolCompletion {
-  id          String   @id @default(uuid())
-  userId      String
-  toolId      String
-  completedAt DateTime @default(now())
-
-  user User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  tool LessonTool @relation(fields: [toolId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, toolId])
-  @@index([userId])
-  @@map("lesson_tool_completion")
-}
 
 model Assignment {
   id        String         @id @default(uuid())

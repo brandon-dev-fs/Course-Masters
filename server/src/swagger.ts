@@ -13,12 +13,10 @@ export const swaggerDocument: JsonObject = {
     { name: 'Courses', description: 'Course CRUD' },
     { name: 'Units', description: 'Unit CRUD (scoped to a course)' },
     { name: 'Lessons', description: 'Lesson CRUD (scoped to a unit)' },
-    { name: 'Resources', description: 'Lesson resources (notes, videos, lectures)' },
-    { name: 'Tools', description: 'Lesson tools (flash cards, practice problems, vocab)' },
     { name: 'Student Notes', description: 'Per-student notes on a lesson' },
     { name: 'Assessments', description: 'Quizzes and exams with graded attempts' },
     { name: 'Completions', description: 'Lesson and unit completion tracking' },
-    { name: 'Resource Completions', description: 'Per-resource completion tracking' },
+    { name: 'Assignment Completions', description: 'Per-assignment completion tracking' },
     { name: 'Progress', description: 'Course and unit progress' },
     { name: 'YouTube', description: 'YouTube utilities' },
   ],
@@ -134,66 +132,6 @@ export const swaggerDocument: JsonObject = {
           planContent: { type: 'object' },
         },
       },
-      LessonResource: {
-        type: 'object',
-        properties: {
-          id: { type: 'string', format: 'uuid' },
-          type: { type: 'string', enum: ['note', 'video', 'lecture'] },
-          title: { type: 'string' },
-          content: { type: 'object' },
-          order: { type: 'integer' },
-          lessonId: { type: 'string', format: 'uuid' },
-        },
-      },
-      CreateLessonResource: {
-        type: 'object',
-        required: ['type', 'title', 'content', 'order'],
-        properties: {
-          type: { type: 'string', enum: ['note', 'video', 'lecture'] },
-          title: { type: 'string', minLength: 1 },
-          content: { type: 'object' },
-          order: { type: 'integer', minimum: 0 },
-        },
-      },
-      UpdateLessonResource: {
-        type: 'object',
-        properties: {
-          type: { type: 'string', enum: ['note', 'video', 'lecture'] },
-          title: { type: 'string', minLength: 1 },
-          content: { type: 'object' },
-          order: { type: 'integer', minimum: 0 },
-        },
-      },
-      LessonTool: {
-        type: 'object',
-        properties: {
-          id: { type: 'string', format: 'uuid' },
-          type: { type: 'string', enum: ['flash_card', 'practice_problem', 'vocab'] },
-          title: { type: 'string' },
-          content: { type: 'object' },
-          order: { type: 'integer' },
-          lessonId: { type: 'string', format: 'uuid' },
-        },
-      },
-      CreateLessonTool: {
-        type: 'object',
-        required: ['type', 'title', 'content', 'order'],
-        properties: {
-          type: { type: 'string', enum: ['flash_card', 'practice_problem', 'vocab'] },
-          title: { type: 'string', minLength: 1 },
-          content: { type: 'object' },
-          order: { type: 'integer', minimum: 0 },
-        },
-      },
-      UpdateLessonTool: {
-        type: 'object',
-        properties: {
-          type: { type: 'string', enum: ['flash_card', 'practice_problem', 'vocab'] },
-          title: { type: 'string', minLength: 1 },
-          content: { type: 'object' },
-          order: { type: 'integer', minimum: 0 },
-        },
-      },
       StudentNote: {
         type: 'object',
         properties: {
@@ -276,10 +214,23 @@ export const swaggerDocument: JsonObject = {
       },
       ToggleCompletion: {
         type: 'object',
-        required: ['resourceType', 'resourceId'],
+        required: ['assignmentId'],
         properties: {
-          resourceType: { type: 'string', enum: ['lessonPlan', 'note', 'video', 'lecture', 'flash_card', 'practice_problem', 'vocab'] },
-          resourceId: { type: 'string', format: 'uuid' },
+          assignmentId: { type: 'string', format: 'uuid' },
+        },
+      },
+      AssignmentCompletion: {
+        type: 'object',
+        properties: {
+          assignmentId: { type: 'string', format: 'uuid' },
+          completedAt: { type: 'string', format: 'date-time' },
+        },
+      },
+      ImportQuestions: {
+        type: 'object',
+        required: ['practiceProblemAssignmentId'],
+        properties: {
+          practiceProblemAssignmentId: { type: 'string', format: 'uuid' },
         },
       },
       CourseProgress: {
@@ -306,8 +257,6 @@ export const swaggerDocument: JsonObject = {
       courseId: { name: 'courseId', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } },
       unitId: { name: 'unitId', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } },
       lessonId: { name: 'lessonId', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } },
-      resourceId: { name: 'resourceId', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } },
-      toolId: { name: 'toolId', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } },
       assessmentId: { name: 'assessmentId', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } },
       studentNoteId: { name: 'studentNoteId', in: 'path', required: true, schema: { type: 'string', format: 'uuid' } },
     },
@@ -499,106 +448,6 @@ export const swaggerDocument: JsonObject = {
       },
     },
 
-    // ── Lesson Resources ───────────────────────────────────
-    '/lessons/{lessonId}/resources': {
-      get: {
-        tags: ['Resources'],
-        summary: 'List resources for a lesson',
-        parameters: [
-          { $ref: '#/components/parameters/lessonId' },
-          { name: 'type', in: 'query', schema: { type: 'string', enum: ['note', 'video', 'lecture'] }, description: 'Filter by resource type' },
-        ],
-        responses: {
-          200: { description: 'Array of resources', content: { 'application/json': { schema: { type: 'array', items: { $ref: '#/components/schemas/LessonResource' } } } } },
-        },
-      },
-      post: {
-        tags: ['Resources'],
-        summary: 'Create a lesson resource',
-        parameters: [{ $ref: '#/components/parameters/lessonId' }],
-        requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/CreateLessonResource' } } } },
-        responses: {
-          201: { description: 'Created resource', content: { 'application/json': { schema: { $ref: '#/components/schemas/LessonResource' } } } },
-          403: { $ref: '#/components/responses/Forbidden' },
-          422: { $ref: '#/components/responses/ValidationError' },
-        },
-      },
-    },
-    '/resources/{resourceId}': {
-      put: {
-        tags: ['Resources'],
-        summary: 'Update a resource',
-        parameters: [{ $ref: '#/components/parameters/resourceId' }],
-        requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/UpdateLessonResource' } } } },
-        responses: {
-          200: { description: 'Updated resource', content: { 'application/json': { schema: { $ref: '#/components/schemas/LessonResource' } } } },
-          403: { $ref: '#/components/responses/Forbidden' },
-          404: { $ref: '#/components/responses/NotFound' },
-          422: { $ref: '#/components/responses/ValidationError' },
-        },
-      },
-      delete: {
-        tags: ['Resources'],
-        summary: 'Delete a resource',
-        parameters: [{ $ref: '#/components/parameters/resourceId' }],
-        responses: {
-          204: { description: 'Deleted' },
-          403: { $ref: '#/components/responses/Forbidden' },
-          404: { $ref: '#/components/responses/NotFound' },
-        },
-      },
-    },
-
-    // ── Lesson Tools ───────────────────────────────────────
-    '/lessons/{lessonId}/tools': {
-      get: {
-        tags: ['Tools'],
-        summary: 'List tools for a lesson',
-        parameters: [
-          { $ref: '#/components/parameters/lessonId' },
-          { name: 'type', in: 'query', schema: { type: 'string', enum: ['flash_card', 'practice_problem', 'vocab'] }, description: 'Filter by tool type' },
-        ],
-        responses: {
-          200: { description: 'Array of tools', content: { 'application/json': { schema: { type: 'array', items: { $ref: '#/components/schemas/LessonTool' } } } } },
-        },
-      },
-      post: {
-        tags: ['Tools'],
-        summary: 'Create a lesson tool',
-        parameters: [{ $ref: '#/components/parameters/lessonId' }],
-        requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/CreateLessonTool' } } } },
-        responses: {
-          201: { description: 'Created tool', content: { 'application/json': { schema: { $ref: '#/components/schemas/LessonTool' } } } },
-          403: { $ref: '#/components/responses/Forbidden' },
-          422: { $ref: '#/components/responses/ValidationError' },
-        },
-      },
-    },
-    '/tools/{toolId}': {
-      put: {
-        tags: ['Tools'],
-        summary: 'Update a tool',
-        parameters: [{ $ref: '#/components/parameters/toolId' }],
-        requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/UpdateLessonTool' } } } },
-        responses: {
-          200: { description: 'Updated tool', content: { 'application/json': { schema: { $ref: '#/components/schemas/LessonTool' } } } },
-          403: { $ref: '#/components/responses/Forbidden' },
-          404: { $ref: '#/components/responses/NotFound' },
-          422: { $ref: '#/components/responses/ValidationError' },
-        },
-      },
-      delete: {
-        tags: ['Tools'],
-        summary: 'Delete a tool',
-        parameters: [{ $ref: '#/components/parameters/toolId' }],
-        responses: {
-          204: { description: 'Deleted' },
-          403: { $ref: '#/components/responses/Forbidden' },
-          404: { $ref: '#/components/responses/NotFound' },
-        },
-      },
-    },
-
     // ── Student Notes ──────────────────────────────────────
     '/lessons/{lessonId}/student-notes': {
       get: {
@@ -743,24 +592,82 @@ export const swaggerDocument: JsonObject = {
       },
     },
 
-    // ── Resource Completions ───────────────────────────────
+    // ── Assignment Completions ─────────────────────────────
     '/lessons/{lessonId}/completions': {
       get: {
-        tags: ['Resource Completions'],
-        summary: 'Get resource completions for a lesson',
+        tags: ['Assignment Completions'],
+        summary: 'Get assignment completions for a lesson',
         parameters: [{ $ref: '#/components/parameters/lessonId' }],
         responses: {
-          200: { description: 'Array of completion records', content: { 'application/json': { schema: { type: 'array', items: { type: 'object' } } } } },
+          200: {
+            description: 'Completions object',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    completions: {
+                      type: 'array',
+                      items: { $ref: '#/components/schemas/AssignmentCompletion' },
+                    },
+                  },
+                },
+              },
+            },
+          },
         },
       },
       post: {
-        tags: ['Resource Completions'],
-        summary: 'Toggle a resource completion',
+        tags: ['Assignment Completions'],
+        summary: 'Toggle an assignment completion',
         parameters: [{ $ref: '#/components/parameters/lessonId' }],
         requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/ToggleCompletion' } } } },
         responses: {
-          200: { description: 'Completion toggled' },
-          422: { $ref: '#/components/responses/ValidationError' },
+          200: {
+            description: 'Completion toggled — returns updated completions list',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    completions: {
+                      type: 'array',
+                      items: { $ref: '#/components/schemas/AssignmentCompletion' },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          400: { $ref: '#/components/responses/ValidationError' },
+          404: { $ref: '#/components/responses/NotFound' },
+        },
+      },
+    },
+
+    // ── Import Questions ───────────────────────────────────
+    '/assessments/{assessmentId}/import-questions': {
+      post: {
+        tags: ['Assessments'],
+        summary: 'Import questions from a practice problem assignment',
+        description: 'Copies questions from a PracticeProblemAssignment into the target assessment. Source questions are not modified. Requires teacher or admin role and course ownership.',
+        parameters: [{ $ref: '#/components/parameters/assessmentId' }],
+        requestBody: { required: true, content: { 'application/json': { schema: { $ref: '#/components/schemas/ImportQuestions' } } } },
+        responses: {
+          201: {
+            description: 'Imported questions',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'array',
+                  items: { $ref: '#/components/schemas/AssessmentQuestion' },
+                },
+              },
+            },
+          },
+          400: { $ref: '#/components/responses/ValidationError' },
+          403: { $ref: '#/components/responses/Forbidden' },
+          404: { $ref: '#/components/responses/NotFound' },
         },
       },
     },
