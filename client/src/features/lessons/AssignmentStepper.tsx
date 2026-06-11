@@ -1,21 +1,18 @@
-import { Lock, CheckCircle2, BookOpen, FileText, Video, Presentation, Layers, Brain, BookMarked, ClipboardCheck, ExternalLink, Plus } from 'lucide-react';
+import { Lock, CheckCircle2, BookOpen, FileText, Video, Brain, BookMarked, ClipboardCheck, ExternalLink, Plus } from 'lucide-react';
 import type React from 'react';
 import type { AssignmentType } from '../../api/types.js';
 
 export interface StepperItem {
   key: string;
   title: string;
-  kind: 'lessonPlan' | 'resource' | 'tool' | 'quiz' | 'assignment';
+  kind: 'lessonPlan' | 'quiz' | 'assignment';
   completionId: string | null;
-  resourceType?: 'note' | 'video' | 'lecture';
-  toolType?: 'flash_card' | 'practice_problem' | 'vocab';
   assignmentType?: AssignmentType;
 }
 
 interface AssignmentStepperProps {
   items: StepperItem[];
   activeStepKey: string;
-  completedIds: Set<string>;
   completedAssignmentIds: Set<string>;
   quizUnlocked: boolean;
   quizPassed: boolean;
@@ -26,16 +23,6 @@ interface AssignmentStepperProps {
 function getStepIcon(item: StepperItem): React.ComponentType<{ className?: string }> {
   if (item.kind === 'quiz') return ClipboardCheck;
   if (item.kind === 'lessonPlan') return BookOpen;
-  if (item.kind === 'resource') {
-    if (item.resourceType === 'video') return Video;
-    if (item.resourceType === 'lecture') return Presentation;
-    return FileText;
-  }
-  if (item.kind === 'tool') {
-    if (item.toolType === 'flash_card') return Layers;
-    if (item.toolType === 'practice_problem') return Brain;
-    if (item.toolType === 'vocab') return BookMarked;
-  }
   if (item.kind === 'assignment') {
     if (item.assignmentType === 'note') return FileText;
     if (item.assignmentType === 'video') return Video;
@@ -49,17 +36,6 @@ function getStepIcon(item: StepperItem): React.ComponentType<{ className?: strin
 export function getStepLabel(item: StepperItem): string {
   if (item.kind === 'lessonPlan') return 'Plan';
   if (item.kind === 'quiz') return 'Quiz';
-  if (item.kind === 'resource') {
-    if (item.resourceType === 'video') return 'Video';
-    if (item.resourceType === 'lecture') return 'Lecture';
-    return 'Read';
-  }
-  if (item.kind === 'tool') {
-    if (item.toolType === 'flash_card') return 'Cards';
-    if (item.toolType === 'practice_problem') return 'Practice';
-    if (item.toolType === 'vocab') return 'Vocab';
-    return 'Read';
-  }
   if (item.kind === 'assignment') {
     if (item.assignmentType === 'note') return 'Read';
     if (item.assignmentType === 'video') return 'Video';
@@ -74,7 +50,7 @@ export function getStepLabel(item: StepperItem): string {
 const focusRing = 'focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:outline-none';
 
 export default function AssignmentStepper({
-  items, activeStepKey, completedIds, completedAssignmentIds, quizUnlocked, quizPassed, onStepClick, onAdd,
+  items, activeStepKey, completedAssignmentIds, quizUnlocked, quizPassed, onStepClick, onAdd,
 }: AssignmentStepperProps) {
   if (items.length === 0) return null;
 
@@ -82,10 +58,9 @@ export default function AssignmentStepper({
   const activeItem = items[activeIndex];
 
   function isItemComplete(item: StepperItem): boolean {
-    const completionSet = item.kind === 'assignment' ? completedAssignmentIds : completedIds;
     return item.kind === 'quiz'
       ? quizPassed
-      : item.completionId ? completionSet.has(item.completionId) : false;
+      : item.completionId ? completedAssignmentIds.has(item.completionId) : false;
   }
 
   return (

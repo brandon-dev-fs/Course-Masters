@@ -1,18 +1,25 @@
 import { useEffect, useState } from 'react';
 import { X } from 'lucide-react';
-import type { LessonTool } from '../../api/types.js';
+
+/** Minimal card shape used by FlashCard. Vocab entries from assignments are adapted to this shape. */
+interface FlashCardData {
+  id: string;
+  type: 'flash_card';
+  title: string;
+  content: { front: string; back: string };
+  order: number;
+  lessonId: string;
+  isRequired: boolean;
+}
 
 interface FlashCardProps {
-  card: LessonTool;
+  card: FlashCardData;
   editMode?: boolean;
   onUpdate?: (id: string, data: { front: string; back: string }) => Promise<void>;
   onDelete?: () => void;
 }
 
 export default function FlashCard({ card, editMode = false, onUpdate, onDelete }: FlashCardProps) {
-  if (card.type !== 'flash_card') {
-    return <p className="text-sm text-muted-foreground">Unsupported tool type.</p>;
-  }
   const cardFront = card.content.front ?? '';
   const cardBack = card.content.back ?? '';
 

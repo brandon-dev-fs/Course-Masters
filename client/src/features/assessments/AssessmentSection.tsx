@@ -3,11 +3,13 @@ import useAssessment from '../../hooks/useAssessment.js';
 import AssessmentForm, { toQuestionDraft } from './AssessmentForm.js';
 import AssessmentTaker from './AssessmentTaker.js';
 import AssessmentResults from './AssessmentResults.js';
+import ImportQuestionsModal from './ImportQuestionsModal.js';
 import Modal from '../../components/Modal.js';
 import Button from '../../components/Button.js';
 import LoadingSpinner from '../../components/LoadingSpinner.js';
 import ErrorMessage from '../../components/ErrorMessage.js';
 import type { QuestionDraft } from './QuestionEditor.js';
+import type { AssessmentQuestion } from '../../api/types.js';
 
 type AssessmentDisplayMode = 'inline' | 'modal-only';
 
@@ -47,6 +49,11 @@ interface AssessmentSectionProps {
   unlocked?: boolean;
   /** Message shown when unlocked=false and canEdit=false */
   lockedMessage?: string;
+  /**
+   * When provided and canEdit is true, shows an "Import from Practice Problems" button
+   * that opens ImportQuestionsModal to copy questions from a practice problem assignment.
+   */
+  lessonId?: string;
 }
 
 export default function AssessmentSection({
@@ -64,8 +71,10 @@ export default function AssessmentSection({
   onClose,
   unlocked,
   lockedMessage,
+  lessonId,
 }: AssessmentSectionProps) {
   const [editQuestions, setEditQuestions] = useState<QuestionDraft[] | null>(null);
+  const [showImport, setShowImport] = useState(false);
   const {
     assessment, loading, error,
     view, setView, result, attempts,
@@ -89,6 +98,11 @@ export default function AssessmentSection({
     setView('idle');
     setEditQuestions(null);
     onClose?.();
+  }
+
+  function handleQuestionsImported(importedQuestions: AssessmentQuestion[]) {
+    const drafts = importedQuestions.map(toQuestionDraft);
+    setEditQuestions(prev => [...(prev ?? []), ...drafts]);
   }
 
   // modal-only mode: render nothing when idle
@@ -147,10 +161,15 @@ export default function AssessmentSection({
           {isLocked && lockedMessage && (
             <p className="text-sm text-muted-foreground mb-4">{lockedMessage}</p>
           )}
-          <div className="flex gap-3 mb-4">
+          <div className="flex flex-wrap gap-3 mb-4">
             {canEdit && (
               <Button variant="secondary" size="sm" onClick={openEdit}>
                 Edit {label}
+              </Button>
+            )}
+            {canEdit && lessonId && (
+              <Button variant="ghost" size="sm" onClick={() => setShowImport(true)}>
+                Import from Practice Problems
               </Button>
             )}
             <Button
@@ -187,6 +206,8 @@ export default function AssessmentSection({
             onSubmit={assessment ? handleUpdate : handleCreate}
             onCancel={closeModal}
             assessmentId={assessment?.id}
+            onImport={lessonId && canEdit && assessment ? handleQuestionsImported : undefined}
+            lessonId={lessonId}
           />
         </Modal>
       )}
@@ -199,6 +220,19 @@ export default function AssessmentSection({
         <Modal title={resultsTitle} onClose={() => setView('idle')}>
           <AssessmentResults result={result} onRetake={() => setView('taking')} onDismiss={() => setView('idle')} />
         </Modal>
+      )}
+      {showImport && assessment && lessonId && (
+        <ImportQuestionsModal
+          assessmentId={assessment.id}
+          lessonId={lessonId}
+          onImported={importedQuestions => {
+            const drafts = importedQuestions.map(toQuestionDraft);
+            setEditQuestions(prev => [...(prev ?? assessment.questions.map(toQuestionDraft)), ...drafts]);
+            setView('creating');
+            setShowImport(false);
+          }}
+          onClose={() => setShowImport(false)}
+        />
       )}
     </div>
   );

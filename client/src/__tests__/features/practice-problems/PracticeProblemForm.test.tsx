@@ -16,7 +16,6 @@ vi.mock('../../../api/client.js', () => ({
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import PracticeProblemForm from '../../../features/practice-problems/PracticeProblemForm.js';
-import type { LessonTool } from '../../../api/types.js';
 
 describe('PracticeProblemForm', () => {
   beforeEach(() => {
@@ -56,14 +55,11 @@ describe('PracticeProblemForm', () => {
   });
 
   it('shows Save Changes button when editing', () => {
-    const initial: LessonTool = {
+    const initial = {
       id: 'pp1',
-      type: 'practice_problem',
-      title: 'Existing Problem',
+      type: 'practice_problem' as const,
       content: { question: 'Q?', options: ['A', 'B'], correctIndex: 0, calculatorEnabled: false },
       order: 2,
-      lessonId: 'l1',
-      isRequired: false,
     };
     render(<PracticeProblemForm initial={initial} onSubmit={vi.fn()} onCancel={vi.fn()} />);
     expect(screen.getByRole('button', { name: /save changes/i })).toBeInTheDocument();

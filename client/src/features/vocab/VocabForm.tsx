@@ -4,10 +4,16 @@ import Textarea from '../../components/Textarea.js';
 import Button from '../../components/Button.js';
 import ErrorMessage from '../../components/ErrorMessage.js';
 import { ApiClientError, classifyError } from '../../api/client.js';
-import type { LessonTool } from '../../api/types.js';
+
+interface VocabInitial {
+  id?: string;
+  type: 'vocab';
+  content: { term?: string; definition?: string; example?: string };
+  order?: number;
+}
 
 interface VocabFormProps {
-  initial?: LessonTool;
+  initial?: VocabInitial;
   nextOrder?: number;
   onSubmit: (data: { term: string; definition: string; example?: string; order: number }) => Promise<void>;
   onCancel: () => void;

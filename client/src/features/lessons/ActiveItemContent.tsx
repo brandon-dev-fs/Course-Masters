@@ -1,12 +1,9 @@
-import type { Assignment, Bookmark, LessonResource, LessonTool } from '../../api/types.js';
+import type { Assignment, Bookmark, Lesson } from '../../api/types.js';
 import type { AssignmentItem } from './AssignmentSection.js';
 import LessonPlanView from './LessonPlanView.js';
-import LessonResourceContent from './LessonResourceContent.js';
-import LessonToolContent from './LessonToolContent.js';
 import LessonAssignmentContent from './LessonAssignmentContent.js';
 import AssessmentSection from '../assessments/AssessmentSection.js';
 import { assessmentsApi } from '../../api/assessments.js';
-import type { Lesson } from '../../api/types.js';
 
 const quizApi = {
   get: assessmentsApi.getLessonQuiz,
@@ -19,20 +16,8 @@ const quizApi = {
 interface ActiveItemContentProps {
   item: AssignmentItem;
   lesson: Lesson;
-  resources: LessonResource[];
-  tools: LessonTool[];
   assignments: Assignment[];
   canEdit: boolean;
-  editingVideoId: string | null;
-  newNoteIdRef: React.RefObject<string | null>;
-  onVideoEditStart: (id: string) => void;
-  onVideoEditCancel: () => void;
-  onVideoUpdated: (updated: LessonResource) => void;
-  onVideoDeleted: (id: string) => void;
-  onNoteUpdated: (updated: LessonResource) => void;
-  onEditTool: (tool: LessonTool) => void;
-  onToolDeleted: (id: string) => void;
-  onToolUpdated: (updated: LessonTool) => void;
   onToggleAssignmentCompletion: (assignment: Assignment) => Promise<void>;
   onBookmarkChange: (assignmentId: string, bookmark: Bookmark | null) => void;
   isStudent: boolean;
@@ -42,20 +27,8 @@ interface ActiveItemContentProps {
 export default function ActiveItemContent({
   item,
   lesson,
-  resources,
-  tools,
   assignments,
   canEdit,
-  editingVideoId,
-  newNoteIdRef,
-  onVideoEditStart,
-  onVideoEditCancel,
-  onVideoUpdated,
-  onVideoDeleted,
-  onNoteUpdated,
-  onEditTool,
-  onToolDeleted,
-  onToolUpdated,
   onToggleAssignmentCompletion,
   onBookmarkChange,
   isStudent,
@@ -83,38 +56,8 @@ export default function ActiveItemContent({
         modalTitle="Lesson Quiz"
         resultsTitle="Quiz Results"
         displayMode="inline"
-      />
-    );
-  }
-
-  if (item.kind === 'resource') {
-    const resource = resources.find(r => r.id === item.id);
-    if (!resource) return null;
-    return (
-      <LessonResourceContent
-        resource={resource}
         canEdit={canEdit}
-        editingVideoId={editingVideoId}
-        newNoteIdRef={newNoteIdRef}
-        onVideoEditStart={onVideoEditStart}
-        onVideoEditCancel={onVideoEditCancel}
-        onVideoUpdated={onVideoUpdated}
-        onVideoDeleted={onVideoDeleted}
-        onNoteUpdated={onNoteUpdated}
-      />
-    );
-  }
-
-  if (item.kind === 'tool') {
-    const tool = tools.find(t => t.id === item.id);
-    if (!tool) return null;
-    return (
-      <LessonToolContent
-        tool={tool}
-        canEdit={canEdit}
-        onEditRequest={onEditTool}
-        onDeleted={onToolDeleted}
-        onToolUpdated={onToolUpdated}
+        lessonId={lesson.id}
       />
     );
   }

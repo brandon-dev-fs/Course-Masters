@@ -1,7 +1,7 @@
 import { useEffect, useRef, useCallback } from 'react';
-import { Lock, ChevronDown, ToggleLeft, ToggleRight, ChevronUp, Pencil, Trash2 } from 'lucide-react';
+import { Lock, ChevronDown, ChevronUp, Pencil, Trash2 } from 'lucide-react';
 
-export type AssignmentKind = 'lessonPlan' | 'resource' | 'tool' | 'quiz' | 'assignment';
+export type AssignmentKind = 'lessonPlan' | 'quiz' | 'assignment';
 
 export interface AssignmentItem {
   key: string;
@@ -10,8 +10,6 @@ export interface AssignmentItem {
   title: string;
   isRequired: boolean;
   order: number;
-  resourceType?: 'note' | 'video' | 'lecture';
-  toolType?: 'flash_card' | 'practice_problem' | 'vocab';
   assignmentType?: import('../../api/types.js').AssignmentType;
 }
 
@@ -25,7 +23,6 @@ interface AssignmentSectionProps {
   incompleteRequired: AssignmentItem[];
   onVisible?: (key: string) => void;
   onToggleCompletion: () => void;
-  onToggleRequired: () => void;
   onMoveUp?: () => void;
   onMoveDown?: () => void;
   onPrev: () => void;
@@ -37,7 +34,7 @@ interface AssignmentSectionProps {
 
 export default function AssignmentSection({
   item, isComplete, isLocked, canEdit, isFirst, isLast, incompleteRequired,
-  onVisible, onToggleCompletion, onToggleRequired, onMoveUp, onMoveDown, onPrev, onNext, onEdit, onDelete, children,
+  onVisible, onToggleCompletion, onMoveUp, onMoveDown, onPrev, onNext, onEdit, onDelete, children,
 }: AssignmentSectionProps) {
   const ref = useRef<HTMLElement>(null);
   const stableOnVisible = useCallback((key: string) => onVisible?.(key), [onVisible]);
@@ -56,7 +53,6 @@ export default function AssignmentSection({
 
   const isQuiz = item.kind === 'quiz';
   const showCompletion = !isQuiz;
-  const showRequired = item.kind !== 'lessonPlan' && !isQuiz;
 
   return (
     <section
@@ -68,33 +64,6 @@ export default function AssignmentSection({
       <div className="flex items-center justify-between gap-3 px-5 py-3 border-b border-border bg-surface-raised">
         <div className="flex items-center gap-2 min-w-0">
           <h2 className="text-sm font-semibold text-foreground truncate">{item.title}</h2>
-          {showRequired && (
-            canEdit ? (
-              <button
-                onClick={onToggleRequired}
-                title={item.isRequired ? 'Mark optional' : 'Mark required'}
-                className={`shrink-0 flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium transition-colors ${
-                  item.isRequired
-                    ? 'bg-primary-subtle text-primary hover:bg-primary-subtle/70'
-                    : 'bg-surface text-muted-foreground border border-border hover:border-primary/50 hover:text-foreground'
-                }`}
-              >
-                {item.isRequired
-                  ? <ToggleRight className="w-3.5 h-3.5" />
-                  : <ToggleLeft className="w-3.5 h-3.5" />
-                }
-                {item.isRequired ? 'Required' : 'Optional'}
-              </button>
-            ) : (
-              <span className={`shrink-0 px-1.5 py-0.5 rounded text-xs font-medium ${
-                item.isRequired
-                  ? 'bg-primary-subtle text-primary'
-                  : 'bg-surface text-muted-foreground border border-border'
-              }`}>
-                {item.isRequired ? 'Required' : 'Optional'}
-              </span>
-            )
-          )}
         </div>
         {canEdit && (
           <div className="flex items-center gap-1 shrink-0">
