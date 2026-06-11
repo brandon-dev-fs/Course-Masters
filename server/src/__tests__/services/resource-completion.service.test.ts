@@ -8,82 +8,41 @@ import { NotFoundError } from '../../errors/NotFoundError.js';
 
 const LESSON_ID = 'lesson-1';
 const USER_ID = 'user-1';
-const RESOURCE_ID = 'resource-1';
-const TOOL_ID = 'tool-1';
+const ASSIGNMENT_ID = '550e8400-e29b-41d4-a716-446655440000';
 
 describe('resourceCompletionService.getByLesson', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    prismaMock.lessonResourceCompletion.findMany.mockResolvedValue([]);
-    prismaMock.lessonToolCompletion.findMany.mockResolvedValue([]);
-    prismaMock.lessonResource.findMany.mockResolvedValue([]);
-    prismaMock.lessonTool.findMany.mockResolvedValue([]);
+    prismaMock.assignmentCompletion.findMany.mockResolvedValue([]);
   });
 
-  it('returns empty completions and requiredItems when nothing exists', async () => {
+  it('returns empty completions when nothing exists', async () => {
     const result = await resourceCompletionService.getByLesson(LESSON_ID, USER_ID);
 
     expect(result.completions).toEqual([]);
-    expect(result.requiredItems).toEqual([]);
   });
 
-  it('returns resource completions mapped to completion items', async () => {
+  it('returns assignment completions mapped to completion items', async () => {
     const completedAt = new Date();
-    prismaMock.lessonResourceCompletion.findMany.mockResolvedValue([
-      { resourceId: RESOURCE_ID, completedAt },
-    ]);
-    prismaMock.lessonResource.findMany.mockResolvedValue([
-      { id: RESOURCE_ID, isRequired: true },
+    prismaMock.assignmentCompletion.findMany.mockResolvedValue([
+      { assignmentId: ASSIGNMENT_ID, completedAt },
     ]);
 
     const result = await resourceCompletionService.getByLesson(LESSON_ID, USER_ID);
 
     expect(result.completions).toEqual([
-      { type: 'resource', targetId: RESOURCE_ID, completedAt },
+      { assignmentId: ASSIGNMENT_ID, completedAt },
     ]);
   });
 
-  it('marks required items as completed when resource is in completions', async () => {
-    prismaMock.lessonResourceCompletion.findMany.mockResolvedValue([
-      { resourceId: RESOURCE_ID, completedAt: new Date() },
-    ]);
-    prismaMock.lessonResource.findMany.mockResolvedValue([
-      { id: RESOURCE_ID, isRequired: true },
-    ]);
+  it('queries assignmentCompletion with lesson and user filters', async () => {
+    await resourceCompletionService.getByLesson(LESSON_ID, USER_ID);
 
-    const result = await resourceCompletionService.getByLesson(LESSON_ID, USER_ID);
-
-    expect(result.requiredItems).toContainEqual(
-      expect.objectContaining({ targetId: RESOURCE_ID, completed: true }),
-    );
-  });
-
-  it('marks required items as not completed when resource is not in completions', async () => {
-    prismaMock.lessonResourceCompletion.findMany.mockResolvedValue([]);
-    prismaMock.lessonResource.findMany.mockResolvedValue([
-      { id: RESOURCE_ID, isRequired: true },
-    ]);
-
-    const result = await resourceCompletionService.getByLesson(LESSON_ID, USER_ID);
-
-    expect(result.requiredItems).toContainEqual(
-      expect.objectContaining({ targetId: RESOURCE_ID, completed: false }),
-    );
-  });
-
-  it('returns tool completions mapped to completion items', async () => {
-    const completedAt = new Date();
-    prismaMock.lessonToolCompletion.findMany.mockResolvedValue([
-      { toolId: TOOL_ID, completedAt },
-    ]);
-    prismaMock.lessonTool.findMany.mockResolvedValue([
-      { id: TOOL_ID, isRequired: false },
-    ]);
-
-    const result = await resourceCompletionService.getByLesson(LESSON_ID, USER_ID);
-
-    expect(result.completions).toContainEqual(
-      expect.objectContaining({ type: 'tool', targetId: TOOL_ID }),
+    expect(prismaMock.assignmentCompletion.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { assignment: { lessonId: LESSON_ID }, userId: USER_ID },
+        select: { assignmentId: true, completedAt: true },
+      }),
     );
   });
 });
@@ -91,67 +50,60 @@ describe('resourceCompletionService.getByLesson', () => {
 describe('resourceCompletionService.toggle', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    prismaMock.lessonResourceCompletion.findMany.mockResolvedValue([]);
-    prismaMock.lessonToolCompletion.findMany.mockResolvedValue([]);
-    prismaMock.lessonResource.findMany.mockResolvedValue([]);
-    prismaMock.lessonTool.findMany.mockResolvedValue([]);
+    prismaMock.assignmentCompletion.findMany.mockResolvedValue([]);
   });
 
-  it('creates resource completion when none exists', async () => {
-    prismaMock.lessonResource.findUnique.mockResolvedValue({ id: RESOURCE_ID, lessonId: LESSON_ID });
-    prismaMock.lessonResourceCompletion.findUnique.mockResolvedValue(null);
-    prismaMock.lessonResourceCompletion.create.mockResolvedValue({ id: 'comp-1' });
+  it('creates assignment completion when none exists', async () => {
+    prismaMock.assignment.findUnique.mockResolvedValue({ id: ASSIGNMENT_ID, lessonId: LESSON_ID });
+    prismaMock.assignmentCompletion.findUnique.mockResolvedValue(null);
+    prismaMock.assignmentCompletion.create.mockResolvedValue({ id: 'comp-1' });
 
-    await resourceCompletionService.toggle(LESSON_ID, USER_ID, 'resource', RESOURCE_ID);
+    await resourceCompletionService.toggle(LESSON_ID, USER_ID, ASSIGNMENT_ID);
 
-    expect(prismaMock.lessonResourceCompletion.create).toHaveBeenCalledWith(
-      expect.objectContaining({ data: { userId: USER_ID, resourceId: RESOURCE_ID } }),
+    expect(prismaMock.assignmentCompletion.create).toHaveBeenCalledWith(
+      expect.objectContaining({ data: { userId: USER_ID, assignmentId: ASSIGNMENT_ID } }),
     );
   });
 
-  it('deletes resource completion when one exists (toggle off)', async () => {
-    prismaMock.lessonResource.findUnique.mockResolvedValue({ id: RESOURCE_ID, lessonId: LESSON_ID });
-    prismaMock.lessonResourceCompletion.findUnique.mockResolvedValue({ id: 'comp-1' });
-    prismaMock.lessonResourceCompletion.delete.mockResolvedValue({ id: 'comp-1' });
+  it('deletes assignment completion when one exists (toggle off)', async () => {
+    prismaMock.assignment.findUnique.mockResolvedValue({ id: ASSIGNMENT_ID, lessonId: LESSON_ID });
+    prismaMock.assignmentCompletion.findUnique.mockResolvedValue({ id: 'comp-1' });
+    prismaMock.assignmentCompletion.delete.mockResolvedValue({ id: 'comp-1' });
 
-    await resourceCompletionService.toggle(LESSON_ID, USER_ID, 'resource', RESOURCE_ID);
+    await resourceCompletionService.toggle(LESSON_ID, USER_ID, ASSIGNMENT_ID);
 
-    expect(prismaMock.lessonResourceCompletion.delete).toHaveBeenCalledWith(
+    expect(prismaMock.assignmentCompletion.delete).toHaveBeenCalledWith(
       expect.objectContaining({ where: { id: 'comp-1' } }),
     );
   });
 
-  it('throws NotFoundError when resource is not found in the lesson', async () => {
-    prismaMock.lessonResource.findUnique.mockResolvedValue(null);
+  it('throws NotFoundError when assignment is not found', async () => {
+    prismaMock.assignment.findUnique.mockResolvedValue(null);
 
     await expect(
-      resourceCompletionService.toggle(LESSON_ID, USER_ID, 'resource', RESOURCE_ID),
+      resourceCompletionService.toggle(LESSON_ID, USER_ID, ASSIGNMENT_ID),
     ).rejects.toThrow(NotFoundError);
   });
 
-  it('throws NotFoundError when resource belongs to a different lesson', async () => {
-    prismaMock.lessonResource.findUnique.mockResolvedValue({ id: RESOURCE_ID, lessonId: 'other-lesson' });
+  it('throws NotFoundError when assignment belongs to a different lesson', async () => {
+    prismaMock.assignment.findUnique.mockResolvedValue({ id: ASSIGNMENT_ID, lessonId: 'other-lesson' });
 
     await expect(
-      resourceCompletionService.toggle(LESSON_ID, USER_ID, 'resource', RESOURCE_ID),
+      resourceCompletionService.toggle(LESSON_ID, USER_ID, ASSIGNMENT_ID),
     ).rejects.toThrow(NotFoundError);
   });
 
-  it('creates tool completion when none exists', async () => {
-    prismaMock.lessonTool.findUnique.mockResolvedValue({ id: TOOL_ID, lessonId: LESSON_ID });
-    prismaMock.lessonToolCompletion.findUnique.mockResolvedValue(null);
-    prismaMock.lessonToolCompletion.create.mockResolvedValue({ id: 'tc-1' });
+  it('returns updated completions list after toggling', async () => {
+    const completedAt = new Date();
+    prismaMock.assignment.findUnique.mockResolvedValue({ id: ASSIGNMENT_ID, lessonId: LESSON_ID });
+    prismaMock.assignmentCompletion.findUnique.mockResolvedValue(null);
+    prismaMock.assignmentCompletion.create.mockResolvedValue({ id: 'comp-1' });
+    prismaMock.assignmentCompletion.findMany.mockResolvedValue([
+      { assignmentId: ASSIGNMENT_ID, completedAt },
+    ]);
 
-    await resourceCompletionService.toggle(LESSON_ID, USER_ID, 'tool', TOOL_ID);
+    const result = await resourceCompletionService.toggle(LESSON_ID, USER_ID, ASSIGNMENT_ID);
 
-    expect(prismaMock.lessonToolCompletion.create).toHaveBeenCalled();
-  });
-
-  it('throws NotFoundError when tool belongs to a different lesson', async () => {
-    prismaMock.lessonTool.findUnique.mockResolvedValue({ id: TOOL_ID, lessonId: 'other-lesson' });
-
-    await expect(
-      resourceCompletionService.toggle(LESSON_ID, USER_ID, 'tool', TOOL_ID),
-    ).rejects.toThrow(NotFoundError);
+    expect(result.completions).toEqual([{ assignmentId: ASSIGNMENT_ID, completedAt }]);
   });
 });

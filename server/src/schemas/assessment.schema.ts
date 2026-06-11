@@ -76,8 +76,13 @@ export const attemptsQuerySchema = z.object({
   pageSize: z.coerce.number().int().min(1).max(100).default(20),
 });
 
+export const importQuestionsSchema = z.object({
+  practiceProblemAssignmentId: z.string().uuid(),
+});
+
 export type QuestionInput = z.infer<typeof questionSchema>;
 export type CreateAssessmentInput = z.infer<typeof createAssessmentSchema>;
 export type SubmitAttemptInput = z.infer<typeof submitAttemptSchema>;
 export type BulkUpdateCalculatorInput = z.infer<typeof bulkUpdateCalculatorSchema>;
 export type AttemptsQuery = z.infer<typeof attemptsQuerySchema>;
+export type ImportQuestionsInput = z.infer<typeof importQuestionsSchema>;
