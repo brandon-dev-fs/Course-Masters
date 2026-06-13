@@ -1,0 +1,46 @@
+services:
+    db:
+        image: postgres:17-alpine
+        environment:
+            POSTGRES_USER: coursemasters
+            POSTGRES_PASSWORD: changeme
+            POSTGRES_DB: coursemasters
+        ports:
+            - '5432:5432'
+        volumes:
+            - postgres_data:/var/lib/postgresql/data
+        healthcheck:
+            test: ['CMD-SHELL', 'pg_isready -U coursemasters']
+            interval: 5s
+            timeout: 5s
+            retries: 5
+
+    server:
+        build:
+            context: .
+            dockerfile: server/Dockerfile
+        depends_on:
+            db:
+                condition: service_healthy
+        environment:
+            DATABASE_URL: postgresql://coursemasters:changeme@db:5432/coursemasters
+            BETTER_AUTH_SECRET: change-me-to-a-32-char-secret-key
+            SERVER_PORT: '5002'
+            NODE_ENV: production
+            CLIENT_URL: http://localhost:5000
+            LOG_LEVEL: info
+            SEED_DB: 'false'
+        ports:
+            - '5002:5002'
+
+    client:
+        build:
+            context: .
+            dockerfile: client/Dockerfile
+        depends_on:
+            - server
+        ports:
+            - '5000:80'
+
+volumes:
+    postgres_data:
