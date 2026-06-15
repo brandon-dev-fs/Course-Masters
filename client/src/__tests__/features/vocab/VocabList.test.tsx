@@ -52,6 +52,7 @@ const vocabAssignment: Assignment = {
   videoAssignment: null,
   readingAssignment: null,
   practiceProblemAssignment: null,
+  fileAssignment: null,
   vocabAssignment: {
     id: 'va1',
     entries: [{ id: 'e1', term: 'Variable', definition: 'A named storage location in memory.' }],

@@ -1,4 +1,4 @@
-import { Lock, BookOpen, FileText, Video, Brain, BookMarked, ClipboardCheck, ExternalLink, Plus } from 'lucide-react';
+import { Lock, CheckCircle2, BookOpen, FileText, Video, Brain, BookMarked, ClipboardCheck, ExternalLink, FileUp, Plus } from 'lucide-react';
 import type React from 'react';
 import type { AssignmentType } from '../../api/types.js';
 
@@ -29,6 +29,7 @@ function getStepIcon(item: StepperItem): React.ComponentType<{ className?: strin
     if (item.assignmentType === 'reading') return ExternalLink;
     if (item.assignmentType === 'vocab') return BookMarked;
     if (item.assignmentType === 'practice_problem') return Brain;
+    if (item.assignmentType === 'file') return FileUp;
   }
   return FileText;
 }
@@ -42,6 +43,7 @@ export function getStepLabel(item: StepperItem): string {
     if (item.assignmentType === 'reading') return 'Link';
     if (item.assignmentType === 'vocab') return 'Vocab';
     if (item.assignmentType === 'practice_problem') return 'Practice';
+    if (item.assignmentType === 'file') return 'File';
     return 'Read';
   }
   return 'Step';

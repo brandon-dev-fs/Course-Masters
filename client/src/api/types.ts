@@ -210,7 +210,7 @@ export interface LessonProgress {
 
 // ─── Assignment Layer ────────────────────────────────────────────────────────
 
-export type AssignmentType = 'note' | 'video' | 'reading' | 'vocab' | 'practice_problem';
+export type AssignmentType = 'note' | 'video' | 'reading' | 'vocab' | 'practice_problem' | 'file';
 export type PracticeQuestionType = 'multiple_choice' | 'true_false' | 'matching' | 'fill_in_blank';
 
 export interface NoteAssignmentData {
@@ -256,6 +256,14 @@ export interface PracticeProblemAssignmentData {
   questions: PracticeQuestion[];
 }
 
+export interface FileAssignmentData {
+  id: string;
+  assignmentId: string;
+  filename: string;
+  mimeType: string;
+  sizeBytes: number;
+}
+
 export interface Bookmark {
   id: string;
   note: string;
@@ -277,6 +285,7 @@ export interface Assignment {
   readingAssignment: ReadingAssignmentData | null;
   vocabAssignment: VocabAssignmentData | null;
   practiceProblemAssignment: PracticeProblemAssignmentData | null;
+  fileAssignment: FileAssignmentData | null;
   bookmark: Bookmark | null;
 }
 
