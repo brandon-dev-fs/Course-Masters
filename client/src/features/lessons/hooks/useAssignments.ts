@@ -75,6 +75,8 @@ interface UseAssignmentsReturn {
   deletingAssignmentId: string | null;
   setDeletingAssignmentId: React.Dispatch<React.SetStateAction<string | null>>;
   handleCreateAssignment: (payload: CreateAssignmentPayload) => Promise<void>;
+  /** Adds an already-created assignment to the list and navigates to it. Used by the file upload flow. */
+  handleAddCreatedAssignment: (assignment: Assignment) => void;
   handleUpdateAssignment: (assignmentId: string, payload: UpdateAssignmentPayload) => Promise<void>;
   handleDeleteAssignment: (assignmentId: string, assignmentItems: AssignmentItem[], activeIdx: number) => Promise<void>;
   handleMoveAssignment: (id: string, direction: 'up' | 'down') => Promise<void>;
@@ -176,6 +178,12 @@ export default function useAssignments({
     setActiveStepKey(`assignment:${created.id}`);
   }, [lessonId, setActiveStepKey]);
 
+  const handleAddCreatedAssignment = useCallback((assignment: Assignment) => {
+    setAssignments(prev => [...prev, assignment].sort((a, b) => a.order - b.order));
+    setIsAddingAssignment(false);
+    setActiveStepKey(`assignment:${assignment.id}`);
+  }, [setActiveStepKey]);
+
   const handleUpdateAssignment = useCallback(async (assignmentId: string, payload: UpdateAssignmentPayload) => {
     const updated = await assignmentsApi.update(assignmentId, payload);
     setAssignments(prev => prev.map(a => a.id === assignmentId ? updated : a));
@@ -235,6 +243,7 @@ export default function useAssignments({
     deletingAssignmentId,
     setDeletingAssignmentId,
     handleCreateAssignment,
+    handleAddCreatedAssignment,
     handleUpdateAssignment,
     handleDeleteAssignment,
     handleMoveAssignment,

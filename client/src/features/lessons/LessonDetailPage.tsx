@@ -99,7 +99,7 @@ export default function LessonDetailPage() {
     isAddingAssignment, setIsAddingAssignment,
     editingAssignment, setEditingAssignment,
     deletingAssignmentId, setDeletingAssignmentId,
-    handleCreateAssignment, handleUpdateAssignment, handleDeleteAssignment,
+    handleCreateAssignment, handleAddCreatedAssignment, handleUpdateAssignment, handleDeleteAssignment,
     handleMoveAssignment, handleToggleAssignmentCompletion, handleBookmarkChange,
   } = useAssignments({ lessonId, lesson, setActiveStepKey });
 
@@ -391,6 +391,8 @@ export default function LessonDetailPage() {
 
       {canEdit && isAddingAssignment && (
         <AssignmentFormModal
+          lessonId={lessonId}
+          onFileCreate={handleAddCreatedAssignment}
           onSubmit={async payload => { await handleCreateAssignment(payload as Parameters<typeof handleCreateAssignment>[0]); }}
           onClose={() => setIsAddingAssignment(false)}
         />

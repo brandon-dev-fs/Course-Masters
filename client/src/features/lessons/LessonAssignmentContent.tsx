@@ -4,6 +4,7 @@ import VideoAssignmentView from '../assignments/VideoAssignmentView.js';
 import ExternalLinkAssignmentView from '../assignments/ExternalLinkAssignmentView.js';
 import VocabAssignmentView from '../assignments/VocabAssignmentView.js';
 import PracticeProblemRunner from '../assignments/PracticeProblemRunner.js';
+import FileAssignmentView from '../assignments/FileAssignmentView.js';
 import BookmarkButton from './BookmarkButton.js';
 
 interface LessonAssignmentContentProps {
@@ -47,6 +48,13 @@ export default function LessonAssignmentContent({
         passingPercentage={assignment.practiceProblemAssignment.passingPercentage}
         onAutoComplete={() => onToggleAssignmentCompletion({ ...assignment, completed: false })}
         onManualComplete={() => onToggleAssignmentCompletion({ ...assignment, completed: false })}
+      />
+    );
+  } else if (assignment.type === 'file' && assignment.fileAssignment) {
+    content = (
+      <FileAssignmentView
+        assignmentId={assignment.id}
+        fileAssignment={assignment.fileAssignment}
       />
     );
   }

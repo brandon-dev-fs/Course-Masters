@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { FileText, Video, ExternalLink, BookMarked, Brain, ChevronLeft } from 'lucide-react';
+import { FileText, Video, ExternalLink, BookMarked, Brain, ChevronLeft, FileUp } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import Modal from '../../components/Modal.js';
 import Input from '../../components/Input.js';
@@ -13,9 +13,11 @@ import ExternalLinkAssignmentForm from './ExternalLinkAssignmentForm.js';
 import VocabAssignmentForm from './VocabAssignmentForm.js';
 import PracticeProblemAssignmentForm from './PracticeProblemAssignmentForm.js';
 import PracticeProblemMetaFields from './PracticeProblemMetaFields.js';
+import FileAssignmentForm from './FileAssignmentForm.js';
 import type { PracticeQuestionDraft } from './PracticeProblemAssignmentForm.js';
 import type { Assignment, AssignmentType, VocabEntry } from '../../api/types.js';
 import type { CreateAssignmentPayload, UpdateAssignmentPayload } from '../../api/assignments.js';
+import { uploadFileAssignment } from '../../api/assignments.js';
 import { ApiClientError, classifyError } from '../../api/client.js';
 
 // ─── Shared state + handler types ─────────────────────────────────────────────
@@ -63,6 +65,7 @@ export const TYPE_CONFIG: Record<AssignmentType, TypeConfig> = {
   practice_problem: { label: 'Practice Problem',  icon: Brain,        nextLabel: 'Questions',
                       MetaFields: PracticeProblemMetaFields,
                       ItemsForm: PracticeProblemAssignmentForm },
+  file:             { label: 'File',              icon: FileUp },
 };
 
 // ─── Empty state constant ─────────────────────────────────────────────────────
@@ -85,10 +88,20 @@ type ModalStep = 'pick' | 'meta' | 'items';
 interface AssignmentFormModalProps {
   initial?: Assignment;
   onSubmit: (payload: CreateAssignmentPayload | UpdateAssignmentPayload) => Promise<void>;
+  /**
+   * Required when creating a file assignment.
+   * Used to call the multipart upload route directly.
+   */
+  lessonId?: string;
+  /**
+   * Called with the newly created Assignment after a successful file upload.
+   * The modal closes itself after calling this.
+   */
+  onFileCreate?: (assignment: Assignment) => void;
   onClose: () => void;
 }
 
-export default function AssignmentFormModal({ initial, onSubmit, onClose }: AssignmentFormModalProps) {
+export default function AssignmentFormModal({ initial, onSubmit, lessonId, onFileCreate, onClose }: AssignmentFormModalProps) {
   const isEdit = !!initial;
 
   // Step state
@@ -138,6 +151,11 @@ export default function AssignmentFormModal({ initial, onSubmit, onClose }: Assi
       ? `Edit ${config!.label}`
       : `Add ${config!.label}`;
 
+  // File assignment state (create mode only — file cannot be replaced in edit mode)
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+  const [fileError, setFileError] = useState('');
+
   // Submission state
   const [apiError, setApiError] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -160,6 +178,9 @@ export default function AssignmentFormModal({ initial, onSubmit, onClose }: Assi
     setObjective('');
     setTitleError('');
     setTypeState(EMPTY_TYPE_STATE);
+    setSelectedFile(null);
+    setUploadProgress(null);
+    setFileError('');
   }
 
   function handleAdvanceToItems() {
@@ -184,6 +205,23 @@ export default function AssignmentFormModal({ initial, onSubmit, onClose }: Assi
       setTitleError('');
 
       const type = selectedType!;
+
+      // File type (create mode) — handled via multipart upload, bypasses standard onSubmit
+      if (type === 'file' && !isEdit) {
+        if (!selectedFile) throw new Error('Please select a file to upload');
+        if (!lessonId) throw new Error('Lesson ID is required for file upload');
+        setUploadProgress(0);
+        const created = await uploadFileAssignment(
+          lessonId,
+          { title: assignmentTitle.trim(), objective: objective.trim() || undefined },
+          selectedFile,
+          (pct) => setUploadProgress(pct),
+        );
+        setUploadProgress(null);
+        // Notify parent of the created assignment via the dedicated callback
+        if (onFileCreate) onFileCreate(created);
+        return;
+      }
 
       if (isEdit) {
         const updatePayload: UpdateAssignmentPayload = {
@@ -352,7 +390,18 @@ export default function AssignmentFormModal({ initial, onSubmit, onClose }: Assi
               placeholder="What should students be able to do after completing this?"
               rows={2}
             />
-            {config?.MetaFields && (() => { const MetaFields = config.MetaFields!; return <MetaFields {...subFormProps} />; })()}
+            {selectedType === 'file' ? (
+              <FileAssignmentForm
+                file={selectedFile}
+                onFileChange={setSelectedFile}
+                uploadProgress={uploadProgress}
+                existingFile={isEdit ? (initial?.fileAssignment ?? null) : null}
+                error={fileError}
+                onErrorChange={setFileError}
+              />
+            ) : (
+              config?.MetaFields && (() => { const MetaFields = config.MetaFields!; return <MetaFields {...subFormProps} />; })()
+            )}
             {apiError && <ErrorMessage message={apiError} />}
           </div>
 

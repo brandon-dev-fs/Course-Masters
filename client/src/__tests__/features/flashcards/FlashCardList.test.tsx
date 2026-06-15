@@ -36,6 +36,7 @@ function makeVocabAssignment(overrides?: Partial<Assignment>): Assignment {
     videoAssignment: null,
     readingAssignment: null,
     practiceProblemAssignment: null,
+    fileAssignment: null,
     bookmark: null,
     vocabAssignment: {
       id: 'va1',
@@ -75,6 +76,7 @@ describe('FlashCardList', () => {
       readingAssignment: null,
       vocabAssignment: null,
       practiceProblemAssignment: null,
+      fileAssignment: null,
       bookmark: null,
     };
     renderWithProviders(<FlashCardList assignments={[nonVocabAssignment]} />);
