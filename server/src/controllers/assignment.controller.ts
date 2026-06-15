@@ -94,8 +94,9 @@ export const assignmentController = {
     const assignmentId = req.params['assignmentId'] as string;
     const { stream, filename, mimeType, sizeBytes } = await assignmentService.getFileStream(assignmentId);
 
+    const encodedFilename = encodeURIComponent(filename);
     res.setHeader('Content-Type', mimeType);
-    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"; filename*=UTF-8''${encodedFilename}`);
     res.setHeader('Content-Length', String(sizeBytes));
 
     stream.on('error', (streamErr) => {

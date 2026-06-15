@@ -55,6 +55,38 @@ function normalizeBookmark(
   return bookmarks && bookmarks.length > 0 ? bookmarks[0] : null;
 }
 
+// ── File upload helpers ───────────────────────────────────────────────────────
+
+/**
+ * Validates that the file buffer's magic bytes match the declared MIME type.
+ * This prevents clients from bypassing the MIME type filter by spoofing the
+ * Content-Type header on the multipart upload.
+ */
+function validateMagicBytes(buffer: Buffer, mimeType: string): boolean {
+  const header = buffer.subarray(0, 8);
+
+  const isPdf = header[0] === 0x25 && header[1] === 0x50 && header[2] === 0x44 && header[3] === 0x46;
+  // OOXML formats (DOCX, PPTX) are ZIP archives
+  const isOoxmlZip = header[0] === 0x50 && header[1] === 0x4B && header[2] === 0x03 && header[3] === 0x04;
+  // Legacy OLE2 compound document format (PPT)
+  const isOle2 = header[0] === 0xD0 && header[1] === 0xCF && header[2] === 0x11 && header[3] === 0xE0;
+
+  switch (mimeType) {
+    case 'application/pdf':
+      return isPdf;
+    case 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
+    case 'application/vnd.openxmlformats-officedocument.presentationml.presentation':
+      return isOoxmlZip;
+    case 'application/vnd.ms-powerpoint':
+      return isOle2;
+    case 'text/plain':
+      // No magic bytes for plain text — reject if null bytes are present (binary heuristic)
+      return !buffer.includes(0x00);
+    default:
+      return false;
+  }
+}
+
 // ── Service ──────────────────────────────────────────────────────────────────
 
 export const assignmentService = {
@@ -343,7 +375,19 @@ export const assignmentService = {
       throw new AppError('S3_NOT_CONFIGURED', 'File storage is not configured', 500);
     }
 
-    const storageKey = `assignments/${randomUUID()}/${data.file.originalname}`;
+    // Validate file content against declared MIME type using magic bytes
+    if (!validateMagicBytes(data.file.buffer, data.file.mimetype)) {
+      throw new ValidationError('File content does not match the declared file type', {
+        file: ['File content does not match the declared file type'],
+      });
+    }
+
+    // Sanitize filename: keep only safe characters, truncate to 255 chars
+    const safeFilename = (data.file.originalname
+      .replace(/[^\w.\-]/g, '_')
+      .slice(0, 255)) || 'upload';
+
+    const storageKey = `assignments/${randomUUID()}/${safeFilename}`;
 
     try {
       await s3Client.send(
@@ -382,7 +426,7 @@ export const assignmentService = {
         await tx.fileAssignment.create({
           data: {
             assignmentId: assignment.id,
-            filename: data.file.originalname,
+            filename: safeFilename,
             mimeType: data.file.mimetype,
             sizeBytes: data.file.size,
             storageKey,
