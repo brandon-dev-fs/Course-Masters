@@ -112,12 +112,11 @@ export function uploadFileAssignment(
     const formData = new FormData();
     formData.append('title', meta.title);
     if (meta.objective) formData.append('objective', meta.objective);
-    formData.append('type', 'file');
     formData.append('file', file);
 
     const xhr = new XMLHttpRequest();
     xhr.withCredentials = true;
-    xhr.open('POST', `/api/lessons/${lessonId}/assignments`);
+    xhr.open('POST', `/api/lessons/${lessonId}/assignments/upload`);
     // Do NOT set Content-Type — browser sets multipart/form-data with boundary automatically
 
     if (onProgress) {
@@ -131,7 +130,7 @@ export function uploadFileAssignment(
     xhr.addEventListener('load', () => {
       if (xhr.status === 401) {
         window.dispatchEvent(new CustomEvent('auth:unauthorized'));
-        reject(new ApiClientError('UNAUTHORIZED', 'Authentication required', undefined, 'client'));
+        reject(new ApiClientError('UNAUTHENTICATED', 'Authentication required', undefined, 'client'));
         return;
       }
       if (xhr.status >= 200 && xhr.status < 300) {

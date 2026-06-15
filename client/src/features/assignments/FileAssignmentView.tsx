@@ -61,13 +61,11 @@ function PdfViewer({ assignmentId, filename }: PdfViewerProps) {
             PDF preview is not available. Please download the file to view it.
           </p>
         </div>
-        <a
-          href={downloadUrl}
-          download={filename}
-          className="self-start flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-lg bg-accent text-accent-foreground hover:opacity-90 transition-opacity"
-        >
-          <Download className="w-3.5 h-3.5" />
-          Download PDF
+        <a href={downloadUrl} download={filename} className="self-start">
+          <Button variant="secondary" size="sm">
+            <Download className="w-3.5 h-3.5 mr-1.5" />
+            Download PDF
+          </Button>
         </a>
       </div>
     );
@@ -78,8 +76,7 @@ function PdfViewer({ assignmentId, filename }: PdfViewerProps) {
       role="region"
       aria-label="PDF preview"
       aria-busy={status === 'loading'}
-      className="relative w-full rounded-lg overflow-hidden border border-border bg-surface"
-      style={{ minHeight: '500px' }}
+      className="relative w-full rounded-lg overflow-hidden border border-border bg-surface min-h-[500px]"
     >
       {status === 'loading' && (
         <div className="absolute inset-0 flex items-center justify-center bg-surface">
@@ -91,8 +88,7 @@ function PdfViewer({ assignmentId, filename }: PdfViewerProps) {
         title={`PDF: ${filename}`}
         onLoad={handleLoad}
         onError={handleError}
-        className="w-full border-0 min-h-[500px]"
-        style={{ display: status === 'loading' ? 'none' : 'block' }}
+        className={`w-full border-0 min-h-[500px] ${status === 'loading' ? 'hidden' : 'block'}`}
       />
     </div>
   );
@@ -162,8 +158,7 @@ function TxtViewer({ assignmentId, filename }: TxtViewerProps) {
     <div
       role="region"
       aria-label={`Text file: ${filename}`}
-      className="rounded-lg border border-border bg-surface overflow-auto"
-      style={{ maxHeight: '600px' }}
+      className="rounded-lg border border-border bg-surface overflow-auto max-h-[500px]"
     >
       <pre className="p-4 text-sm text-text-primary font-mono whitespace-pre-wrap break-words">
         {text}
@@ -184,7 +179,7 @@ function DownloadCard({ assignmentId, filename }: DownloadCardProps) {
 
   return (
     <div className="flex flex-col items-center gap-4 py-8 rounded-lg border border-border bg-surface">
-      <FileUp className="w-10 h-10 text-text-secondary" aria-hidden="true" />
+      <Download className="w-10 h-10 text-text-secondary" aria-hidden="true" />
       <p className="text-sm text-text-secondary text-center max-w-xs">
         This file type cannot be previewed in the browser. Download it to open it in your
         preferred application.
@@ -221,14 +216,14 @@ export default function FileAssignmentView({ assignmentId, fileAssignment }: Fil
       {/* File info header */}
       <div className="flex items-center gap-2 flex-wrap">
         <FileUp className="w-4 h-4 text-accent shrink-0" aria-hidden="true" />
-        <span className="text-sm font-semibold text-foreground truncate">{filename}</span>
-        <span className="text-xs text-muted-foreground">{formatFileSize(sizeBytes)}</span>
+        <span className="text-sm font-semibold text-text-primary truncate">{filename}</span>
+        <span className="text-xs text-text-secondary">{formatFileSize(sizeBytes)}</span>
         <div className="flex-1" />
         {/* Secondary download link always available */}
         <a
           href={downloadUrl}
           download={filename}
-          className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg border border-border text-muted-foreground hover:text-foreground hover:bg-surface-raised transition-colors"
+          className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg border border-border text-text-secondary hover:text-text-primary hover:bg-surface-raised transition-colors"
         >
           <Download className="w-3 h-3" />
           Download

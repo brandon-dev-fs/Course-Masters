@@ -208,7 +208,11 @@ export default function AssignmentFormModal({ initial, onSubmit, lessonId, onFil
 
       // File type (create mode) — handled via multipart upload, bypasses standard onSubmit
       if (type === 'file' && !isEdit) {
-        if (!selectedFile) throw new Error('Please select a file to upload');
+        if (!selectedFile) {
+          setFileError('Please select a file');
+          setSubmitting(false);
+          return;
+        }
         if (!lessonId) throw new Error('Lesson ID is required for file upload');
         setUploadProgress(0);
         const created = await uploadFileAssignment(

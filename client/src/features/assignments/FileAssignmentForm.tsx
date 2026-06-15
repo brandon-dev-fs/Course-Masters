@@ -126,8 +126,7 @@ export default function FileAssignmentForm({
             aria-valuemin={0}
             aria-valuemax={100}
             aria-label="Upload progress"
-            className="w-full bg-surface rounded-full overflow-hidden border border-border"
-            style={{ height: '8px' }}
+            className="w-full h-2 bg-surface rounded-full overflow-hidden border border-border"
           >
             <div
               className="h-full bg-green-button rounded-full transition-all duration-200"
