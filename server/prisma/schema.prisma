@@ -33,6 +33,7 @@ enum AssignmentType {
   reading
   vocab
   practice_problem
+  file
 }
 
 model User {
@@ -287,6 +288,7 @@ model Assignment {
   readingAssignment         ReadingAssignment?
   vocabAssignment           VocabAssignment?
   practiceProblemAssignment PracticeProblemAssignment?
+  fileAssignment            FileAssignment?
   completions               AssignmentCompletion[]
   bookmarks                 ActivityBookmark[]
 
@@ -393,6 +395,19 @@ model PracticeProblemQuestion {
   @@map("practice_problem_question")
 }
 
+model FileAssignment {
+  id           String @id @default(uuid())
+  assignmentId String @unique
+  filename     String
+  mimeType     String
+  sizeBytes    Int
+  storageKey   String
+
+  assignment Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+
+  @@map("file_assignment")
+}
+
 model AssignmentCompletion {
   id           String   @id @default(uuid())
   userId       String
@@ -442,4 +457,3 @@ model LessonChecklistItem {
   @@index([userId, lessonId])
   @@map("lesson_checklist_item")
 }
-

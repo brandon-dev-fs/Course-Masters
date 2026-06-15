@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { assignmentController } from '../controllers/assignment.controller.js';
 import { validate } from '../middleware/validate.js';
 import { authorize } from '../middleware/authorize.js';
+import { uploadSingle } from '../middleware/upload.js';
 import {
   createAssignmentSchema,
   updateAssignmentSchema,
@@ -17,6 +18,14 @@ lessonAssignmentsRouter.get('/', assignmentController.getAll);
 
 // vocab flashcards must be registered before /:assignmentId to avoid conflict
 lessonAssignmentsRouter.get('/vocab-flashcards', assignmentController.getSavedVocabEntryFlashCards);
+
+// file upload must be registered before /:assignmentId to avoid conflict
+lessonAssignmentsRouter.post(
+  '/upload',
+  authorize('teacher', 'admin'),
+  uploadSingle,
+  assignmentController.uploadFile,
+);
 
 // reorder must be registered before /:assignmentId to avoid conflict
 lessonAssignmentsRouter.put(
@@ -38,6 +47,8 @@ lessonAssignmentsRouter.post(
 export const assignmentsRouter = Router();
 
 assignmentsRouter.get('/:assignmentId', assignmentController.getOne);
+
+assignmentsRouter.get('/:assignmentId/file', assignmentController.downloadFile);
 
 assignmentsRouter.put(
   '/:assignmentId',

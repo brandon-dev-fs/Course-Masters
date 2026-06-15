@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 import { Prisma } from '@prisma/client';
+import multer from 'multer';
 import { AppError } from '../errors/index.js';
 import { logger } from '../lib/logger.js';
 
@@ -9,6 +10,19 @@ export function errorHandler(
   res: Response,
   _next: NextFunction,
 ): void {
+  if (err instanceof multer.MulterError) {
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      res.status(400).json({
+        error: { code: 'FILE_TOO_LARGE', message: 'File exceeds the 10 MB limit' },
+      });
+      return;
+    }
+    res.status(400).json({
+      error: { code: 'VALIDATION_ERROR', message: err.message },
+    });
+    return;
+  }
+
   if (err instanceof AppError) {
     res.status(err.statusCode).json({
       error: {
