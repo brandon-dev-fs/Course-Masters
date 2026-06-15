@@ -17,6 +17,12 @@ export function errorHandler(
       });
       return;
     }
+    if (err.code === 'LIMIT_UNEXPECTED_FILE') {
+      res.status(400).json({
+        error: { code: 'VALIDATION_ERROR', message: 'File type not allowed. Accepted types: PDF, DOCX, TXT, PPT, PPTX' },
+      });
+      return;
+    }
     res.status(400).json({
       error: { code: 'VALIDATION_ERROR', message: err.message },
     });

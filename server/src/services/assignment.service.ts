@@ -393,13 +393,13 @@ export const assignmentService = {
       });
       assignmentId = result.id;
     } catch (err) {
-      // Transaction failed — clean up orphaned S3 object (best-effort)
+      // Transaction failed — clean up orphaned S3 object before re-throwing
       if (s3Client && S3_BUCKET) {
-        s3Client
-          .send(new DeleteObjectCommand({ Bucket: S3_BUCKET, Key: storageKey }))
-          .catch((s3Err) => {
-            logger.error({ storageKey, s3Err }, 'Failed to clean up S3 object after transaction rollback');
-          });
+        try {
+          await s3Client.send(new DeleteObjectCommand({ Bucket: S3_BUCKET, Key: storageKey }));
+        } catch (cleanupErr) {
+          logger.warn({ storageKey, cleanupErr }, 'S3 compensating delete failed — orphan object may exist');
+        }
       }
       throw err;
     }

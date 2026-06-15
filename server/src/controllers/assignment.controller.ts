@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { assignmentService } from '../services/assignment.service.js';
+import { logger } from '../lib/logger.js';
 import { ValidationError } from '../errors/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 
@@ -97,7 +98,8 @@ export const assignmentController = {
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
     res.setHeader('Content-Length', String(sizeBytes));
 
-    stream.on('error', () => {
+    stream.on('error', (streamErr) => {
+      logger.error({ assignmentId, streamErr }, 'S3 stream error during file download');
       res.destroy();
     });
 
