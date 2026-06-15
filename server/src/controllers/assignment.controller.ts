@@ -1,5 +1,7 @@
 import { Request, Response } from 'express';
 import { assignmentService } from '../services/assignment.service.js';
+import { logger } from '../lib/logger.js';
+import { ValidationError } from '../errors/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 
 export const assignmentController = {
@@ -66,5 +68,42 @@ export const assignmentController = {
     const userId = req.user!.id;
     await assignmentService.removeVocabEntryFlashCard(entryId, userId);
     res.status(204).send();
+  }),
+
+  uploadFile: asyncHandler(async (req: Request, res: Response) => {
+    const lessonId = req.params['lessonId'] as string;
+    const { title, objective } = req.body as { title?: string; objective?: string };
+
+    if (!title || title.trim() === '') {
+      throw new ValidationError('title is required', { title: ['title is required'] });
+    }
+    if (!req.file) {
+      throw new ValidationError('file is required', { file: ['file is required'] });
+    }
+
+    const assignment = await assignmentService.createFileAssignment(lessonId, {
+      title: title.trim(),
+      objective,
+      file: req.file,
+    });
+
+    res.status(201).json(assignment);
+  }),
+
+  downloadFile: asyncHandler(async (req: Request, res: Response) => {
+    const assignmentId = req.params['assignmentId'] as string;
+    const { stream, filename, mimeType, sizeBytes } = await assignmentService.getFileStream(assignmentId);
+
+    const encodedFilename = encodeURIComponent(filename);
+    res.setHeader('Content-Type', mimeType);
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"; filename*=UTF-8''${encodedFilename}`);
+    res.setHeader('Content-Length', String(sizeBytes));
+
+    stream.on('error', (streamErr) => {
+      logger.error({ assignmentId, streamErr }, 'S3 stream error during file download');
+      res.destroy();
+    });
+
+    stream.pipe(res);
   }),
 };

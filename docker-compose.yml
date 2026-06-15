@@ -22,6 +22,8 @@ services:
         depends_on:
             db:
                 condition: service_healthy
+            garage:
+                condition: service_started
         environment:
             DATABASE_URL: postgresql://coursemasters:${POSTGRES_PASSWORD}@db:5432/coursemasters
             BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
@@ -30,6 +32,11 @@ services:
             CLIENT_URL: http://localhost:5000
             LOG_LEVEL: info
             SEED_DB: 'true'
+            S3_ENDPOINT: http://garage:3900
+            S3_BUCKET: ${S3_BUCKET:-course-masters}
+            S3_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID}
+            S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY}
+            S3_REGION: garage
         ports:
             - '5002:5002'
 
@@ -42,5 +49,24 @@ services:
         ports:
             - '5000:80'
 
+    garage:
+        image: dxflrs/garage:v1.0.0
+        volumes:
+            - garage_meta:/var/lib/garage/meta
+            - garage_data:/var/lib/garage/data
+        environment:
+            GARAGE_REPLICATION_FACTOR: '1'
+            GARAGE_METADATA_DIR: /var/lib/garage/meta
+            GARAGE_DATA_DIR: /var/lib/garage/data
+            GARAGE_RPC_SECRET: change-me-to-a-64-char-hex-secret-value-for-garage
+            GARAGE_RPC_BIND_ADDR: '[::]:3901'
+            GARAGE_S3_API_BIND_ADDR: '[::]:3900'
+            GARAGE_ADMIN_API_BIND_ADDR: '[::]:3902'
+        ports:
+            - '3900:3900'
+            - '3902:3902'
+
 volumes:
     postgres_data:
+    garage_meta:
+    garage_data:
