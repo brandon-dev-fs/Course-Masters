@@ -29,12 +29,13 @@ interface AssignmentSectionProps {
   onNext: () => void;
   onEdit?: () => void;
   onDelete?: () => void;
+  headerRight?: React.ReactNode;
   children: React.ReactNode;
 }
 
 export default function AssignmentSection({
   item, isComplete, isLocked, canEdit, isFirst, isLast, incompleteRequired,
-  onVisible, onToggleCompletion, onMoveUp, onMoveDown, onPrev, onNext, onEdit, onDelete, children,
+  onVisible, onToggleCompletion, onMoveUp, onMoveDown, onPrev, onNext, onEdit, onDelete, headerRight, children,
 }: AssignmentSectionProps) {
   const ref = useRef<HTMLElement>(null);
   const stableOnVisible = useCallback((key: string) => onVisible?.(key), [onVisible]);
@@ -51,8 +52,18 @@ export default function AssignmentSection({
     return () => observer.disconnect();
   }, [item.key, stableOnVisible, onVisible]);
 
-  const isQuiz = item.kind === 'quiz';
-  const showCompletion = !isQuiz;
+  const showCompletion = item.kind === 'assignment';
+
+  function getTypeLabel(): string {
+    if (item.kind === 'lessonPlan') return 'Plan';
+    if (item.kind === 'quiz') return 'Quiz';
+    if (item.assignmentType === 'note') return 'Read';
+    if (item.assignmentType === 'video') return 'Video';
+    if (item.assignmentType === 'reading') return 'Link';
+    if (item.assignmentType === 'vocab') return 'Vocab';
+    if (item.assignmentType === 'practice_problem') return 'Practice';
+    return 'Read';
+  }
 
   return (
     <section
@@ -62,56 +73,64 @@ export default function AssignmentSection({
     >
       {/* Header */}
       <div className="flex items-center justify-between gap-3 px-5 py-3 border-b border-border bg-surface-raised">
-        <div className="flex items-center gap-2 min-w-0">
-          <h2 className="text-sm font-semibold text-foreground truncate">{item.title}</h2>
+        <span className="shrink-0 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          {getTypeLabel()}
+        </span>
+        <div className="flex items-center gap-1 shrink-0 ml-auto">
+          {headerRight}
+          {canEdit && (
+            <>
+              {onEdit && (
+                <button
+                  onClick={onEdit}
+                  aria-label={`Edit ${item.title}`}
+                  className="p-1.5 rounded text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <Pencil className="w-4 h-4" />
+                </button>
+              )}
+              {onDelete && (
+                <button
+                  onClick={onDelete}
+                  aria-label={`Delete ${item.title}`}
+                  className="p-1.5 rounded text-muted-foreground hover:text-destructive transition-colors"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              )}
+              {(onMoveUp || onMoveDown) && (
+                <div className="flex items-center gap-0.5 pl-1 border-l border-border ml-1">
+                  <span className="text-xs text-muted-foreground mr-0.5">Reorder</span>
+                  <button
+                    onClick={onMoveUp}
+                    disabled={!onMoveUp}
+                    title="Move up"
+                    className="p-0.5 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                  >
+                    <ChevronUp className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={onMoveDown}
+                    disabled={!onMoveDown}
+                    title="Move down"
+                    className="p-0.5 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                  >
+                    <ChevronDown className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
+            </>
+          )}
         </div>
-        {canEdit && (
-          <div className="flex items-center gap-1 shrink-0">
-            {onEdit && (
-              <button
-                onClick={onEdit}
-                aria-label={`Edit ${item.title}`}
-                className="p-1.5 rounded text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <Pencil className="w-4 h-4" />
-              </button>
-            )}
-            {onDelete && (
-              <button
-                onClick={onDelete}
-                aria-label={`Delete ${item.title}`}
-                className="p-1.5 rounded text-muted-foreground hover:text-destructive transition-colors"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
-            )}
-            {(onMoveUp || onMoveDown) && (
-              <div className="flex items-center gap-0.5 pl-1 border-l border-border ml-1">
-                <span className="text-xs text-muted-foreground mr-0.5">Reorder</span>
-                <button
-                  onClick={onMoveUp}
-                  disabled={!onMoveUp}
-                  title="Move up"
-                  className="p-0.5 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                >
-                  <ChevronUp className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={onMoveDown}
-                  disabled={!onMoveDown}
-                  title="Move down"
-                  className="p-0.5 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                >
-                  <ChevronDown className="w-4 h-4" />
-                </button>
-              </div>
-            )}
-          </div>
-        )}
+      </div>
+
+      {/* Assignment title */}
+      <div className="px-5 pt-4 pb-0">
+        <h2 className="text-base font-semibold text-foreground">{item.title}</h2>
       </div>
 
       {/* Content */}
-      <div className="px-5 py-5 relative">
+      <div className="px-5 py-4 relative">
         {isLocked ? (
           <div className="flex flex-col items-center gap-3 py-6 text-center">
             <Lock className="w-8 h-8 text-muted-foreground" />

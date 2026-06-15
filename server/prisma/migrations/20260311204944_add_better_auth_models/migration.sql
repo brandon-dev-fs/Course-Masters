@@ -1,2 +1,0 @@
--- This migration is intentionally empty.
--- It was a duplicate of 20260311194525_add_better_auth_models and has been voided.

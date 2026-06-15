@@ -94,6 +94,86 @@ The Vite dev server proxies all `/api` requests to `http://localhost:5002`, so n
 
 ---
 
+## Running with Docker
+
+Docker Compose runs the full stack — client, server, and PostgreSQL — in containers with a single command. No local Node.js or PostgreSQL installation required.
+
+**Prerequisites:** [Docker Desktop](https://www.docker.com/products/docker-desktop/) (includes Docker Compose).
+
+### 1. Create your secrets file
+
+Docker Compose reads a `.env` file at the repository root for variable substitution. Copy the example and fill in the two required values:
+
+```bash
+cp docker.env.example .env
+```
+
+Then open `.env` and set:
+
+```
+POSTGRES_PASSWORD=<any password>
+BETTER_AUTH_SECRET=<random string, minimum 32 characters>
+```
+
+This file is gitignored and never committed.
+
+### 2. Build and start
+
+```bash
+docker-compose up --build
+```
+
+This builds the client and server images, starts PostgreSQL, runs database migrations automatically, and brings up all three services. The first build takes a few minutes; subsequent starts are faster.
+
+| Service  | URL                    |
+| -------- | ---------------------- |
+| App      | http://localhost:5000  |
+| API      | http://localhost:5002  |
+| Database | localhost:5432         |
+
+### 3. Seed the database (optional)
+
+To populate the database with sample data on startup, set `SEED_DB: 'true'` on the `server` service in `docker-compose.yml`, then restart:
+
+```bash
+docker-compose up --build
+```
+
+Reset `SEED_DB` back to `'false'` after the first run to avoid re-seeding on every restart.
+
+### Rebuilding after code changes
+
+Docker images are not rebuilt automatically when source files change. Run `docker-compose up --build` again after any changes to rebuild:
+
+```bash
+docker-compose up --build
+```
+
+### Stopping
+
+```bash
+docker-compose down          # Stop containers — database data is preserved
+docker-compose down -v       # Stop containers AND delete the database volume
+```
+
+The PostgreSQL data is stored in a named Docker volume (`postgres_data`) and persists across normal `docker-compose down` / `up` cycles. Only `down -v` destroys the data.
+
+### Direct database access
+
+The PostgreSQL container exposes port `5432` to the host. Connect with any PostgreSQL client using:
+
+```
+Host:     localhost
+Port:     5432
+User:     coursemasters
+Password: <value of POSTGRES_PASSWORD from your .env>
+Database: coursemasters
+```
+
+To use Prisma Studio against the Docker database, update `server/.env` to point `DATABASE_URL` at `localhost:5432` and run `npm run db:studio`.
+
+---
+
 ## Available Scripts
 
 All scripts are run from the repository root.

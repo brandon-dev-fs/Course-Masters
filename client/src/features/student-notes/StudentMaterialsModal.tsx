@@ -142,7 +142,7 @@ export default function StudentMaterialsModal({
       {/* Content */}
       <div className="flex-1 overflow-y-auto min-h-0">
         {activeTool === 'notes' && <StudentNotePanel lessonId={lessonId} />}
-        {activeTool === 'flashcards' && <div className="p-3"><FlashCardList assignments={assignments} /></div>}
+        {activeTool === 'flashcards' && <div className="p-3"><FlashCardList lessonId={lessonId} /></div>}
         {activeTool === 'checklist' && <div className="p-3"><ChecklistPanel lessonId={lessonId} /></div>}
         {activeTool === 'bookmarks' && (
           <BookmarksPanel

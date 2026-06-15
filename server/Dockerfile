@@ -20,7 +20,8 @@ COPY server/ ./server/
 RUN npx prisma generate --schema=./server/prisma/schema.prisma
 
 # Compile TypeScript
-RUN npm run build --workspace=server
+WORKDIR /app/server
+RUN npm run build
 
 # Stage 2: Production runtime
 FROM node:22-alpine AS runtime

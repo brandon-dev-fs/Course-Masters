@@ -1,4 +1,4 @@
-import { Lock, CheckCircle2, BookOpen, FileText, Video, Brain, BookMarked, ClipboardCheck, ExternalLink, Plus } from 'lucide-react';
+import { Lock, BookOpen, FileText, Video, Brain, BookMarked, ClipboardCheck, ExternalLink, Plus } from 'lucide-react';
 import type React from 'react';
 import type { AssignmentType } from '../../api/types.js';
 
@@ -82,8 +82,13 @@ export default function AssignmentStepper({
             const Icon = getStepIcon(item);
             const label = getStepLabel(item);
 
-            let circleClass = 'flex items-center justify-center w-7 h-7 rounded-full shrink-0 transition-colors ';
-            if (isLocked) {
+            const isLessonPlan = item.kind === 'lessonPlan';
+            let circleClass = `flex items-center justify-center w-7 h-7 shrink-0 transition-colors ${isLessonPlan ? 'rounded-lg' : 'rounded-full'} `;
+            if (isLessonPlan) {
+              circleClass += isActive
+                ? 'bg-accent text-accent-foreground cursor-pointer hover:opacity-90'
+                : 'border border-accent/50 bg-accent-subtle text-accent cursor-pointer hover:opacity-80';
+            } else if (isLocked) {
               circleClass += 'border border-border bg-surface text-muted-foreground opacity-50 cursor-not-allowed';
             } else if (isComplete || isActive) {
               circleClass += 'bg-primary text-primary-foreground cursor-pointer hover:opacity-90';
@@ -96,7 +101,7 @@ export default function AssignmentStepper({
                 {idx > 0 && (
                   <div
                     aria-hidden
-                    className={`flex-1 h-px w-4 ${prevComplete ? 'bg-primary' : 'bg-border'}`}
+                    className={`flex-1 h-px w-4 ${prevComplete && items[idx - 1].kind !== 'lessonPlan' ? 'bg-primary' : 'bg-border'}`}
                   />
                 )}
                 <button
@@ -106,12 +111,10 @@ export default function AssignmentStepper({
                   aria-current={isActive ? 'step' : undefined}
                   aria-disabled={isLocked ? 'true' : undefined}
                   disabled={isLocked}
-                  title={isLocked ? 'Complete all required items to unlock the quiz' : item.title}
+                  title={isLocked ? 'Complete all required items to unlock the quiz' : `${label}: ${item.title}`}
                 >
                   {isLocked ? (
                     <Lock className="w-3.5 h-3.5" />
-                  ) : isComplete ? (
-                    <CheckCircle2 className="w-4 h-4" />
                   ) : (
                     <Icon className="w-4 h-4" />
                   )}

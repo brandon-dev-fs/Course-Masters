@@ -58,17 +58,21 @@ export default function ExternalLinkAssignmentView({
         {estimatedMinutes != null && (
           <span className="text-xs text-muted-foreground">~ {estimatedMinutes} min</span>
         )}
-        <div className="flex-1" />
-        <a
-          href={url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg border border-border text-muted-foreground hover:text-foreground hover:bg-surface-raised transition-colors"
-        >
-          <ExternalLink className="w-3 h-3" />
-          Open in new tab
-          <span className="sr-only">(opens in new tab)</span>
-        </a>
+        {iframeStatus !== 'failed' && (
+          <>
+            <div className="flex-1" />
+            <a
+              href={url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg border border-border text-muted-foreground hover:text-foreground hover:bg-surface-raised transition-colors"
+            >
+              <ExternalLink className="w-3 h-3" />
+              Open in new tab
+              <span className="sr-only">(opens in new tab)</span>
+            </a>
+          </>
+        )}
       </div>
 
       {/* Iframe embed area */}

@@ -112,6 +112,15 @@ export default function FlashCard({ card, editMode = false, onUpdate, onDelete }
       style={{ perspective: '1000px' }}
       onClick={() => setFlipped(f => !f)}
     >
+      {onDelete && (
+        <button
+          onClick={e => { e.stopPropagation(); onDelete(); }}
+          className="absolute top-2 right-2 z-10 w-6 h-6 flex items-center justify-center rounded-full text-destructive hover:bg-destructive/10 transition-colors"
+          aria-label="Remove flashcard"
+        >
+          <X className="w-3.5 h-3.5" />
+        </button>
+      )}
       <div
         className="relative w-full transition-transform duration-500"
         style={{

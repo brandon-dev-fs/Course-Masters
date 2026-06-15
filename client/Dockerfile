@@ -16,7 +16,8 @@ COPY tsconfig.base.json ./
 COPY client/ ./client/
 
 # Build the client
-RUN npm run build --workspace=client
+WORKDIR /app/client
+RUN npm run build
 
 # Stage 2: Serve with nginx
 FROM nginx:alpine AS runtime

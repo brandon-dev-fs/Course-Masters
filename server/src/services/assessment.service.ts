@@ -1,4 +1,4 @@
-import { AssessmentType } from '@prisma/client';
+import { AssessmentType, Prisma } from '@prisma/client';
 import prisma from '../lib/prisma.js';
 import { AppError, NotFoundError } from '../errors/index.js';
 import type { BulkUpdateCalculatorInput, CreateAssessmentInput, SubmitAttemptInput } from '../schemas/assessment.schema.js';
@@ -249,7 +249,7 @@ export const assessmentService = {
             type: ppq.type,
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             question: ((ppq.content as any)['question'] as string | undefined) ?? '',
-            content: ppq.content,
+            content: ppq.content ?? Prisma.JsonNull,
             order: nextOrder++,
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             calculatorEnabled: ((ppq.content as any)['calculatorEnabled'] as boolean | undefined) ?? false,

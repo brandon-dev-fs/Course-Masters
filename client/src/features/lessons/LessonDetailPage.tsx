@@ -17,6 +17,7 @@ import ErrorMessage from '../../components/ErrorMessage.js';
 import AssignmentStepper from './AssignmentStepper.js';
 import type { StepperItem } from './AssignmentStepper.js';
 import AssignmentSection from './AssignmentSection.js';
+import BookmarkButton from './BookmarkButton.js';
 import StudentToolsBar from '../student-notes/StudentToolsBar.js';
 import type { StudentToolType } from '../student-notes/StudentToolsBar.js';
 import StudentMaterialsModal from '../student-notes/StudentMaterialsModal.js';
@@ -325,6 +326,13 @@ export default function LessonDetailPage() {
                       onDelete={canEdit && activeItem.kind === 'assignment' && activeItem.id
                         ? () => setDeletingAssignmentId(activeItem.id)
                         : undefined}
+                      headerRight={isStudent && activeAssignment ? (
+                        <BookmarkButton
+                          assignmentId={activeAssignment.id}
+                          bookmark={activeAssignment.bookmark ?? null}
+                          onBookmarkChange={(bookmark) => handleBookmarkChange(activeAssignment.id, bookmark)}
+                        />
+                      ) : undefined}
                     >
                       <ActiveItemContent
                         item={activeItem}
