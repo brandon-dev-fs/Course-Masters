@@ -1939,6 +1939,10 @@ BEGIN
     IF NOT EXISTS (SELECT 1 FROM practice_problem_assignment WHERE "assignmentId" = NEW.id) THEN
       RAISE EXCEPTION 'assignment % declared type=practice_problem but no practice_problem_assignment row exists', NEW.id;
     END IF;
+  ELSIF NEW.type = 'file' THEN
+    IF NOT EXISTS (SELECT 1 FROM file_assignment WHERE "assignmentId" = NEW.id) THEN
+      RAISE EXCEPTION 'assignment % declared type=file but no file_assignment row exists', NEW.id;
+    END IF;
   ELSE
     RAISE EXCEPTION 'assignment % has unknown type: %', NEW.id, NEW.type;
   END IF;

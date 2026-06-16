@@ -11,6 +11,7 @@ export interface AssignmentItem {
   isRequired: boolean;
   order: number;
   assignmentType?: import('../../api/types.js').AssignmentType;
+  mimeType?: string;
 }
 
 interface AssignmentSectionProps {
@@ -62,8 +63,33 @@ export default function AssignmentSection({
     if (item.assignmentType === 'reading') return 'Link';
     if (item.assignmentType === 'vocab') return 'Vocab';
     if (item.assignmentType === 'practice_problem') return 'Practice';
+    if (item.assignmentType === 'file') return 'File';
     return 'Read';
   }
+
+  function getFileTypeLabel(mimeType: string): string {
+    if (mimeType === 'application/pdf') return 'PDF Document';
+    if (mimeType === 'text/plain') return 'Text File';
+    if (mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') return 'Word Document';
+    if (mimeType === 'application/msword') return 'Word Document';
+    if (mimeType === 'application/vnd.openxmlformats-officedocument.presentationml.presentation') return 'PowerPoint';
+    if (mimeType === 'application/vnd.ms-powerpoint') return 'PowerPoint';
+    if (mimeType === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') return 'Excel Spreadsheet';
+    if (mimeType === 'application/vnd.ms-excel') return 'Excel Spreadsheet';
+    if (mimeType === 'image/png') return 'PNG Image';
+    if (mimeType === 'image/jpeg') return 'JPEG Image';
+    if (mimeType === 'image/gif') return 'GIF Image';
+    if (mimeType === 'image/webp') return 'WebP Image';
+    if (mimeType === 'image/svg+xml') return 'SVG Image';
+    if (mimeType.startsWith('video/')) return 'Video File';
+    if (mimeType.startsWith('audio/')) return 'Audio File';
+    if (mimeType.startsWith('image/')) return 'Image';
+    return 'File';
+  }
+
+  const displayTitle = item.assignmentType === 'file' && item.mimeType
+    ? getFileTypeLabel(item.mimeType)
+    : item.title;
 
   return (
     <section
@@ -126,7 +152,7 @@ export default function AssignmentSection({
 
       {/* Assignment title */}
       <div className="px-5 pt-4 pb-0">
-        <h2 className="text-base font-semibold text-foreground">{item.title}</h2>
+        <h2 className="text-base font-semibold text-foreground">{displayTitle}</h2>
       </div>
 
       {/* Content */}

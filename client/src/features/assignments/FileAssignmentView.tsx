@@ -213,13 +213,15 @@ export default function FileAssignmentView({ assignmentId, fileAssignment }: Fil
 
   return (
     <div className="flex flex-col gap-4">
-      {/* File info header */}
+      {/* Type-specific viewer */}
+      {viewer}
+
+      {/* File info footer */}
       <div className="flex items-center gap-2 flex-wrap">
         <FileUp className="w-4 h-4 text-accent shrink-0" aria-hidden="true" />
         <span className="text-sm font-semibold text-text-primary truncate">{filename}</span>
         <span className="text-xs text-text-secondary">{formatFileSize(sizeBytes)}</span>
         <div className="flex-1" />
-        {/* Secondary download link always available */}
         <a
           href={downloadUrl}
           download={filename}
@@ -230,9 +232,6 @@ export default function FileAssignmentView({ assignmentId, fileAssignment }: Fil
           <span className="sr-only"> {filename}</span>
         </a>
       </div>
-
-      {/* Type-specific viewer */}
-      {viewer}
     </div>
   );
 }

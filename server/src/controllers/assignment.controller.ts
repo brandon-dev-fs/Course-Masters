@@ -96,7 +96,7 @@ export const assignmentController = {
 
     const encodedFilename = encodeURIComponent(filename);
     res.setHeader('Content-Type', mimeType);
-    res.setHeader('Content-Disposition', `attachment; filename="${filename}"; filename*=UTF-8''${encodedFilename}`);
+    res.setHeader('Content-Disposition', `inline; filename="${filename}"; filename*=UTF-8''${encodedFilename}`);
     res.setHeader('Content-Length', String(sizeBytes));
 
     stream.on('error', (streamErr) => {

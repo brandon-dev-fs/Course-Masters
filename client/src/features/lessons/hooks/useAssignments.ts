@@ -35,6 +35,7 @@ export function buildAssignmentItems(
       isRequired: true,
       order: a.order,
       assignmentType: a.type,
+      mimeType: a.fileAssignment?.mimeType,
     });
   }
 
