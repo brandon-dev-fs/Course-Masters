@@ -134,7 +134,7 @@ describe('FileAssignmentView', () => {
   describe('TxtViewer (mimeType: text/plain)', () => {
     beforeEach(() => {
       // Mock global fetch for TxtViewer
-      global.fetch = vi.fn().mockResolvedValue({
+      globalThis.fetch = vi.fn().mockResolvedValue({
         ok: true,
         status: 200,
         text: () => Promise.resolve('Hello, world!'),
@@ -146,7 +146,7 @@ describe('FileAssignmentView', () => {
     });
 
     it('renders a loading spinner while fetching', () => {
-      global.fetch = vi.fn().mockReturnValue(new Promise(() => {})); // never resolves
+      globalThis.fetch = vi.fn().mockReturnValue(new Promise(() => {})); // never resolves
       renderView('asgn-1', makeFileData({ mimeType: 'text/plain', filename: 'readme.txt', sizeBytes: 13 }));
       // Should show loading state (spinner)
       expect(document.querySelector('[class*="animate"]') ?? document.querySelector('svg')).toBeTruthy();
@@ -167,7 +167,7 @@ describe('FileAssignmentView', () => {
     });
 
     it('shows error message when fetch fails', async () => {
-      global.fetch = vi.fn().mockRejectedValue(new Error('Network error'));
+      globalThis.fetch = vi.fn().mockRejectedValue(new Error('Network error'));
       await act(async () => {
         renderView('asgn-1', makeFileData({ mimeType: 'text/plain', filename: 'readme.txt', sizeBytes: 13 }));
       });
@@ -175,7 +175,7 @@ describe('FileAssignmentView', () => {
     });
 
     it('shows error message when fetch returns non-ok status', async () => {
-      global.fetch = vi.fn().mockResolvedValue({
+      globalThis.fetch = vi.fn().mockResolvedValue({
         ok: false,
         status: 500,
         text: () => Promise.resolve(''),
@@ -188,7 +188,7 @@ describe('FileAssignmentView', () => {
 
     it('dispatches auth:unauthorized event on 401', async () => {
       const dispatchSpy = vi.spyOn(window, 'dispatchEvent');
-      global.fetch = vi.fn().mockResolvedValue({
+      globalThis.fetch = vi.fn().mockResolvedValue({
         ok: false,
         status: 401,
         text: () => Promise.resolve(''),
