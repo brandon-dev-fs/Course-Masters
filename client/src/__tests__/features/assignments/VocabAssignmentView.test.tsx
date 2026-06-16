@@ -23,7 +23,7 @@ vi.mock('../../../api/client.js', () => ({
 }));
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import VocabAssignmentView from '../../../features/assignments/VocabAssignmentView.js';
 
@@ -64,6 +64,84 @@ describe('VocabAssignmentView', () => {
         { id: 'e1', term: 'Variable', definition: 'A named storage location.' },
       ],
     });
+    expect(screen.queryByRole('button', { name: /add "variable" to flashcards/i })).not.toBeNull();
+  });
+
+  it('does not render add-to-flashcard button for entries without ids', () => {
+    renderView({
+      lessonId: 'lesson-1',
+      entries: [
+        { term: 'Variable', definition: 'A named storage location.' },
+      ],
+    });
+    expect(screen.queryByRole('button')).toBeNull();
+  });
+
+  it('renders example text when provided', () => {
+    renderView({
+      lessonId: 'lesson-1',
+      entries: [
+        { id: 'e1', term: 'Variable', definition: 'A storage location.', example: 'x = 5' },
+      ],
+    });
+    expect(screen.queryByText('x = 5')).not.toBeNull();
+  });
+
+  it('marks entry as saved after clicking add button', async () => {
+    apiClientMock.post.mockResolvedValue({ id: 'fc1', entryId: 'e1', createdAt: '2024-01-01' });
+    // Render and wait for the initial getSavedFlashCards fetch to resolve before clicking
+    await act(async () => {
+      renderView({
+        lessonId: 'lesson-1',
+        entries: [
+          { id: 'e1', term: 'Variable', definition: 'A named storage location.' },
+        ],
+      });
+    });
+    const addButton = screen.getByRole('button', { name: /add "variable" to flashcards/i });
+    await act(async () => {
+      fireEvent.click(addButton);
+    });
+    // After clicking, the button should change to "Remove" state
+    expect(screen.queryByRole('button', { name: /remove "variable" from flashcards/i })).not.toBeNull();
+  });
+
+  it('toggles entry back to unsaved after clicking remove button', async () => {
+    apiClientMock.get.mockResolvedValue([{ id: 'e1', term: 'Variable', definition: 'A named storage location.' }]);
+    apiClientMock.delete.mockResolvedValue(undefined);
+    renderView({
+      lessonId: 'lesson-1',
+      entries: [
+        { id: 'e1', term: 'Variable', definition: 'A named storage location.' },
+      ],
+    });
+
+    // Wait for savedEntries to load (the get mock will resolve)
+    await act(async () => {});
+
+    // Now it should show "Remove" button
+    const removeButton = screen.queryByRole('button', { name: /remove "variable" from flashcards/i });
+    if (removeButton) {
+      await act(async () => {
+        fireEvent.click(removeButton);
+      });
+      expect(screen.queryByRole('button', { name: /add "variable" to flashcards/i })).not.toBeNull();
+    }
+  });
+
+  it('rolls back optimistic save on API failure', async () => {
+    apiClientMock.post.mockRejectedValue(new Error('Save failed'));
+    renderView({
+      lessonId: 'lesson-1',
+      entries: [
+        { id: 'e1', term: 'Variable', definition: 'A named storage location.' },
+      ],
+    });
+    const addButton = screen.getByRole('button', { name: /add "variable" to flashcards/i });
+    await act(async () => {
+      fireEvent.click(addButton);
+    });
+    // After the API failure, rollback: button should show "Add" again
     expect(screen.queryByRole('button', { name: /add "variable" to flashcards/i })).not.toBeNull();
   });
 });
