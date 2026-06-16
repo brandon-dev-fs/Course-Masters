@@ -144,3 +144,4 @@ worktrees/
 plans/
 
 docker.env
+garage.toml

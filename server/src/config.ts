@@ -12,9 +12,9 @@ const envSchema = z.object({
 		.enum(['trace', 'debug', 'info', 'warn', 'error', 'fatal', 'silent'])
 		.default('info'),
 	S3_ENDPOINT: z.string().url().optional(),
-	S3_BUCKET: z.string().min(1).optional(),
-	S3_ACCESS_KEY_ID: z.string().min(1).optional(),
-	S3_SECRET_ACCESS_KEY: z.string().min(1).optional(),
+	S3_BUCKET: z.string().optional().transform(v => v || undefined),
+	S3_ACCESS_KEY_ID: z.string().optional().transform(v => v || undefined),
+	S3_SECRET_ACCESS_KEY: z.string().optional().transform(v => v || undefined),
 	S3_REGION: z.string().min(1).default('garage'),
 });
 

@@ -54,14 +54,7 @@ services:
         volumes:
             - garage_meta:/var/lib/garage/meta
             - garage_data:/var/lib/garage/data
-        environment:
-            GARAGE_REPLICATION_FACTOR: '1'
-            GARAGE_METADATA_DIR: /var/lib/garage/meta
-            GARAGE_DATA_DIR: /var/lib/garage/data
-            GARAGE_RPC_SECRET: change-me-to-a-64-char-hex-secret-value-for-garage
-            GARAGE_RPC_BIND_ADDR: '[::]:3901'
-            GARAGE_S3_API_BIND_ADDR: '[::]:3900'
-            GARAGE_ADMIN_API_BIND_ADDR: '[::]:3902'
+            - ./garage.toml:/etc/garage.toml:ro
         ports:
             - '3900:3900'
             - '3902:3902'
