@@ -8,6 +8,7 @@ vi.mock('../../services/assessment.service.js', () => ({
     submitAttempt: vi.fn(),
     getAttempts: vi.fn(),
     bulkUpdateCalculator: vi.fn(),
+    importQuestions: vi.fn(),
   },
 }));
 
@@ -21,6 +22,7 @@ const mockUpdate = assessmentService.update as ReturnType<typeof vi.fn>;
 const mockSubmitAttempt = assessmentService.submitAttempt as ReturnType<typeof vi.fn>;
 const mockGetAttempts = assessmentService.getAttempts as ReturnType<typeof vi.fn>;
 const mockBulkUpdateCalculator = assessmentService.bulkUpdateCalculator as ReturnType<typeof vi.fn>;
+const mockImportQuestions = assessmentService.importQuestions as ReturnType<typeof vi.fn>;
 
 async function callHandler(handler: Function, req: ReturnType<typeof makeReq>) {
   const res = makeRes();
@@ -214,6 +216,39 @@ describe('assessmentController.bulkUpdateCalculator', () => {
     mockBulkUpdateCalculator.mockRejectedValue(err);
     const req = makeReq({ params: { assessmentId: 'a1' }, body: {} });
     const { next } = await callHandler(assessmentController.bulkUpdateCalculator, req);
+    expect(next).toHaveBeenCalledWith(err);
+  });
+});
+
+describe('assessmentController.importQuestions', () => {
+  const PP_ID = '550e8400-e29b-41d4-a716-446655440000';
+
+  beforeEach(() => vi.clearAllMocks());
+
+  it('imports questions and responds with 201', async () => {
+    const questions = [{ id: 'q1', type: 'multiple_choice', question: 'Test?', order: 0 }];
+    mockImportQuestions.mockResolvedValue(questions);
+    const req = makeReq({
+      params: { assessmentId: 'a1' },
+      body: { practiceProblemAssignmentId: PP_ID },
+      user: { id: 'teacher1', role: 'teacher' },
+    });
+    const { res, next } = await callHandler(assessmentController.importQuestions, req);
+    expect(mockImportQuestions).toHaveBeenCalledWith('a1', PP_ID);
+    expect(res.status).toHaveBeenCalledWith(201);
+    expect(res.json).toHaveBeenCalledWith(questions);
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it('calls next with error on service failure', async () => {
+    const err = new Error('import fail');
+    mockImportQuestions.mockRejectedValue(err);
+    const req = makeReq({
+      params: { assessmentId: 'a1' },
+      body: { practiceProblemAssignmentId: PP_ID },
+      user: { id: 'teacher1', role: 'teacher' },
+    });
+    const { next } = await callHandler(assessmentController.importQuestions, req);
     expect(next).toHaveBeenCalledWith(err);
   });
 });

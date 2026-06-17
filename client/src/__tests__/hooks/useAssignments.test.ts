@@ -1,6 +1,6 @@
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import type { Assignment, Lesson, LessonResource, LessonTool } from '../../api/types.js';
+import type { Assignment, Lesson } from '../../api/types.js';
 import {
   buildAssignmentItems,
   completionKeyOf,
@@ -56,6 +56,7 @@ function makeAssignment(overrides: Partial<Assignment> = {}): Assignment {
     readingAssignment: null,
     vocabAssignment: null,
     practiceProblemAssignment: null,
+    fileAssignment: null,
     ...overrides,
   };
 }
@@ -63,9 +64,6 @@ function makeAssignment(overrides: Partial<Assignment> = {}): Assignment {
 const defaultParams = {
   lessonId: 'lesson-1' as string | undefined,
   lesson: makeLesson(),
-  resources: [] as LessonResource[],
-  tools: [] as LessonTool[],
-  completedIds: new Set<string>(),
   setActiveStepKey: vi.fn(),
 };
 
@@ -83,24 +81,13 @@ describe('nextOrder', () => {
 
 describe('buildAssignmentItems', () => {
   it('always includes lessonPlan item first', () => {
-    const items = buildAssignmentItems(makeLesson(), [], [], []);
+    const items = buildAssignmentItems(makeLesson(), []);
     expect(items[0].kind).toBe('lessonPlan');
   });
 
   it('always includes quiz item last', () => {
-    const items = buildAssignmentItems(makeLesson(), [], [], []);
+    const items = buildAssignmentItems(makeLesson(), []);
     expect(items[items.length - 1].kind).toBe('quiz');
-  });
-
-  it('includes resources sorted by order', () => {
-    const resources: LessonResource[] = [
-      { id: 'r2', type: 'note', title: 'R2', content: { body: {} }, order: 2, lessonId: 'lesson-1', isRequired: false },
-      { id: 'r1', type: 'video', title: 'R1', content: { url: 'http://...' }, order: 1, lessonId: 'lesson-1', isRequired: true },
-    ];
-    const items = buildAssignmentItems(makeLesson(), resources, [], []);
-    // lessonPlan, r1 (order=1), r2 (order=2), quiz
-    expect(items[1].id).toBe('r1');
-    expect(items[2].id).toBe('r2');
   });
 
   it('includes assignments sorted by order', () => {
@@ -108,15 +95,22 @@ describe('buildAssignmentItems', () => {
       makeAssignment({ id: 'a2', order: 2 }),
       makeAssignment({ id: 'a1', order: 1 }),
     ];
-    const items = buildAssignmentItems(makeLesson(), [], [], assignments);
+    const items = buildAssignmentItems(makeLesson(), assignments);
     const assignmentItems = items.filter(i => i.kind === 'assignment');
     expect(assignmentItems[0].id).toBe('a1');
     expect(assignmentItems[1].id).toBe('a2');
   });
 
-  it('returns empty list (only lessonPlan + quiz) when no resources/tools/assignments', () => {
-    const items = buildAssignmentItems(makeLesson(), [], [], []);
+  it('returns only lessonPlan + quiz when no assignments', () => {
+    const items = buildAssignmentItems(makeLesson(), []);
     expect(items).toHaveLength(2);
+  });
+
+  it('sets assignmentType on assignment items', () => {
+    const assignments = [makeAssignment({ id: 'a1', order: 1, type: 'vocab' })];
+    const items = buildAssignmentItems(makeLesson(), assignments);
+    const assignmentItem = items.find(i => i.kind === 'assignment');
+    expect(assignmentItem?.assignmentType).toBe('vocab');
   });
 });
 
@@ -126,9 +120,9 @@ describe('completionKeyOf', () => {
     expect(completionKeyOf(item, 'lesson-1')).toBe('lesson-1');
   });
 
-  it('returns item id for resource/tool/assignment kinds', () => {
-    const item = { kind: 'resource' as const, id: 'resource-1', key: 'resource:resource-1', title: 'R1', isRequired: true, order: 1 };
-    expect(completionKeyOf(item, 'lesson-1')).toBe('resource-1');
+  it('returns item id for assignment kind', () => {
+    const item = { kind: 'assignment' as const, id: 'assignment-1', key: 'assignment:assignment-1', title: 'A1', isRequired: true, order: 1 };
+    expect(completionKeyOf(item, 'lesson-1')).toBe('assignment-1');
   });
 
   it('returns null for quiz kind (id is null)', () => {

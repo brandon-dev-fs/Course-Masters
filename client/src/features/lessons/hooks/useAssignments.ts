@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { assignmentsApi } from '../../../api/assignments.js';
 import type { CreateAssignmentPayload, UpdateAssignmentPayload } from '../../../api/assignments.js';
-import type { Assignment, Bookmark, Lesson, LessonResource, LessonTool } from '../../../api/types.js';
+import type { Assignment, Bookmark, Lesson } from '../../../api/types.js';
 import type { AssignmentItem } from '../AssignmentSection.js';
 import type { StudentToolType } from '../../student-notes/StudentToolsBar.js';
 import useFetch from '../../../hooks/useFetch.js';
@@ -13,8 +13,6 @@ export const nextOrder = (arr: { order: number }[]) =>
 
 export function buildAssignmentItems(
   lesson: Lesson,
-  resources: LessonResource[],
-  tools: LessonTool[],
   assignments: Assignment[],
 ): AssignmentItem[] {
   const items: AssignmentItem[] = [];
@@ -28,30 +26,6 @@ export function buildAssignmentItems(
     order: -1,
   });
 
-  for (const r of [...resources].sort((a, b) => a.order - b.order)) {
-    items.push({
-      key: `resource:${r.id}`,
-      kind: 'resource',
-      id: r.id,
-      title: r.title,
-      isRequired: r.isRequired,
-      order: r.order,
-      resourceType: r.type,
-    });
-  }
-
-  for (const t of [...tools].sort((a, b) => a.order - b.order)) {
-    items.push({
-      key: `tool:${t.id}`,
-      kind: 'tool',
-      id: t.id,
-      title: t.title,
-      isRequired: t.isRequired,
-      order: t.order,
-      toolType: t.type,
-    });
-  }
-
   for (const a of [...assignments].sort((x, y) => x.order - y.order)) {
     items.push({
       key: `assignment:${a.id}`,
@@ -61,6 +35,7 @@ export function buildAssignmentItems(
       isRequired: true,
       order: a.order,
       assignmentType: a.type,
+      mimeType: a.fileAssignment?.mimeType,
     });
   }
 
@@ -85,9 +60,6 @@ export function completionKeyOf(item: AssignmentItem, lessonId: string | null | 
 interface UseAssignmentsParams {
   lessonId: string | undefined;
   lesson: Lesson | null;
-  resources: LessonResource[];
-  tools: LessonTool[];
-  completedIds: Set<string>;
   setActiveStepKey: (key: string) => void;
 }
 
@@ -104,6 +76,8 @@ interface UseAssignmentsReturn {
   deletingAssignmentId: string | null;
   setDeletingAssignmentId: React.Dispatch<React.SetStateAction<string | null>>;
   handleCreateAssignment: (payload: CreateAssignmentPayload) => Promise<void>;
+  /** Adds an already-created assignment to the list and navigates to it. Used by the file upload flow. */
+  handleAddCreatedAssignment: (assignment: Assignment) => void;
   handleUpdateAssignment: (assignmentId: string, payload: UpdateAssignmentPayload) => Promise<void>;
   handleDeleteAssignment: (assignmentId: string, assignmentItems: AssignmentItem[], activeIdx: number) => Promise<void>;
   handleMoveAssignment: (id: string, direction: 'up' | 'down') => Promise<void>;
@@ -114,9 +88,6 @@ interface UseAssignmentsReturn {
 export default function useAssignments({
   lessonId,
   lesson,
-  resources,
-  tools,
-  completedIds,
   setActiveStepKey,
 }: UseAssignmentsParams): UseAssignmentsReturn {
   const { data: fetchedAssignments } = useFetch<Assignment[]>(
@@ -179,8 +150,8 @@ export default function useAssignments({
   const [deletingAssignmentId, setDeletingAssignmentId] = useState<string | null>(null);
 
   const assignmentItems = useMemo(
-    () => lesson ? buildAssignmentItems(lesson, resources, tools, assignments) : [],
-    [lesson, resources, tools, assignments],
+    () => lesson ? buildAssignmentItems(lesson, assignments) : [],
+    [lesson, assignments],
   );
 
   const completedAssignmentIds = useMemo(
@@ -195,9 +166,9 @@ export default function useAssignments({
   const incompleteRequired = useMemo(
     () => assignmentItems.filter(
       item => item.isRequired && item.kind !== 'quiz' && item.id !== null &&
-        (item.kind === 'assignment' ? !completedAssignmentIds.has(item.id) : !completedIds.has(item.id))
+        item.kind === 'assignment' && !completedAssignmentIds.has(item.id)
     ),
-    [assignmentItems, completedIds, completedAssignmentIds],
+    [assignmentItems, completedAssignmentIds],
   );
 
   const handleCreateAssignment = useCallback(async (payload: CreateAssignmentPayload) => {
@@ -207,6 +178,12 @@ export default function useAssignments({
     setIsAddingAssignment(false);
     setActiveStepKey(`assignment:${created.id}`);
   }, [lessonId, setActiveStepKey]);
+
+  const handleAddCreatedAssignment = useCallback((assignment: Assignment) => {
+    setAssignments(prev => [...prev, assignment].sort((a, b) => a.order - b.order));
+    setIsAddingAssignment(false);
+    setActiveStepKey(`assignment:${assignment.id}`);
+  }, [setActiveStepKey]);
 
   const handleUpdateAssignment = useCallback(async (assignmentId: string, payload: UpdateAssignmentPayload) => {
     const updated = await assignmentsApi.update(assignmentId, payload);
@@ -267,6 +244,7 @@ export default function useAssignments({
     deletingAssignmentId,
     setDeletingAssignmentId,
     handleCreateAssignment,
+    handleAddCreatedAssignment,
     handleUpdateAssignment,
     handleDeleteAssignment,
     handleMoveAssignment,

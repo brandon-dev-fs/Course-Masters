@@ -35,15 +35,28 @@ import { screen, fireEvent, waitFor, within } from '@testing-library/react';
 import { renderWithProviders } from '../../setup/renderWithProviders.js';
 import { makeTeacherUser } from '../../mocks/authContext.mock.js';
 import VocabList from '../../../features/vocab/VocabList.js';
+import type { Assignment } from '../../../api/types.js';
 
-const vocabTool = {
+const vocabAssignment: Assignment = {
   id: 't1',
-  type: 'vocab',
-  title: 'Variable',
-  content: { term: 'Variable', definition: 'A named storage location in memory.' },
-  order: 1,
   lessonId: 'l1',
-  isRequired: false,
+  order: 1,
+  title: 'Variable',
+  objective: null,
+  type: 'vocab',
+  createdAt: '2026-01-01T00:00:00.000Z',
+  updatedAt: '2026-01-01T00:00:00.000Z',
+  completed: false,
+  bookmark: null,
+  noteAssignment: null,
+  videoAssignment: null,
+  readingAssignment: null,
+  practiceProblemAssignment: null,
+  fileAssignment: null,
+  vocabAssignment: {
+    id: 'va1',
+    entries: [{ id: 'e1', term: 'Variable', definition: 'A named storage location in memory.' }],
+  },
 };
 
 describe('VocabList', () => {
@@ -59,14 +72,14 @@ describe('VocabList', () => {
   });
 
   it('shows vocab cards when data is available', async () => {
-    apiClientMock.get.mockResolvedValue([vocabTool]);
+    apiClientMock.get.mockResolvedValue([vocabAssignment]);
     renderWithProviders(<VocabList lessonId="l1" />);
     expect(await screen.findByText('Variable')).toBeInTheDocument();
   });
 
   it('shows add term button for teacher with items', async () => {
     authClientMock.getSession.mockResolvedValue({ data: { user: makeTeacherUser() }, error: null });
-    apiClientMock.get.mockResolvedValue([vocabTool]);
+    apiClientMock.get.mockResolvedValue([vocabAssignment]);
     renderWithProviders(<VocabList lessonId="l1" />);
     expect(await screen.findByRole('button', { name: /\+ add term/i })).toBeInTheDocument();
   });
@@ -79,7 +92,7 @@ describe('VocabList', () => {
 
   it('opens add modal when add term button clicked', async () => {
     authClientMock.getSession.mockResolvedValue({ data: { user: makeTeacherUser() }, error: null });
-    apiClientMock.get.mockResolvedValue([vocabTool]);
+    apiClientMock.get.mockResolvedValue([vocabAssignment]);
     renderWithProviders(<VocabList lessonId="l1" />);
     fireEvent.click(await screen.findByRole('button', { name: /\+ add term/i }));
     expect(screen.getByText('Add Vocabulary Term')).toBeInTheDocument();
@@ -96,7 +109,7 @@ describe('VocabList', () => {
 
   it('shows edit/delete buttons on vocab cards for teacher', async () => {
     authClientMock.getSession.mockResolvedValue({ data: { user: makeTeacherUser() }, error: null });
-    apiClientMock.get.mockResolvedValue([vocabTool]);
+    apiClientMock.get.mockResolvedValue([vocabAssignment]);
     renderWithProviders(<VocabList lessonId="l1" />);
     await screen.findByText('Variable');
     expect(screen.getByRole('button', { name: /edit/i })).toBeInTheDocument();
@@ -105,7 +118,7 @@ describe('VocabList', () => {
 
   it('opens edit modal when edit button clicked', async () => {
     authClientMock.getSession.mockResolvedValue({ data: { user: makeTeacherUser() }, error: null });
-    apiClientMock.get.mockResolvedValue([vocabTool]);
+    apiClientMock.get.mockResolvedValue([vocabAssignment]);
     renderWithProviders(<VocabList lessonId="l1" />);
     await screen.findByText('Variable');
     fireEvent.click(screen.getByRole('button', { name: /edit/i }));
@@ -114,7 +127,7 @@ describe('VocabList', () => {
 
   it('shows delete confirmation when delete button clicked', async () => {
     authClientMock.getSession.mockResolvedValue({ data: { user: makeTeacherUser() }, error: null });
-    apiClientMock.get.mockResolvedValue([vocabTool]);
+    apiClientMock.get.mockResolvedValue([vocabAssignment]);
     renderWithProviders(<VocabList lessonId="l1" />);
     await screen.findByText('Variable');
     fireEvent.click(screen.getByRole('button', { name: /delete/i }));
@@ -123,8 +136,8 @@ describe('VocabList', () => {
 
   it('submits add form and calls create API', async () => {
     authClientMock.getSession.mockResolvedValue({ data: { user: makeTeacherUser() }, error: null });
-    apiClientMock.get.mockResolvedValue([vocabTool]);
-    apiClientMock.post.mockResolvedValue({ ...vocabTool, id: 't2' });
+    apiClientMock.get.mockResolvedValue([vocabAssignment]);
+    apiClientMock.post.mockResolvedValue({ ...vocabAssignment, id: 't2' });
     renderWithProviders(<VocabList lessonId="l1" />);
     fireEvent.click(await screen.findByRole('button', { name: /\+ add term/i }));
     fireEvent.click(screen.getByText('Submit Vocab'));
@@ -133,7 +146,7 @@ describe('VocabList', () => {
 
   it('closes add modal when form cancel is clicked', async () => {
     authClientMock.getSession.mockResolvedValue({ data: { user: makeTeacherUser() }, error: null });
-    apiClientMock.get.mockResolvedValue([vocabTool]);
+    apiClientMock.get.mockResolvedValue([vocabAssignment]);
     renderWithProviders(<VocabList lessonId="l1" />);
     fireEvent.click(await screen.findByRole('button', { name: /\+ add term/i }));
     expect(screen.getByTestId('vocab-form')).toBeInTheDocument();
@@ -143,8 +156,8 @@ describe('VocabList', () => {
 
   it('submits edit form and calls update API', async () => {
     authClientMock.getSession.mockResolvedValue({ data: { user: makeTeacherUser() }, error: null });
-    apiClientMock.get.mockResolvedValue([vocabTool]);
-    apiClientMock.put.mockResolvedValue(vocabTool);
+    apiClientMock.get.mockResolvedValue([vocabAssignment]);
+    apiClientMock.put.mockResolvedValue(vocabAssignment);
     renderWithProviders(<VocabList lessonId="l1" />);
     await screen.findByText('Variable');
     fireEvent.click(screen.getByRole('button', { name: /edit/i }));
@@ -154,7 +167,7 @@ describe('VocabList', () => {
 
   it('closes edit modal when form cancel is clicked', async () => {
     authClientMock.getSession.mockResolvedValue({ data: { user: makeTeacherUser() }, error: null });
-    apiClientMock.get.mockResolvedValue([vocabTool]);
+    apiClientMock.get.mockResolvedValue([vocabAssignment]);
     renderWithProviders(<VocabList lessonId="l1" />);
     await screen.findByText('Variable');
     fireEvent.click(screen.getByRole('button', { name: /edit/i }));
@@ -165,7 +178,7 @@ describe('VocabList', () => {
 
   it('calls delete API when confirm delete clicked', async () => {
     authClientMock.getSession.mockResolvedValue({ data: { user: makeTeacherUser() }, error: null });
-    apiClientMock.get.mockResolvedValue([vocabTool]);
+    apiClientMock.get.mockResolvedValue([vocabAssignment]);
     apiClientMock.delete.mockResolvedValue(undefined);
     renderWithProviders(<VocabList lessonId="l1" />);
     await screen.findByText('Variable');
@@ -176,7 +189,7 @@ describe('VocabList', () => {
 
   it('closes delete dialog when cancel clicked', async () => {
     authClientMock.getSession.mockResolvedValue({ data: { user: makeTeacherUser() }, error: null });
-    apiClientMock.get.mockResolvedValue([vocabTool]);
+    apiClientMock.get.mockResolvedValue([vocabAssignment]);
     renderWithProviders(<VocabList lessonId="l1" />);
     await screen.findByText('Variable');
     fireEvent.click(screen.getByRole('button', { name: /delete/i }));

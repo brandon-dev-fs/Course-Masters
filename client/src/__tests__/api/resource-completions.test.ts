@@ -1,5 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { vi } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 const { apiClientMock } = vi.hoisted(() => ({
   apiClientMock: {
@@ -14,51 +13,67 @@ const { apiClientMock } = vi.hoisted(() => ({
 vi.mock('../../api/client.js', () => ({ apiClient: apiClientMock }));
 
 import { resourceCompletionsApi } from '../../api/resource-completions.js';
+import type { CompletionsResponse } from '../../api/types.js';
 
-const mockCompletions = {
+const mockCompletionsResponse: CompletionsResponse = {
   completions: [
-    { resourceType: 'resource', resourceId: 'r1', isRequired: true },
-    { resourceType: 'tool', resourceId: 't1', isRequired: false },
-  ],
-  requiredItems: [
-    { resourceType: 'resource', resourceId: 'r1', isRequired: true },
+    { assignmentId: 'a1', completedAt: '2024-01-01T00:00:00Z' },
+    { assignmentId: 'a2', completedAt: '2024-01-02T00:00:00Z' },
   ],
 };
 
 describe('resourceCompletionsApi', () => {
-  beforeEach(() => vi.clearAllMocks());
-
-  it('get calls GET /lessons/:lessonId/completions', async () => {
-    apiClientMock.get.mockResolvedValueOnce(mockCompletions);
-    const result = await resourceCompletionsApi.get('lesson-1');
-    expect(apiClientMock.get).toHaveBeenCalledWith('/lessons/lesson-1/completions');
-    expect(result).toEqual(mockCompletions);
+  beforeEach(() => {
+    vi.clearAllMocks();
   });
 
-  it('toggle calls POST /lessons/:lessonId/completions with resourceType and resourceId', async () => {
-    const updated = {
-      completions: [
-        { resourceType: 'resource', resourceId: 'r1', isRequired: true },
-        { resourceType: 'tool', resourceId: 't1', isRequired: false },
-        { resourceType: 'resource', resourceId: 'r2', isRequired: false },
-      ],
-      requiredItems: [{ resourceType: 'resource', resourceId: 'r1', isRequired: true }],
-    };
-    apiClientMock.post.mockResolvedValueOnce(updated);
-    const result = await resourceCompletionsApi.toggle('lesson-1', 'resource', 'r2');
-    expect(apiClientMock.post).toHaveBeenCalledWith('/lessons/lesson-1/completions', {
-      resourceType: 'resource',
-      resourceId: 'r2',
+  describe('get', () => {
+    it('calls GET /lessons/:lessonId/completions', async () => {
+      apiClientMock.get.mockResolvedValueOnce(mockCompletionsResponse);
+      const result = await resourceCompletionsApi.get('lesson-1');
+      expect(apiClientMock.get).toHaveBeenCalledWith('/lessons/lesson-1/completions');
+      expect(result).toEqual(mockCompletionsResponse);
     });
-    expect(result).toEqual(updated);
+
+    it('returns completions response with correct shape', async () => {
+      apiClientMock.get.mockResolvedValueOnce(mockCompletionsResponse);
+      const result = await resourceCompletionsApi.get('lesson-abc');
+      expect(result.completions).toHaveLength(2);
+      expect(result.completions[0].assignmentId).toBe('a1');
+    });
+
+    it('returns empty completions when no completions exist', async () => {
+      apiClientMock.get.mockResolvedValueOnce({ completions: [] });
+      const result = await resourceCompletionsApi.get('lesson-empty');
+      expect(result.completions).toHaveLength(0);
+    });
   });
 
-  it('toggle passes the correct lessonId in the URL', async () => {
-    apiClientMock.post.mockResolvedValueOnce(mockCompletions);
-    await resourceCompletionsApi.toggle('lesson-abc', 'tool', 't1');
-    expect(apiClientMock.post).toHaveBeenCalledWith('/lessons/lesson-abc/completions', {
-      resourceType: 'tool',
-      resourceId: 't1',
+  describe('toggle', () => {
+    it('calls POST /lessons/:lessonId/completions with assignmentId', async () => {
+      apiClientMock.post.mockResolvedValueOnce(mockCompletionsResponse);
+      const result = await resourceCompletionsApi.toggle('lesson-1', 'a1');
+      expect(apiClientMock.post).toHaveBeenCalledWith('/lessons/lesson-1/completions', {
+        assignmentId: 'a1',
+      });
+      expect(result).toEqual(mockCompletionsResponse);
+    });
+
+    it('uses correct lessonId and assignmentId in the URL and body', async () => {
+      apiClientMock.post.mockResolvedValueOnce({ completions: [] });
+      await resourceCompletionsApi.toggle('lesson-xyz', 'assign-abc');
+      expect(apiClientMock.post).toHaveBeenCalledWith('/lessons/lesson-xyz/completions', {
+        assignmentId: 'assign-abc',
+      });
+    });
+
+    it('returns the updated completions response', async () => {
+      const updated: CompletionsResponse = {
+        completions: [{ assignmentId: 'a3', completedAt: '2024-02-01T00:00:00Z' }],
+      };
+      apiClientMock.post.mockResolvedValueOnce(updated);
+      const result = await resourceCompletionsApi.toggle('lesson-1', 'a3');
+      expect(result).toEqual(updated);
     });
   });
 });

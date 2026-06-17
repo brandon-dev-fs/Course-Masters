@@ -297,3 +297,130 @@ describe('requireStudentRole', () => {
     );
   });
 });
+
+describe('resolveCourseOwner — resource types', () => {
+  let res: ReturnType<typeof makeRes>;
+  let next: ReturnType<typeof makeNext>;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    res = makeRes();
+    next = makeNext();
+  });
+
+  async function flushMiddleware(
+    mw: ReturnType<typeof requireCourseOwnership>,
+    req: ReturnType<typeof makeReq>,
+  ) {
+    mw(
+      req as Parameters<ReturnType<typeof requireCourseOwnership>>[0],
+      res as unknown as Parameters<ReturnType<typeof requireCourseOwnership>>[1],
+      next,
+    );
+    await Promise.resolve();
+    await Promise.resolve();
+    await Promise.resolve();
+  }
+
+  it('calls next() when teacher owns a unit', async () => {
+    prismaMock.unit.findUnique.mockResolvedValue({ course: { authorId: OWNER_ID } });
+    const req = makeReq({
+      user: { id: OWNER_ID, role: 'teacher' },
+      params: { unitId: 'unit-1' },
+    });
+
+    await flushMiddleware(
+      requireCourseOwnership('unit', (r) => r.params['unitId'] as string),
+      req,
+    );
+
+    expect(next).toHaveBeenCalledOnce();
+    expect(next).toHaveBeenCalledWith();
+  });
+
+  it('throws NotFoundError when unit does not exist', async () => {
+    prismaMock.unit.findUnique.mockResolvedValue(null);
+    const req = makeReq({
+      user: { id: OWNER_ID, role: 'teacher' },
+      params: { unitId: 'unit-missing' },
+    });
+
+    await flushMiddleware(
+      requireCourseOwnership('unit', (r) => r.params['unitId'] as string),
+      req,
+    );
+
+    expect(next).toHaveBeenCalledWith(expect.any(NotFoundError));
+  });
+
+  it('calls next() when teacher owns a lesson', async () => {
+    prismaMock.lesson.findUnique.mockResolvedValue({ unit: { course: { authorId: OWNER_ID } } });
+    const req = makeReq({
+      user: { id: OWNER_ID, role: 'teacher' },
+      params: { lessonId: 'lesson-1' },
+    });
+
+    await flushMiddleware(
+      requireCourseOwnership('lesson', (r) => r.params['lessonId'] as string),
+      req,
+    );
+
+    expect(next).toHaveBeenCalledOnce();
+    expect(next).toHaveBeenCalledWith();
+  });
+
+  it('calls next() when teacher owns an assessment via courseId branch', async () => {
+    prismaMock.assessment.findUnique.mockResolvedValue({
+      course: { authorId: OWNER_ID },
+      unit: null,
+      lesson: null,
+    });
+    const req = makeReq({
+      user: { id: OWNER_ID, role: 'teacher' },
+      params: { assessmentId: 'assess-1' },
+    });
+
+    await flushMiddleware(
+      requireCourseOwnership('assessment', (r) => r.params['assessmentId'] as string),
+      req,
+    );
+
+    expect(next).toHaveBeenCalledOnce();
+    expect(next).toHaveBeenCalledWith();
+  });
+
+  it('calls next() when teacher owns an assessment via unitId branch', async () => {
+    prismaMock.assessment.findUnique.mockResolvedValue({
+      course: null,
+      unit: { course: { authorId: OWNER_ID } },
+      lesson: null,
+    });
+    const req = makeReq({
+      user: { id: OWNER_ID, role: 'teacher' },
+      params: { assessmentId: 'assess-2' },
+    });
+
+    await flushMiddleware(
+      requireCourseOwnership('assessment', (r) => r.params['assessmentId'] as string),
+      req,
+    );
+
+    expect(next).toHaveBeenCalledOnce();
+    expect(next).toHaveBeenCalledWith();
+  });
+
+  it('throws NotFoundError when assessment does not exist', async () => {
+    prismaMock.assessment.findUnique.mockResolvedValue(null);
+    const req = makeReq({
+      user: { id: OWNER_ID, role: 'teacher' },
+      params: { assessmentId: 'assess-missing' },
+    });
+
+    await flushMiddleware(
+      requireCourseOwnership('assessment', (r) => r.params['assessmentId'] as string),
+      req,
+    );
+
+    expect(next).toHaveBeenCalledWith(expect.any(NotFoundError));
+  });
+});

@@ -1,6 +1,13 @@
+import { randomUUID } from 'node:crypto';
+
 import { AssignmentType } from '@prisma/client';
+import { PutObjectCommand, DeleteObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
+import type { Readable } from 'node:stream';
+
 import prisma from '../lib/prisma.js';
-import { AppError, NotFoundError } from '../errors/index.js';
+import { s3Client, S3_BUCKET } from '../lib/s3.js';
+import { logger } from '../lib/logger.js';
+import { AppError, NotFoundError, ValidationError } from '../errors/index.js';
 import { assertExists } from '../utils/assertExists.js';
 import type { CreateAssignmentInput, UpdateAssignmentInput } from '../schemas/assignment.schema.js';
 
@@ -21,6 +28,15 @@ function buildAssignmentInclude(userId: string | null) {
         questions: { orderBy: { order: 'asc' as const } },
       },
     },
+    fileAssignment: {
+      select: {
+        id: true,
+        assignmentId: true,
+        filename: true,
+        mimeType: true,
+        sizeBytes: true,
+      },
+    },
     ...(userId
       ? {
           bookmarks: {
@@ -37,6 +53,38 @@ function normalizeBookmark(
   bookmarks: Array<{ id: string; note: string; updatedAt: Date }> | undefined,
 ) {
   return bookmarks && bookmarks.length > 0 ? bookmarks[0] : null;
+}
+
+// ── File upload helpers ───────────────────────────────────────────────────────
+
+/**
+ * Validates that the file buffer's magic bytes match the declared MIME type.
+ * This prevents clients from bypassing the MIME type filter by spoofing the
+ * Content-Type header on the multipart upload.
+ */
+function validateMagicBytes(buffer: Buffer, mimeType: string): boolean {
+  const header = buffer.subarray(0, 8);
+
+  const isPdf = header[0] === 0x25 && header[1] === 0x50 && header[2] === 0x44 && header[3] === 0x46;
+  // OOXML formats (DOCX, PPTX) are ZIP archives
+  const isOoxmlZip = header[0] === 0x50 && header[1] === 0x4B && header[2] === 0x03 && header[3] === 0x04;
+  // Legacy OLE2 compound document format (PPT)
+  const isOle2 = header[0] === 0xD0 && header[1] === 0xCF && header[2] === 0x11 && header[3] === 0xE0;
+
+  switch (mimeType) {
+    case 'application/pdf':
+      return isPdf;
+    case 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
+    case 'application/vnd.openxmlformats-officedocument.presentationml.presentation':
+      return isOoxmlZip;
+    case 'application/vnd.ms-powerpoint':
+      return isOle2;
+    case 'text/plain':
+      // No magic bytes for plain text — reject if null bytes are present (binary heuristic)
+      return !buffer.includes(0x00);
+    default:
+      return false;
+  }
 }
 
 // ── Service ──────────────────────────────────────────────────────────────────
@@ -272,12 +320,17 @@ export const assignmentService = {
   },
 
   async remove(assignmentId: string) {
-    // Inline check retained: we need lessonId from the record for order recalculation.
-    // assertExists would require a second query to retrieve the same record.
-    const assignment = await prisma.assignment.findUnique({ where: { id: assignmentId } });
+    // Inline check retained: we need lessonId + type from the record for order
+    // recalculation and S3 cleanup.
+    const assignment = await prisma.assignment.findUnique({
+      where: { id: assignmentId },
+      include: { fileAssignment: { select: { storageKey: true } } },
+    });
     if (!assignment) throw new NotFoundError('Assignment not found');
 
     const { lessonId } = assignment;
+    const storageKey =
+      assignment.type === AssignmentType.file ? assignment.fileAssignment?.storageKey ?? null : null;
 
     // Delete + order recalculation run atomically to prevent gaps under concurrency
     await prisma.$transaction(async (tx) => {
@@ -301,6 +354,135 @@ export const assignmentService = {
         );
       }
     });
+
+    // After successful DB commit, clean up S3 object (best-effort)
+    if (storageKey && s3Client && S3_BUCKET) {
+      try {
+        await s3Client.send(new DeleteObjectCommand({ Bucket: S3_BUCKET, Key: storageKey }));
+      } catch (err) {
+        logger.warn({ assignmentId, storageKey, err }, 'Failed to delete S3 object after assignment removal');
+      }
+    }
+  },
+
+  async createFileAssignment(
+    lessonId: string,
+    data: { title: string; objective?: string; file: Express.Multer.File },
+  ) {
+    await assertExists(prisma.lesson, lessonId, 'Lesson');
+
+    if (!s3Client || !S3_BUCKET) {
+      throw new AppError('S3_NOT_CONFIGURED', 'File storage is not configured', 500);
+    }
+
+    // Validate file content against declared MIME type using magic bytes
+    if (!validateMagicBytes(data.file.buffer, data.file.mimetype)) {
+      throw new ValidationError('File content does not match the declared file type', {
+        file: ['File content does not match the declared file type'],
+      });
+    }
+
+    // Sanitize filename: keep only safe characters, truncate to 255 chars
+    const safeFilename = (data.file.originalname
+      .replace(/[^\w.\-]/g, '_')
+      .slice(0, 255)) || 'upload';
+
+    const storageKey = `assignments/${randomUUID()}/${safeFilename}`;
+
+    try {
+      await s3Client.send(
+        new PutObjectCommand({
+          Bucket: S3_BUCKET,
+          Key: storageKey,
+          Body: data.file.buffer,
+          ContentType: data.file.mimetype,
+          ContentLength: data.file.size,
+        }),
+      );
+    } catch (err) {
+      logger.error({ lessonId, storageKey, err }, 'S3 upload failed');
+      throw new AppError('UPLOAD_FAILED', 'Failed to upload file to storage', 500);
+    }
+
+    let assignmentId: string;
+    try {
+      const result = await prisma.$transaction(async (tx) => {
+        const agg = await tx.assignment.aggregate({
+          where: { lessonId },
+          _max: { order: true },
+        });
+        const nextOrder = (agg._max.order ?? 0) + 1;
+
+        const assignment = await tx.assignment.create({
+          data: {
+            lessonId,
+            order: nextOrder,
+            title: data.title,
+            objective: data.objective,
+            type: AssignmentType.file,
+          },
+        });
+
+        await tx.fileAssignment.create({
+          data: {
+            assignmentId: assignment.id,
+            filename: safeFilename,
+            mimeType: data.file.mimetype,
+            sizeBytes: data.file.size,
+            storageKey,
+          },
+        });
+
+        return assignment;
+      });
+      assignmentId = result.id;
+    } catch (err) {
+      // Transaction failed — clean up orphaned S3 object before re-throwing
+      if (s3Client && S3_BUCKET) {
+        try {
+          await s3Client.send(new DeleteObjectCommand({ Bucket: S3_BUCKET, Key: storageKey }));
+        } catch (cleanupErr) {
+          logger.warn({ storageKey, cleanupErr }, 'S3 compensating delete failed — orphan object may exist');
+        }
+      }
+      throw err;
+    }
+
+    return this.findById(assignmentId, null);
+  },
+
+  async getFileStream(assignmentId: string) {
+    const assignment = await prisma.assignment.findUnique({
+      where: { id: assignmentId },
+      include: { fileAssignment: true },
+    });
+
+    if (!assignment || assignment.type !== AssignmentType.file || !assignment.fileAssignment) {
+      throw new NotFoundError('File assignment not found');
+    }
+
+    if (!s3Client || !S3_BUCKET) {
+      throw new AppError('S3_NOT_CONFIGURED', 'File storage is not configured', 500);
+    }
+
+    const { filename, mimeType, sizeBytes, storageKey } = assignment.fileAssignment;
+
+    let response;
+    try {
+      response = await s3Client.send(
+        new GetObjectCommand({ Bucket: S3_BUCKET, Key: storageKey }),
+      );
+    } catch (err) {
+      logger.error({ assignmentId, storageKey, err }, 'S3 download failed');
+      throw new AppError('DOWNLOAD_FAILED', 'Failed to retrieve file from storage', 500);
+    }
+
+    return {
+      stream: response.Body as Readable,
+      filename,
+      mimeType,
+      sizeBytes,
+    };
   },
 
   async reorder(lessonId: string, assignmentIds: string[]) {

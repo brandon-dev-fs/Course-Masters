@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Prisma } from '@prisma/client';
+import multer from 'multer';
 import { AppError } from '../../errors/AppError.js';
 import { NotFoundError } from '../../errors/NotFoundError.js';
 import { ValidationError } from '../../errors/ValidationError.js';
@@ -195,5 +196,42 @@ describe('errorHandler', () => {
     expect(call).toHaveProperty('error');
     expect(call.error).toHaveProperty('code');
     expect(call.error).toHaveProperty('message');
+  });
+
+  // ── Multer errors ─────────────────────────────────────────────────────────
+
+  describe('multer errors', () => {
+    it('returns 400 FILE_TOO_LARGE for LIMIT_FILE_SIZE multer error', () => {
+      const err = new multer.MulterError('LIMIT_FILE_SIZE');
+      callHandler(err);
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          error: expect.objectContaining({ code: 'FILE_TOO_LARGE' }),
+        }),
+      );
+    });
+
+    it('returns 400 VALIDATION_ERROR for LIMIT_UNEXPECTED_FILE multer error', () => {
+      const err = new multer.MulterError('LIMIT_UNEXPECTED_FILE');
+      callHandler(err);
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          error: expect.objectContaining({ code: 'VALIDATION_ERROR' }),
+        }),
+      );
+    });
+
+    it('returns 400 VALIDATION_ERROR for generic multer error (LIMIT_PART_COUNT)', () => {
+      const err = new multer.MulterError('LIMIT_PART_COUNT');
+      callHandler(err);
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          error: expect.objectContaining({ code: 'VALIDATION_ERROR' }),
+        }),
+      );
+    });
   });
 });

@@ -40,7 +40,7 @@ vi.mock('../../controllers/student-note.controller.js', () => ({
 }));
 vi.mock('../../controllers/assessment.controller.js', () => ({
   createAssessmentController: () => makeController(['get', 'create']),
-  assessmentController: makeController(['update', 'bulkUpdateCalculator', 'getAttempts', 'submitAttempt']),
+  assessmentController: makeController(['update', 'bulkUpdateCalculator', 'getAttempts', 'submitAttempt', 'importQuestions']),
 }));
 vi.mock('../../controllers/completion.controller.js', () => ({
   completionController: makeController(['markLessonComplete', 'removeLessonComplete', 'markUnitComplete', 'removeUnitComplete']),
@@ -58,7 +58,12 @@ vi.mock('../../controllers/assignment.controller.js', () => ({
   assignmentController: makeController([
     'getAll', 'getOne', 'create', 'update', 'remove', 'reorder', 'complete', 'uncomplete',
     'getSavedVocabEntryFlashCards', 'saveVocabEntryFlashCard', 'removeVocabEntryFlashCard',
+    'uploadFile', 'downloadFile',
   ]),
+}));
+vi.mock('../../middleware/upload.js', () => ({
+  uploadSingle: vi.fn(),
+  ALLOWED_MIME_TYPES: [],
 }));
 vi.mock('../../controllers/bookmark.controller.js', () => ({
   bookmarkController: makeController(['getOne', 'create', 'upsert', 'remove']),

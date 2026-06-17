@@ -30,6 +30,7 @@ function makeAssignment(overrides: Partial<Assignment> = {}): Assignment {
     readingAssignment: null,
     vocabAssignment: null,
     practiceProblemAssignment: null,
+    fileAssignment: null,
     ...overrides,
   };
 }

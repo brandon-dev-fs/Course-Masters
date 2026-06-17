@@ -4,13 +4,13 @@ import AssignmentSection from '../../../features/lessons/AssignmentSection.js';
 import type { AssignmentItem } from '../../../features/lessons/AssignmentSection.js';
 
 const baseItem: AssignmentItem = {
-  key: 'item-1',
-  kind: 'resource',
-  id: 'r1',
+  key: 'assignment:a1',
+  kind: 'assignment',
+  id: 'a1',
   title: 'Video: Intro',
-  isRequired: false,
+  isRequired: true,
   order: 1,
-  resourceType: 'video',
+  assignmentType: 'video',
 };
 
 const defaultProps = {
@@ -22,7 +22,6 @@ const defaultProps = {
   isLast: false,
   incompleteRequired: [],
   onToggleCompletion: vi.fn(),
-  onToggleRequired: vi.fn(),
   onPrev: vi.fn(),
   onNext: vi.fn(),
   children: <div>Content here</div>,
@@ -103,7 +102,7 @@ describe('AssignmentSection', () => {
 
   it('shows incomplete required items when locked', () => {
     const incomplete: AssignmentItem[] = [
-      { key: 'r2', kind: 'resource', id: 'r2', title: 'Required Video', isRequired: true, order: 1 },
+      { key: 'a2', kind: 'assignment', id: 'a2', title: 'Required Video', isRequired: true, order: 1, assignmentType: 'video' },
     ];
     render(<AssignmentSection {...defaultProps} isLocked={true} incompleteRequired={incomplete} />);
     expect(screen.getByText('Required Video')).toBeInTheDocument();
@@ -138,24 +137,14 @@ describe('AssignmentSection', () => {
     expect(onDelete).toHaveBeenCalledOnce();
   });
 
-  it('shows Required badge when item is required and not canEdit', () => {
-    render(<AssignmentSection {...defaultProps} item={{ ...baseItem, isRequired: true }} />);
-    expect(screen.getByText('Required')).toBeInTheDocument();
-  });
-
-  it('shows Optional badge when item is optional and not canEdit', () => {
-    render(<AssignmentSection {...defaultProps} item={{ ...baseItem, isRequired: false }} />);
-    expect(screen.getByText('Optional')).toBeInTheDocument();
-  });
-
-  it('shows toggle required button when canEdit', () => {
-    render(<AssignmentSection {...defaultProps} canEdit={true} item={{ ...baseItem, isRequired: false }} />);
-    expect(screen.getByTitle('Mark required')).toBeInTheDocument();
-  });
-
   it('does not show completion footer for quiz items', () => {
     const quizItem: AssignmentItem = { ...baseItem, kind: 'quiz', key: 'quiz', id: null, title: 'Quiz', isRequired: true };
     render(<AssignmentSection {...defaultProps} item={quizItem} />);
     expect(screen.queryByText('Mark complete')).not.toBeInTheDocument();
+  });
+
+  it('does not show Required/Optional badge — removed in refactor', () => {
+    render(<AssignmentSection {...defaultProps} item={{ ...baseItem, isRequired: true }} />);
+    expect(screen.queryByText('Required')).not.toBeInTheDocument();
   });
 });

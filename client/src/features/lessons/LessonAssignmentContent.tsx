@@ -4,6 +4,7 @@ import VideoAssignmentView from '../assignments/VideoAssignmentView.js';
 import ExternalLinkAssignmentView from '../assignments/ExternalLinkAssignmentView.js';
 import VocabAssignmentView from '../assignments/VocabAssignmentView.js';
 import PracticeProblemRunner from '../assignments/PracticeProblemRunner.js';
+import FileAssignmentView from '../assignments/FileAssignmentView.js';
 import BookmarkButton from './BookmarkButton.js';
 
 interface LessonAssignmentContentProps {
@@ -16,8 +17,6 @@ interface LessonAssignmentContentProps {
 export default function LessonAssignmentContent({
   assignment,
   onToggleAssignmentCompletion,
-  onBookmarkChange,
-  isStudent,
 }: LessonAssignmentContentProps) {
   let content: React.ReactNode = null;
 
@@ -49,22 +48,14 @@ export default function LessonAssignmentContent({
         onManualComplete={() => onToggleAssignmentCompletion({ ...assignment, completed: false })}
       />
     );
+  } else if (assignment.type === 'file' && assignment.fileAssignment) {
+    content = (
+      <FileAssignmentView
+        assignmentId={assignment.id}
+        fileAssignment={assignment.fileAssignment}
+      />
+    );
   }
 
-  if (!content) return null;
-
-  return (
-    <div className="relative">
-      {isStudent && (
-        <div className="absolute top-0 right-0 z-10">
-          <BookmarkButton
-            assignmentId={assignment.id}
-            bookmark={assignment.bookmark ?? null}
-            onBookmarkChange={(bookmark) => onBookmarkChange(assignment.id, bookmark)}
-          />
-        </div>
-      )}
-      {content}
-    </div>
-  );
+  return content;
 }

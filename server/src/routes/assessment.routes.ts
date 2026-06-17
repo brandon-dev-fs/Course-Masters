@@ -3,7 +3,7 @@ import { createAssessmentController, assessmentController } from '../controllers
 import { validate } from '../middleware/validate.js';
 import { authorize } from '../middleware/authorize.js';
 import { authenticate } from '../middleware/authenticate.js';
-import { bulkUpdateCalculatorSchema, createAssessmentSchema, submitAttemptSchema } from '../schemas/assessment.schema.js';
+import { bulkUpdateCalculatorSchema, createAssessmentSchema, importQuestionsSchema, submitAttemptSchema } from '../schemas/assessment.schema.js';
 import { requireCourseOwnership, requireStudentRole } from '../middleware/authorize-resource.js';
 
 const lessonAssessmentController = createAssessmentController('lesson_quiz', 'lessonId');
@@ -56,4 +56,11 @@ assessmentsRouter.post(
   requireStudentRole(),
   validate(submitAttemptSchema),
   assessmentController.submitAttempt,
+);
+assessmentsRouter.post(
+  '/:assessmentId/import-questions',
+  authorize('teacher', 'admin'),
+  requireCourseOwnership('assessment', (req) => req.params['assessmentId'] as string),
+  validate(importQuestionsSchema),
+  assessmentController.importQuestions,
 );

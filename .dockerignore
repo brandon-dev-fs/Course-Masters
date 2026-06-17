@@ -1,0 +1,39 @@
+# Dependencies (rebuilt inside container)
+**/node_modules
+
+# Build output (rebuilt inside container)
+**/dist
+
+# Environment files (secrets — never bake into images)
+**/.env
+**/.env.local
+**/.env.production
+
+# Test files (not needed in production images)
+**/coverage
+**/__tests__
+**/*.test.ts
+**/*.spec.ts
+**/vitest.config.ts
+**/vitest.setup.ts
+
+# Git
+.git
+.gitignore
+
+# Claude Code workflow artifacts
+.claude
+worktrees
+plans
+
+# IDE
+.vscode
+.idea
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useCallback } from 'react';
-import { Lock, ChevronDown, ToggleLeft, ToggleRight, ChevronUp, Pencil, Trash2 } from 'lucide-react';
+import { Lock, ChevronDown, ChevronUp, Pencil, Trash2 } from 'lucide-react';
 
-export type AssignmentKind = 'lessonPlan' | 'resource' | 'tool' | 'quiz' | 'assignment';
+export type AssignmentKind = 'lessonPlan' | 'quiz' | 'assignment';
 
 export interface AssignmentItem {
   key: string;
@@ -10,9 +10,8 @@ export interface AssignmentItem {
   title: string;
   isRequired: boolean;
   order: number;
-  resourceType?: 'note' | 'video' | 'lecture';
-  toolType?: 'flash_card' | 'practice_problem' | 'vocab';
   assignmentType?: import('../../api/types.js').AssignmentType;
+  mimeType?: string;
 }
 
 interface AssignmentSectionProps {
@@ -25,19 +24,19 @@ interface AssignmentSectionProps {
   incompleteRequired: AssignmentItem[];
   onVisible?: (key: string) => void;
   onToggleCompletion: () => void;
-  onToggleRequired: () => void;
   onMoveUp?: () => void;
   onMoveDown?: () => void;
   onPrev: () => void;
   onNext: () => void;
   onEdit?: () => void;
   onDelete?: () => void;
+  headerRight?: React.ReactNode;
   children: React.ReactNode;
 }
 
 export default function AssignmentSection({
   item, isComplete, isLocked, canEdit, isFirst, isLast, incompleteRequired,
-  onVisible, onToggleCompletion, onToggleRequired, onMoveUp, onMoveDown, onPrev, onNext, onEdit, onDelete, children,
+  onVisible, onToggleCompletion, onMoveUp, onMoveDown, onPrev, onNext, onEdit, onDelete, headerRight, children,
 }: AssignmentSectionProps) {
   const ref = useRef<HTMLElement>(null);
   const stableOnVisible = useCallback((key: string) => onVisible?.(key), [onVisible]);
@@ -54,9 +53,43 @@ export default function AssignmentSection({
     return () => observer.disconnect();
   }, [item.key, stableOnVisible, onVisible]);
 
-  const isQuiz = item.kind === 'quiz';
-  const showCompletion = !isQuiz;
-  const showRequired = item.kind !== 'lessonPlan' && !isQuiz;
+  const showCompletion = item.kind === 'assignment';
+
+  function getTypeLabel(): string {
+    if (item.kind === 'lessonPlan') return 'Plan';
+    if (item.kind === 'quiz') return 'Quiz';
+    if (item.assignmentType === 'note') return 'Read';
+    if (item.assignmentType === 'video') return 'Video';
+    if (item.assignmentType === 'reading') return 'Link';
+    if (item.assignmentType === 'vocab') return 'Vocab';
+    if (item.assignmentType === 'practice_problem') return 'Practice';
+    if (item.assignmentType === 'file') return 'File';
+    return 'Read';
+  }
+
+  function getFileTypeLabel(mimeType: string): string {
+    if (mimeType === 'application/pdf') return 'PDF Document';
+    if (mimeType === 'text/plain') return 'Text File';
+    if (mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') return 'Word Document';
+    if (mimeType === 'application/msword') return 'Word Document';
+    if (mimeType === 'application/vnd.openxmlformats-officedocument.presentationml.presentation') return 'PowerPoint';
+    if (mimeType === 'application/vnd.ms-powerpoint') return 'PowerPoint';
+    if (mimeType === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') return 'Excel Spreadsheet';
+    if (mimeType === 'application/vnd.ms-excel') return 'Excel Spreadsheet';
+    if (mimeType === 'image/png') return 'PNG Image';
+    if (mimeType === 'image/jpeg') return 'JPEG Image';
+    if (mimeType === 'image/gif') return 'GIF Image';
+    if (mimeType === 'image/webp') return 'WebP Image';
+    if (mimeType === 'image/svg+xml') return 'SVG Image';
+    if (mimeType.startsWith('video/')) return 'Video File';
+    if (mimeType.startsWith('audio/')) return 'Audio File';
+    if (mimeType.startsWith('image/')) return 'Image';
+    return 'File';
+  }
+
+  const displayTitle = item.assignmentType === 'file' && item.mimeType
+    ? getFileTypeLabel(item.mimeType)
+    : item.title;
 
   return (
     <section
@@ -66,83 +99,64 @@ export default function AssignmentSection({
     >
       {/* Header */}
       <div className="flex items-center justify-between gap-3 px-5 py-3 border-b border-border bg-surface-raised">
-        <div className="flex items-center gap-2 min-w-0">
-          <h2 className="text-sm font-semibold text-foreground truncate">{item.title}</h2>
-          {showRequired && (
-            canEdit ? (
-              <button
-                onClick={onToggleRequired}
-                title={item.isRequired ? 'Mark optional' : 'Mark required'}
-                className={`shrink-0 flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium transition-colors ${
-                  item.isRequired
-                    ? 'bg-primary-subtle text-primary hover:bg-primary-subtle/70'
-                    : 'bg-surface text-muted-foreground border border-border hover:border-primary/50 hover:text-foreground'
-                }`}
-              >
-                {item.isRequired
-                  ? <ToggleRight className="w-3.5 h-3.5" />
-                  : <ToggleLeft className="w-3.5 h-3.5" />
-                }
-                {item.isRequired ? 'Required' : 'Optional'}
-              </button>
-            ) : (
-              <span className={`shrink-0 px-1.5 py-0.5 rounded text-xs font-medium ${
-                item.isRequired
-                  ? 'bg-primary-subtle text-primary'
-                  : 'bg-surface text-muted-foreground border border-border'
-              }`}>
-                {item.isRequired ? 'Required' : 'Optional'}
-              </span>
-            )
+        <span className="shrink-0 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          {getTypeLabel()}
+        </span>
+        <div className="flex items-center gap-1 shrink-0 ml-auto">
+          {headerRight}
+          {canEdit && (
+            <>
+              {onEdit && (
+                <button
+                  onClick={onEdit}
+                  aria-label={`Edit ${item.title}`}
+                  className="p-1.5 rounded text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <Pencil className="w-4 h-4" />
+                </button>
+              )}
+              {onDelete && (
+                <button
+                  onClick={onDelete}
+                  aria-label={`Delete ${item.title}`}
+                  className="p-1.5 rounded text-muted-foreground hover:text-destructive transition-colors"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              )}
+              {(onMoveUp || onMoveDown) && (
+                <div className="flex items-center gap-0.5 pl-1 border-l border-border ml-1">
+                  <span className="text-xs text-muted-foreground mr-0.5">Reorder</span>
+                  <button
+                    onClick={onMoveUp}
+                    disabled={!onMoveUp}
+                    title="Move up"
+                    className="p-0.5 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                  >
+                    <ChevronUp className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={onMoveDown}
+                    disabled={!onMoveDown}
+                    title="Move down"
+                    className="p-0.5 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                  >
+                    <ChevronDown className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
+            </>
           )}
         </div>
-        {canEdit && (
-          <div className="flex items-center gap-1 shrink-0">
-            {onEdit && (
-              <button
-                onClick={onEdit}
-                aria-label={`Edit ${item.title}`}
-                className="p-1.5 rounded text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <Pencil className="w-4 h-4" />
-              </button>
-            )}
-            {onDelete && (
-              <button
-                onClick={onDelete}
-                aria-label={`Delete ${item.title}`}
-                className="p-1.5 rounded text-muted-foreground hover:text-destructive transition-colors"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
-            )}
-            {(onMoveUp || onMoveDown) && (
-              <div className="flex items-center gap-0.5 pl-1 border-l border-border ml-1">
-                <span className="text-xs text-muted-foreground mr-0.5">Reorder</span>
-                <button
-                  onClick={onMoveUp}
-                  disabled={!onMoveUp}
-                  title="Move up"
-                  className="p-0.5 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                >
-                  <ChevronUp className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={onMoveDown}
-                  disabled={!onMoveDown}
-                  title="Move down"
-                  className="p-0.5 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                >
-                  <ChevronDown className="w-4 h-4" />
-                </button>
-              </div>
-            )}
-          </div>
-        )}
+      </div>
+
+      {/* Assignment title */}
+      <div className="px-5 pt-4 pb-0">
+        <h2 className="text-base font-semibold text-foreground">{displayTitle}</h2>
       </div>
 
       {/* Content */}
-      <div className="px-5 py-5 relative">
+      <div className="px-5 py-4 relative">
         {isLocked ? (
           <div className="flex flex-col items-center gap-3 py-6 text-center">
             <Lock className="w-8 h-8 text-muted-foreground" />
