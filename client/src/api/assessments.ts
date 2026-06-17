@@ -1,5 +1,5 @@
 import { apiClient } from './client.js';
-import type { Assessment, AttemptResult, AttemptSummary, PaginatedAttempts } from './types.js';
+import type { Assessment, AssessmentQuestion, AttemptResult, AttemptSummary, PaginatedAttempts } from './types.js';
 
 interface QuestionInput {
   type?: string;
@@ -42,4 +42,7 @@ export const assessmentsApi = {
     data: { questionIds: string[]; calculatorEnabled: boolean },
   ) =>
     apiClient.patch<Assessment>(`/assessments/${assessmentId}/questions/calculator`, data),
+
+  importQuestions: (assessmentId: string, body: { practiceProblemAssignmentId: string }) =>
+    apiClient.post<AssessmentQuestion[]>(`/assessments/${assessmentId}/import-questions`, body),
 };

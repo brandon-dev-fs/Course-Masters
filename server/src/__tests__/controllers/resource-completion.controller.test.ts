@@ -14,6 +14,8 @@ import { makeReq, makeRes, makeNext } from '../mocks/express.js';
 const mockGetByLesson = resourceCompletionService.getByLesson as ReturnType<typeof vi.fn>;
 const mockToggle = resourceCompletionService.toggle as ReturnType<typeof vi.fn>;
 
+const ASSIGNMENT_ID = '550e8400-e29b-41d4-a716-446655440000';
+
 async function callHandler(handler: Function, req: ReturnType<typeof makeReq>) {
   const res = makeRes();
   const next = makeNext();
@@ -28,7 +30,7 @@ describe('resourceCompletionController.getCompletions', () => {
   beforeEach(() => vi.clearAllMocks());
 
   it('returns completions for the lesson and user', async () => {
-    const data = [{ resourceId: 'r1', completed: true }];
+    const data = { completions: [{ assignmentId: ASSIGNMENT_ID, completedAt: new Date() }] };
     mockGetByLesson.mockResolvedValue(data);
     const req = makeReq({
       params: { lessonId: 'l1' },
@@ -52,30 +54,16 @@ describe('resourceCompletionController.getCompletions', () => {
 describe('resourceCompletionController.toggleCompletion', () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it('toggles resource completion and responds with json', async () => {
-    const data = { resourceId: 'r1', completed: true };
+  it('toggles assignment completion and responds with json', async () => {
+    const data = { completions: [] };
     mockToggle.mockResolvedValue(data);
     const req = makeReq({
       params: { lessonId: 'l1' },
-      body: { type: 'resource', targetId: 'r1' },
+      body: { assignmentId: ASSIGNMENT_ID },
       user: { id: 'user1', role: 'student' },
     });
     const { res, next } = await callHandler(resourceCompletionController.toggleCompletion, req);
-    expect(mockToggle).toHaveBeenCalledWith('l1', 'user1', 'resource', 'r1');
-    expect(res.json).toHaveBeenCalledWith(data);
-    expect(next).not.toHaveBeenCalled();
-  });
-
-  it('toggles tool completion and responds with json', async () => {
-    const data = { toolId: 't1', completed: false };
-    mockToggle.mockResolvedValue(data);
-    const req = makeReq({
-      params: { lessonId: 'l1' },
-      body: { type: 'tool', targetId: 't1' },
-      user: { id: 'user1', role: 'student' },
-    });
-    const { res, next } = await callHandler(resourceCompletionController.toggleCompletion, req);
-    expect(mockToggle).toHaveBeenCalledWith('l1', 'user1', 'tool', 't1');
+    expect(mockToggle).toHaveBeenCalledWith('l1', 'user1', ASSIGNMENT_ID);
     expect(res.json).toHaveBeenCalledWith(data);
     expect(next).not.toHaveBeenCalled();
   });
@@ -85,7 +73,7 @@ describe('resourceCompletionController.toggleCompletion', () => {
     mockToggle.mockRejectedValue(err);
     const req = makeReq({
       params: { lessonId: 'l1' },
-      body: { type: 'resource', targetId: 'r1' },
+      body: { assignmentId: ASSIGNMENT_ID },
       user: { id: 'user1', role: 'student' },
     });
     const { next } = await callHandler(resourceCompletionController.toggleCompletion, req);

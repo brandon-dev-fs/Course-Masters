@@ -53,9 +53,6 @@ const ASSESSMENT_ID = 'a-1';
 
 describe('assessmentService.submitAttempt', () => {
   beforeEach(() => {
-    // Default: no required resources or tools
-    prismaMock.lessonResource.findMany.mockResolvedValue([]);
-    prismaMock.lessonTool.findMany.mockResolvedValue([]);
     // Default: create attempt returns a stub
     prismaMock.assessmentAttempt.create.mockResolvedValue({
       id: 'attempt-1',
@@ -407,133 +404,6 @@ describe('assessmentService.submitAttempt', () => {
   });
 
   // -------------------------------------------------------------------------
-  // Required assignments gate
-  // -------------------------------------------------------------------------
-
-  describe('required assignments gate', () => {
-    it('throws REQUIRED_ASSIGNMENTS_INCOMPLETE when a required resource is not completed', async () => {
-      const questions = [
-        makeQuestion({ type: 'multiple_choice', content: { correctIndex: 0 } }),
-      ];
-      prismaMock.assessment.findFirst.mockResolvedValue(
-        makeAssessment({ type: 'lesson_quiz', lessonId: 'lesson-1', questions }),
-      );
-      // One required resource exists
-      prismaMock.lessonResource.findMany.mockResolvedValue([{ id: 'resource-1' }]);
-      prismaMock.lessonTool.findMany.mockResolvedValue([]);
-      // But the user has no completions
-      prismaMock.lessonResourceCompletion.findMany.mockResolvedValue([]);
-      prismaMock.lessonToolCompletion.findMany.mockResolvedValue([]);
-
-      await expect(
-        assessmentService.submitAttempt(ASSESSMENT_ID, { answers: [0] }, USER_ID),
-      ).rejects.toMatchObject({
-        code: 'REQUIRED_ASSIGNMENTS_INCOMPLETE',
-        statusCode: 400,
-      });
-    });
-
-    it('throws REQUIRED_ASSIGNMENTS_INCOMPLETE when a required tool is not completed', async () => {
-      const questions = [
-        makeQuestion({ type: 'multiple_choice', content: { correctIndex: 0 } }),
-      ];
-      prismaMock.assessment.findFirst.mockResolvedValue(
-        makeAssessment({ type: 'lesson_quiz', lessonId: 'lesson-1', questions }),
-      );
-      // One required tool exists, no required resources
-      prismaMock.lessonResource.findMany.mockResolvedValue([]);
-      prismaMock.lessonTool.findMany.mockResolvedValue([{ id: 'tool-1' }]);
-      // Tool not completed
-      prismaMock.lessonResourceCompletion.findMany.mockResolvedValue([]);
-      prismaMock.lessonToolCompletion.findMany.mockResolvedValue([]);
-
-      await expect(
-        assessmentService.submitAttempt(ASSESSMENT_ID, { answers: [0] }, USER_ID),
-      ).rejects.toMatchObject({
-        code: 'REQUIRED_ASSIGNMENTS_INCOMPLETE',
-        statusCode: 400,
-      });
-    });
-
-    it('allows submission when all required resources are completed', async () => {
-      const questions = [
-        makeQuestion({ type: 'multiple_choice', content: { correctIndex: 0 } }),
-      ];
-      prismaMock.assessment.findFirst.mockResolvedValue(
-        makeAssessment({ type: 'lesson_quiz', lessonId: 'lesson-1', questions }),
-      );
-      // One required resource
-      prismaMock.lessonResource.findMany.mockResolvedValue([{ id: 'resource-1' }]);
-      prismaMock.lessonTool.findMany.mockResolvedValue([]);
-      // Resource completed
-      prismaMock.lessonResourceCompletion.findMany.mockResolvedValue([{ resourceId: 'resource-1' }]);
-      prismaMock.lessonToolCompletion.findMany.mockResolvedValue([]);
-      prismaMock.assessmentAttempt.create.mockResolvedValue({
-        id: 'attempt-1', assessmentId: ASSESSMENT_ID, userId: USER_ID,
-        score: 1, passed: true, createdAt: new Date(),
-      });
-
-      const result = await assessmentService.submitAttempt(
-        ASSESSMENT_ID,
-        { answers: [0] },
-        USER_ID,
-      );
-
-      expect(result.correctCount).toBe(1);
-    });
-
-    it('skips required-assignment check for non-lesson_quiz assessment types', async () => {
-      // unit_quiz should not check required resources
-      const questions = [
-        makeQuestion({ type: 'multiple_choice', content: { correctIndex: 0 } }),
-      ];
-      prismaMock.assessment.findFirst.mockResolvedValue(
-        makeAssessment({ type: 'unit_quiz', lessonId: null, unitId: 'unit-1', questions }),
-      );
-      prismaMock.assessmentAttempt.create.mockResolvedValue({
-        id: 'attempt-1', assessmentId: ASSESSMENT_ID, userId: USER_ID,
-        score: 1, passed: true, createdAt: new Date(),
-      });
-
-      // lessonResource/lessonTool findMany should NOT be called for unit_quiz
-      const result = await assessmentService.submitAttempt(
-        ASSESSMENT_ID,
-        { answers: [0] },
-        USER_ID,
-      );
-
-      expect(result.correctCount).toBe(1);
-      expect(prismaMock.lessonResource.findMany).not.toHaveBeenCalled();
-    });
-
-    it('skips gate when there are no required resources or tools', async () => {
-      // lesson_quiz but no required resources/tools
-      const questions = [
-        makeQuestion({ type: 'multiple_choice', content: { correctIndex: 0 } }),
-      ];
-      prismaMock.assessment.findFirst.mockResolvedValue(
-        makeAssessment({ type: 'lesson_quiz', lessonId: 'lesson-1', questions }),
-      );
-      prismaMock.lessonResource.findMany.mockResolvedValue([]);
-      prismaMock.lessonTool.findMany.mockResolvedValue([]);
-      prismaMock.assessmentAttempt.create.mockResolvedValue({
-        id: 'attempt-1', assessmentId: ASSESSMENT_ID, userId: USER_ID,
-        score: 1, passed: true, createdAt: new Date(),
-      });
-
-      const result = await assessmentService.submitAttempt(
-        ASSESSMENT_ID,
-        { answers: [0] },
-        USER_ID,
-      );
-
-      expect(result.correctCount).toBe(1);
-      // Completions should not have been queried since allRequiredIds is empty
-      expect(prismaMock.lessonResourceCompletion.findMany).not.toHaveBeenCalled();
-    });
-  });
-
-  // -------------------------------------------------------------------------
   // Return value shape
   // -------------------------------------------------------------------------
 
@@ -777,5 +647,165 @@ describe('assessmentService.bulkUpdateCalculator', () => {
     await expect(
       assessmentService.bulkUpdateCalculator(ASSESSMENT_ID, { questionIds: ['q-1'], calculatorEnabled: true }),
     ).rejects.toThrow(NotFoundError);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// importQuestions
+// ---------------------------------------------------------------------------
+
+const PP_ASSIGNMENT_ID = 'pp-assign-1';
+const COURSE_ID = 'course-1';
+
+function makePPAssignment(overrides: Record<string, unknown> = {}) {
+  return {
+    id: PP_ASSIGNMENT_ID,
+    assignmentId: 'assign-1',
+    passingPercentage: null,
+    assignment: {
+      id: 'assign-1',
+      lessonId: 'lesson-1',
+      lesson: {
+        id: 'lesson-1',
+        unitId: 'unit-1',
+        unit: { courseId: COURSE_ID },
+      },
+    },
+    questions: [],
+    ...overrides,
+  };
+}
+
+describe('assessmentService.importQuestions', () => {
+  const mockAssessment = {
+    id: ASSESSMENT_ID,
+    type: 'lesson_quiz' as const,
+    lessonId: 'lesson-1',
+    unitId: null,
+    courseId: null,
+    deletedAt: null,
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    prismaMock.assessmentQuestion.aggregate.mockResolvedValue({ _max: { order: null } } as never);
+    prismaMock.$transaction.mockImplementation((queries: unknown) =>
+      Promise.all(queries as Promise<unknown>[]),
+    );
+  });
+
+  it('throws NotFoundError when assessment does not exist', async () => {
+    prismaMock.assessment.findFirst.mockResolvedValue(null);
+
+    await expect(
+      assessmentService.importQuestions(ASSESSMENT_ID, PP_ASSIGNMENT_ID),
+    ).rejects.toThrow(NotFoundError);
+  });
+
+  it('throws NotFoundError when practice problem assignment does not exist', async () => {
+    prismaMock.assessment.findFirst.mockResolvedValue(mockAssessment as never);
+    prismaMock.lesson.findUnique.mockResolvedValue({ unit: { courseId: COURSE_ID } } as never);
+    prismaMock.practiceProblemAssignment.findUnique.mockResolvedValue(null);
+
+    await expect(
+      assessmentService.importQuestions(ASSESSMENT_ID, PP_ASSIGNMENT_ID),
+    ).rejects.toThrow(NotFoundError);
+  });
+
+  it('throws FORBIDDEN when PP assignment belongs to a different course', async () => {
+    prismaMock.assessment.findFirst.mockResolvedValue(mockAssessment as never);
+    prismaMock.lesson.findUnique.mockResolvedValue({ unit: { courseId: COURSE_ID } } as never);
+    prismaMock.practiceProblemAssignment.findUnique.mockResolvedValue(
+      makePPAssignment({
+        assignment: {
+          id: 'assign-1',
+          lessonId: 'lesson-other',
+          lesson: { id: 'lesson-other', unitId: 'unit-other', unit: { courseId: 'different-course' } },
+        },
+      }) as never,
+    );
+
+    await expect(
+      assessmentService.importQuestions(ASSESSMENT_ID, PP_ASSIGNMENT_ID),
+    ).rejects.toMatchObject({ code: 'FORBIDDEN', statusCode: 403 });
+  });
+
+  it('returns empty array when PP assignment has no questions', async () => {
+    prismaMock.assessment.findFirst.mockResolvedValue(mockAssessment as never);
+    prismaMock.lesson.findUnique.mockResolvedValue({ unit: { courseId: COURSE_ID } } as never);
+    prismaMock.practiceProblemAssignment.findUnique.mockResolvedValue(
+      makePPAssignment({ questions: [] }) as never,
+    );
+    prismaMock.$transaction.mockResolvedValue([]);
+
+    const result = await assessmentService.importQuestions(ASSESSMENT_ID, PP_ASSIGNMENT_ID);
+
+    expect(result).toEqual([]);
+  });
+
+  it('creates questions with order starting after existing max order', async () => {
+    const ppQuestion = {
+      id: 'ppq-1',
+      practiceProblemAssignmentId: PP_ASSIGNMENT_ID,
+      order: 0,
+      type: 'multiple_choice' as const,
+      content: { question: 'What is 2+2?', options: ['3', '4'], correctIndex: 1 },
+    };
+    prismaMock.assessment.findFirst.mockResolvedValue(mockAssessment as never);
+    prismaMock.lesson.findUnique.mockResolvedValue({ unit: { courseId: COURSE_ID } } as never);
+    prismaMock.practiceProblemAssignment.findUnique.mockResolvedValue(
+      makePPAssignment({ questions: [ppQuestion] }) as never,
+    );
+    // Existing assessment has questions up to order 2
+    prismaMock.assessmentQuestion.aggregate.mockResolvedValue({ _max: { order: 2 } } as never);
+    const createdQuestion = {
+      id: 'new-q-1',
+      assessmentId: ASSESSMENT_ID,
+      type: 'multiple_choice',
+      question: 'What is 2+2?',
+      content: ppQuestion.content,
+      order: 3,
+      calculatorEnabled: false,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    prismaMock.$transaction.mockResolvedValue([createdQuestion]);
+
+    const result = await assessmentService.importQuestions(ASSESSMENT_ID, PP_ASSIGNMENT_ID);
+
+    expect(result).toHaveLength(1);
+    expect(result[0]).toMatchObject({ order: 3 });
+  });
+
+  it('extracts question text and calculatorEnabled from content', async () => {
+    const ppQuestion = {
+      id: 'ppq-1',
+      practiceProblemAssignmentId: PP_ASSIGNMENT_ID,
+      order: 0,
+      type: 'multiple_choice' as const,
+      content: { question: 'Extracted question?', options: ['A'], correctIndex: 0, calculatorEnabled: true },
+    };
+    prismaMock.assessment.findFirst.mockResolvedValue(mockAssessment as never);
+    prismaMock.lesson.findUnique.mockResolvedValue({ unit: { courseId: COURSE_ID } } as never);
+    prismaMock.practiceProblemAssignment.findUnique.mockResolvedValue(
+      makePPAssignment({ questions: [ppQuestion] }) as never,
+    );
+    prismaMock.assessmentQuestion.aggregate.mockResolvedValue({ _max: { order: null } } as never);
+    prismaMock.assessmentQuestion.create.mockResolvedValue({} as never);
+    prismaMock.$transaction.mockImplementation(async (queries: unknown) => {
+      return Promise.all((queries as Promise<unknown>[]));
+    });
+
+    await assessmentService.importQuestions(ASSESSMENT_ID, PP_ASSIGNMENT_ID);
+
+    expect(prismaMock.assessmentQuestion.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          question: 'Extracted question?',
+          calculatorEnabled: true,
+          order: 0,
+        }),
+      }),
+    );
   });
 });

@@ -23,6 +23,7 @@ const baseAssignment: Assignment = {
   readingAssignment: null,
   vocabAssignment: null,
   practiceProblemAssignment: null,
+  fileAssignment: null,
 };
 
 describe('LessonAssignmentContent', () => {

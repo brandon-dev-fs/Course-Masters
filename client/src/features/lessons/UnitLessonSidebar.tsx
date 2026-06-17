@@ -184,7 +184,7 @@ export default function UnitLessonSidebar({
       <nav
         id="unit-lesson-sidebar"
         aria-label="Unit lessons"
-        className={`hidden lg:flex flex-col shrink-0 border-r border-border bg-surface overflow-y-auto transition-all duration-200 ease-in-out ${
+        className={`hidden lg:flex flex-col shrink-0 border-r border-border bg-surface overflow-y-auto overflow-x-hidden transition-all duration-200 ease-in-out ${
           collapsed ? 'w-9' : 'w-44'
         }`}
       >
@@ -203,8 +203,7 @@ export default function UnitLessonSidebar({
         ) : (
           <>
             {desktopHeader}
-            {/* min-w matches parent w-44 = 176px to prevent content reflow during collapse */}
-            <div className="py-2 min-w-[176px]">
+            <div className="py-2">
               <div className="flex flex-col gap-0.5 px-2">
                 {lessonList}
                 {unitTestItem && (

@@ -89,6 +89,7 @@ describe('AssignmentFormModal', () => {
       readingAssignment: null,
       vocabAssignment: null,
       practiceProblemAssignment: null,
+      fileAssignment: null,
       videoAssignment: { id: 'va1', url: 'https://youtube.com/watch?v=abc', title: 'Video Title' },
     };
     renderModal({ initial });

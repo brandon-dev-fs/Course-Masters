@@ -22,6 +22,23 @@ function makeNoteBody(heading: string, ...paragraphs: string[]) {
 	};
 }
 
+function makeAssignmentNote(heading: string, ...paragraphs: string[]) {
+	return {
+		type: 'doc',
+		content: [
+			{
+				type: 'heading',
+				attrs: { level: 2 },
+				content: [{ type: 'text', text: heading }],
+			},
+			...paragraphs.map((p) => ({
+				type: 'paragraph',
+				content: [{ type: 'text', text: p }],
+			})),
+		],
+	};
+}
+
 function makePlanContent(heading: string, bullets: string[]) {
 	return {
 		type: 'doc',
@@ -187,131 +204,94 @@ async function main() {
 		},
 	});
 
-	const grammarL1R1 = await prisma.lessonResource.create({
+	const grammarL1A1 = await prisma.assignment.create({
 		data: {
-			type: 'video',
-			title: 'Introduction to Nouns',
-			content: { url: 'https://www.youtube.com/watch?v=mn_HkWMnW0A' },
+			lessonId: grammarL1.id,
 			order: 1,
-			lessonId: grammarL1.id,
+			title: 'Introduction to Nouns',
+			type: 'video',
+			videoAssignment: {
+				create: {
+					url: 'https://www.youtube.com/watch?v=mn_HkWMnW0A',
+					title: 'Introduction to Nouns',
+				},
+			},
 		},
 	});
-	const grammarL1R2 = await prisma.lessonResource.create({
+	const grammarL1A2 = await prisma.assignment.create({
 		data: {
-			type: 'note',
-			title: 'What Is a Noun?',
-			content: makeNoteBody(
-				'What Is a Noun?',
-				'A noun names a person (teacher, Maria), a place (school, Paris), a thing (desk, pencil), or an idea (freedom, happiness). Nouns can be common (generic) or proper (specific, always capitalized).',
-				'Collective nouns name groups: team, class, flock. Abstract nouns name intangible concepts: courage, justice, knowledge.',
-			),
+			lessonId: grammarL1.id,
 			order: 2,
-			lessonId: grammarL1.id,
+			title: 'What Is a Noun?',
+			type: 'note',
+			noteAssignment: {
+				create: {
+					content: makeAssignmentNote(
+						'What Is a Noun?',
+						'A noun names a person (teacher, Maria), a place (school, Paris), a thing (desk, pencil), or an idea (freedom, happiness). Nouns can be common (generic) or proper (specific, always capitalized).',
+						'Collective nouns name groups: team, class, flock. Abstract nouns name intangible concepts: courage, justice, knowledge.',
+					),
+				},
+			},
 		},
 	});
-	const grammarL1R3 = await prisma.lessonResource.create({
+	const grammarL1A3 = await prisma.assignment.create({
 		data: {
-			type: 'lecture',
-			title: 'Pronoun Reference and Agreement',
-			content: makeNoteBody(
-				'Pronoun Reference and Agreement',
-				'A pronoun takes the place of a noun to avoid repetition. The noun it replaces is called its antecedent. Personal pronouns: I/me, you, he/him, she/her, it, we/us, they/them.',
-				'A pronoun must agree with its antecedent in number (singular/plural) and gender. Example: "Maria left early; she had a meeting." (she → Maria)',
-			),
-			order: 3,
 			lessonId: grammarL1.id,
+			order: 3,
+			title: 'Pronoun Reference and Agreement',
+			type: 'note',
+			noteAssignment: {
+				create: {
+					content: makeAssignmentNote(
+						'Pronoun Reference and Agreement',
+						'A pronoun takes the place of a noun to avoid repetition. The noun it replaces is called its antecedent. Personal pronouns: I/me, you, he/him, she/her, it, we/us, they/them.',
+						'A pronoun must agree with its antecedent in number (singular/plural) and gender. Example: "Maria left early; she had a meeting." (she → Maria)',
+					),
+				},
+			},
 		},
-	});
-
-	const grammarL1Tools = await prisma.lessonTool.createManyAndReturn({
-		data: [
-			{
-				type: 'flash_card',
-				title: 'Common vs. Proper Noun',
-				content: {
-					front: 'What is the difference between a common noun and a proper noun?',
-					back: 'A common noun names a general person, place, or thing (city, teacher). A proper noun names a specific one and is always capitalized (Paris, Mr. Rivera).',
-				},
-				order: 1,
-				lessonId: grammarL1.id,
-			},
-			{
-				type: 'flash_card',
-				title: 'What is a pronoun?',
-				content: {
-					front: 'What is a pronoun, and what is its antecedent?',
-					back: 'A pronoun replaces a noun. Its antecedent is the noun it refers to. Example: "Maria left early; she had a meeting." (she → Maria)',
-				},
-				order: 2,
-				lessonId: grammarL1.id,
-			},
-			{
-				type: 'vocab',
-				title: 'Noun',
-				content: {
-					term: 'Noun',
-					definition:
-						'A word that names a person, place, thing, or idea. Nouns can be common (book) or proper (London).',
-				},
-				order: 3,
-				lessonId: grammarL1.id,
-			},
-			{
-				type: 'vocab',
-				title: 'Pronoun',
-				content: {
-					term: 'Pronoun',
-					definition:
-						'A word that takes the place of a noun to avoid repetition, e.g. he, she, it, they, who.',
-				},
-				order: 4,
-				lessonId: grammarL1.id,
-			},
-			{
-				type: 'practice_problem',
-				title: 'Which is a proper noun?',
-				content: {
-					question: 'Which of the following is a proper noun?',
-					options: ['city', 'Paris', 'river', 'mountain'],
-					correctIndex: 1,
-				},
-				order: 5,
-				lessonId: grammarL1.id,
-			},
-		],
 	});
 
 	await prisma.assignment.create({
 		data: {
 			lessonId: grammarL1.id,
-			order: 1,
+			order: 4,
 			title: 'Parts of Speech Vocabulary',
 			objective: 'Review the key terms introduced in this lesson.',
 			type: 'vocab',
 			vocabAssignment: {
 				create: {
-					entries: [
-						{
-							term: 'Noun',
-							definition:
-								'A word naming a person, place, thing, or idea.',
+					entries: {
+						createMany: {
+							data: [
+								{
+									order: 1,
+									term: 'Noun',
+									definition:
+										'A word naming a person, place, thing, or idea.',
+								},
+								{
+									order: 2,
+									term: 'Pronoun',
+									definition:
+										'A word that replaces a noun to avoid repetition.',
+								},
+								{
+									order: 3,
+									term: 'Antecedent',
+									definition:
+										'The noun that a pronoun refers to or replaces.',
+								},
+								{
+									order: 4,
+									term: 'Proper Noun',
+									definition:
+										'A specific noun that is always capitalized, such as London or Mr. Rivera.',
+								},
+							],
 						},
-						{
-							term: 'Pronoun',
-							definition:
-								'A word that replaces a noun to avoid repetition.',
-						},
-						{
-							term: 'Antecedent',
-							definition:
-								'The noun that a pronoun refers to or replaces.',
-						},
-						{
-							term: 'Proper Noun',
-							definition:
-								'A specific noun that is always capitalized, such as London or Mr. Rivera.',
-						},
-					],
+					},
 				},
 			},
 		},
@@ -319,7 +299,7 @@ async function main() {
 	await prisma.assignment.create({
 		data: {
 			lessonId: grammarL1.id,
-			order: 2,
+			order: 5,
 			title: 'Reading: Nouns and Pronouns in Context',
 			objective: 'Read an overview of English nouns and pronouns.',
 			type: 'reading',
@@ -392,110 +372,55 @@ async function main() {
 		},
 	});
 
-	const grammarL2R1 = await prisma.lessonResource.create({
+	const grammarL2A1 = await prisma.assignment.create({
 		data: {
-			type: 'note',
-			title: 'Verb Types and Tense',
-			content: makeNoteBody(
-				'Verb Types and Tense',
-				'Action verbs express physical or mental action: run, think, write. Linking verbs connect the subject to a description: is, seems, appears, becomes. Helping verbs (auxiliaries) combine with a main verb: has written, will run, is thinking.',
-				'Tense shows when an action occurs. Simple present: She writes. Simple past: She wrote. Simple future: She will write. Perfect forms use "have/has/had" + past participle.',
-			),
+			lessonId: grammarL2.id,
 			order: 1,
-			lessonId: grammarL2.id,
+			title: 'Verb Types and Tense',
+			type: 'note',
+			noteAssignment: {
+				create: {
+					content: makeAssignmentNote(
+						'Verb Types and Tense',
+						'Action verbs express physical or mental action: run, think, write. Linking verbs connect the subject to a description: is, seems, appears, becomes. Helping verbs (auxiliaries) combine with a main verb: has written, will run, is thinking.',
+						'Tense shows when an action occurs. Simple present: She writes. Simple past: She wrote. Simple future: She will write. Perfect forms use "have/has/had" + past participle.',
+					),
+				},
+			},
 		},
 	});
-	const grammarL2R2 = await prisma.lessonResource.create({
+	const grammarL2A2 = await prisma.assignment.create({
 		data: {
-			type: 'video',
-			title: 'Adjectives Explained',
-			content: { url: 'https://www.youtube.com/watch?v=N0r3oBhA_Sk' },
-			order: 2,
 			lessonId: grammarL2.id,
+			order: 2,
+			title: 'Adjectives Explained',
+			type: 'video',
+			videoAssignment: {
+				create: {
+					url: 'https://www.youtube.com/watch?v=N0r3oBhA_Sk',
+					title: 'Adjectives Explained',
+				},
+			},
 		},
-	});
-
-	const grammarL2Tools = await prisma.lessonTool.createManyAndReturn({
-		data: [
-			{
-				type: 'flash_card',
-				title: 'Linking verb example',
-				content: {
-					front: 'Is "seems" an action verb or a linking verb?',
-					back: 'Linking verb. It connects the subject to a description without expressing physical or mental action. Example: "The soup seems hot."',
-				},
-				order: 1,
-				lessonId: grammarL2.id,
-			},
-			{
-				type: 'flash_card',
-				title: 'Comparative vs. superlative',
-				content: {
-					front: 'What is the difference between comparative and superlative adjectives?',
-					back: 'Comparative (-er or "more") compares two things: taller, more careful. Superlative (-est or "most") ranks one among three or more: tallest, most careful.',
-				},
-				order: 2,
-				lessonId: grammarL2.id,
-			},
-			{
-				type: 'vocab',
-				title: 'Verb',
-				content: {
-					term: 'Verb',
-					definition:
-						'A word that expresses action (run, write) or a state of being (is, seems). Every complete sentence requires a verb.',
-				},
-				order: 3,
-				lessonId: grammarL2.id,
-			},
-			{
-				type: 'vocab',
-				title: 'Adjective',
-				content: {
-					term: 'Adjective',
-					definition:
-						'A word that modifies a noun or pronoun by describing, identifying, or quantifying it. Example: the tall building, three apples.',
-				},
-				order: 4,
-				lessonId: grammarL2.id,
-			},
-		],
 	});
 
 	await prisma.assignment.create({
 		data: {
 			lessonId: grammarL2.id,
-			order: 1,
+			order: 3,
 			title: 'Verb and Adjective Notes',
 			objective:
 				'Summarize the key distinctions between verb types and adjective forms in your own words.',
 			type: 'note',
 			noteAssignment: {
 				create: {
-					content: {
-						type: 'doc',
-						content: [
-							{
-								type: 'heading',
-								attrs: { level: 2 },
-								content: [
-									{
-										type: 'text',
-										text: 'Verb and Adjective Notes',
-									},
-								],
-							},
-							{
-								type: 'paragraph',
-								content: [
-									{
-										type: 'text',
-										text: 'Write your notes about verb types (action, linking, helping) and adjective comparisons here.',
-									},
-								],
-							},
-						],
-					},
+					content: makeAssignmentNote(
+						'Verb and Adjective Notes',
+						'Verbs fall into three categories. Action verbs describe physical or mental activity: run, think, create. Linking verbs connect the subject to a description or state: is, seems, appears, becomes, feels. Helping (auxiliary) verbs combine with a main verb to form tenses or moods: has written, will run, is thinking, could have gone.',
+						'Tense shifts show time. Simple present: "She reads." Simple past: "She read." Simple future: "She will read." Perfect forms use have/has/had plus the past participle: "She has read," "She had read." Always keep tense consistent within a passage unless the time frame genuinely changes.',
+						'Adjectives modify nouns and pronouns by answering which one, what kind, or how many. Comparative adjectives compare two things and typically add -er or use more: taller, more difficult. Superlative adjectives compare three or more and add -est or use most: tallest, most difficult. Irregular forms must be memorized: good → better → best; bad → worse → worst.',
+						'Predicate adjectives follow linking verbs and describe the subject: "The sky is blue." Attributive adjectives appear directly before the noun: "the blue sky." Both are grammatically correct; placement affects rhythm and emphasis.',
+					),
 				},
 			},
 		},
@@ -503,7 +428,7 @@ async function main() {
 	await prisma.assignment.create({
 		data: {
 			lessonId: grammarL2.id,
-			order: 2,
+			order: 4,
 			title: 'Verb and Adjective Practice',
 			objective:
 				'Test your understanding of verb types and adjective forms.',
@@ -691,70 +616,42 @@ async function main() {
 		},
 	});
 
-	const grammarL3R1 = await prisma.lessonResource.create({
+	const grammarL3A1 = await prisma.assignment.create({
 		data: {
-			type: 'video',
-			title: 'Subjects and Predicates',
-			content: { url: 'https://www.youtube.com/watch?v=BuCBdUuvGso' },
+			lessonId: grammarL3.id,
 			order: 1,
-			lessonId: grammarL3.id,
+			title: 'Subjects and Predicates',
+			type: 'video',
+			videoAssignment: {
+				create: {
+					url: 'https://www.youtube.com/watch?v=BuCBdUuvGso',
+					title: 'Subjects and Predicates',
+				},
+			},
 		},
 	});
-	const grammarL3R2 = await prisma.lessonResource.create({
+	const grammarL3A2 = await prisma.assignment.create({
 		data: {
-			type: 'lecture',
-			title: 'Subject-Verb Agreement',
-			content: makeNoteBody(
-				'Subject-Verb Agreement',
-				'The subject and verb of a sentence must agree in number. A singular subject takes a singular verb; a plural subject takes a plural verb. Example: "The dog runs." vs. "The dogs run."',
-				'Compound subjects joined by "and" take a plural verb. Compound subjects joined by "or" or "nor" take a verb that agrees with the nearer subject.',
-			),
-			order: 2,
 			lessonId: grammarL3.id,
+			order: 2,
+			title: 'Subject-Verb Agreement',
+			type: 'note',
+			noteAssignment: {
+				create: {
+					content: makeAssignmentNote(
+						'Subject-Verb Agreement',
+						'The subject and verb of a sentence must agree in number. A singular subject takes a singular verb; a plural subject takes a plural verb. Example: "The dog runs." vs. "The dogs run."',
+						'Compound subjects joined by "and" take a plural verb. Compound subjects joined by "or" or "nor" take a verb that agrees with the nearer subject.',
+					),
+				},
+			},
 		},
-	});
-
-	const grammarL3Tools = await prisma.lessonTool.createManyAndReturn({
-		data: [
-			{
-				type: 'flash_card',
-				title: 'What is the simple subject?',
-				content: {
-					front: 'What is the simple subject of a sentence?',
-					back: 'The main noun or pronoun that the sentence is about, without any modifiers. In "The tall building collapsed," the simple subject is "building."',
-				},
-				order: 1,
-				lessonId: grammarL3.id,
-			},
-			{
-				type: 'vocab',
-				title: 'Subject',
-				content: {
-					term: 'Subject',
-					definition:
-						'The part of a sentence that tells who or what the sentence is about. The simple subject is the main noun or pronoun.',
-				},
-				order: 2,
-				lessonId: grammarL3.id,
-			},
-			{
-				type: 'vocab',
-				title: 'Predicate',
-				content: {
-					term: 'Predicate',
-					definition:
-						'The part of a sentence that tells what the subject does or is. The simple predicate is the main verb.',
-				},
-				order: 3,
-				lessonId: grammarL3.id,
-			},
-		],
 	});
 
 	await prisma.assignment.create({
 		data: {
 			lessonId: grammarL3.id,
-			order: 1,
+			order: 3,
 			title: 'Video: Sentence Diagramming Basics',
 			objective:
 				'Watch a demonstration of how to visually diagram subject-predicate relationships.',
@@ -832,111 +729,58 @@ async function main() {
 		},
 	});
 
-	await prisma.lessonResource.create({
+	await prisma.assignment.create({
 		data: {
-			type: 'note',
-			title: 'Clauses: Independent and Dependent',
-			content: makeNoteBody(
-				'Clauses: Independent and Dependent',
-				'An independent clause can stand alone as a complete sentence: "She studied hard." A dependent clause cannot stand alone; it begins with a subordinating conjunction: "Because she studied hard..."',
-				'Common subordinating conjunctions: because, although, when, if, since, unless, while, after, before. Always attach a dependent clause to an independent clause.',
-			),
+			lessonId: grammarL4.id,
 			order: 1,
-			lessonId: grammarL4.id,
+			title: 'Clauses: Independent and Dependent',
+			type: 'note',
+			noteAssignment: {
+				create: {
+					content: makeAssignmentNote(
+						'Clauses: Independent and Dependent',
+						'An independent clause can stand alone as a complete sentence: "She studied hard." A dependent clause cannot stand alone; it begins with a subordinating conjunction: "Because she studied hard..."',
+						'Common subordinating conjunctions: because, although, when, if, since, unless, while, after, before. Always attach a dependent clause to an independent clause.',
+					),
+				},
+			},
 		},
 	});
-	await prisma.lessonResource.create({
+	await prisma.assignment.create({
 		data: {
-			type: 'lecture',
-			title: 'Phrases vs. Clauses',
-			content: makeNoteBody(
-				'Phrases vs. Clauses',
-				'A phrase is a group of words without both a subject and a verb. Types: noun phrase (the tall building), verb phrase (has been running), prepositional phrase (in the morning), infinitive phrase (to win the race).',
-				'Unlike a clause, a phrase cannot make a complete thought on its own. A dependent clause has a subject and a verb but still needs an independent clause to complete its meaning.',
-			),
-			order: 2,
 			lessonId: grammarL4.id,
+			order: 2,
+			title: 'Phrases vs. Clauses',
+			type: 'note',
+			noteAssignment: {
+				create: {
+					content: makeAssignmentNote(
+						'Phrases vs. Clauses',
+						'A phrase is a group of words without both a subject and a verb. Types: noun phrase (the tall building), verb phrase (has been running), prepositional phrase (in the morning), infinitive phrase (to win the race).',
+						'Unlike a clause, a phrase cannot make a complete thought on its own. A dependent clause has a subject and a verb but still needs an independent clause to complete its meaning.',
+					),
+				},
+			},
 		},
-	});
-
-	await prisma.lessonTool.createMany({
-		data: [
-			{
-				type: 'vocab',
-				title: 'Independent Clause',
-				content: {
-					term: 'Independent Clause',
-					definition:
-						'A clause that contains a subject and a verb and expresses a complete thought. It can stand alone as a sentence.',
-				},
-				order: 1,
-				lessonId: grammarL4.id,
-			},
-			{
-				type: 'vocab',
-				title: 'Dependent Clause',
-				content: {
-					term: 'Dependent Clause',
-					definition:
-						'A clause that has a subject and a verb but cannot stand alone because it begins with a subordinating conjunction, e.g. "although she was tired."',
-				},
-				order: 2,
-				lessonId: grammarL4.id,
-			},
-			{
-				type: 'practice_problem',
-				title: 'Identify the clause type',
-				content: {
-					question:
-						'Which of the following is an independent clause?',
-					options: [
-						'Because it was raining.',
-						'When the bell rings.',
-						'The students left the classroom.',
-						'Although he tried hard.',
-					],
-					correctIndex: 2,
-				},
-				order: 3,
-				lessonId: grammarL4.id,
-			},
-		],
 	});
 
 	await prisma.assignment.create({
 		data: {
 			lessonId: grammarL4.id,
-			order: 1,
+			order: 3,
 			title: 'Clause and Phrase Analysis Notes',
 			objective:
 				'Record examples of clauses and phrases from your reading and label each type.',
 			type: 'note',
 			noteAssignment: {
 				create: {
-					content: {
-						type: 'doc',
-						content: [
-							{
-								type: 'heading',
-								attrs: { level: 2 },
-								content: [
-									{
-										type: 'text',
-										text: 'Clause and Phrase Analysis',
-									},
-								],
-							},
-							{
-								type: 'paragraph',
-								content: [
-									{
-										type: 'text',
-										text: 'List examples of independent clauses, dependent clauses, and phrases you find in your reading. Label each one.',
-									},
-								],
-							},
-						],
-					},
+					content: makeAssignmentNote(
+						'Clause and Phrase Analysis Notes',
+						'A clause contains both a subject and a predicate. An independent clause expresses a complete thought and can stand alone as a sentence: "Maria studied all night." A dependent (subordinate) clause has a subject and predicate but cannot stand alone because it begins with a subordinating conjunction: "Because Maria studied all night, she passed the test." The dependent clause needs the independent clause to make sense.',
+						'Common subordinating conjunctions to watch for: because, although, when, if, since, unless, while, after, before, until, whenever, wherever. These words signal that a clause is dependent. If you see one at the start of a clause, that clause cannot be a standalone sentence.',
+						'A phrase is a group of related words that lacks a subject-predicate pair. Noun phrases act as nouns: "the tall oak tree." Verb phrases combine helping and main verbs: "has been running." Prepositional phrases show location, time, or relationship: "under the bridge," "before noon." Participial phrases modify nouns using a verb form: "Running late, she skipped breakfast."',
+						'To identify clause type: (1) find the subject and verb, (2) check whether it expresses a complete thought, (3) look for a subordinating conjunction. Practice labeling each clause and phrase in a paragraph to build accuracy.',
+					),
 				},
 			},
 		},
@@ -944,7 +788,7 @@ async function main() {
 	await prisma.assignment.create({
 		data: {
 			lessonId: grammarL4.id,
-			order: 2,
+			order: 4,
 			title: 'Reading: Clauses and Phrases Explained',
 			objective: 'Read a reference guide to clause and phrase types.',
 			type: 'reading',
@@ -1157,32 +1001,15 @@ async function main() {
 	// ════════════════════════════════════════════════════════════════════
 	// STUDENT PROGRESS: Lessons 1, 2 (Unit 1 complete) + Lesson 3 (Unit 2)
 	// ════════════════════════════════════════════════════════════════════
-	await prisma.lessonResourceCompletion.createMany({
+	await prisma.assignmentCompletion.createMany({
 		data: [
-			{ userId: student.id, resourceId: grammarL1R1.id },
-			{ userId: student.id, resourceId: grammarL1R2.id },
-			{ userId: student.id, resourceId: grammarL1R3.id },
-			{ userId: student.id, resourceId: grammarL2R1.id },
-			{ userId: student.id, resourceId: grammarL2R2.id },
-			{ userId: student.id, resourceId: grammarL3R1.id },
-			{ userId: student.id, resourceId: grammarL3R2.id },
-		],
-	});
-
-	await prisma.lessonToolCompletion.createMany({
-		data: [
-			...grammarL1Tools.map((t) => ({
-				userId: student.id,
-				toolId: t.id,
-			})),
-			...grammarL2Tools.map((t) => ({
-				userId: student.id,
-				toolId: t.id,
-			})),
-			...grammarL3Tools.map((t) => ({
-				userId: student.id,
-				toolId: t.id,
-			})),
+			{ userId: student.id, assignmentId: grammarL1A1.id },
+			{ userId: student.id, assignmentId: grammarL1A2.id },
+			{ userId: student.id, assignmentId: grammarL1A3.id },
+			{ userId: student.id, assignmentId: grammarL2A1.id },
+			{ userId: student.id, assignmentId: grammarL2A2.id },
+			{ userId: student.id, assignmentId: grammarL3A1.id },
+			{ userId: student.id, assignmentId: grammarL3A2.id },
 		],
 	});
 
@@ -1281,107 +1108,77 @@ async function main() {
 		},
 	});
 
-	await prisma.lessonResource.create({
+	await prisma.assignment.create({
 		data: {
-			type: 'video',
-			title: 'What Are Variables?',
-			content: { url: 'https://www.youtube.com/watch?v=tHYis-DP0oU' },
+			lessonId: algebraL1.id,
 			order: 1,
-			lessonId: algebraL1.id,
+			title: 'What Are Variables?',
+			type: 'video',
+			videoAssignment: {
+				create: {
+					url: 'https://www.youtube.com/watch?v=tHYis-DP0oU',
+					title: 'What Are Variables?',
+				},
+			},
 		},
 	});
-	await prisma.lessonResource.create({
+	await prisma.assignment.create({
 		data: {
-			type: 'note',
-			title: 'Variables, Constants, and Expressions',
-			content: makeNoteBody(
-				'Variables, Constants, and Expressions',
-				'A variable is a symbol (usually a letter) that represents an unknown or changing value. A constant is a fixed value that does not change. In 3x + 7, x is the variable and 7 is the constant.',
-				'An algebraic expression is a combination of variables, constants, and operations. To evaluate an expression, substitute a number for each variable and simplify using the order of operations (PEMDAS).',
-			),
-			order: 2,
 			lessonId: algebraL1.id,
+			order: 2,
+			title: 'Variables, Constants, and Expressions',
+			type: 'note',
+			noteAssignment: {
+				create: {
+					content: makeAssignmentNote(
+						'Variables, Constants, and Expressions',
+						'A variable is a symbol (usually a letter) that represents an unknown or changing value. A constant is a fixed value that does not change. In 3x + 7, x is the variable and 7 is the constant.',
+						'An algebraic expression is a combination of variables, constants, and operations. To evaluate an expression, substitute a number for each variable and simplify using the order of operations (PEMDAS).',
+					),
+				},
+			},
 		},
-	});
-
-	await prisma.lessonTool.createMany({
-		data: [
-			{
-				type: 'flash_card',
-				title: 'Variable vs. constant',
-				content: {
-					front: 'In the expression 5n − 3, which part is the variable and which is the constant?',
-					back: 'n is the variable (it can change). −3 is the constant (it is fixed).',
-				},
-				order: 1,
-				lessonId: algebraL1.id,
-			},
-			{
-				type: 'flash_card',
-				title: 'Evaluate an expression',
-				content: {
-					front: 'Evaluate 2x + 4 when x = 3.',
-					back: '2(3) + 4 = 6 + 4 = 10',
-				},
-				order: 2,
-				lessonId: algebraL1.id,
-			},
-			{
-				type: 'vocab',
-				title: 'Variable',
-				content: {
-					term: 'Variable',
-					definition:
-						'A letter or symbol that represents an unknown or changing quantity in an algebraic expression or equation.',
-				},
-				order: 3,
-				lessonId: algebraL1.id,
-			},
-			{
-				type: 'vocab',
-				title: 'Constant',
-				content: {
-					term: 'Constant',
-					definition:
-						'A fixed numerical value in an expression that does not change, such as the 7 in 3x + 7.',
-				},
-				order: 4,
-				lessonId: algebraL1.id,
-			},
-		],
 	});
 
 	await prisma.assignment.create({
 		data: {
 			lessonId: algebraL1.id,
-			order: 1,
+			order: 3,
 			title: 'Algebra Vocabulary Review',
 			objective:
 				'Reinforce your understanding of foundational algebra terms.',
 			type: 'vocab',
 			vocabAssignment: {
 				create: {
-					entries: [
-						{
-							term: 'Variable',
-							definition:
-								'A symbol representing an unknown quantity.',
+					entries: {
+						createMany: {
+							data: [
+								{
+									order: 1,
+									term: 'Variable',
+									definition:
+										'A symbol representing an unknown quantity.',
+								},
+								{
+									order: 2,
+									term: 'Constant',
+									definition: 'A fixed value that does not change.',
+								},
+								{
+									order: 3,
+									term: 'Expression',
+									definition:
+										'A combination of variables, constants, and operations — no equals sign.',
+								},
+								{
+									order: 4,
+									term: 'Evaluate',
+									definition:
+										'To substitute values for variables and simplify to a single number.',
+								},
+							],
 						},
-						{
-							term: 'Constant',
-							definition: 'A fixed value that does not change.',
-						},
-						{
-							term: 'Expression',
-							definition:
-								'A combination of variables, constants, and operations — no equals sign.',
-						},
-						{
-							term: 'Evaluate',
-							definition:
-								'To substitute values for variables and simplify to a single number.',
-						},
-					],
+					},
 				},
 			},
 		},
@@ -1389,7 +1186,7 @@ async function main() {
 	await prisma.assignment.create({
 		data: {
 			lessonId: algebraL1.id,
-			order: 2,
+			order: 4,
 			title: 'Reading: Introduction to Algebraic Expressions',
 			objective:
 				'Read a primer on translating word problems into algebraic expressions.',
@@ -1461,74 +1258,45 @@ async function main() {
 		},
 	});
 
-	await prisma.lessonResource.create({
+	await prisma.assignment.create({
 		data: {
-			type: 'lecture',
-			title: 'Like Terms and the Distributive Property',
-			content: makeNoteBody(
-				'Like Terms and the Distributive Property',
-				'Like terms have the same variable raised to the same exponent. You can add or subtract their coefficients. Example: 3x + 5x = 8x. Unlike terms (3x and 5y) cannot be combined.',
-				'The distributive property states a(b + c) = ab + ac. Use it to remove parentheses before combining like terms. Example: 2(x + 4) = 2x + 8.',
-			),
+			lessonId: algebraL2.id,
 			order: 1,
-			lessonId: algebraL2.id,
-		},
-	});
-	await prisma.lessonResource.create({
-		data: {
+			title: 'Like Terms and the Distributive Property',
 			type: 'note',
-			title: 'Simplification Steps',
-			content: makeNoteBody(
-				'Simplification Steps',
-				'Step 1: Apply the distributive property to remove parentheses. Step 2: Identify all like terms. Step 3: Add or subtract coefficients. Step 4: Write the simplified expression.',
-				'Example: Simplify 3(2x + 1) + 4x. Step 1: 6x + 3 + 4x. Steps 2–4: 10x + 3.',
-			),
-			order: 2,
-			lessonId: algebraL2.id,
+			noteAssignment: {
+				create: {
+					content: makeAssignmentNote(
+						'Like Terms and the Distributive Property',
+						'Like terms have the same variable raised to the same exponent. You can add or subtract their coefficients. Example: 3x + 5x = 8x. Unlike terms (3x and 5y) cannot be combined.',
+						'The distributive property states a(b + c) = ab + ac. Use it to remove parentheses before combining like terms. Example: 2(x + 4) = 2x + 8.',
+					),
+				},
+			},
 		},
 	});
-
-	await prisma.lessonTool.createMany({
-		data: [
-			{
-				type: 'practice_problem',
-				title: 'Combine like terms',
-				content: {
-					question: 'Simplify: 7x + 3 − 2x + 5',
-					options: ['5x + 8', '5x − 2', '9x + 8', '5x + 2'],
-					correctIndex: 0,
+	await prisma.assignment.create({
+		data: {
+			lessonId: algebraL2.id,
+			order: 2,
+			title: 'Simplification Steps',
+			type: 'note',
+			noteAssignment: {
+				create: {
+					content: makeAssignmentNote(
+						'Simplification Steps',
+						'Step 1: Apply the distributive property to remove parentheses. Step 2: Identify all like terms. Step 3: Add or subtract coefficients. Step 4: Write the simplified expression.',
+						'Example: Simplify 3(2x + 1) + 4x. Step 1: 6x + 3 + 4x. Steps 2–4: 10x + 3.',
+					),
 				},
-				order: 1,
-				lessonId: algebraL2.id,
 			},
-			{
-				type: 'practice_problem',
-				title: 'Distributive property',
-				content: {
-					question: 'Simplify: 3(x + 4) + 2x',
-					options: ['5x + 4', '5x + 12', '3x + 14', '6x + 4'],
-					correctIndex: 1,
-				},
-				order: 2,
-				lessonId: algebraL2.id,
-			},
-			{
-				type: 'flash_card',
-				title: 'Like terms definition',
-				content: {
-					front: 'Can 4x² and 4x be combined as like terms?',
-					back: 'No. Like terms must have the same variable AND the same exponent. 4x² and 4x have different exponents.',
-				},
-				order: 3,
-				lessonId: algebraL2.id,
-			},
-		],
+		},
 	});
 
 	await prisma.assignment.create({
 		data: {
 			lessonId: algebraL2.id,
-			order: 1,
+			order: 3,
 			title: 'Simplification Practice Set',
 			objective:
 				'Demonstrate mastery of combining like terms and the distributive property.',
@@ -1570,37 +1338,21 @@ async function main() {
 	await prisma.assignment.create({
 		data: {
 			lessonId: algebraL2.id,
-			order: 2,
+			order: 4,
 			title: 'Distributive Property Examples',
 			objective:
 				'Write out three examples of the distributive property in your own notes.',
 			type: 'note',
 			noteAssignment: {
 				create: {
-					content: {
-						type: 'doc',
-						content: [
-							{
-								type: 'heading',
-								attrs: { level: 2 },
-								content: [
-									{
-										type: 'text',
-										text: 'Distributive Property Examples',
-									},
-								],
-							},
-							{
-								type: 'paragraph',
-								content: [
-									{
-										type: 'text',
-										text: 'Write three original expressions and show each step of applying the distributive property to simplify them.',
-									},
-								],
-							},
-						],
-					},
+					content: makeAssignmentNote(
+						'Distributive Property Examples',
+						'The distributive property states: a(b + c) = ab + ac. In words, multiply the factor outside the parentheses by every term inside. This lets you remove parentheses before combining like terms.',
+						'Example 1 — simple distribution: 3(x + 5). Multiply 3 by x: 3x. Multiply 3 by 5: 15. Result: 3x + 15.',
+						'Example 2 — distribution with subtraction: 4(2x − 3). Multiply 4 by 2x: 8x. Multiply 4 by −3: −12. Result: 8x − 12.',
+						'Example 3 — distribution then combine like terms: 2(3x + 4) + 5x. Step 1, distribute: 6x + 8 + 5x. Step 2, combine like terms (6x + 5x): 11x + 8.',
+						'Watch for negatives outside the parentheses: −2(x − 7) = −2x + 14. Distributing a negative flips every sign inside. This is the most common error — slow down and multiply each term carefully.',
+					),
 				},
 			},
 		},
@@ -1743,84 +1495,59 @@ async function main() {
 		},
 	});
 
-	await prisma.lessonResource.create({
+	await prisma.assignment.create({
 		data: {
-			type: 'video',
-			title: 'Solving One-Step Equations',
-			content: { url: 'https://www.youtube.com/watch?v=l3XzepN03KQ' },
+			lessonId: algebraL3.id,
 			order: 1,
-			lessonId: algebraL3.id,
+			title: 'Solving One-Step Equations',
+			type: 'video',
+			videoAssignment: {
+				create: {
+					url: 'https://www.youtube.com/watch?v=l3XzepN03KQ',
+					title: 'Solving One-Step Equations',
+				},
+			},
 		},
 	});
-	await prisma.lessonResource.create({
+	await prisma.assignment.create({
 		data: {
-			type: 'note',
-			title: 'Inverse Operations',
-			content: makeNoteBody(
-				'Inverse Operations',
-				'To solve an equation, apply inverse operations to isolate the variable. The inverse of addition is subtraction; the inverse of multiplication is division. Perform the same operation on both sides.',
-				'Two-step equations: first undo addition/subtraction, then undo multiplication/division. Example: Solve 2x + 3 = 11. Subtract 3: 2x = 8. Divide by 2: x = 4. Check: 2(4) + 3 = 11. ✓',
-			),
+			lessonId: algebraL3.id,
 			order: 2,
-			lessonId: algebraL3.id,
+			title: 'Inverse Operations',
+			type: 'note',
+			noteAssignment: {
+				create: {
+					content: makeAssignmentNote(
+						'Inverse Operations',
+						'To solve an equation, apply inverse operations to isolate the variable. The inverse of addition is subtraction; the inverse of multiplication is division. Perform the same operation on both sides.',
+						'Two-step equations: first undo addition/subtraction, then undo multiplication/division. Example: Solve 2x + 3 = 11. Subtract 3: 2x = 8. Divide by 2: x = 4. Check: 2(4) + 3 = 11. ✓',
+					),
+				},
+			},
 		},
 	});
-	await prisma.lessonResource.create({
+	await prisma.assignment.create({
 		data: {
-			type: 'lecture',
-			title: 'Writing Equations from Word Problems',
-			content: makeNoteBody(
-				'Writing Equations from Word Problems',
-				'"More than" = addition, "less than" = subtraction, "times" = multiplication, "split equally" = division. Define a variable for the unknown, write the equation, then solve.',
-				'Example: "Three more than twice a number is 11." Let n = the number. Equation: 2n + 3 = 11. Solve: n = 4.',
-			),
-			order: 3,
 			lessonId: algebraL3.id,
+			order: 3,
+			title: 'Writing Equations from Word Problems',
+			type: 'note',
+			noteAssignment: {
+				create: {
+					content: makeAssignmentNote(
+						'Writing Equations from Word Problems',
+						'"More than" = addition, "less than" = subtraction, "times" = multiplication, "split equally" = division. Define a variable for the unknown, write the equation, then solve.',
+						'Example: "Three more than twice a number is 11." Let n = the number. Equation: 2n + 3 = 11. Solve: n = 4.',
+					),
+				},
+			},
 		},
-	});
-
-	await prisma.lessonTool.createMany({
-		data: [
-			{
-				type: 'practice_problem',
-				title: 'Solve a one-step equation',
-				content: {
-					question: 'Solve for x: x + 7 = 15',
-					options: ['x = 8', 'x = 22', 'x = 7', 'x = 6'],
-					correctIndex: 0,
-				},
-				order: 1,
-				lessonId: algebraL3.id,
-			},
-			{
-				type: 'practice_problem',
-				title: 'Solve a two-step equation',
-				content: {
-					question: 'Solve for x: 3x − 4 = 11',
-					options: ['x = 5', 'x = 7', 'x = 3', 'x = 4'],
-					correctIndex: 0,
-				},
-				order: 2,
-				lessonId: algebraL3.id,
-			},
-			{
-				type: 'vocab',
-				title: 'Equation',
-				content: {
-					term: 'Equation',
-					definition:
-						'A mathematical statement that two expressions are equal, indicated by an equals sign. Example: 2x + 1 = 9.',
-				},
-				order: 3,
-				lessonId: algebraL3.id,
-			},
-		],
 	});
 
 	await prisma.assignment.create({
 		data: {
 			lessonId: algebraL3.id,
-			order: 1,
+			order: 4,
 			title: 'Video: Two-Step Equation Practice',
 			objective:
 				'Watch worked examples of two-step equations solved step by step.',
@@ -1836,7 +1563,7 @@ async function main() {
 	await prisma.assignment.create({
 		data: {
 			lessonId: algebraL3.id,
-			order: 2,
+			order: 5,
 			title: 'Equation Solving Practice Set',
 			objective:
 				'Solve a set of linear equations independently and verify your answers.',
@@ -1931,75 +1658,45 @@ async function main() {
 		},
 	});
 
-	await prisma.lessonResource.create({
+	await prisma.assignment.create({
 		data: {
-			type: 'note',
-			title: 'Inequality Symbols and Rules',
-			content: makeNoteBody(
-				'Inequality Symbols and Rules',
-				'Inequalities compare two expressions: < (less than), > (greater than), ≤ (less than or equal to), ≥ (greater than or equal to). Solve inequalities the same way as equations — but flip the inequality sign when you multiply or divide both sides by a negative number.',
-				'Example: Solve −2x > 8. Divide both sides by −2 and flip: x < −4. Graph with an open circle at −4 and an arrow pointing left.',
-			),
+			lessonId: algebraL4.id,
 			order: 1,
-			lessonId: algebraL4.id,
+			title: 'Inequality Symbols and Rules',
+			type: 'note',
+			noteAssignment: {
+				create: {
+					content: makeAssignmentNote(
+						'Inequality Symbols and Rules',
+						'Inequalities compare two expressions: < (less than), > (greater than), ≤ (less than or equal to), ≥ (greater than or equal to). Solve inequalities the same way as equations — but flip the inequality sign when you multiply or divide both sides by a negative number.',
+						'Example: Solve −2x > 8. Divide both sides by −2 and flip: x < −4. Graph with an open circle at −4 and an arrow pointing left.',
+					),
+				},
+			},
 		},
 	});
-	await prisma.lessonResource.create({
+	await prisma.assignment.create({
 		data: {
-			type: 'lecture',
-			title: 'Graphing Inequalities',
-			content: makeNoteBody(
-				'Graphing Inequalities',
-				'On a number line: use an open circle (○) for strict inequalities (< or >) and a closed circle (●) for inclusive ones (≤ or ≥). Shade or draw an arrow toward the values that satisfy the inequality.',
-				'For compound inequalities: "and" (intersection) shades between two values. "Or" (union) shades outward from two points. Always test a value in the shaded region to verify.',
-			),
-			order: 2,
 			lessonId: algebraL4.id,
+			order: 2,
+			title: 'Graphing Inequalities',
+			type: 'note',
+			noteAssignment: {
+				create: {
+					content: makeAssignmentNote(
+						'Graphing Inequalities',
+						'On a number line: use an open circle (○) for strict inequalities (< or >) and a closed circle (●) for inclusive ones (≤ or ≥). Shade or draw an arrow toward the values that satisfy the inequality.',
+						'For compound inequalities: "and" (intersection) shades between two values. "Or" (union) shades outward from two points. Always test a value in the shaded region to verify.',
+					),
+				},
+			},
 		},
-	});
-
-	await prisma.lessonTool.createMany({
-		data: [
-			{
-				type: 'flash_card',
-				title: 'Sign flip rule',
-				content: {
-					front: 'When do you flip the inequality sign when solving an inequality?',
-					back: 'When you multiply or divide BOTH sides by a negative number. Example: −2x > 6 → x < −3.',
-				},
-				order: 1,
-				lessonId: algebraL4.id,
-			},
-			{
-				type: 'practice_problem',
-				title: 'Solve an inequality',
-				content: {
-					question: 'Solve for x: 3x − 6 < 9',
-					options: ['x < 5', 'x < 1', 'x > 5', 'x < 3'],
-					correctIndex: 0,
-				},
-				order: 2,
-				lessonId: algebraL4.id,
-			},
-			{
-				type: 'practice_problem',
-				title: 'Identify the graph',
-				content: {
-					question:
-						'Which inequality is represented by an open circle at 4 with an arrow pointing right?',
-					options: ['x ≤ 4', 'x ≥ 4', 'x < 4', 'x > 4'],
-					correctIndex: 3,
-				},
-				order: 3,
-				lessonId: algebraL4.id,
-			},
-		],
 	});
 
 	await prisma.assignment.create({
 		data: {
 			lessonId: algebraL4.id,
-			order: 1,
+			order: 3,
 			title: 'Reading: Inequalities in the Real World',
 			objective:
 				'Read about how inequalities model real-world constraints such as budgets and speed limits.',
@@ -2017,37 +1714,21 @@ async function main() {
 	await prisma.assignment.create({
 		data: {
 			lessonId: algebraL4.id,
-			order: 2,
+			order: 4,
 			title: 'Inequality Solving Notes',
 			objective:
 				'Document the steps for solving inequalities and give two original examples.',
 			type: 'note',
 			noteAssignment: {
 				create: {
-					content: {
-						type: 'doc',
-						content: [
-							{
-								type: 'heading',
-								attrs: { level: 2 },
-								content: [
-									{
-										type: 'text',
-										text: 'Inequality Solving Notes',
-									},
-								],
-							},
-							{
-								type: 'paragraph',
-								content: [
-									{
-										type: 'text',
-										text: 'Summarize the rules for solving inequalities, including when to flip the sign. Provide two original inequality problems and solve them step by step.',
-									},
-								],
-							},
-						],
-					},
+					content: makeAssignmentNote(
+						'Inequality Solving Notes',
+						'Inequalities are solved the same way as equations — apply inverse operations to isolate the variable — with one critical exception: when you multiply or divide both sides by a negative number, you must flip the inequality sign.',
+						'The four inequality symbols: < (less than), > (greater than), ≤ (less than or equal to), ≥ (greater than or equal to). The solution is a range of values, not a single answer.',
+						'Worked example 1 — no sign flip: 3x + 4 > 13. Subtract 4 from both sides: 3x > 9. Divide both sides by 3 (positive, no flip): x > 3. Solution: all values greater than 3.',
+						'Worked example 2 — sign flip required: −2x ≤ 8. Divide both sides by −2 (negative — flip the sign): x ≥ −4. Solution: all values greater than or equal to −4. If you forget to flip, your answer will point the wrong direction.',
+						'Checking your answer: pick a number in your solution range and substitute it back into the original inequality. For x > 3, try x = 5: 3(5) + 4 = 19 > 13. True — the solution holds.',
+					),
 				},
 			},
 		},
@@ -2257,6 +1938,10 @@ BEGIN
   ELSIF NEW.type = 'practice_problem' THEN
     IF NOT EXISTS (SELECT 1 FROM practice_problem_assignment WHERE "assignmentId" = NEW.id) THEN
       RAISE EXCEPTION 'assignment % declared type=practice_problem but no practice_problem_assignment row exists', NEW.id;
+    END IF;
+  ELSIF NEW.type = 'file' THEN
+    IF NOT EXISTS (SELECT 1 FROM file_assignment WHERE "assignmentId" = NEW.id) THEN
+      RAISE EXCEPTION 'assignment % declared type=file but no file_assignment row exists', NEW.id;
     END IF;
   ELSE
     RAISE EXCEPTION 'assignment % has unknown type: %', NEW.id, NEW.type;

@@ -3,6 +3,8 @@ import type { Assignment, Prisma } from '@prisma/client';
 import { prismaMock } from '../mocks/prisma.js';
 
 vi.mock('../../lib/prisma.js', () => ({ default: prismaMock }));
+vi.mock('../../lib/s3.js', () => ({ s3Client: null, S3_BUCKET: null }));
+vi.mock('../../lib/logger.js', () => ({ logger: { info: vi.fn(), error: vi.fn(), warn: vi.fn(), debug: vi.fn() } }));
 
 import { assignmentService } from '../../services/assignment.service.js';
 import { NotFoundError } from '../../errors/NotFoundError.js';
@@ -33,6 +35,7 @@ type AssignmentWithRelations = Prisma.AssignmentGetPayload<{
     readingAssignment: true;
     vocabAssignment: true;
     practiceProblemAssignment: { include: { questions: true } };
+    fileAssignment: { select: { id: true; assignmentId: true; filename: true; mimeType: true; sizeBytes: true } };
   };
 }>;
 
@@ -43,6 +46,7 @@ const ASSIGNMENT_WITH_RELATIONS: AssignmentWithRelations = {
   readingAssignment: null,
   vocabAssignment: null,
   practiceProblemAssignment: null,
+  fileAssignment: null,
 };
 
 describe('assignmentService.findAllByLesson', () => {

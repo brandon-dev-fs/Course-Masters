@@ -4,18 +4,12 @@ import useDisclosure from '../../hooks/useDisclosure.js';
 import { useAuth } from '../../context/AuthContext.js';
 import { Menu, ArrowLeft, Settings } from 'lucide-react';
 import { assessmentsApi } from '../../api/assessments.js';
-import { lessonResourcesApi } from '../../api/lesson-resources.js';
-import { lessonToolsApi } from '../../api/lesson-tools.js';
-import { resourceCompletionsApi } from '../../api/resource-completions.js';
 import type { UpdateAssignmentPayload } from '../../api/assignments.js';
 import useLesson from './hooks/useLesson.js';
-import useResources from './hooks/useResources.js';
-import useTools from './hooks/useTools.js';
 import useAssignments, { completionKeyOf } from './hooks/useAssignments.js';
 import type { AssignmentItem } from './AssignmentSection.js';
 import UnitLessonSidebar from './UnitLessonSidebar.js';
 import ActiveItemContent from './ActiveItemContent.js';
-import LessonToolModals from './LessonToolModals.js';
 import LessonSettingsModal from './LessonSettingsModal.js';
 import LessonPlanModal from './LessonPlanModal.js';
 import LoadingSpinner from '../../components/LoadingSpinner.js';
@@ -23,6 +17,7 @@ import ErrorMessage from '../../components/ErrorMessage.js';
 import AssignmentStepper from './AssignmentStepper.js';
 import type { StepperItem } from './AssignmentStepper.js';
 import AssignmentSection from './AssignmentSection.js';
+import BookmarkButton from './BookmarkButton.js';
 import StudentToolsBar from '../student-notes/StudentToolsBar.js';
 import type { StudentToolType } from '../student-notes/StudentToolsBar.js';
 import StudentMaterialsModal from '../student-notes/StudentMaterialsModal.js';
@@ -96,19 +91,6 @@ export default function LessonDetailPage() {
     handleAddLesson, handleUpdate, handleDelete,
   } = useLesson({ courseId, unitId, lessonId }, settingsDisclosure.close);
 
-  const {
-    resources, completionsData, completedIds,
-    editingVideoId, newNoteIdRef,
-    setResources, setCompletionsData, setEditingVideoId,
-    handleToggleCompletion, handleMoveResource,
-  } = useResources(lessonId);
-
-  const {
-    tools, editingTool,
-    setTools, setEditingTool,
-    handleMoveTool,
-  } = useTools(lessonId);
-
   const { user } = useAuth();
   const isStudent = user?.role === 'student';
 
@@ -118,9 +100,9 @@ export default function LessonDetailPage() {
     isAddingAssignment, setIsAddingAssignment,
     editingAssignment, setEditingAssignment,
     deletingAssignmentId, setDeletingAssignmentId,
-    handleCreateAssignment, handleUpdateAssignment, handleDeleteAssignment,
+    handleCreateAssignment, handleAddCreatedAssignment, handleUpdateAssignment, handleDeleteAssignment,
     handleMoveAssignment, handleToggleAssignmentCompletion, handleBookmarkChange,
-  } = useAssignments({ lessonId, lesson, resources, tools, completedIds, setActiveStepKey });
+  } = useAssignments({ lessonId, lesson, setActiveStepKey });
 
   function handleToggleSidebar() {
     setSidebarCollapsed(prev => {
@@ -135,20 +117,6 @@ export default function LessonDetailPage() {
     hamburgerRef.current?.focus();
   }
 
-  async function handleToggleRequired(item: AssignmentItem) {
-    if (!lessonId || !item.id) return;
-    const newRequired = !item.isRequired;
-    if (item.kind === 'resource') {
-      const updated = await lessonResourcesApi.update(item.id, { isRequired: newRequired });
-      setResources(prev => prev.map(r => r.id === item.id ? updated : r));
-    } else if (item.kind === 'tool') {
-      const updated = await lessonToolsApi.update(item.id, { isRequired: newRequired });
-      setTools(prev => prev.map(t => t.id === item.id ? updated : t));
-    }
-    const fresh = await resourceCompletionsApi.get(lessonId);
-    setCompletionsData(fresh);
-  }
-
   if (loading) return <LoadingSpinner />;
   if (error) return <ErrorMessage message={error} />;
   if (!lesson) return null;
@@ -158,9 +126,8 @@ export default function LessonDetailPage() {
   const activeItem = assignmentItems.find(item => item.key === activeStepKey) ?? assignmentItems[0];
   const activeIdx = assignmentItems.findIndex(item => item.key === activeItem?.key);
 
-  const quizUnlocked = completionsData.requiredItems
-    .filter(r => r.isRequired)
-    .every(r => completedIds.has(r.resourceId));
+  const quizUnlocked = assignments.length === 0
+    || assignments.every(a => completedAssignmentIds.has(a.id));
   const quizPassed = unitProgress?.lessons.find(l => l.lessonId === lesson.id)?.quizPassed ?? false;
   const allLessonsComplete = unitProgress
     ? unitProgress.totalLessons > 0 && unitProgress.completedLessons === unitProgress.totalLessons
@@ -174,25 +141,13 @@ export default function LessonDetailPage() {
     title: item.title,
     kind: item.kind,
     completionId: completionKeyOf(item, lesson.id),
-    resourceType: item.resourceType,
-    toolType: item.toolType,
     assignmentType: item.assignmentType,
   }));
 
-  const sortedResources = [...resources].sort((a, b) => a.order - b.order);
-  const sortedTools = [...tools].sort((a, b) => a.order - b.order);
   const sortedAssignments = [...assignments].sort((a, b) => a.order - b.order);
   let onMoveUp: (() => void) | undefined;
   let onMoveDown: (() => void) | undefined;
-  if (activeItem?.kind === 'resource') {
-    const ri = sortedResources.findIndex(r => r.id === activeItem.id);
-    if (ri > 0) onMoveUp = () => handleMoveResource(activeItem.id!, 'up');
-    if (ri < sortedResources.length - 1) onMoveDown = () => handleMoveResource(activeItem.id!, 'down');
-  } else if (activeItem?.kind === 'tool') {
-    const ti = sortedTools.findIndex(t => t.id === activeItem.id);
-    if (ti > 0) onMoveUp = () => handleMoveTool(activeItem.id!, 'up');
-    if (ti < sortedTools.length - 1) onMoveDown = () => handleMoveTool(activeItem.id!, 'down');
-  } else if (activeItem?.kind === 'assignment') {
+  if (activeItem?.kind === 'assignment') {
     const ai = sortedAssignments.findIndex(a => a.id === activeItem.id);
     if (ai > 0) onMoveUp = () => handleMoveAssignment(activeItem.id!, 'up');
     if (ai < sortedAssignments.length - 1) onMoveDown = () => handleMoveAssignment(activeItem.id!, 'down');
@@ -201,7 +156,7 @@ export default function LessonDetailPage() {
   const isComplete = !activeItem ? false
     : activeItem.kind === 'quiz' ? quizPassed
     : activeItem.kind === 'assignment' && activeItem.id ? completedAssignmentIds.has(activeItem.id)
-    : activeItem.id ? completedIds.has(activeItem.id) : false;
+    : false;
 
   const activeAssignment = activeItem?.kind === 'assignment'
     ? assignments.find(a => a.id === activeItem.id)
@@ -209,7 +164,7 @@ export default function LessonDetailPage() {
 
   const onToggleCompletion = activeAssignment
     ? () => handleToggleAssignmentCompletion(activeAssignment)
-    : () => activeItem && handleToggleCompletion(activeItem);
+    : () => {};
 
   const currentUnit = units.find(u => u.id === unitId);
 
@@ -313,7 +268,6 @@ export default function LessonDetailPage() {
               <AssignmentStepper
                 items={stepperItems}
                 activeStepKey={activeStepKey}
-                completedIds={completedIds}
                 completedAssignmentIds={completedAssignmentIds}
                 quizUnlocked={quizUnlocked}
                 quizPassed={quizPassed}
@@ -362,7 +316,6 @@ export default function LessonDetailPage() {
                       isLast={activeIdx === assignmentItems.length - 1}
                       incompleteRequired={incompleteRequired}
                       onToggleCompletion={onToggleCompletion}
-                      onToggleRequired={() => handleToggleRequired(activeItem)}
                       onMoveUp={onMoveUp}
                       onMoveDown={onMoveDown}
                       onPrev={() => { const p = assignmentItems[activeIdx - 1]; if (p) setActiveStepKey(p.key); }}
@@ -373,27 +326,19 @@ export default function LessonDetailPage() {
                       onDelete={canEdit && activeItem.kind === 'assignment' && activeItem.id
                         ? () => setDeletingAssignmentId(activeItem.id)
                         : undefined}
+                      headerRight={isStudent && activeAssignment ? (
+                        <BookmarkButton
+                          assignmentId={activeAssignment.id}
+                          bookmark={activeAssignment.bookmark ?? null}
+                          onBookmarkChange={(bookmark) => handleBookmarkChange(activeAssignment.id, bookmark)}
+                        />
+                      ) : undefined}
                     >
                       <ActiveItemContent
                         item={activeItem}
                         lesson={lesson}
-                        resources={resources}
-                        tools={tools}
                         assignments={assignments}
                         canEdit={canEdit}
-                        editingVideoId={editingVideoId}
-                        newNoteIdRef={newNoteIdRef}
-                        onVideoEditStart={id => setEditingVideoId(id)}
-                        onVideoEditCancel={() => setEditingVideoId(null)}
-                        onVideoUpdated={updated => {
-                          setResources(prev => prev.map(r => r.id === updated.id ? updated : r).sort((a, b) => a.order - b.order));
-                          setEditingVideoId(null);
-                        }}
-                        onVideoDeleted={id => setResources(prev => prev.filter(r => r.id !== id))}
-                        onNoteUpdated={updated => setResources(prev => prev.map(r => r.id === updated.id ? updated : r))}
-                        onEditTool={t => setEditingTool(t)}
-                        onToolDeleted={id => setTools(prev => prev.filter(t => t.id !== id))}
-                        onToolUpdated={updated => setTools(prev => prev.map(t => t.id === updated.id ? updated : t))}
                         onToggleAssignmentCompletion={handleToggleAssignmentCompletion}
                         onBookmarkChange={handleBookmarkChange}
                         isStudent={isStudent}
@@ -452,15 +397,10 @@ export default function LessonDetailPage() {
         />
       )}
 
-      <LessonToolModals
-        canEdit={canEdit}
-        editingTool={editingTool}
-        onClose={() => setEditingTool(null)}
-        onToolUpdated={updated => setTools(prev => prev.map(t => t.id === updated.id ? updated : t).sort((a, b) => a.order - b.order))}
-      />
-
       {canEdit && isAddingAssignment && (
         <AssignmentFormModal
+          lessonId={lessonId}
+          onFileCreate={handleAddCreatedAssignment}
           onSubmit={async payload => { await handleCreateAssignment(payload as Parameters<typeof handleCreateAssignment>[0]); }}
           onClose={() => setIsAddingAssignment(false)}
         />

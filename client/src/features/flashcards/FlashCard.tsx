@@ -1,18 +1,25 @@
 import { useEffect, useState } from 'react';
 import { X } from 'lucide-react';
-import type { LessonTool } from '../../api/types.js';
+
+/** Minimal card shape used by FlashCard. Vocab entries from assignments are adapted to this shape. */
+interface FlashCardData {
+  id: string;
+  type: 'flash_card';
+  title: string;
+  content: { front: string; back: string };
+  order: number;
+  lessonId: string;
+  isRequired: boolean;
+}
 
 interface FlashCardProps {
-  card: LessonTool;
+  card: FlashCardData;
   editMode?: boolean;
   onUpdate?: (id: string, data: { front: string; back: string }) => Promise<void>;
   onDelete?: () => void;
 }
 
 export default function FlashCard({ card, editMode = false, onUpdate, onDelete }: FlashCardProps) {
-  if (card.type !== 'flash_card') {
-    return <p className="text-sm text-muted-foreground">Unsupported tool type.</p>;
-  }
   const cardFront = card.content.front ?? '';
   const cardBack = card.content.back ?? '';
 
@@ -105,6 +112,15 @@ export default function FlashCard({ card, editMode = false, onUpdate, onDelete }
       style={{ perspective: '1000px' }}
       onClick={() => setFlipped(f => !f)}
     >
+      {onDelete && (
+        <button
+          onClick={e => { e.stopPropagation(); onDelete(); }}
+          className="absolute top-2 right-2 z-10 w-6 h-6 flex items-center justify-center rounded-full text-destructive hover:bg-destructive/10 transition-colors"
+          aria-label="Remove flashcard"
+        >
+          <X className="w-3.5 h-3.5" />
+        </button>
+      )}
       <div
         className="relative w-full transition-transform duration-500"
         style={{

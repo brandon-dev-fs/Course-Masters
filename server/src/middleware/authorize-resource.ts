@@ -12,8 +12,6 @@ export type ResourceOwnershipType =
   | 'course'
   | 'unit'
   | 'lesson'
-  | 'resource'
-  | 'tool'
   | 'assessment'
   | 'lesson_assessment'
   | 'unit_assessment'
@@ -64,42 +62,6 @@ async function resolveCourseOwner(
         select: { unit: { select: { course: { select: { authorId: true } } } } },
       });
       return row?.unit.course.authorId ?? null;
-    }
-
-    case 'resource': {
-      const row = await prisma.lessonResource.findUnique({
-        where: { id: resourceId },
-        select: {
-          lesson: {
-            select: {
-              unit: {
-                select: {
-                  course: { select: { authorId: true } },
-                },
-              },
-            },
-          },
-        },
-      });
-      return row?.lesson.unit.course.authorId ?? null;
-    }
-
-    case 'tool': {
-      const row = await prisma.lessonTool.findUnique({
-        where: { id: resourceId },
-        select: {
-          lesson: {
-            select: {
-              unit: {
-                select: {
-                  course: { select: { authorId: true } },
-                },
-              },
-            },
-          },
-        },
-      });
-      return row?.lesson.unit.course.authorId ?? null;
     }
 
     case 'assessment': {

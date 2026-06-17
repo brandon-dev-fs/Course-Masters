@@ -5,7 +5,7 @@ import type { StepperItem } from '../../../features/lessons/AssignmentStepper.js
 
 const items: StepperItem[] = [
   { key: 'lessonPlan', title: 'Lesson Plan', kind: 'lessonPlan', completionId: null },
-  { key: 'r1', title: 'Video 1', kind: 'resource', completionId: 'r1', resourceType: 'video' },
+  { key: 'assignment:a1', title: 'Video 1', kind: 'assignment', completionId: 'a1', assignmentType: 'video' },
   { key: 'quiz', title: 'Quiz', kind: 'quiz', completionId: null },
 ];
 
@@ -21,7 +21,6 @@ describe('AssignmentStepper', () => {
       <AssignmentStepper
         items={items}
         activeStepKey="lessonPlan"
-        completedIds={new Set()}
         completedAssignmentIds={new Set()}
         quizUnlocked={true}
         quizPassed={false}
@@ -33,7 +32,6 @@ describe('AssignmentStepper', () => {
 
   it('renders step buttons for each item via aria-labels', () => {
     renderStepper();
-    // Desktop and mobile each render buttons identified by aria-label
     expect(screen.getAllByLabelText('Plan: Lesson Plan').length).toBeGreaterThan(0);
     expect(screen.getAllByLabelText('Video: Video 1').length).toBeGreaterThan(0);
     expect(screen.getAllByLabelText('Quiz: Quiz').length).toBeGreaterThan(0);
@@ -41,7 +39,6 @@ describe('AssignmentStepper', () => {
 
   it('calls onStepClick when a step is clicked', () => {
     renderStepper();
-    // aria-label is now "Label: Title" format
     const buttons = screen.getAllByLabelText('Plan: Lesson Plan');
     fireEvent.click(buttons[0]);
     expect(onStepClick).toHaveBeenCalledWith('lessonPlan');
@@ -86,7 +83,7 @@ describe('AssignmentStepper', () => {
   });
 
   it('shows step counter in mobile progress bar', () => {
-    renderStepper({ activeStepKey: 'r1' });
+    renderStepper({ activeStepKey: 'assignment:a1' });
     // Header shows "Step 2 of 3" when second item (index 1) is active out of 3 items
     expect(screen.getAllByText('Step 2 of 3').length).toBeGreaterThan(0);
   });
@@ -98,35 +95,24 @@ describe('AssignmentStepper', () => {
     it('returns Quiz for quiz', () => {
       expect(getStepLabel({ key: 'k', title: 't', kind: 'quiz', completionId: null })).toBe('Quiz');
     });
-    it('returns Video for video resource', () => {
-      expect(getStepLabel({ key: 'k', title: 't', kind: 'resource', completionId: null, resourceType: 'video' })).toBe('Video');
-    });
-    it('returns Lecture for lecture resource', () => {
-      expect(getStepLabel({ key: 'k', title: 't', kind: 'resource', completionId: null, resourceType: 'lecture' })).toBe('Lecture');
-    });
-    it('returns Read for note resource', () => {
-      expect(getStepLabel({ key: 'k', title: 't', kind: 'resource', completionId: null, resourceType: 'note' })).toBe('Read');
-    });
-    it('returns Cards for flash_card tool', () => {
-      expect(getStepLabel({ key: 'k', title: 't', kind: 'tool', completionId: null, toolType: 'flash_card' })).toBe('Cards');
-    });
-    it('returns Practice for practice_problem tool', () => {
-      expect(getStepLabel({ key: 'k', title: 't', kind: 'tool', completionId: null, toolType: 'practice_problem' })).toBe('Practice');
-    });
-    it('returns Vocab for vocab tool', () => {
-      expect(getStepLabel({ key: 'k', title: 't', kind: 'tool', completionId: null, toolType: 'vocab' })).toBe('Vocab');
-    });
     it('returns Read for note assignment', () => {
       expect(getStepLabel({ key: 'k', title: 't', kind: 'assignment', completionId: null, assignmentType: 'note' })).toBe('Read');
     });
     it('returns Video for video assignment', () => {
       expect(getStepLabel({ key: 'k', title: 't', kind: 'assignment', completionId: null, assignmentType: 'video' })).toBe('Video');
     });
+    it('returns Link for reading assignment', () => {
+      expect(getStepLabel({ key: 'k', title: 't', kind: 'assignment', completionId: null, assignmentType: 'reading' })).toBe('Link');
+    });
     it('returns Vocab for vocab assignment', () => {
       expect(getStepLabel({ key: 'k', title: 't', kind: 'assignment', completionId: null, assignmentType: 'vocab' })).toBe('Vocab');
     });
     it('returns Practice for practice_problem assignment', () => {
       expect(getStepLabel({ key: 'k', title: 't', kind: 'assignment', completionId: null, assignmentType: 'practice_problem' })).toBe('Practice');
+    });
+    it('returns Step for unknown kind', () => {
+      // exercise the default branch
+      expect(getStepLabel({ key: 'k', title: 't', kind: 'assignment', completionId: null })).toBe('Read');
     });
   });
 });
