@@ -29,6 +29,8 @@ export const userService = {
    * Returns the updated themePreference value.
    */
   async updatePreferences(userId: string, data: UpdatePreferencesInput) {
+    const user = await prisma.user.findFirst({ where: { id: userId, deletedAt: null } });
+    if (!user) throw new NotFoundError('User not found');
     return prisma.user.update({
       where: { id: userId },
       data: { themePreference: data.themePreference },
