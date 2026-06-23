@@ -52,7 +52,7 @@ vi.mock('../../controllers/resource-completion.controller.js', () => ({
   resourceCompletionController: makeController(['getCompletions', 'toggleCompletion']),
 }));
 vi.mock('../../controllers/user.controller.js', () => ({
-  userController: makeController(['remove']),
+  userController: makeController(['getMe', 'updatePreferences', 'remove']),
 }));
 vi.mock('../../controllers/assignment.controller.js', () => ({
   assignmentController: makeController([
