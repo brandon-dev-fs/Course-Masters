@@ -1,10 +1,12 @@
-import { useState, useEffect, FormEvent } from 'react';
-import { Link } from 'react-router-dom';
-import { Pencil, Check, X } from 'lucide-react';
+import { useState, useRef, FormEvent } from 'react';
+
 import { useAuth } from '../../context/AuthContext.js';
+import { useTheme } from '../../context/ThemeContext.js';
 import { authClient } from '../../api/auth.js';
-import { coursesApi } from '../../api/courses.js';
-import type { Course } from '../../api/types.js';
+import { usersApi } from '../../api/users.js';
+import type { ThemePreference } from '../../api/types.js';
+import ProfileAvatar from './ProfileAvatar.js';
+import ThemeSegmentedControl from './ThemeSegmentedControl.js';
 import Input from '../../components/Input.js';
 import Button from '../../components/Button.js';
 import ErrorMessage from '../../components/ErrorMessage.js';
@@ -16,11 +18,14 @@ const roleBadge: Record<string, string> = {
   student: 'bg-surface-raised text-muted-foreground border border-border',
 };
 
+const readOnlyInputClass =
+  'w-full rounded-lg px-3 py-2 text-sm bg-surface border border-border-subtle text-muted-foreground cursor-default';
+
 export default function ProfilePage() {
   const { user, refreshUser } = useAuth();
+  const { themePreference, setThemePreference } = useTheme();
 
-  // Name editing
-  const [editingName, setEditingName] = useState(false);
+  // Name
   const [nameValue, setNameValue] = useState(user?.name ?? '');
   const [nameError, setNameError] = useState<string | null>(null);
   const [nameSaving, setNameSaving] = useState(false);
@@ -34,22 +39,16 @@ export default function ProfilePage() {
   const [passwordSuccess, setPasswordSuccess] = useState(false);
   const [passwordSaving, setPasswordSaving] = useState(false);
 
-  // Courses
-  const [courses, setCourses] = useState<Course[]>([]);
-  const [coursesLoading, setCoursesLoading] = useState(true);
-  const [coursesError, setCoursesError] = useState<string | null>(null);
+  // Theme preference
+  const [themeError, setThemeError] = useState<string | null>(null);
 
-  useEffect(() => {
-    coursesApi
-      .getAll()
-      .then(setCourses)
-      .catch((err: unknown) =>
-        setCoursesError(err instanceof Error ? err.message : 'Failed to load courses'),
-      )
-      .finally(() => setCoursesLoading(false));
-  }, []);
+  // Ref to track the last pref sent so rapid toggles don't cause stale reverts
+  const latestThemePrefRef = useRef<ThemePreference>(themePreference);
 
-  async function handleSaveName() {
+  if (!user) return <LoadingSpinner fullPage />;
+
+  async function handleSaveName(e?: FormEvent) {
+    e?.preventDefault();
     if (!nameValue.trim()) {
       setNameError('Name cannot be empty');
       return;
@@ -60,7 +59,6 @@ export default function ProfilePage() {
       const { error } = await authClient.updateUser({ name: nameValue.trim() });
       if (error) throw new Error(error.message);
       await refreshUser();
-      setEditingName(false);
       setNameSuccess(true);
       setTimeout(() => setNameSuccess(false), 3000);
     } catch (err) {
@@ -86,10 +84,7 @@ export default function ProfilePage() {
 
     setPasswordSaving(true);
     try {
-      const { error } = await authClient.changePassword({
-        currentPassword,
-        newPassword,
-      });
+      const { error } = await authClient.changePassword({ currentPassword, newPassword });
       if (error) throw new Error(error.message);
       setCurrentPassword('');
       setNewPassword('');
@@ -103,162 +98,212 @@ export default function ProfilePage() {
     }
   }
 
-  if (!user) return <LoadingSpinner fullPage />;
+  function handleThemeChange(pref: ThemePreference) {
+    const previousPref = themePreference;
+    latestThemePrefRef.current = pref;
+    setThemePreference(pref);
+    setThemeError(null);
+
+    usersApi.updatePreferences({ themePreference: pref }).catch(() => {
+      // Only revert if the user hasn't changed again in the meantime
+      if (latestThemePrefRef.current === pref) {
+        setThemePreference(previousPref);
+        latestThemePrefRef.current = previousPref;
+        setThemeError('Failed to save theme preference. Please try again.');
+        setTimeout(() => setThemeError(null), 3000);
+      }
+    });
+  }
 
   return (
-    <div className="max-w-2xl mx-auto flex flex-col gap-8">
-      <h1 className="text-3xl font-bold text-foreground">Profile</h1>
-
-      {/* Account info */}
-      <section className="bg-surface rounded-2xl shadow-warm-sm border border-border p-6 flex flex-col gap-5">
-        <h2 className="text-lg font-semibold text-foreground">Account</h2>
-
-        {/* Name */}
+    <div className="max-w-4xl mx-auto py-8 px-4 flex flex-col gap-8">
+      {/* Profile header */}
+      <div className="flex flex-col items-center text-center gap-3 pb-6 border-b border-border-subtle md:flex-row md:text-left">
+        <ProfileAvatar name={user.name} />
         <div className="flex flex-col gap-1">
-          <span className="text-sm font-semibold text-foreground">Display Name</span>
-          {editingName ? (
-            <div className="flex items-center gap-2">
-              <input
-                value={nameValue}
-                onChange={(e) => setNameValue(e.target.value)}
-                className="rounded-xl border-2 border-primary bg-surface-raised px-3 py-2 text-foreground text-sm flex-1 focus:outline-none"
-                autoFocus
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') void handleSaveName();
-                  if (e.key === 'Escape') setEditingName(false);
-                }}
-              />
-              <button
-                onClick={() => void handleSaveName()}
-                disabled={nameSaving}
-                className="text-primary hover:brightness-110 disabled:opacity-50"
-                aria-label="Save name"
-              >
-                <Check className="w-5 h-5" />
-              </button>
-              <button
-                onClick={() => { setEditingName(false); setNameValue(user.name); setNameError(null); }}
-                className="text-muted-foreground hover:text-foreground"
-                aria-label="Cancel"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-          ) : (
-            <div className="flex items-center gap-2">
-              <span className="text-foreground">{user.name}</span>
-              <button
-                onClick={() => { setEditingName(true); setNameValue(user.name); }}
-                className="text-muted-foreground hover:text-foreground transition-colors"
-                aria-label="Edit name"
-              >
-                <Pencil className="w-4 h-4" />
-              </button>
-              {nameSuccess && (
-                <span className="text-xs text-success font-medium">Saved!</span>
-              )}
-            </div>
-          )}
-          {nameError && <p className="text-xs text-destructive">{nameError}</p>}
-        </div>
-
-        {/* Email */}
-        <div className="flex flex-col gap-1">
-          <span className="text-sm font-semibold text-foreground">Email</span>
-          <span className="text-muted-foreground">{user.email}</span>
-        </div>
-
-        {/* Role */}
-        <div className="flex flex-col gap-1">
-          <span className="text-sm font-semibold text-foreground">Role</span>
+          <span className="text-2xl font-bold text-text-primary">{user.name}</span>
+          <span className="text-sm text-text-secondary">{user.email}</span>
           <span
             className={`inline-flex w-fit items-center px-2.5 py-0.5 rounded-full text-xs font-semibold capitalize ${roleBadge[user.role] ?? roleBadge.student}`}
           >
             {user.role}
           </span>
         </div>
-      </section>
+      </div>
 
-      {/* Change password */}
-      <section className="bg-surface rounded-2xl shadow-warm-sm border border-border p-6 flex flex-col gap-5">
-        <h2 className="text-lg font-semibold text-foreground">Change Password</h2>
+      {/* Two-column grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Account card */}
+        <section
+          aria-labelledby="account-heading"
+          className="bg-surface rounded-2xl shadow-warm-sm border border-border p-6 flex flex-col gap-4"
+        >
+          <h2 id="account-heading" className="text-lg font-semibold text-foreground">
+            Account
+          </h2>
 
-        {passwordError && <ErrorMessage message={passwordError} />}
-        {passwordSuccess && (
-          <div className="rounded-md bg-success/10 border border-success/20 px-4 py-3 text-success text-sm">
-            Password changed successfully.
-          </div>
-        )}
+          <form onSubmit={(e) => void handleSaveName(e)} className="flex flex-col gap-4">
+            {/* Display name */}
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="displayName" className="text-xs text-muted-foreground uppercase tracking-wide">
+                Display Name
+              </label>
+              <Input
+                id="displayName"
+                value={nameValue}
+                onChange={(e) => {
+                  setNameValue(e.target.value);
+                  if (nameError) setNameError(null);
+                }}
+                placeholder="Your display name"
+                autoComplete="name"
+              />
+            </div>
 
-        <form onSubmit={(e) => void handlePasswordChange(e)} className="flex flex-col gap-4">
-          <Input
-            id="currentPassword"
-            label="Current Password"
-            type="password"
-            value={currentPassword}
-            onChange={(e) => setCurrentPassword(e.target.value)}
-            required
-            autoComplete="current-password"
-          />
-          <Input
-            id="newPassword"
-            label="New Password"
-            type="password"
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-            required
-            minLength={8}
-            autoComplete="new-password"
-          />
-          <Input
-            id="confirmPassword"
-            label="Confirm New Password"
-            type="password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            required
-            autoComplete="new-password"
-          />
+            {/* Email (read-only) */}
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="email" className="text-xs text-muted-foreground uppercase tracking-wide">
+                Email
+              </label>
+              <input
+                id="email"
+                type="email"
+                value={user.email}
+                readOnly
+                aria-readonly="true"
+                className={readOnlyInputClass}
+              />
+            </div>
+
+            {/* Role (read-only) */}
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="role" className="text-xs text-muted-foreground uppercase tracking-wide">
+                Role
+              </label>
+              <input
+                id="role"
+                value={user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+                readOnly
+                aria-readonly="true"
+                className={readOnlyInputClass}
+              />
+            </div>
+
+            <div className="flex items-center gap-3">
+              <Button type="submit" variant="primary" disabled={nameSaving}>
+                {nameSaving ? 'Saving…' : 'Save changes'}
+              </Button>
+              {nameSuccess && (
+                <span role="status" className="text-sm text-success">
+                  Saved!
+                </span>
+              )}
+            </div>
+
+            {nameError && <ErrorMessage message={nameError} />}
+          </form>
+        </section>
+
+        {/* Change Password card */}
+        <section
+          aria-labelledby="password-heading"
+          className="bg-surface rounded-2xl shadow-warm-sm border border-border p-6 flex flex-col gap-4"
+        >
+          <h2 id="password-heading" className="text-lg font-semibold text-foreground">
+            Change Password
+          </h2>
+
+          <form onSubmit={(e) => void handlePasswordChange(e)} className="flex flex-col gap-4">
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="currentPassword" className="text-xs text-muted-foreground uppercase tracking-wide">
+                Current Password
+              </label>
+              <Input
+                id="currentPassword"
+                type="password"
+                value={currentPassword}
+                onChange={(e) => {
+                  setCurrentPassword(e.target.value);
+                  if (passwordError) setPasswordError(null);
+                }}
+                autoComplete="current-password"
+                required
+              />
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="newPassword" className="text-xs text-muted-foreground uppercase tracking-wide">
+                New Password
+              </label>
+              <Input
+                id="newPassword"
+                type="password"
+                value={newPassword}
+                onChange={(e) => {
+                  setNewPassword(e.target.value);
+                  if (passwordError) setPasswordError(null);
+                }}
+                autoComplete="new-password"
+                required
+                minLength={8}
+              />
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="confirmPassword" className="text-xs text-muted-foreground uppercase tracking-wide">
+                Confirm New Password
+              </label>
+              <Input
+                id="confirmPassword"
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => {
+                  setConfirmPassword(e.target.value);
+                  if (passwordError) setPasswordError(null);
+                }}
+                autoComplete="new-password"
+                required
+              />
+            </div>
+
+            <div>
+              <Button type="submit" variant="secondary" disabled={passwordSaving}>
+                {passwordSaving ? 'Updating…' : 'Update password'}
+              </Button>
+            </div>
+
+            {passwordError && <ErrorMessage message={passwordError} role="alert" />}
+            {passwordSuccess && (
+              <div
+                role="status"
+                className="rounded-md bg-success/10 border border-success/20 px-4 py-3 text-success text-sm"
+              >
+                Password updated successfully.
+              </div>
+            )}
+          </form>
+        </section>
+      </div>
+
+      {/* Preferences card */}
+      <section
+        aria-labelledby="preferences-heading"
+        className="bg-surface rounded-2xl shadow-warm-sm border border-border p-6 flex flex-col gap-4"
+      >
+        <h2 id="preferences-heading" className="text-lg font-semibold text-foreground">
+          Preferences
+        </h2>
+
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
-            <Button type="submit" disabled={passwordSaving}>
-              {passwordSaving ? 'Saving…' : 'Change Password'}
-            </Button>
+            <p className="text-sm font-medium text-text-primary">Theme</p>
+            <p className="text-xs text-text-secondary">Choose your preferred color theme</p>
           </div>
-        </form>
-      </section>
+          <ThemeSegmentedControl value={themePreference} onChange={handleThemeChange} />
+        </div>
 
-      {/* Courses */}
-      <section className="bg-surface rounded-2xl shadow-warm-sm border border-border p-6 flex flex-col gap-4">
-        <h2 className="text-lg font-semibold text-foreground">Courses</h2>
-
-        {coursesLoading && <LoadingSpinner />}
-        {coursesError && <ErrorMessage message={coursesError} />}
-
-        {!coursesLoading && !coursesError && courses.length === 0 && (
-          <p className="text-muted-foreground text-sm">
-            No courses yet.{' '}
-            <Link to="/" className="text-primary font-semibold hover:underline">
-              Browse courses
-            </Link>
-          </p>
-        )}
-
-        {!coursesLoading && courses.length > 0 && (
-          <ul className="flex flex-col gap-2">
-            {courses.map((course) => (
-              <li key={course.id}>
-                <Link
-                  to={`/courses/${course.id}`}
-                  className="flex items-center justify-between px-4 py-3 rounded-xl bg-surface-raised hover:bg-border transition-colors"
-                >
-                  <span className="text-foreground font-medium">{course.title}</span>
-                  <span className="text-xs text-muted-foreground">
-                    {course._count?.units ?? 0} {(course._count?.units ?? 0) === 1 ? 'unit' : 'units'}
-                  </span>
-                </Link>
-              </li>
-            ))}
-          </ul>
+        {themeError && (
+          <p className="text-xs text-destructive mt-2">{themeError}</p>
         )}
       </section>
     </div>
