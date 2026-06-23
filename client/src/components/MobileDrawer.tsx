@@ -1,6 +1,6 @@
 import { useRef, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { X, Sun, Moon, UserCircle, ShieldCheck, LogOut } from 'lucide-react';
+import { X, Sun, Moon, Monitor, UserCircle, ShieldCheck, LogOut } from 'lucide-react';
 
 import { useAuth } from '../context/AuthContext.js';
 import { useTheme } from '../context/ThemeContext.js';
@@ -19,7 +19,7 @@ function drawerLinkClass(active: boolean): string {
 
 export default function MobileDrawer({ isOpen, onClose, focusReturnRef }: MobileDrawerProps) {
   const { user, logout } = useAuth();
-  const { theme, toggleTheme } = useTheme();
+  const { themePreference, setThemePreference } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
   const drawerRef = useRef<HTMLDivElement>(null);
@@ -175,12 +175,24 @@ export default function MobileDrawer({ isOpen, onClose, focusReturnRef }: Mobile
         {/* Drawer footer — theme toggle + sign out */}
         <div className="border-t border-border px-4 py-4 flex flex-col gap-2">
           <button
-            onClick={toggleTheme}
-            aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+            onClick={() =>
+              setThemePreference(
+                themePreference === 'light' ? 'dark' : themePreference === 'dark' ? 'system' : 'light',
+              )
+            }
+            aria-label="Cycle theme"
             className="flex items-center justify-between min-h-[44px] px-3 rounded-xl text-muted-foreground hover:text-foreground hover:bg-surface transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-primary focus-visible:ring-offset-2"
           >
-            <span>{theme === 'dark' ? 'Dark mode' : 'Light mode'}</span>
-            {theme === 'dark' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
+            <span>
+              {themePreference === 'light' ? 'Light mode' : themePreference === 'dark' ? 'Dark mode' : 'System'}
+            </span>
+            {themePreference === 'light' ? (
+              <Sun className="w-4 h-4" />
+            ) : themePreference === 'dark' ? (
+              <Moon className="w-4 h-4" />
+            ) : (
+              <Monitor className="w-4 h-4" />
+            )}
           </button>
           {user && (
             <button
