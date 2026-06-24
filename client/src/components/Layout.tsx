@@ -5,8 +5,6 @@ import { useTheme } from '../context/ThemeContext.js';
 import { useAuth } from '../context/AuthContext.js';
 import {
 	GraduationCap,
-	Sun,
-	Moon,
 	UserCircle,
 	LogOut,
 	ShieldCheck,
@@ -17,7 +15,7 @@ import MobileDrawer from './MobileDrawer.js';
 
 
 export default function Layout() {
-	const { theme, toggleTheme } = useTheme();
+	const { theme } = useTheme();
 	const { user, logout } = useAuth();
 	const navigate = useNavigate();
 	const location = useLocation();
@@ -73,17 +71,6 @@ export default function Layout() {
 
 				{/* Inline nav items — hidden below md breakpoint */}
 				<div className="hidden md:flex items-center gap-1">
-					<button
-						onClick={toggleTheme}
-						className="w-10 h-10 flex items-center justify-center transition-colors rounded-xl text-muted-foreground hover:text-foreground hover:bg-surface"
-						aria-label="Toggle theme"
-					>
-						{theme === 'dark' ? (
-							<Moon className="w-5 h-5" />
-						) : (
-							<Sun className="w-5 h-5" />
-						)}
-					</button>
 					{!user && (
 						<>
 							<Link to="/login">

@@ -7,6 +7,7 @@ import {
   ReactNode,
 } from 'react';
 import { authClient } from '../api/auth.js';
+import { usersApi } from '../api/users.js';
 import type { AuthUser } from '../api/types.js';
 
 export interface AuthContextValue {
@@ -44,6 +45,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .then(({ data }) => {
         if (data?.user) {
           setUser(data.user as AuthUser);
+          // Fetch user profile to sync theme preference; silently ignore errors
+          usersApi.getMe().then((profile) => {
+            window.dispatchEvent(
+              new CustomEvent('theme:server-sync', {
+                detail: { themePreference: profile.themePreference },
+              }),
+            );
+          }).catch(() => {
+            // Intentionally silent — theme falls back to localStorage
+          });
         }
       })
       .catch((err: unknown) => {

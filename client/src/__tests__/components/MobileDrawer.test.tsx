@@ -121,24 +121,6 @@ describe('MobileDrawer', () => {
     });
   });
 
-  describe('theme toggle', () => {
-    it('always renders the theme toggle button', () => {
-      renderDrawer(true, { user: null });
-      expect(
-        screen.getByRole('button', { name: /switch to (dark|light) mode/i }),
-      ).toBeInTheDocument();
-    });
-
-    it('shows "Switch to dark mode" label in light mode', () => {
-      localStorage.setItem('theme', 'light');
-      renderDrawer(true, { user: null });
-      expect(
-        screen.getByRole('button', { name: /switch to dark mode/i }),
-      ).toBeInTheDocument();
-      localStorage.removeItem('theme');
-    });
-  });
-
   describe('sign out', () => {
     it('calls logout when Sign Out is clicked', async () => {
       const logoutMock = vi.fn().mockResolvedValue(undefined);
