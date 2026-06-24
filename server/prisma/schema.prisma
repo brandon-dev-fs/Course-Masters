@@ -43,10 +43,11 @@ model User {
   emailVerified Boolean   @default(false)
   image         String?
   role          UserRole  @default(student)
-  banned        Boolean?
-  banReason     String?
-  banExpires    DateTime?
-  createdAt     DateTime  @default(now())
+  banned          Boolean?
+  banReason       String?
+  banExpires      DateTime?
+  themePreference String?   @map("theme_preference")
+  createdAt       DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   deletedAt     DateTime?
 
