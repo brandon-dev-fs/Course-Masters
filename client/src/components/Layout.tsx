@@ -5,9 +5,6 @@ import { useTheme } from '../context/ThemeContext.js';
 import { useAuth } from '../context/AuthContext.js';
 import {
 	GraduationCap,
-	Sun,
-	Moon,
-	Monitor,
 	UserCircle,
 	LogOut,
 	ShieldCheck,
@@ -18,7 +15,7 @@ import MobileDrawer from './MobileDrawer.js';
 
 
 export default function Layout() {
-	const { theme, themePreference, setThemePreference } = useTheme();
+	const { theme } = useTheme();
 	const { user, logout } = useAuth();
 	const navigate = useNavigate();
 	const location = useLocation();
@@ -74,23 +71,6 @@ export default function Layout() {
 
 				{/* Inline nav items — hidden below md breakpoint */}
 				<div className="hidden md:flex items-center gap-1">
-					<button
-						onClick={() =>
-							setThemePreference(
-								themePreference === 'light' ? 'dark' : themePreference === 'dark' ? 'system' : 'light',
-							)
-						}
-						className="w-10 h-10 flex items-center justify-center transition-colors rounded-xl text-muted-foreground hover:text-foreground hover:bg-surface"
-						aria-label="Cycle theme"
-					>
-						{themePreference === 'light' ? (
-							<Sun className="w-5 h-5" />
-						) : themePreference === 'dark' ? (
-							<Moon className="w-5 h-5" />
-						) : (
-							<Monitor className="w-5 h-5" />
-						)}
-					</button>
 					{!user && (
 						<>
 							<Link to="/login">

@@ -1,9 +1,8 @@
 import { useRef, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { X, Sun, Moon, Monitor, UserCircle, ShieldCheck, LogOut } from 'lucide-react';
+import { X, UserCircle, ShieldCheck, LogOut } from 'lucide-react';
 
 import { useAuth } from '../context/AuthContext.js';
-import { useTheme } from '../context/ThemeContext.js';
 
 interface MobileDrawerProps {
   isOpen: boolean;
@@ -19,7 +18,6 @@ function drawerLinkClass(active: boolean): string {
 
 export default function MobileDrawer({ isOpen, onClose, focusReturnRef }: MobileDrawerProps) {
   const { user, logout } = useAuth();
-  const { themePreference, setThemePreference } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
   const drawerRef = useRef<HTMLDivElement>(null);
@@ -172,38 +170,18 @@ export default function MobileDrawer({ isOpen, onClose, focusReturnRef }: Mobile
           )}
         </div>
 
-        {/* Drawer footer — theme toggle + sign out */}
-        <div className="border-t border-border px-4 py-4 flex flex-col gap-2">
-          <button
-            onClick={() =>
-              setThemePreference(
-                themePreference === 'light' ? 'dark' : themePreference === 'dark' ? 'system' : 'light',
-              )
-            }
-            aria-label="Cycle theme"
-            className="flex items-center justify-between min-h-[44px] px-3 rounded-xl text-muted-foreground hover:text-foreground hover:bg-surface transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-primary focus-visible:ring-offset-2"
-          >
-            <span>
-              {themePreference === 'light' ? 'Light mode' : themePreference === 'dark' ? 'Dark mode' : 'System'}
-            </span>
-            {themePreference === 'light' ? (
-              <Sun className="w-4 h-4" />
-            ) : themePreference === 'dark' ? (
-              <Moon className="w-4 h-4" />
-            ) : (
-              <Monitor className="w-4 h-4" />
-            )}
-          </button>
-          {user && (
+        {/* Drawer footer — sign out */}
+        {user && (
+          <div className="border-t border-border px-4 py-4">
             <button
               onClick={() => void handleSignOut()}
-              className="flex items-center min-h-[44px] px-3 rounded-xl text-destructive hover:bg-destructive/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-primary focus-visible:ring-offset-2"
+              className="flex items-center min-h-[44px] px-3 rounded-xl text-destructive hover:bg-destructive/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-primary focus-visible:ring-offset-2 w-full"
             >
               <LogOut className="w-4 h-4 mr-2" />
               Sign Out
             </button>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </>
   );

@@ -121,22 +121,6 @@ describe('MobileDrawer', () => {
     });
   });
 
-  describe('theme toggle', () => {
-    it('always renders the theme toggle button', () => {
-      renderDrawer(true, { user: null });
-      expect(
-        screen.getByRole('button', { name: /cycle theme/i }),
-      ).toBeInTheDocument();
-    });
-
-    it('shows current theme preference label in the button text', () => {
-      localStorage.setItem('themePreference', 'light');
-      renderDrawer(true, { user: null });
-      expect(screen.getByText(/light mode/i)).toBeInTheDocument();
-      localStorage.removeItem('themePreference');
-    });
-  });
-
   describe('sign out', () => {
     it('calls logout when Sign Out is clicked', async () => {
       const logoutMock = vi.fn().mockResolvedValue(undefined);
