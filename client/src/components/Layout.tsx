@@ -81,7 +81,7 @@ export default function Layout() {
 							)
 						}
 						className="w-10 h-10 flex items-center justify-center transition-colors rounded-xl text-muted-foreground hover:text-foreground hover:bg-surface"
-						aria-label="Toggle theme"
+						aria-label="Cycle theme"
 					>
 						{themePreference === 'light' ? (
 							<Sun className="w-5 h-5" />

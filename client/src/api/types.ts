@@ -17,7 +17,7 @@ export interface UpdatePreferencesInput {
 }
 
 export interface UpdatePreferencesResponse {
-  themePreference: string;
+  themePreference: ThemePreference;
 }
 
 export interface AuthUser {
