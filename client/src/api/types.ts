@@ -1,6 +1,24 @@
 export type UserRole = 'student' | 'teacher' | 'admin';
 export type AssessmentType = 'lesson_quiz' | 'unit_quiz' | 'course_exam';
 export type QuestionType = 'multiple_choice' | 'true_false' | 'matching' | 'fill_in_blank';
+export type ThemePreference = 'light' | 'dark' | 'system';
+
+export interface UserProfile {
+  id: string;
+  name: string;
+  email: string;
+  role: UserRole;
+  themePreference: ThemePreference | null;
+  createdAt: string;
+}
+
+export interface UpdatePreferencesInput {
+  themePreference: ThemePreference;
+}
+
+export interface UpdatePreferencesResponse {
+  themePreference: ThemePreference;
+}
 
 export interface AuthUser {
   id: string;
