@@ -272,7 +272,7 @@ export default function ProfilePage() {
               </Button>
             </div>
 
-            {passwordError && <ErrorMessage message={passwordError} role="alert" />}
+            {passwordError && <ErrorMessage message={passwordError} />}
             {passwordSuccess && (
               <div
                 role="status"
