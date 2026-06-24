@@ -180,9 +180,9 @@ describe('ProfilePage', () => {
     authClientMock.getSession.mockResolvedValue({ data: { user: makeTeacherUser() }, error: null });
     authClientMock.updateUser.mockResolvedValue({ data: null, error: { message: 'Server rejected' } });
     renderWithProviders(<ProfilePage />);
+    // Wait for the display name input to appear and be populated by the useEffect sync
     const nameInput = await screen.findByLabelText(/display name/i);
-    // Ensure the input has a value before clicking save
-    expect(nameInput).toHaveValue('Teacher');
+    await waitFor(() => expect(nameInput).toHaveValue('Teacher'));
     fireEvent.click(screen.getByRole('button', { name: /save changes/i }));
     expect(await screen.findByText(/server rejected/i)).toBeInTheDocument();
   });
