@@ -3,10 +3,11 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { ThemeProvider, useTheme } from '../../context/ThemeContext.js';
 
 function ThemeDisplay() {
-  const { theme, toggleTheme } = useTheme();
+  const { theme, themePreference, toggleTheme } = useTheme();
   return (
     <div>
       <span data-testid="theme">{theme}</span>
+      <span data-testid="pref">{themePreference}</span>
       <button onClick={toggleTheme}>Toggle</button>
     </div>
   );
@@ -23,16 +24,29 @@ describe('ThemeContext', () => {
     vi.restoreAllMocks();
   });
 
-  it('defaults to dark theme when no localStorage value', () => {
+  it('defaults to system preference when no localStorage value', () => {
+    render(
+      <ThemeProvider>
+        <ThemeDisplay />
+      </ThemeProvider>,
+    );
+    // matchMedia mock returns false -> system resolves to light
+    expect(screen.getByTestId('pref').textContent).toBe('system');
+    expect(screen.getByTestId('theme').textContent).toBe('light');
+  });
+
+  it('reads initial theme from localStorage themePreference key', () => {
+    localStorage.setItem('themePreference', 'dark');
     render(
       <ThemeProvider>
         <ThemeDisplay />
       </ThemeProvider>,
     );
     expect(screen.getByTestId('theme').textContent).toBe('dark');
+    expect(screen.getByTestId('pref').textContent).toBe('dark');
   });
 
-  it('reads initial theme from localStorage', () => {
+  it('migrates legacy theme key to themePreference on load', () => {
     localStorage.setItem('theme', 'light');
     render(
       <ThemeProvider>
@@ -40,51 +54,65 @@ describe('ThemeContext', () => {
       </ThemeProvider>,
     );
     expect(screen.getByTestId('theme').textContent).toBe('light');
-  });
-
-  it('toggles from dark to light', () => {
-    localStorage.setItem('theme', 'dark');
-    render(
-      <ThemeProvider>
-        <ThemeDisplay />
-      </ThemeProvider>,
-    );
-    expect(screen.getByTestId('theme').textContent).toBe('dark');
-    fireEvent.click(screen.getByText('Toggle'));
-    expect(screen.getByTestId('theme').textContent).toBe('light');
+    expect(localStorage.getItem('themePreference')).toBe('light');
+    expect(localStorage.getItem('theme')).toBeNull();
   });
 
   it('toggles from light to dark', () => {
-    localStorage.setItem('theme', 'light');
+    localStorage.setItem('themePreference', 'light');
     render(
       <ThemeProvider>
         <ThemeDisplay />
       </ThemeProvider>,
     );
+    expect(screen.getByTestId('theme').textContent).toBe('light');
     fireEvent.click(screen.getByText('Toggle'));
+    expect(screen.getByTestId('pref').textContent).toBe('dark');
     expect(screen.getByTestId('theme').textContent).toBe('dark');
   });
 
-  it('updates localStorage and html class on toggle', () => {
+  it('cycles dark -> system via toggle', () => {
+    localStorage.setItem('themePreference', 'dark');
     render(
       <ThemeProvider>
         <ThemeDisplay />
       </ThemeProvider>,
     );
-    // Default is dark, so html should have dark class
-    expect(document.documentElement.classList.contains('dark')).toBe(true);
     fireEvent.click(screen.getByText('Toggle'));
+    expect(screen.getByTestId('pref').textContent).toBe('system');
+  });
+
+  it('cycles system -> light via toggle', () => {
+    localStorage.setItem('themePreference', 'system');
+    render(
+      <ThemeProvider>
+        <ThemeDisplay />
+      </ThemeProvider>,
+    );
+    fireEvent.click(screen.getByText('Toggle'));
+    expect(screen.getByTestId('pref').textContent).toBe('light');
+  });
+
+  it('updates localStorage and html class when preference changes to dark', () => {
+    localStorage.setItem('themePreference', 'light');
+    render(
+      <ThemeProvider>
+        <ThemeDisplay />
+      </ThemeProvider>,
+    );
     expect(document.documentElement.classList.contains('dark')).toBe(false);
-    expect(localStorage.getItem('theme')).toBe('light');
+    fireEvent.click(screen.getByText('Toggle'));
+    expect(document.documentElement.classList.contains('dark')).toBe(true);
+    expect(localStorage.getItem('themePreference')).toBe('dark');
   });
 
   it('provides default context values when used without provider', () => {
-    // useTheme with default context returns 'dark' and noop
+    // useTheme with default context returns 'light' (default resolved theme)
     function StandaloneDisplay() {
       const { theme } = useTheme();
       return <span data-testid="theme">{theme}</span>;
     }
     render(<StandaloneDisplay />);
-    expect(screen.getByTestId('theme').textContent).toBe('dark');
+    expect(screen.getByTestId('theme').textContent).toBe('light');
   });
 });

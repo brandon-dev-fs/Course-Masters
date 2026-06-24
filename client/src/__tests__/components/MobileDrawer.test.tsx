@@ -125,17 +125,15 @@ describe('MobileDrawer', () => {
     it('always renders the theme toggle button', () => {
       renderDrawer(true, { user: null });
       expect(
-        screen.getByRole('button', { name: /switch to (dark|light) mode/i }),
+        screen.getByRole('button', { name: /cycle theme/i }),
       ).toBeInTheDocument();
     });
 
-    it('shows "Switch to dark mode" label in light mode', () => {
-      localStorage.setItem('theme', 'light');
+    it('shows current theme preference label in the button text', () => {
+      localStorage.setItem('themePreference', 'light');
       renderDrawer(true, { user: null });
-      expect(
-        screen.getByRole('button', { name: /switch to dark mode/i }),
-      ).toBeInTheDocument();
-      localStorage.removeItem('theme');
+      expect(screen.getByText(/light mode/i)).toBeInTheDocument();
+      localStorage.removeItem('themePreference');
     });
   });
 

@@ -1,4 +1,4 @@
-import { useState, useRef, FormEvent } from 'react';
+import { useState, useRef, useEffect, FormEvent } from 'react';
 
 import { useAuth } from '../../context/AuthContext.js';
 import { useTheme } from '../../context/ThemeContext.js';
@@ -44,6 +44,17 @@ export default function ProfilePage() {
 
   // Ref to track the last pref sent so rapid toggles don't cause stale reverts
   const latestThemePrefRef = useRef<ThemePreference>(themePreference);
+
+  // Track whether we have initialized the name from the user object yet
+  const nameInitializedRef = useRef(false);
+
+  // Sync nameValue once when user first loads (user is initially null while AuthContext resolves)
+  useEffect(() => {
+    if (user && !nameInitializedRef.current) {
+      nameInitializedRef.current = true;
+      setNameValue(user.name);
+    }
+  }, [user]);
 
   if (!user) return <LoadingSpinner fullPage />;
 
