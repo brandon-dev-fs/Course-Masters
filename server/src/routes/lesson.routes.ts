@@ -1,7 +1,10 @@
 import { Router } from 'express';
+
 import { lessonController } from '../controllers/lesson.controller.js';
+import { builderController } from '../controllers/builder.controller.js';
 import { validate } from '../middleware/validate.js';
 import { createLessonSchema, updateLessonSchema } from '../schemas/lesson.schema.js';
+import { reorderItemsSchema } from '../schemas/builder.schema.js';
 import { authorize } from '../middleware/authorize.js';
 import { requireCourseOwnership } from '../middleware/authorize-resource.js';
 
@@ -15,6 +18,16 @@ router.post(
   validate(createLessonSchema),
   lessonController.create,
 );
+
+// Must be registered before /:lessonId to avoid conflict
+router.put(
+  '/reorder',
+  authorize('teacher', 'admin'),
+  requireCourseOwnership('unit', (req) => req.params['unitId'] as string),
+  validate(reorderItemsSchema),
+  builderController.reorderLessons,
+);
+
 router.get('/:lessonId', lessonController.getOne);
 router.put(
   '/:lessonId',
