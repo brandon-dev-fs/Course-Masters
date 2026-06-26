@@ -6,6 +6,7 @@ import type { Course } from '../../api/types.js';
 import { getCourseCategory } from './CourseFilters.js';
 import type { CourseCategory } from './CourseFilters.js';
 import CourseCardMenu from './CourseCardMenu.js';
+import { useAuth } from '../../context/AuthContext.js';
 
 interface CourseCardProps {
   course: Course;
@@ -47,11 +48,18 @@ export default function CourseCard({
   onEdit,
   onDelete,
 }: CourseCardProps) {
+  const { user } = useAuth();
   const unitCount = course._count?.units ?? 0;
   const category = getCourseCategory(course.title);
   const colorVariant = CATEGORY_COLOR[category];
   const Icon = CATEGORY_ICON[category];
   const categoryPillClass = CATEGORY_PILL_CLASS[category];
+
+  // Teachers and admins go to the builder; students go to the course detail page
+  const courseLink =
+    user?.role === 'teacher' || user?.role === 'admin'
+      ? `/courses/${course.id}/builder`
+      : `/courses/${course.id}`;
 
   return (
     <div className="rounded-2xl bg-surface border border-border-subtle shadow-warm-sm hover:shadow-warm-md hover:-translate-y-0.5 transition-all overflow-hidden flex flex-row md:flex-col p-4 gap-3">
@@ -75,7 +83,7 @@ export default function CourseCard({
       {/* Content */}
       <div className="flex flex-col flex-1 min-w-0">
         <Link
-          to={`/courses/${course.id}`}
+          to={courseLink}
           className="text-base font-semibold text-text-primary hover:text-green-primary transition-colors mb-1"
         >
           {course.title}
