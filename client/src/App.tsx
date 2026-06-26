@@ -11,6 +11,7 @@ import ProfilePage from './features/auth/ProfilePage.js';
 import RequireAuth from './features/auth/RequireAuth.js';
 import RequireRole from './features/auth/RequireRole.js';
 import AdminUsersPage from './features/auth/AdminUsersPage.js';
+import CourseBuilderPage from './features/builder/CourseBuilderPage.js';
 import ErrorBoundary from './components/ErrorBoundary.js';
 
 export default function App() {
@@ -29,6 +30,16 @@ export default function App() {
 							element={
 								<RequireAuth>
 									<CourseDetailPage />
+								</RequireAuth>
+							}
+						/>
+						<Route
+							path="/courses/:courseId/builder"
+							element={
+								<RequireAuth>
+									<RequireRole roles={['teacher', 'admin']}>
+										<CourseBuilderPage />
+									</RequireRole>
 								</RequireAuth>
 							}
 						/>
