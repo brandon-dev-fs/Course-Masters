@@ -53,6 +53,9 @@ const baseAssignmentFields = {
 
 // ── Create schema (discriminated union by type) ──────────────────────────────
 
+// URL validator — accepts empty string (placeholder on creation) or a valid http/https URL
+const urlField = z.union([z.literal(''), z.string().url().refine(u => /^https?:\/\//i.test(u), { message: 'URL must use http or https' })]);
+
 export const createAssignmentSchema = z.discriminatedUnion('type', [
   z.object({
     ...baseAssignmentFields,
@@ -63,7 +66,7 @@ export const createAssignmentSchema = z.discriminatedUnion('type', [
   z.object({
     ...baseAssignmentFields,
     type: z.literal('video'),
-    url: z.string().url().refine(u => /^https?:\/\//i.test(u), { message: 'URL must use http or https' }),
+    url: urlField,
     // displayTitle is the video's own display title — named distinctly from the shared
     // assignment `title` to avoid a key collision in the flat request body
     displayTitle: z.string().optional(),
@@ -71,13 +74,14 @@ export const createAssignmentSchema = z.discriminatedUnion('type', [
   z.object({
     ...baseAssignmentFields,
     type: z.literal('reading'),
-    url: z.string().url().refine(u => /^https?:\/\//i.test(u), { message: 'URL must use http or https' }),
+    url: urlField,
     description: z.string().optional(),
     estimatedMinutes: z.number().int().min(1).optional(),
   }),
   z.object({
     ...baseAssignmentFields,
     type: z.literal('vocab'),
+    // Allow empty array on creation — entries are added via the edit flow
     entries: z
       .array(
         z.object({
@@ -86,13 +90,14 @@ export const createAssignmentSchema = z.discriminatedUnion('type', [
           example: z.string().optional(),
         }),
       )
-      .min(1),
+      .default([]),
   }),
   z.object({
     ...baseAssignmentFields,
     type: z.literal('practice_problem'),
     passingPercentage: z.number().int().min(0).max(100).optional(),
-    questions: z.array(practiceQuestionSchema).min(1),
+    // Allow empty array on creation — questions are added via the edit flow
+    questions: z.array(practiceQuestionSchema).default([]),
   }),
 ]);
 
