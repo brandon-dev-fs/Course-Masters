@@ -1,7 +1,9 @@
 import { Router } from 'express';
+
 import courseRouter from './course.routes.js';
 import unitRouter from './unit.routes.js';
 import lessonRouter from './lesson.routes.js';
+import builderRouter from './builder.routes.js';
 import { lessonStudentNotesRouter, studentNotesRouter } from './student-note.routes.js';
 import { lessonAssessmentRouter, unitAssessmentRouter, courseAssessmentRouter, assessmentsRouter } from './assessment.routes.js';
 import { courseProgressRouter, unitProgressRouter } from './progress.routes.js';
@@ -26,6 +28,9 @@ router.use(authenticate());
 router.use('/courses', courseRouter);
 router.use('/courses/:courseId/units', unitRouter);
 router.use('/units/:unitId/lessons', lessonRouter);
+
+// Builder
+router.use('/courses/:courseId/builder', builderRouter);
 
 // Lesson content
 router.use('/lessons/:lessonId/student-notes', lessonStudentNotesRouter);

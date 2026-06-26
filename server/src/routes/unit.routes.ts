@@ -1,7 +1,10 @@
 import { Router } from 'express';
+
 import { unitController } from '../controllers/unit.controller.js';
+import { builderController } from '../controllers/builder.controller.js';
 import { validate } from '../middleware/validate.js';
 import { createUnitSchema, updateUnitSchema } from '../schemas/unit.schema.js';
+import { reorderItemsSchema } from '../schemas/builder.schema.js';
 import { authorize } from '../middleware/authorize.js';
 import { requireCourseOwnership } from '../middleware/authorize-resource.js';
 
@@ -15,6 +18,16 @@ router.post(
   validate(createUnitSchema),
   unitController.create,
 );
+
+// Must be registered before /:unitId to avoid conflict
+router.put(
+  '/reorder',
+  authorize('teacher', 'admin'),
+  requireCourseOwnership('course', (req) => req.params['courseId'] as string),
+  validate(reorderItemsSchema),
+  builderController.reorderUnits,
+);
+
 router.get('/:unitId', unitController.getOne);
 router.put(
   '/:unitId',
