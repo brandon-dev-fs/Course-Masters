@@ -5,9 +5,9 @@ export const unitsApi = {
   getAll: (courseId: string) => apiClient.get<Unit[]>(`/courses/${courseId}/units`),
   getOne: (courseId: string, unitId: string) =>
     apiClient.get<Unit>(`/courses/${courseId}/units/${unitId}`),
-  create: (courseId: string, data: { title: string; order: number }) =>
+  create: (courseId: string, data: { title: string; description: string; order: number }) =>
     apiClient.post<Unit>(`/courses/${courseId}/units`, data),
-  update: (courseId: string, unitId: string, data: { title?: string; order?: number }) =>
+  update: (courseId: string, unitId: string, data: { title?: string; description?: string; order?: number }) =>
     apiClient.put<Unit>(`/courses/${courseId}/units/${unitId}`, data),
   delete: (courseId: string, unitId: string) =>
     apiClient.delete<void>(`/courses/${courseId}/units/${unitId}`),

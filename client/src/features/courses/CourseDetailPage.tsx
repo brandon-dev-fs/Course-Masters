@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
+import { PencilRuler, ArrowLeft } from 'lucide-react';
 
 import { coursesApi } from '../../api/courses.js';
 import { unitsApi } from '../../api/units.js';
@@ -115,7 +116,7 @@ export default function CourseDetailPage() {
 		navigate('/');
 	}
 
-	async function handleAddUnit(unitData: { title: string; order: number }) {
+	async function handleAddUnit(unitData: { title: string; description: string; order: number }) {
 		if (!courseId || !course) return;
 		const unit = await unitsApi.create(courseId, unitData);
 		setCourse((prev) =>
@@ -154,7 +155,7 @@ export default function CourseDetailPage() {
 
 	async function handleUpdateUnit(
 		unit: Unit,
-		unitData: { title: string; order: number },
+		unitData: { title: string; description: string; order: number },
 	) {
 		if (!courseId) return;
 		const updated = await unitsApi.update(courseId, unit.id, unitData);
@@ -186,6 +187,24 @@ export default function CourseDetailPage() {
 
 	return (
 		<div className="bg-background min-h-screen">
+			{canEdit && courseId && (
+				<div className="sticky top-0 z-40 bg-orange-surface border-b border-orange-accent/30">
+					<div className="container mx-auto px-4 md:px-6 py-2 flex items-center justify-between gap-4">
+						<div className="flex items-center gap-2 text-sm font-semibold text-orange-surface-text">
+							<PencilRuler className="w-4 h-4 shrink-0" aria-hidden="true" />
+							Teacher Preview — you&apos;re viewing as a student
+						</div>
+						<Link
+							to={`/courses/${courseId}/builder`}
+							className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold rounded-xl
+								bg-green-button text-green-button-text hover:opacity-90 transition-opacity shadow-warm-sm shrink-0"
+						>
+							<ArrowLeft className="w-4 h-4" aria-hidden="true" />
+							Back to Builder
+						</Link>
+					</div>
+				</div>
+			)}
 			<div className="container mx-auto px-4 md:px-6 py-6">
 				{loading && <LoadingSpinner />}
 				{error && <ErrorMessage message={error} />}

@@ -37,7 +37,7 @@ describe('unitsApi', () => {
   });
 
   it('create calls POST /courses/:courseId/units with data', async () => {
-    const payload = { title: 'New Unit', order: 1 };
+    const payload = { title: 'New Unit', description: '', order: 1 };
     apiClientMock.post.mockResolvedValueOnce(mockUnit);
     const result = await unitsApi.create('c1', payload);
     expect(apiClientMock.post).toHaveBeenCalledWith('/courses/c1/units', payload);

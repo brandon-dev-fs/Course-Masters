@@ -1,9 +1,9 @@
-import { useState } from 'react';
 import {
   GripVertical,
   ChevronRight,
   MoreVertical,
   Pencil,
+  FileEdit,
   Trash2,
   ChevronUp,
   ChevronDown,
@@ -118,13 +118,14 @@ interface UnitRowProps {
   onDelete: () => void;
   onDeleteLesson: (lessonId: string) => void;
   onDeleteActivity: (lessonId: string, assignmentId: string) => void;
-  onAddLesson: () => Promise<void>;
+  onAddLesson: () => void;
   onAddActivity: (lessonId: string, type: AssignmentType) => Promise<void>;
   onReorderLessons: (reordered: BuilderLesson[], items: ReorderItem[]) => Promise<void>;
   onReorderActivities: (lessonId: string, reordered: BuilderActivity[], assignmentIds: string[]) => Promise<void>;
   onMoveUnit: (direction: 'up' | 'down') => void;
   onMoveLesson: (lessonId: string, direction: 'up' | 'down') => void;
   onMoveActivity: (lessonId: string, assignmentId: string, direction: 'up' | 'down') => void;
+  onEditUnit: () => void;
   announce: (message: string) => void;
   dragHandleProps?: Record<string, unknown>;
   isDragging?: boolean;
@@ -154,13 +155,12 @@ export default function UnitRow({
   onMoveUnit,
   onMoveLesson,
   onMoveActivity,
+  onEditUnit,
   announce,
   dragHandleProps,
   isDragging = false,
 }: UnitRowProps) {
   const { isOpen: menuOpen, open: openMenu, close: closeMenu, triggerRef: menuTriggerRef } = useContextMenu();
-  const [addingLesson, setAddingLesson] = useState(false);
-  const [addLessonError, setAddLessonError] = useState('');
   const isRenaming = renamingId === unit.id;
   const childGroupId = `unit-children-${unit.id}`;
 
@@ -185,6 +185,11 @@ export default function UnitRow({
       onClick: () => onStartRename(unit.id),
     },
     {
+      label: 'Edit details',
+      icon: <FileEdit className="w-4 h-4" />,
+      onClick: onEditUnit,
+    },
+    {
       label: 'Move up',
       icon: <ChevronUp className="w-4 h-4" />,
       onClick: () => onMoveUnit('up'),
@@ -204,19 +209,6 @@ export default function UnitRow({
       dividerBefore: true,
     },
   ];
-
-  async function handleAddLesson() {
-    setAddingLesson(true);
-    setAddLessonError('');
-    try {
-      await onAddLesson();
-      announce('Lesson created');
-    } catch {
-      setAddLessonError('Failed to add lesson.');
-    } finally {
-      setAddingLesson(false);
-    }
-  }
 
   function handleMoveLesson(lessonId: string, direction: 'up' | 'down') {
     const sorted = [...unit.lessons].sort((a, b) => a.order - b.order);
@@ -314,6 +306,14 @@ export default function UnitRow({
       {/* Children */}
       {isExpanded && (
         <div id={childGroupId} role="group" className="pb-2">
+          {/* Unit description */}
+          <p className="text-xs pl-9 pr-3 pb-1.5">
+            {unit.description
+              ? <span className="text-text-secondary">{unit.description}</span>
+              : <span className="text-muted-foreground italic">No description</span>
+            }
+          </p>
+
           {sortedLessons.length === 0 && (
             <p className="text-sm text-muted-foreground italic px-3 py-1.5 ml-8">
               No lessons in this unit.
@@ -357,15 +357,10 @@ export default function UnitRow({
             </SortableContext>
           </DndContext>
 
-          {addLessonError && (
-            <p className="text-xs text-destructive px-3 py-1 ml-4 md:ml-8">{addLessonError}</p>
-          )}
-
           <div className="ml-4 md:ml-8 mt-1">
             <AddItemButton
               label="Add lesson"
-              loading={addingLesson}
-              onClick={handleAddLesson}
+              onClick={onAddLesson}
             />
           </div>
 

@@ -26,7 +26,6 @@ export default function UnitForm({ initial, nextOrder = 1, onSubmit, onCancel }:
     setError('');
     try {
       if (!title.trim()) throw new Error('Title is required');
-      if (!description.trim()) throw new Error('Description is required');
       await onSubmit({ title: title.trim(), description: description.trim(), order });
     } catch (err: unknown) {
       setError(err instanceof ApiClientError ? classifyError(err) : err instanceof Error ? err.message : 'Something went wrong');

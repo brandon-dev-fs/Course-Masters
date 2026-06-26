@@ -8,7 +8,13 @@ export const createLessonSchema = z.object({
   planContent: z.record(z.any()).optional().default({}),
 });
 
-export const updateLessonSchema = createLessonSchema.partial();
+export const updateLessonSchema = z.object({
+  title: z.string().min(1, 'Title is required').optional(),
+  description: z.string().optional(),
+  order: z.number().int().min(0).optional(),
+  objective: z.string().optional(),
+  planContent: z.record(z.any()).optional(),
+});
 
 export type CreateLessonInput = z.infer<typeof createLessonSchema>;
 export type UpdateLessonInput = z.infer<typeof updateLessonSchema>;

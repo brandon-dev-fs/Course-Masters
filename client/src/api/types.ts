@@ -346,6 +346,7 @@ export interface BuilderLesson {
 export interface BuilderUnit {
   id: string;
   title: string;
+  description: string;
   order: number;
   lessons: BuilderLesson[];
   assessment: BuilderAssessment | null;

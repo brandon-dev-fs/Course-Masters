@@ -30,13 +30,14 @@ interface SortableUnitRowProps {
   onDelete: () => void;
   onDeleteLesson: (lessonId: string) => void;
   onDeleteActivity: (lessonId: string, assignmentId: string) => void;
-  onAddLesson: () => Promise<void>;
+  onAddLesson: () => void;
   onAddActivity: (lessonId: string, type: AssignmentType) => Promise<void>;
   onReorderLessons: (reordered: BuilderLesson[], items: ReorderItem[]) => Promise<void>;
   onReorderActivities: (lessonId: string, reordered: BuilderActivity[], assignmentIds: string[]) => Promise<void>;
   onMoveUnit: (direction: 'up' | 'down') => void;
   onMoveLesson: (lessonId: string, direction: 'up' | 'down') => void;
   onMoveActivity: (lessonId: string, assignmentId: string, direction: 'up' | 'down') => void;
+  onEditUnit: () => void;
   announce: (message: string) => void;
 }
 
@@ -64,6 +65,7 @@ function SortableUnitRow({
   onMoveUnit,
   onMoveLesson,
   onMoveActivity,
+  onEditUnit,
   announce,
 }: SortableUnitRowProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -101,6 +103,7 @@ function SortableUnitRow({
         onMoveUnit={onMoveUnit}
         onMoveLesson={onMoveLesson}
         onMoveActivity={onMoveActivity}
+        onEditUnit={onEditUnit}
         announce={announce}
         dragHandleProps={{ ...attributes, ...listeners }}
         isDragging={isDragging}
@@ -125,8 +128,8 @@ interface OutlineTreeProps {
   onDeleteUnit: (unitId: string) => void;
   onDeleteLesson: (unitId: string, lessonId: string) => void;
   onDeleteActivity: (lessonId: string, assignmentId: string) => void;
-  onAddUnit: () => Promise<void>;
-  onAddLesson: (unitId: string) => Promise<void>;
+  onAddUnit: () => void;
+  onAddLesson: (unitId: string) => void;
   onAddActivity: (lessonId: string, type: AssignmentType) => Promise<void>;
   onReorderUnits: (reordered: BuilderUnit[], items: ReorderItem[]) => Promise<void>;
   onReorderLessons: (unitId: string, reordered: BuilderLesson[], items: ReorderItem[]) => Promise<void>;
@@ -134,8 +137,8 @@ interface OutlineTreeProps {
   onMoveUnit: (unitId: string, direction: 'up' | 'down') => void;
   onMoveLesson: (unitId: string, lessonId: string, direction: 'up' | 'down') => void;
   onMoveActivity: (lessonId: string, assignmentId: string, direction: 'up' | 'down') => void;
+  onEditUnit: (unitId: string) => void;
   announce: (message: string) => void;
-  addingUnit: boolean;
   onConfirmDeleteUnit: (unitId: string) => void;
   onConfirmDeleteLesson: (unitId: string, lessonId: string) => void;
   onConfirmDeleteActivity: (lessonId: string, assignmentId: string) => void;
@@ -166,8 +169,8 @@ export default function OutlineTree({
   onMoveUnit,
   onMoveLesson,
   onMoveActivity,
+  onEditUnit,
   announce,
-  addingUnit,
   onConfirmDeleteUnit,
   onConfirmDeleteLesson,
   onConfirmDeleteActivity,
@@ -224,6 +227,7 @@ export default function OutlineTree({
               onMoveUnit={(dir) => onMoveUnit(unit.id, dir)}
               onMoveLesson={(lessonId, dir) => onMoveLesson(unit.id, lessonId, dir)}
               onMoveActivity={onMoveActivity}
+              onEditUnit={() => onEditUnit(unit.id)}
               announce={announce}
             />
           ))}
@@ -234,7 +238,6 @@ export default function OutlineTree({
       <div className="mt-2">
         <AddItemButton
           label="Add unit"
-          loading={addingUnit}
           onClick={onAddUnit}
         />
       </div>

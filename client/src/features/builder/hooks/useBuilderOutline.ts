@@ -15,8 +15,9 @@ interface UseBuilderOutlineResult {
   error: string;
   reload: () => void;
   setOutline: React.Dispatch<React.SetStateAction<BuilderOutline | null>>;
-  addUnit: () => Promise<void>;
-  addLesson: (unitId: string) => Promise<void>;
+  addUnit: (data: { title: string; description: string; order: number }) => Promise<void>;
+  editUnit: (courseId: string, unitId: string, data: { title: string; description: string; order: number }) => Promise<void>;
+  addLesson: (unitId: string, data: { title: string; description: string; order: number }) => Promise<void>;
   addActivity: (lessonId: string, type: AssignmentType) => Promise<void>;
   renameUnit: (courseId: string, unitId: string, title: string) => Promise<void>;
   renameLesson: (unitId: string, lessonId: string, title: string) => Promise<void>;
@@ -85,14 +86,13 @@ export function useBuilderOutline(courseId: string): UseBuilderOutlineResult {
 
   const reload = useCallback(() => setVersion((v) => v + 1), []);
 
-  const addUnit = useCallback(async () => {
+  const addUnit = useCallback(async (data: { title: string; description: string; order: number }) => {
     if (!outline) return;
-    const nextOrder = outline.units.length + 1;
-    const defaultTitle = `Unit ${nextOrder}`;
-    const newUnit = await unitsApi.create(courseId, { title: defaultTitle, order: nextOrder });
+    const newUnit = await unitsApi.create(courseId, data);
     const builderUnit: BuilderUnit = {
       id: newUnit.id,
       title: newUnit.title,
+      description: newUnit.description,
       order: newUnit.order,
       lessons: [],
       assessment: null,
@@ -100,17 +100,8 @@ export function useBuilderOutline(courseId: string): UseBuilderOutlineResult {
     setOutline((prev) => prev ? { ...prev, units: [...prev.units, builderUnit] } : prev);
   }, [outline, courseId]);
 
-  const addLesson = useCallback(async (unitId: string) => {
-    if (!outline) return;
-    const unit = outline.units.find((u) => u.id === unitId);
-    if (!unit) return;
-    const nextOrder = unit.lessons.length + 1;
-    const defaultTitle = `Lesson ${nextOrder}`;
-    const newLesson = await lessonsApi.create(unitId, {
-      title: defaultTitle,
-      description: '',
-      order: nextOrder,
-    });
+  const addLesson = useCallback(async (unitId: string, data: { title: string; description: string; order: number }) => {
+    const newLesson = await lessonsApi.create(unitId, data);
     const builderLesson: BuilderLesson = {
       id: newLesson.id,
       title: newLesson.title,
@@ -127,7 +118,7 @@ export function useBuilderOutline(courseId: string): UseBuilderOutlineResult {
         ),
       };
     });
-  }, [outline]);
+  }, []);
 
   const addActivity = useCallback(async (lessonId: string, type: AssignmentType) => {
     if (!outline) return;
@@ -165,6 +156,17 @@ export function useBuilderOutline(courseId: string): UseBuilderOutlineResult {
       return {
         ...prev,
         units: prev.units.map((u) => u.id === unitId ? { ...u, title } : u),
+      };
+    });
+  }, []);
+
+  const editUnit = useCallback(async (courseId: string, unitId: string, data: { title: string; description: string; order: number }) => {
+    await unitsApi.update(courseId, unitId, data);
+    setOutline((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        units: prev.units.map((u) => u.id === unitId ? { ...u, ...data } : u),
       };
     });
   }, []);
@@ -262,6 +264,7 @@ export function useBuilderOutline(courseId: string): UseBuilderOutlineResult {
     reload,
     setOutline,
     addUnit,
+    editUnit,
     addLesson,
     addActivity,
     renameUnit,

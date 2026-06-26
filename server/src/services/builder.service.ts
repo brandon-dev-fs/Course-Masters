@@ -25,6 +25,7 @@ export const builderService = {
           select: {
             id: true,
             title: true,
+            description: true,
             order: true,
             assessment: {
               where: { deletedAt: null },
@@ -71,6 +72,7 @@ export const builderService = {
     const units = course.units.map((unit) => ({
       id: unit.id,
       title: unit.title,
+      description: unit.description,
       order: unit.order,
       lessons: unit.lessons.map((lesson) => ({
         id: lesson.id,

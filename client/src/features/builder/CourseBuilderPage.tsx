@@ -9,7 +9,10 @@ import ScreenReaderAnnouncer from './ScreenReaderAnnouncer.js';
 import LoadingSpinner from '../../components/LoadingSpinner.js';
 import ErrorMessage from '../../components/ErrorMessage.js';
 import ConfirmDialog from '../../components/ConfirmDialog.js';
+import Modal from '../../components/Modal.js';
 import Button from '../../components/Button.js';
+import UnitForm from '../units/UnitForm.js';
+import LessonForm from '../lessons/LessonForm.js';
 
 import type { AssignmentType, ReorderItem, BuilderUnit, BuilderLesson, BuilderActivity } from '../../api/types.js';
 
@@ -33,6 +36,7 @@ export default function CourseBuilderPage() {
     error,
     reload,
     addUnit,
+    editUnit,
     addLesson,
     addActivity,
     renameUnit,
@@ -60,8 +64,14 @@ export default function CourseBuilderPage() {
   const [deleteError, setDeleteError] = useState('');
   const [deleting, setDeleting] = useState(false);
 
-  // ── "Adding unit" loading state ───────────────────────────────────────────
-  const [addingUnit, setAddingUnit] = useState(false);
+  // ── Add unit modal state ──────────────────────────────────────────────────
+  const [addUnitModalOpen, setAddUnitModalOpen] = useState(false);
+
+  // ── Edit unit modal state ─────────────────────────────────────────────────
+  const [editingUnitId, setEditingUnitId] = useState<string | null>(null);
+
+  // ── Add lesson modal state ────────────────────────────────────────────────
+  const [addLessonUnitId, setAddLessonUnitId] = useState<string | null>(null);
 
   // ── Handlers ──────────────────────────────────────────────────────────────
 
@@ -109,20 +119,37 @@ export default function CourseBuilderPage() {
     setAnnouncement(`Renamed to ${title}`);
   }, [renameLesson]);
 
-  const handleAddUnit = useCallback(async () => {
-    setAddingUnit(true);
-    try {
-      await addUnit();
-      setAnnouncement('Unit created');
-    } finally {
-      setAddingUnit(false);
-    }
+  const handleAddUnit = useCallback(() => {
+    setAddUnitModalOpen(true);
+  }, []);
+
+  const handleSubmitNewUnit = useCallback(async (data: { title: string; description: string; order: number }) => {
+    await addUnit(data);
+    setAddUnitModalOpen(false);
+    setAnnouncement('Unit created');
   }, [addUnit]);
 
-  const handleAddLesson = useCallback(async (unitId: string) => {
-    await addLesson(unitId);
+  const handleEditUnit = useCallback((unitId: string) => {
+    setEditingUnitId(unitId);
+  }, []);
+
+  const handleSubmitEditUnit = useCallback(async (data: { title: string; description: string; order: number }) => {
+    if (!editingUnitId) return;
+    await editUnit(resolvedCourseId, editingUnitId, data);
+    setEditingUnitId(null);
+    setAnnouncement('Unit updated');
+  }, [editUnit, editingUnitId, resolvedCourseId]);
+
+  const handleAddLesson = useCallback((unitId: string) => {
+    setAddLessonUnitId(unitId);
+  }, []);
+
+  const handleSubmitNewLesson = useCallback(async (data: { title: string; description: string; order: number }) => {
+    if (!addLessonUnitId) return;
+    await addLesson(addLessonUnitId, data);
+    setAddLessonUnitId(null);
     setAnnouncement('Lesson created');
-  }, [addLesson]);
+  }, [addLesson, addLessonUnitId]);
 
   const handleAddActivity = useCallback(async (lessonId: string, type: AssignmentType) => {
     await addActivity(lessonId, type);
@@ -300,8 +327,8 @@ export default function CourseBuilderPage() {
             onMoveUnit={handleMoveUnit}
             onMoveLesson={handleMoveLesson}
             onMoveActivity={handleMoveActivity}
+            onEditUnit={handleEditUnit}
             announce={setAnnouncement}
-            addingUnit={addingUnit}
             onConfirmDeleteUnit={handleConfirmDeleteUnit}
             onConfirmDeleteLesson={handleConfirmDeleteLesson}
             onConfirmDeleteActivity={handleConfirmDeleteActivity}
@@ -337,6 +364,47 @@ export default function CourseBuilderPage() {
           <ErrorMessage message={deleteError} />
         </div>
       )}
+
+      {/* Add unit modal */}
+      {addUnitModalOpen && (
+        <Modal title="Add Unit" onClose={() => setAddUnitModalOpen(false)}>
+          <UnitForm
+            nextOrder={(outline.units.length) + 1}
+            onSubmit={handleSubmitNewUnit}
+            onCancel={() => setAddUnitModalOpen(false)}
+          />
+        </Modal>
+      )}
+
+      {/* Add lesson modal */}
+      {addLessonUnitId && (() => {
+        const unit = outline.units.find((u) => u.id === addLessonUnitId);
+        if (!unit) return null;
+        return (
+          <Modal title="Add Lesson" onClose={() => setAddLessonUnitId(null)}>
+            <LessonForm
+              nextOrder={unit.lessons.length + 1}
+              onSubmit={handleSubmitNewLesson}
+              onCancel={() => setAddLessonUnitId(null)}
+            />
+          </Modal>
+        );
+      })()}
+
+      {/* Edit unit modal */}
+      {editingUnitId && (() => {
+        const editingUnit = outline.units.find((u) => u.id === editingUnitId);
+        if (!editingUnit) return null;
+        return (
+          <Modal title="Edit Unit" onClose={() => setEditingUnitId(null)}>
+            <UnitForm
+              initial={{ id: editingUnit.id, title: editingUnit.title, description: editingUnit.description, order: editingUnit.order }}
+              onSubmit={handleSubmitEditUnit}
+              onCancel={() => setEditingUnitId(null)}
+            />
+          </Modal>
+        );
+      })()}
     </div>
   );
 }
