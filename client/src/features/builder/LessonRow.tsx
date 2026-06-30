@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import {
   GripVertical,
   ChevronRight,
@@ -16,12 +15,11 @@ import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 import { CSS } from '@dnd-kit/utilities';
 
-import type { BuilderLesson, BuilderActivity, AssignmentType, ReorderItem } from '../../api/types.js';
+import type { BuilderLesson, BuilderActivity, ReorderItem } from '../../api/types.js';
 
 import ActivityRow from './ActivityRow.js';
 import AssessmentRow from './AssessmentRow.js';
 import AddItemButton from './AddItemButton.js';
-import ActivityTypeMenu from './ActivityTypeMenu.js';
 import InlineRenameInput from './InlineRenameInput.js';
 import DropdownMenu from './DropdownMenu.js';
 import { useContextMenu } from './hooks/useContextMenu.js';
@@ -79,7 +77,7 @@ interface LessonRowProps {
   onCancelRename: () => void;
   onDelete: () => void;
   onDeleteActivity: (assignmentId: string) => void;
-  onAddActivity: (type: AssignmentType) => Promise<void>;
+  onAddActivity: () => void;
   onReorderActivities: (reordered: BuilderActivity[], assignmentIds: string[]) => Promise<void>;
   onMoveLesson: (direction: 'up' | 'down') => void;
   onMoveActivity: (assignmentId: string, direction: 'up' | 'down') => void;
@@ -110,9 +108,6 @@ export default function LessonRow({
   isDragging = false,
 }: LessonRowProps) {
   const { isOpen: menuOpen, open: openMenu, close: closeMenu, triggerRef: menuTriggerRef } = useContextMenu();
-  const [activityMenuOpen, setActivityMenuOpen] = useState(false);
-  const [addingActivity, setAddingActivity] = useState(false);
-  const [activityError, setActivityError] = useState('');
   const isRenaming = renamingId === lesson.id;
   const childGroupId = `lesson-children-${lesson.id}`;
 
@@ -157,19 +152,6 @@ export default function LessonRow({
       dividerBefore: true,
     },
   ];
-
-  async function handleAddActivity(type: AssignmentType) {
-    setAddingActivity(true);
-    setActivityError('');
-    try {
-      await onAddActivity(type);
-      announce(`${type} activity created`);
-    } catch {
-      setActivityError('Failed to add activity.');
-    } finally {
-      setAddingActivity(false);
-    }
-  }
 
   const sortedActivities = [...lesson.assignments].sort((a, b) => a.order - b.order);
 
@@ -299,25 +281,13 @@ export default function LessonRow({
             </SortableContext>
           </DndContext>
 
-          {activityError && (
-            <p className="text-xs text-destructive px-3 py-1 ml-8 md:ml-16">{activityError}</p>
-          )}
-
-          {/* Add activity button + menu */}
-          <div className="relative ml-8 md:ml-16 mt-1 mb-1">
+          {/* Add activity button */}
+          <div className="ml-8 md:ml-16 mt-1 mb-1">
             <AddItemButton
               label="Add activity"
-              loading={addingActivity}
-              onClick={() => setActivityMenuOpen(true)}
-              ariaHasPopup
+              onClick={onAddActivity}
               ariaLabel="Add activity"
             />
-            {activityMenuOpen && (
-              <ActivityTypeMenu
-                onSelect={handleAddActivity}
-                onClose={() => setActivityMenuOpen(false)}
-              />
-            )}
           </div>
 
           {/* Lesson quiz */}

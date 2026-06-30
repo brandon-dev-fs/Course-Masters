@@ -6,7 +6,7 @@ import { lessonsApi } from '../../../api/lessons.js';
 import { assignmentsApi } from '../../../api/assignments.js';
 import { classifyError, ApiClientError } from '../../../api/client.js';
 
-import type { BuilderOutline, BuilderUnit, BuilderLesson, BuilderActivity, ReorderItem, AssignmentType } from '../../../api/types.js';
+import type { BuilderOutline, BuilderUnit, BuilderLesson, BuilderActivity, ReorderItem } from '../../../api/types.js';
 import type { CreateAssignmentPayload } from '../../../api/assignments.js';
 
 interface UseBuilderOutlineResult {
@@ -18,7 +18,7 @@ interface UseBuilderOutlineResult {
   addUnit: (data: { title: string; description: string; order: number }) => Promise<void>;
   editUnit: (courseId: string, unitId: string, data: { title: string; description: string; order: number }) => Promise<void>;
   addLesson: (unitId: string, data: { title: string; description: string; order: number }) => Promise<void>;
-  addActivity: (lessonId: string, type: AssignmentType) => Promise<void>;
+  addActivity: (lessonId: string, payload: CreateAssignmentPayload) => Promise<void>;
   renameUnit: (courseId: string, unitId: string, title: string) => Promise<void>;
   renameLesson: (unitId: string, lessonId: string, title: string) => Promise<void>;
   deleteUnit: (courseId: string, unitId: string) => Promise<void>;
@@ -28,32 +28,6 @@ interface UseBuilderOutlineResult {
   reorderLessons: (unitId: string, reordered: BuilderLesson[], items: ReorderItem[]) => Promise<void>;
   reorderActivities: (lessonId: string, reordered: BuilderActivity[], assignmentIds: string[]) => Promise<void>;
 }
-
-function getDefaultPayload(type: AssignmentType, title: string): CreateAssignmentPayload {
-  switch (type) {
-    case 'note':
-      return { type: 'note', title, content: { type: 'doc', content: [] } };
-    case 'video':
-      return { type: 'video', title, url: '' };
-    case 'reading':
-      return { type: 'reading', title, url: '', description: '' };
-    case 'vocab':
-      return { type: 'vocab', title, entries: [] };
-    case 'practice_problem':
-      return { type: 'practice_problem', title, questions: [] };
-    default:
-      return { type: 'note', title, content: { type: 'doc', content: [] } };
-  }
-}
-
-const TYPE_DEFAULT_TITLE: Record<AssignmentType, string> = {
-  note: 'Untitled Note',
-  video: 'Untitled Video',
-  reading: 'Untitled Reading',
-  vocab: 'Untitled Vocab',
-  practice_problem: 'Untitled Practice Problem',
-  file: 'Untitled File',
-};
 
 export function useBuilderOutline(courseId: string): UseBuilderOutlineResult {
   const [outline, setOutline] = useState<BuilderOutline | null>(null);
@@ -120,12 +94,7 @@ export function useBuilderOutline(courseId: string): UseBuilderOutlineResult {
     });
   }, []);
 
-  const addActivity = useCallback(async (lessonId: string, type: AssignmentType) => {
-    if (!outline) return;
-    const lesson = outline.units.flatMap((u) => u.lessons).find((l) => l.id === lessonId);
-    if (!lesson) return;
-    const defaultTitle = TYPE_DEFAULT_TITLE[type];
-    const payload = getDefaultPayload(type, defaultTitle);
+  const addActivity = useCallback(async (lessonId: string, payload: CreateAssignmentPayload) => {
     const newAssignment = await assignmentsApi.create(lessonId, payload);
     const builderActivity: BuilderActivity = {
       id: newAssignment.id,
@@ -147,7 +116,7 @@ export function useBuilderOutline(courseId: string): UseBuilderOutlineResult {
         })),
       };
     });
-  }, [outline]);
+  }, []);
 
   const renameUnit = useCallback(async (courseId: string, unitId: string, title: string) => {
     await unitsApi.update(courseId, unitId, { title });

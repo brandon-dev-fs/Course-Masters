@@ -1,33 +1,7 @@
-import { Calendar, FileText, Users, Settings } from 'lucide-react';
-
 import type { BuilderOutline } from '../../api/types.js';
 
 interface BuilderSidebarProps {
   outline: BuilderOutline;
-}
-
-interface QuickActionProps {
-  icon: React.ReactNode;
-  label: string;
-}
-
-function QuickAction({ icon, label }: QuickActionProps) {
-  return (
-    <button
-      type="button"
-      disabled
-      title="Coming soon"
-      aria-label={`${label} (coming soon)`}
-      className="flex items-center gap-2 w-full px-3 py-2 text-sm text-muted-foreground rounded-lg
-        cursor-not-allowed opacity-60 hover:bg-surface transition-colors"
-    >
-      <span className="w-4 h-4 shrink-0" aria-hidden="true">{icon}</span>
-      {label}
-      <span className="ml-auto text-xs bg-surface border border-border-subtle px-1.5 py-0.5 rounded-full">
-        Soon
-      </span>
-    </button>
-  );
 }
 
 export default function BuilderSidebar({ outline }: BuilderSidebarProps) {
@@ -75,19 +49,6 @@ export default function BuilderSidebar({ outline }: BuilderSidebarProps) {
           </dl>
         </div>
 
-        {/* Quick Actions */}
-        <div className="bg-surface rounded-xl border border-border-subtle p-5 shadow-warm-sm">
-          <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">
-            Quick Actions
-          </h2>
-
-          <div className="flex flex-col gap-1">
-            <QuickAction icon={<Calendar className="w-4 h-4" />} label="Calendar" />
-            <QuickAction icon={<FileText className="w-4 h-4" />} label="Syllabus" />
-            <QuickAction icon={<Users className="w-4 h-4" />} label="Manage Students" />
-            <QuickAction icon={<Settings className="w-4 h-4" />} label="Course Settings" />
-          </div>
-        </div>
       </div>
     </aside>
   );

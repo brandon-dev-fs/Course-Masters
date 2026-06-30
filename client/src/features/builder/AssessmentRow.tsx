@@ -1,5 +1,3 @@
-import { Pencil } from 'lucide-react';
-
 import type { BuilderAssessment } from '../../api/types.js';
 
 interface AssessmentRowProps {
@@ -43,16 +41,6 @@ export default function AssessmentRow({
         </span>
       )}
 
-      <button
-        type="button"
-        aria-label={`Edit ${label}`}
-        className="p-1 rounded-lg text-muted-foreground hover:text-text-primary hover:bg-surface transition-colors shrink-0"
-        onClick={() => {
-          // Coming soon — assessment editor navigation is out of scope for this iteration
-        }}
-      >
-        <Pencil className="w-3.5 h-3.5" aria-hidden="true" />
-      </button>
     </div>
   );
 }

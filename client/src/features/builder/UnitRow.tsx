@@ -16,7 +16,7 @@ import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 import { CSS } from '@dnd-kit/utilities';
 
-import type { BuilderUnit, BuilderLesson, BuilderActivity, AssignmentType, ReorderItem } from '../../api/types.js';
+import type { BuilderUnit, BuilderLesson, BuilderActivity, ReorderItem } from '../../api/types.js';
 
 import LessonRow from './LessonRow.js';
 import AssessmentRow from './AssessmentRow.js';
@@ -39,7 +39,7 @@ interface SortableLessonRowProps {
   onCancelRename: () => void;
   onDelete: () => void;
   onDeleteActivity: (assignmentId: string) => void;
-  onAddActivity: (type: AssignmentType) => Promise<void>;
+  onAddActivity: () => void;
   onReorderActivities: (reordered: BuilderActivity[], assignmentIds: string[]) => Promise<void>;
   onMoveLesson: (direction: 'up' | 'down') => void;
   onMoveActivity: (assignmentId: string, direction: 'up' | 'down') => void;
@@ -119,7 +119,7 @@ interface UnitRowProps {
   onDeleteLesson: (lessonId: string) => void;
   onDeleteActivity: (lessonId: string, assignmentId: string) => void;
   onAddLesson: () => void;
-  onAddActivity: (lessonId: string, type: AssignmentType) => Promise<void>;
+  onAddActivity: (lessonId: string) => void;
   onReorderLessons: (reordered: BuilderLesson[], items: ReorderItem[]) => Promise<void>;
   onReorderActivities: (lessonId: string, reordered: BuilderActivity[], assignmentIds: string[]) => Promise<void>;
   onMoveUnit: (direction: 'up' | 'down') => void;
@@ -345,7 +345,7 @@ export default function UnitRow({
                   onCancelRename={onCancelRename}
                   onDelete={() => onDeleteLesson(lesson.id)}
                   onDeleteActivity={(assignmentId) => onDeleteActivity(lesson.id, assignmentId)}
-                  onAddActivity={(type) => onAddActivity(lesson.id, type)}
+                  onAddActivity={() => onAddActivity(lesson.id)}
                   onReorderActivities={(reordered, assignmentIds) =>
                     onReorderActivities(lesson.id, reordered, assignmentIds)
                   }

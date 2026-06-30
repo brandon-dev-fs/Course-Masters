@@ -2,7 +2,7 @@ import { useState, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import useDisclosure from '../../hooks/useDisclosure.js';
 import { useAuth } from '../../context/AuthContext.js';
-import { Menu, ArrowLeft, Settings } from 'lucide-react';
+import { Menu, ArrowLeft, Settings, PencilRuler } from 'lucide-react';
 import { assessmentsApi } from '../../api/assessments.js';
 import type { UpdateAssignmentPayload } from '../../api/assignments.js';
 import useLesson from './hooks/useLesson.js';
@@ -173,6 +173,24 @@ export default function LessonDetailPage() {
 
   return (
     <>
+      {canEdit && courseId && (
+        <div className="sticky top-0 z-40 bg-orange-surface border-b border-orange-accent/30">
+          <div className="container mx-auto px-4 md:px-6 py-2 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-2 text-sm font-semibold text-orange-surface-text">
+              <PencilRuler className="w-4 h-4 shrink-0" aria-hidden="true" />
+              Teacher Preview — you&apos;re viewing as a student
+            </div>
+            <Link
+              to={`/courses/${courseId}/builder`}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold rounded-xl
+                bg-green-button text-green-button-text hover:opacity-90 transition-opacity shadow-warm-sm shrink-0"
+            >
+              <ArrowLeft className="w-4 h-4" aria-hidden="true" />
+              Back to Builder
+            </Link>
+          </div>
+        </div>
+      )}
       <div
         className="relative -mx-4 flex flex-col flex-1"
         style={{ width: '100vw', left: '50%', marginLeft: '-50vw' }}

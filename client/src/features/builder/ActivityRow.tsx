@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import { GripVertical, MoreVertical, Pencil, Trash2, ChevronUp, ChevronDown } from 'lucide-react';
+import { GripVertical, MoreVertical, Trash2, ChevronUp, ChevronDown } from 'lucide-react';
 
 import type { BuilderActivity } from '../../api/types.js';
 
@@ -27,16 +26,8 @@ export default function ActivityRow({
   isDragging = false,
 }: ActivityRowProps) {
   const { isOpen, open, close, triggerRef } = useContextMenu();
-  const [showTooltip, setShowTooltip] = useState(false);
 
   const menuItems = [
-    // Edit is coming soon
-    {
-      label: 'Edit (coming soon)',
-      icon: <Pencil className="w-4 h-4" />,
-      onClick: () => {},
-      disabled: true,
-    },
     // Move up/down — shown on mobile (no drag handles)
     {
       label: 'Move up',
@@ -85,30 +76,6 @@ export default function ActivityRow({
       <span className="flex-1 text-sm text-text-primary truncate min-w-0">
         {activity.title}
       </span>
-
-      {/* Edit button — coming soon */}
-      <div className="relative">
-        <button
-          type="button"
-          aria-label={`Edit ${activity.title} (coming soon)`}
-          className="p-1 rounded-lg text-muted-foreground hover:text-text-primary hover:bg-surface transition-colors opacity-0 group-hover:opacity-100 shrink-0"
-          onMouseEnter={() => setShowTooltip(true)}
-          onMouseLeave={() => setShowTooltip(false)}
-          onFocus={() => setShowTooltip(true)}
-          onBlur={() => setShowTooltip(false)}
-          onClick={() => setShowTooltip(true)}
-        >
-          <Pencil className="w-3.5 h-3.5" aria-hidden="true" />
-        </button>
-        {showTooltip && (
-          <div
-            role="tooltip"
-            className="absolute bottom-full right-0 mb-1 px-2 py-1 text-xs bg-surface-raised border border-border rounded-lg shadow-warm-sm whitespace-nowrap z-20"
-          >
-            Coming soon
-          </div>
-        )}
-      </div>
 
       {/* Context menu */}
       <div className="relative">

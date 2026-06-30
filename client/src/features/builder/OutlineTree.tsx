@@ -6,7 +6,7 @@ import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 import { CSS } from '@dnd-kit/utilities';
 
-import type { BuilderUnit, BuilderLesson, BuilderActivity, BuilderAssessment, AssignmentType, ReorderItem } from '../../api/types.js';
+import type { BuilderUnit, BuilderLesson, BuilderActivity, BuilderAssessment, ReorderItem } from '../../api/types.js';
 
 import UnitRow from './UnitRow.js';
 import AssessmentRow from './AssessmentRow.js';
@@ -31,7 +31,7 @@ interface SortableUnitRowProps {
   onDeleteLesson: (lessonId: string) => void;
   onDeleteActivity: (lessonId: string, assignmentId: string) => void;
   onAddLesson: () => void;
-  onAddActivity: (lessonId: string, type: AssignmentType) => Promise<void>;
+  onAddActivity: (lessonId: string) => void;
   onReorderLessons: (reordered: BuilderLesson[], items: ReorderItem[]) => Promise<void>;
   onReorderActivities: (lessonId: string, reordered: BuilderActivity[], assignmentIds: string[]) => Promise<void>;
   onMoveUnit: (direction: 'up' | 'down') => void;
@@ -130,7 +130,7 @@ interface OutlineTreeProps {
   onDeleteActivity: (lessonId: string, assignmentId: string) => void;
   onAddUnit: () => void;
   onAddLesson: (unitId: string) => void;
-  onAddActivity: (lessonId: string, type: AssignmentType) => Promise<void>;
+  onAddActivity: (lessonId: string) => void;
   onReorderUnits: (reordered: BuilderUnit[], items: ReorderItem[]) => Promise<void>;
   onReorderLessons: (unitId: string, reordered: BuilderLesson[], items: ReorderItem[]) => Promise<void>;
   onReorderActivities: (lessonId: string, reordered: BuilderActivity[], assignmentIds: string[]) => Promise<void>;

@@ -13,8 +13,10 @@ import Modal from '../../components/Modal.js';
 import Button from '../../components/Button.js';
 import UnitForm from '../units/UnitForm.js';
 import LessonForm from '../lessons/LessonForm.js';
+import AssignmentFormModal from '../assignments/AssignmentFormModal.js';
 
-import type { AssignmentType, ReorderItem, BuilderUnit, BuilderLesson, BuilderActivity } from '../../api/types.js';
+import type { Assignment, ReorderItem, BuilderUnit, BuilderLesson, BuilderActivity } from '../../api/types.js';
+import type { CreateAssignmentPayload, UpdateAssignmentPayload } from '../../api/assignments.js';
 
 interface DeleteTarget {
   id: string;
@@ -35,6 +37,7 @@ export default function CourseBuilderPage() {
     loading,
     error,
     reload,
+    setOutline,
     addUnit,
     editUnit,
     addLesson,
@@ -72,6 +75,9 @@ export default function CourseBuilderPage() {
 
   // ── Add lesson modal state ────────────────────────────────────────────────
   const [addLessonUnitId, setAddLessonUnitId] = useState<string | null>(null);
+
+  // ── Add activity modal state ──────────────────────────────────────────────
+  const [addActivityLessonId, setAddActivityLessonId] = useState<string | null>(null);
 
   // ── Handlers ──────────────────────────────────────────────────────────────
 
@@ -151,10 +157,37 @@ export default function CourseBuilderPage() {
     setAnnouncement('Lesson created');
   }, [addLesson, addLessonUnitId]);
 
-  const handleAddActivity = useCallback(async (lessonId: string, type: AssignmentType) => {
-    await addActivity(lessonId, type);
+  const handleAddActivity = useCallback((lessonId: string) => {
+    setAddActivityLessonId(lessonId);
+  }, []);
+
+  const handleSubmitNewActivity = useCallback(async (payload: CreateAssignmentPayload | UpdateAssignmentPayload) => {
+    if (!addActivityLessonId) return;
+    await addActivity(addActivityLessonId, payload as CreateAssignmentPayload);
+    setAddActivityLessonId(null);
     setAnnouncement('Activity created');
-  }, [addActivity]);
+  }, [addActivity, addActivityLessonId]);
+
+  const handleFileCreate = useCallback((assignment: Assignment) => {
+    if (!addActivityLessonId) return;
+    const lessonId = addActivityLessonId;
+    setOutline((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        units: prev.units.map((u) => ({
+          ...u,
+          lessons: u.lessons.map((l) =>
+            l.id === lessonId
+              ? { ...l, assignments: [...l.assignments, { id: assignment.id, title: assignment.title, type: assignment.type, order: assignment.order }] }
+              : l,
+          ),
+        })),
+      };
+    });
+    setAddActivityLessonId(null);
+    setAnnouncement('Activity created');
+  }, [addActivityLessonId, setOutline]);
 
   // ── Confirm delete ────────────────────────────────────────────────────────
 
@@ -405,6 +438,16 @@ export default function CourseBuilderPage() {
           </Modal>
         );
       })()}
+
+      {/* Add activity modal */}
+      {addActivityLessonId && (
+        <AssignmentFormModal
+          lessonId={addActivityLessonId}
+          onSubmit={handleSubmitNewActivity}
+          onFileCreate={handleFileCreate}
+          onClose={() => setAddActivityLessonId(null)}
+        />
+      )}
     </div>
   );
 }
