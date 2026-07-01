@@ -452,6 +452,168 @@ describe('assignmentService.reorder', () => {
 });
 
 // ---------------------------------------------------------------------------
+// remove — remaining assignments reorder branch
+// ---------------------------------------------------------------------------
+
+describe('assignmentService.remove — remaining assignments', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('reorders remaining assignments after deletion', async () => {
+    prismaMock.assignment.findUnique.mockResolvedValue(makeAssignment());
+    prismaMock.assignment.delete.mockResolvedValue(makeAssignment());
+    prismaMock.assignment.findMany.mockResolvedValue([makeAssignment({ id: 'assignment-2', order: 2 })]);
+    prismaMock.assignment.update.mockResolvedValue({} as never);
+
+    await assignmentService.remove(ASSIGNMENT_ID);
+
+    expect(prismaMock.assignment.update).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: 'assignment-2' }, data: { order: 1 } }),
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// findAllByLesson — normalizeBookmark true branch
+// ---------------------------------------------------------------------------
+
+describe('assignmentService.findAllByLesson — bookmark normalization', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('returns the first bookmark when assignment has bookmarks', async () => {
+    prismaMock.lesson.findUnique.mockResolvedValue({ id: LESSON_ID });
+    prismaMock.assignmentCompletion.findMany.mockResolvedValue([]);
+    const bookmark = { id: 'bm-1', note: 'my note', updatedAt: new Date() };
+    prismaMock.assignment.findMany.mockResolvedValue([
+      { ...ASSIGNMENT_WITH_RELATIONS, bookmarks: [bookmark] },
+    ] as never);
+
+    const result = await assignmentService.findAllByLesson(LESSON_ID, USER_ID);
+
+    expect(result[0].bookmark).toEqual(bookmark);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// createFileAssignment — S3 not configured
+// ---------------------------------------------------------------------------
+
+describe('assignmentService.createFileAssignment', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('throws AppError when S3 is not configured', async () => {
+    prismaMock.lesson.findUnique.mockResolvedValue({ id: LESSON_ID });
+    const file = {
+      buffer: Buffer.from('%PDF-test'),
+      mimetype: 'application/pdf',
+      originalname: 'test.pdf',
+      size: 100,
+    } as Express.Multer.File;
+
+    await expect(
+      assignmentService.createFileAssignment(LESSON_ID, { title: 'File', file }),
+    ).rejects.toMatchObject({ code: 'S3_NOT_CONFIGURED' });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// getFileStream — not found / wrong type / S3 not configured
+// ---------------------------------------------------------------------------
+
+describe('assignmentService.getFileStream', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('throws NotFoundError when assignment not found', async () => {
+    prismaMock.assignment.findUnique.mockResolvedValue(null);
+    await expect(assignmentService.getFileStream(ASSIGNMENT_ID)).rejects.toThrow(NotFoundError);
+  });
+
+  it('throws NotFoundError when assignment type is not file', async () => {
+    prismaMock.assignment.findUnique.mockResolvedValue({ ...makeAssignment({ type: 'note' }), fileAssignment: null } as never);
+    await expect(assignmentService.getFileStream(ASSIGNMENT_ID)).rejects.toThrow(NotFoundError);
+  });
+
+  it('throws AppError when S3 is not configured for file stream', async () => {
+    prismaMock.assignment.findUnique.mockResolvedValue({
+      ...makeAssignment({ type: 'file' }),
+      fileAssignment: {
+        id: 'fa-1',
+        assignmentId: ASSIGNMENT_ID,
+        storageKey: 'key',
+        filename: 'test.pdf',
+        mimeType: 'application/pdf',
+        sizeBytes: 100,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    } as never);
+    await expect(assignmentService.getFileStream(ASSIGNMENT_ID)).rejects.toMatchObject({ code: 'S3_NOT_CONFIGURED' });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// update — uncovered type-specific branches
+// ---------------------------------------------------------------------------
+
+describe('assignmentService.update — additional branches', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    prismaMock.assignment.update.mockResolvedValue(makeAssignment());
+    prismaMock.assignment.findUnique.mockResolvedValue(ASSIGNMENT_WITH_RELATIONS);
+  });
+
+  it('skips videoAssignment.update when no video fields provided', async () => {
+    prismaMock.assignment.findUnique.mockResolvedValue({ ...ASSIGNMENT_WITH_RELATIONS, type: 'video' });
+    // Pass only title — no url or displayTitle — for a video assignment
+    await assignmentService.update(ASSIGNMENT_ID, { title: 'New Title' });
+    expect(prismaMock.videoAssignment.update).not.toHaveBeenCalled();
+  });
+
+  it('skips readingAssignment.update when no reading fields provided', async () => {
+    prismaMock.assignment.findUnique.mockResolvedValue({ ...ASSIGNMENT_WITH_RELATIONS, type: 'reading' });
+    await assignmentService.update(ASSIGNMENT_ID, { title: 'New Title' });
+    expect(prismaMock.readingAssignment.update).not.toHaveBeenCalled();
+  });
+
+  it('skips vocab entry updates when vocabAssignment not found', async () => {
+    prismaMock.assignment.findUnique.mockResolvedValue({ ...ASSIGNMENT_WITH_RELATIONS, type: 'vocab' });
+    prismaMock.vocabAssignment.findUnique.mockResolvedValue(null);
+
+    await assignmentService.update(ASSIGNMENT_ID, { entries: [{ term: 'cat', definition: 'animal' }] });
+
+    expect(prismaMock.vocabAssignmentEntry.deleteMany).not.toHaveBeenCalled();
+  });
+
+  it('updates existing vocab entry when entry has an id', async () => {
+    prismaMock.assignment.findUnique.mockResolvedValue({ ...ASSIGNMENT_WITH_RELATIONS, type: 'vocab' });
+    prismaMock.vocabAssignment.findUnique.mockResolvedValue({ id: 'va-1' } as never);
+    prismaMock.vocabAssignmentEntry.deleteMany.mockResolvedValue({ count: 0 });
+    prismaMock.vocabAssignmentEntry.update.mockResolvedValue({} as never);
+
+    await assignmentService.update(ASSIGNMENT_ID, {
+      entries: [{ id: 'entry-1', term: 'dog', definition: 'canine' }],
+    });
+
+    expect(prismaMock.vocabAssignmentEntry.update).toHaveBeenCalled();
+    expect(prismaMock.vocabAssignmentEntry.create).not.toHaveBeenCalled();
+  });
+
+  it('skips practiceProblemQuestion.createMany when questions array is empty', async () => {
+    const ppa = { id: 'ppa-1', questions: [] };
+    prismaMock.assignment.findUnique.mockResolvedValue({
+      ...ASSIGNMENT_WITH_RELATIONS,
+      type: 'practice_problem',
+      practiceProblemAssignment: ppa,
+    });
+    prismaMock.practiceProblemQuestion.deleteMany.mockResolvedValue({ count: 0 });
+
+    await assignmentService.update(ASSIGNMENT_ID, { questions: [] });
+
+    expect(prismaMock.practiceProblemQuestion.deleteMany).toHaveBeenCalled();
+    expect(prismaMock.practiceProblemQuestion.createMany).not.toHaveBeenCalled();
+  });
+});
+
+// ---------------------------------------------------------------------------
 // getSavedVocabEntryFlashCards
 // ---------------------------------------------------------------------------
 
