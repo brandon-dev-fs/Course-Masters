@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { assignmentController } from '../controllers/assignment.controller.js';
 import { validate } from '../middleware/validate.js';
 import { authorize } from '../middleware/authorize.js';
+import { requireCourseOwnership } from '../middleware/authorize-resource.js';
 import { uploadSingle } from '../middleware/upload.js';
 import {
   createAssignmentSchema,
@@ -23,6 +24,7 @@ lessonAssignmentsRouter.get('/vocab-flashcards', assignmentController.getSavedVo
 lessonAssignmentsRouter.post(
   '/upload',
   authorize('teacher', 'admin'),
+  requireCourseOwnership('lesson', req => req.params['lessonId'] as string),
   uploadSingle,
   assignmentController.uploadFile,
 );
@@ -48,7 +50,11 @@ export const assignmentsRouter = Router();
 
 assignmentsRouter.get('/:assignmentId', assignmentController.getOne);
 
-assignmentsRouter.get('/:assignmentId/file', assignmentController.downloadFile);
+assignmentsRouter.get(
+  '/:assignmentId/file',
+  requireCourseOwnership('assignment', req => req.params['assignmentId'] as string),
+  assignmentController.downloadFile,
+);
 
 assignmentsRouter.put(
   '/:assignmentId',

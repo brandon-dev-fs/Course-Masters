@@ -454,7 +454,11 @@ export const assignmentService = {
   async getFileStream(assignmentId: string) {
     const assignment = await prisma.assignment.findUnique({
       where: { id: assignmentId },
-      include: { fileAssignment: true },
+      include: {
+        fileAssignment: {
+          select: { filename: true, mimeType: true, sizeBytes: true, storageKey: true },
+        },
+      },
     });
 
     if (!assignment || assignment.type !== AssignmentType.file || !assignment.fileAssignment) {
