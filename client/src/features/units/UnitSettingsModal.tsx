@@ -7,10 +7,10 @@ import UnitForm from './UnitForm.js';
 interface UnitSettingsModalProps {
 	course: Course;
 	onClose: () => void;
-	onAddUnit: (data: { title: string; order: number }) => Promise<void>;
+	onAddUnit: (data: { title: string; description: string; order: number }) => Promise<void>;
 	onUpdateUnit: (
 		unit: Unit,
-		data: { title: string; order: number },
+		data: { title: string; description: string; order: number },
 	) => Promise<void>;
 	onDeleteUnit: (unit: Unit) => Promise<void>;
 	initialAdding?: boolean;

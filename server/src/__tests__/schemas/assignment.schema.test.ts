@@ -127,13 +127,13 @@ describe('createAssignmentSchema — vocab', () => {
     expect(result.success).toBe(true);
   });
 
-  it('rejects empty entries array', () => {
+  it('accepts empty entries array (entries default to [])', () => {
     const result = createAssignmentSchema.safeParse({
       type: 'vocab',
       title: 'Vocab',
       entries: [],
     });
-    expect(result.success).toBe(false);
+    expect(result.success).toBe(true);
   });
 
   it('rejects entry with empty term', () => {
@@ -187,13 +187,13 @@ describe('createAssignmentSchema — practice_problem', () => {
     expect(result.success).toBe(true);
   });
 
-  it('rejects empty questions array', () => {
+  it('accepts empty questions array (questions default to [])', () => {
     const result = createAssignmentSchema.safeParse({
       type: 'practice_problem',
       title: 'Practice Quiz',
       questions: [],
     });
-    expect(result.success).toBe(false);
+    expect(result.success).toBe(true);
   });
 
   it('rejects passingPercentage above 100', () => {

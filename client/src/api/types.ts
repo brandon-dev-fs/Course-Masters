@@ -314,6 +314,55 @@ export interface AssignmentCompletion {
   completedAt: string;
 }
 
+// ─── Builder Outline ─────────────────────────────────────────────────────────
+
+export interface BuilderCourseInfo {
+  id: string;
+  title: string;
+  description: string;
+}
+
+export interface BuilderAssessment {
+  id: string;
+  type: AssessmentType;
+  questionCount: number;
+}
+
+export interface BuilderActivity {
+  id: string;
+  title: string;
+  type: AssignmentType;
+  order: number;
+}
+
+export interface BuilderLesson {
+  id: string;
+  title: string;
+  order: number;
+  assignments: BuilderActivity[];
+  assessment: BuilderAssessment | null;
+}
+
+export interface BuilderUnit {
+  id: string;
+  title: string;
+  description: string;
+  order: number;
+  lessons: BuilderLesson[];
+  assessment: BuilderAssessment | null;
+}
+
+export interface BuilderOutline {
+  course: BuilderCourseInfo;
+  units: BuilderUnit[];
+  courseAssessment: BuilderAssessment | null;
+}
+
+export interface ReorderItem {
+  id: string;
+  order: number;
+}
+
 // ─── Checklist ───────────────────────────────────────────────────────────────
 
 export interface ChecklistItem {

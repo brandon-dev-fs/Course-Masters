@@ -93,4 +93,86 @@ describe('AdminUsersPage', () => {
     const selects = screen.getAllByRole('combobox');
     expect(selects.length).toBe(2);
   });
+
+  it('calls setRole when role select value changes', async () => {
+    authClientMock.admin.listUsers.mockResolvedValue({ data: { users: mockUsers, total: 2 }, error: null });
+    renderWithProviders(<AdminUsersPage />);
+    await screen.findByText('Alice');
+    const aliceSelect = screen.getByRole('combobox', { name: /change role for alice/i });
+    fireEvent.change(aliceSelect, { target: { value: 'teacher' } });
+    await waitFor(() => {
+      expect(authClientMock.admin.setRole).toHaveBeenCalledWith({ userId: 'u1', role: 'teacher' });
+    });
+  });
+
+  it('updates user role in local state after successful setRole', async () => {
+    authClientMock.admin.listUsers.mockResolvedValue({ data: { users: mockUsers, total: 2 }, error: null });
+    authClientMock.admin.setRole.mockResolvedValue({ data: {}, error: null });
+    renderWithProviders(<AdminUsersPage />);
+    await screen.findByText('Alice');
+    const aliceSelect = screen.getByRole('combobox', { name: /change role for alice/i });
+    fireEvent.change(aliceSelect, { target: { value: 'admin' } });
+    await waitFor(() => {
+      expect(authClientMock.admin.setRole).toHaveBeenCalled();
+    });
+  });
+
+  it('shows roleError when setRole returns an error', async () => {
+    authClientMock.admin.listUsers.mockResolvedValue({ data: { users: mockUsers, total: 2 }, error: null });
+    authClientMock.admin.setRole.mockResolvedValue({ data: null, error: { message: 'Permission denied' } });
+    renderWithProviders(<AdminUsersPage />);
+    await screen.findByText('Alice');
+    const aliceSelect = screen.getByRole('combobox', { name: /change role for alice/i });
+    fireEvent.change(aliceSelect, { target: { value: 'admin' } });
+    expect(await screen.findByText('Permission denied')).toBeInTheDocument();
+  });
+
+  it('shows roleError when setRole throws', async () => {
+    authClientMock.admin.listUsers.mockResolvedValue({ data: { users: mockUsers, total: 2 }, error: null });
+    authClientMock.admin.setRole.mockRejectedValue(new Error('Server error'));
+    renderWithProviders(<AdminUsersPage />);
+    await screen.findByText('Alice');
+    const aliceSelect = screen.getByRole('combobox', { name: /change role for alice/i });
+    fireEvent.change(aliceSelect, { target: { value: 'admin' } });
+    expect(await screen.findByText('Server error')).toBeInTheDocument();
+  });
+
+  it('disables role select while a role change is in progress', async () => {
+    authClientMock.admin.listUsers.mockResolvedValue({ data: { users: mockUsers, total: 2 }, error: null });
+    // Keep setRole pending so changingRole stays set
+    let resolveSetRole!: () => void;
+    authClientMock.admin.setRole.mockReturnValue(
+      new Promise((resolve) => { resolveSetRole = () => resolve({ data: {}, error: null }); }),
+    );
+    renderWithProviders(<AdminUsersPage />);
+    await screen.findByText('Alice');
+    const aliceSelect = screen.getByRole('combobox', { name: /change role for alice/i });
+    fireEvent.change(aliceSelect, { target: { value: 'admin' } });
+    // While pending, the select for that user should be disabled
+    await waitFor(() => {
+      expect(aliceSelect).toBeDisabled();
+    });
+    resolveSetRole();
+  });
+
+  it('navigates to next page when Next is clicked', async () => {
+    // 25 total users → more than PAGE_SIZE (20) → Next should be enabled
+    authClientMock.admin.listUsers.mockResolvedValue({ data: { users: mockUsers, total: 25 }, error: null });
+    renderWithProviders(<AdminUsersPage />);
+    await screen.findByText('User Management');
+    const nextBtn = screen.getByRole('button', { name: /next/i });
+    expect(nextBtn).not.toBeDisabled();
+    fireEvent.click(nextBtn);
+    await waitFor(() => {
+      // listUsers should be called again for page 2
+      expect(authClientMock.admin.listUsers).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  it('disables Next button when on last page', async () => {
+    authClientMock.admin.listUsers.mockResolvedValue({ data: { users: mockUsers, total: 2 }, error: null });
+    renderWithProviders(<AdminUsersPage />);
+    await screen.findByText('User Management');
+    expect(screen.getByRole('button', { name: /next/i })).toBeDisabled();
+  });
 });

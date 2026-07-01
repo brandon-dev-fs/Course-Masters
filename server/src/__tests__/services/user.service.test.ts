@@ -13,10 +13,48 @@ const mockUser = {
   name: 'Test User',
   email: 'test@example.com',
   role: 'student',
+  themePreference: null,
   deletedAt: null,
   createdAt: new Date(),
   updatedAt: new Date(),
 };
+
+describe('userService.getMe', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('returns the user profile when found', async () => {
+    prismaMock.user.findFirst.mockResolvedValue(mockUser);
+    const result = await userService.getMe(USER_ID);
+    expect(result).toMatchObject({ id: USER_ID, name: 'Test User', email: 'test@example.com' });
+    expect(prismaMock.user.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: USER_ID, deletedAt: null } }),
+    );
+  });
+
+  it('throws NotFoundError when user not found', async () => {
+    prismaMock.user.findFirst.mockResolvedValue(null);
+    await expect(userService.getMe(USER_ID)).rejects.toThrow(NotFoundError);
+  });
+});
+
+describe('userService.updatePreferences', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('updates theme preference when user exists', async () => {
+    prismaMock.user.findFirst.mockResolvedValue(mockUser);
+    prismaMock.user.update.mockResolvedValue({ themePreference: 'dark' } as never);
+    const result = await userService.updatePreferences(USER_ID, { themePreference: 'dark' });
+    expect(result).toEqual({ themePreference: 'dark' });
+    expect(prismaMock.user.update).toHaveBeenCalledWith(
+      expect.objectContaining({ data: { themePreference: 'dark' } }),
+    );
+  });
+
+  it('throws NotFoundError when user not found', async () => {
+    prismaMock.user.findFirst.mockResolvedValue(null);
+    await expect(userService.updatePreferences(USER_ID, { themePreference: 'dark' })).rejects.toThrow(NotFoundError);
+  });
+});
 
 describe('userService.remove', () => {
   beforeEach(() => {
