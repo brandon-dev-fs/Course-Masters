@@ -21,9 +21,9 @@ describe('createUnitSchema', () => {
     expect(result.success).toBe(false);
   });
 
-  it('rejects missing description', () => {
+  it('accepts missing description (defaults to empty string)', () => {
     const result = createUnitSchema.safeParse({ title: 'Unit 1', order: 0 });
-    expect(result.success).toBe(false);
+    expect(result.success).toBe(true);
   });
 
   it('rejects missing order', () => {
