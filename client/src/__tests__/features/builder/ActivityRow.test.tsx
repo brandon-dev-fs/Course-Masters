@@ -94,7 +94,7 @@ describe('ActivityRow', () => {
   it('renders the ActivityTypePill', () => {
     render(
       <ActivityRow
-        activity={makeActivity({ type: 'flash_card' })}
+        activity={makeActivity({ type: 'reading' })}
         isFirst={false}
         isLast={false}
         onDelete={onDelete}

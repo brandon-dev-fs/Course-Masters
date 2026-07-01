@@ -64,7 +64,8 @@ const baseAssessment = {
     {
       id: 'q1',
       type: 'multiple_choice' as const,
-      content: { question: 'What is 2+2?', options: ['2', '3', '4', '5'], answer: '4' },
+      question: 'What is 2+2?',
+      content: { options: ['2', '3', '4'], correctIndex: 2 },
       order: 1,
       assessmentId: 'a1',
       calculatorEnabled: false,

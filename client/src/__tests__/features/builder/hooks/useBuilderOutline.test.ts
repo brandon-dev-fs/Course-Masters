@@ -127,7 +127,7 @@ describe('useBuilderOutline', () => {
     await waitFor(() => expect(result.current.loading).toBe(false));
 
     await act(async () => {
-      await result.current.addActivity('l1', { title: 'Act 1', type: 'note', order: 1, content: {} });
+      await result.current.addActivity('l1', { title: 'Act 1', type: 'note', content: {} });
     });
 
     const foundLesson = result.current.outline?.units[0].lessons[0];
