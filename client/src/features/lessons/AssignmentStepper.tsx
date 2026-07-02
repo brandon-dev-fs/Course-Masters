@@ -68,7 +68,7 @@ export default function AssignmentStepper({
   return (
     <>
       {/* Desktop: horizontal activity bar */}
-      <div className="hidden lg:block border-b border-border bg-surface">
+      <div className="hidden md:block border-b border-border bg-surface">
         {/* Header row */}
         <div className="flex items-center justify-between px-4 py-2">
           <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Lesson activities</span>
@@ -141,7 +141,7 @@ export default function AssignmentStepper({
       </div>
 
       {/* Mobile: header + compact segmented progress bar */}
-      <div className="lg:hidden border-b border-border bg-surface">
+      <div className="md:hidden border-b border-border bg-surface">
         {/* Header row */}
         <div className="flex items-center justify-between px-4 pt-2">
           <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Lesson activities</span>

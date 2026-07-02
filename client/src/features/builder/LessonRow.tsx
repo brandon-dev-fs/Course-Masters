@@ -313,12 +313,13 @@ export default function LessonRow({
             </SortableContext>
           </DndContext>
 
-          {/* Add activity button */}
+          {/* Add activity button — disabled until lesson plan is set */}
           <div className="ml-8 md:ml-16 mt-1 mb-1">
             <AddItemButton
               label="Add activity"
               onClick={onAddActivity}
-              ariaLabel="Add activity"
+              disabled={!lesson.hasLessonPlan}
+              ariaLabel={lesson.hasLessonPlan ? 'Add activity' : 'Set a lesson plan before adding activities'}
             />
           </div>
 
