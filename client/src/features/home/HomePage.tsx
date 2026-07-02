@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { BookOpen, Search, SearchX, X } from 'lucide-react';
 
 import { coursesApi } from '../../api/courses.js';
@@ -26,6 +27,7 @@ export default function HomePage() {
 	const { user } = useAuth();
 	const loggedIn = user !== null;
 	const canEdit = useCanEdit();
+	const navigate = useNavigate();
 	const [courses, setCourses] = useState<Course[]>([]);
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState('');
@@ -68,8 +70,7 @@ export default function HomePage() {
 
 	async function handleCreate(data: { title: string; description?: string }) {
 		const course = await coursesApi.create(data);
-		setCourses((prev) => [course, ...prev]);
-		setShowCreate(false);
+		navigate(`/courses/${course.id}/builder`);
 	}
 
 	async function handleUpdate(data: { title: string; description?: string }) {

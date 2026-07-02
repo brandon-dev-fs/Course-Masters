@@ -68,6 +68,36 @@ export const TYPE_CONFIG: Record<AssignmentType, TypeConfig> = {
   file:             { label: 'File',              icon: FileUp },
 };
 
+// ─── Question validity helper ─────────────────────────────────────────────────
+
+function isQuestionValid(q: PracticeQuestionDraft): boolean {
+  const content = q.content;
+  switch (q.type) {
+    case 'multiple_choice': {
+      const question = (content.question as string) ?? '';
+      const options = (content.options as string[]) ?? [];
+      const nonEmptyOptions = options.filter(o => o.trim().length > 0);
+      return question.trim().length > 0 && nonEmptyOptions.length >= 2;
+    }
+    case 'true_false': {
+      const question = (content.question as string) ?? '';
+      return question.trim().length > 0;
+    }
+    case 'matching': {
+      const leftItems = (content.leftItems as string[]) ?? [];
+      const rightItems = (content.rightItems as string[]) ?? [];
+      return leftItems.some((l, i) => l.trim().length > 0 && (rightItems[i] ?? '').trim().length > 0);
+    }
+    case 'fill_in_blank': {
+      const question = (content.question as string) ?? '';
+      const blanks = (content.blanks as Array<{ answer: string }>) ?? [];
+      return question.trim().length > 0 && blanks.some(b => b.answer.trim().length > 0);
+    }
+    default:
+      return false;
+  }
+}
+
 // ─── Empty state constant ─────────────────────────────────────────────────────
 
 const EMPTY_TYPE_STATE: TypeFormState = {
@@ -144,13 +174,6 @@ export default function AssignmentFormModal({ initial, onSubmit, lessonId, onFil
   const config = selectedType ? TYPE_CONFIG[selectedType] : null;
   const hasItems = !!config?.ItemsForm;
 
-  // Modal title
-  const modalTitle = step === 'pick'
-    ? 'Add Assignment'
-    : isEdit
-      ? `Edit ${config!.label}`
-      : `Add ${config!.label}`;
-
   // File assignment state (create mode only — file cannot be replaced in edit mode)
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
@@ -159,6 +182,51 @@ export default function AssignmentFormModal({ initial, onSubmit, lessonId, onFil
   // Submission state
   const [apiError, setApiError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  // ── Validity derived from typeState ──────────────────────────────────────────
+  const titleValid = assignmentTitle.trim().length > 0;
+
+  const isMetaTypeValid: boolean = (() => {
+    if (!selectedType) return false;
+    switch (selectedType) {
+      case 'note':
+        return typeState.noteContent != null && JSON.stringify(typeState.noteContent).includes('"text"');
+      case 'video':
+        return typeState.url.trim().length > 0;
+      case 'reading':
+        return typeState.url.trim().length > 0;
+      case 'file':
+        return isEdit ? true : selectedFile !== null;
+      case 'vocab':
+      case 'practice_problem':
+        return true;
+      default:
+        return true;
+    }
+  })();
+
+  const isItemsValid: boolean = (() => {
+    if (!selectedType) return false;
+    switch (selectedType) {
+      case 'vocab':
+        return typeState.entries.some(e => e.term.trim() && e.definition.trim());
+      case 'practice_problem':
+        return typeState.questions.length > 0 && typeState.questions.every(isQuestionValid);
+      default:
+        return true;
+    }
+  })();
+
+  const isMetaSubmitValid = titleValid && isMetaTypeValid;
+  const isNextValid = titleValid;
+  const isItemsSubmitValid = isItemsValid;
+
+  // Modal title
+  const modalTitle = step === 'pick'
+    ? 'Add Assignment'
+    : isEdit
+      ? `Edit ${config!.label}`
+      : `Add ${config!.label}`;
 
   // Navigation handlers
   function handleTypeSelected(type: AssignmentType) {
@@ -382,9 +450,15 @@ export default function AssignmentFormModal({ initial, onSubmit, lessonId, onFil
                 value={assignmentTitle}
                 onChange={e => { setAssignmentTitle(e.target.value); if (e.target.value.trim()) setTitleError(''); }}
                 placeholder="e.g. Read the Introduction"
+                maxLength={30}
                 required
               />
-              {titleError && <ErrorMessage variant="inline" message={titleError} className="mt-1" />}
+              <div className="flex justify-between mt-1">
+                {titleError
+                  ? <ErrorMessage variant="inline" message={titleError} />
+                  : <span />}
+                <p className="text-xs text-muted-foreground">{assignmentTitle.length}/30</p>
+              </div>
             </div>
             <Textarea
               id="assignment-objective"
@@ -415,12 +489,12 @@ export default function AssignmentFormModal({ initial, onSubmit, lessonId, onFil
               Cancel
             </Button>
             {!hasItems && (
-              <Button type="submit" disabled={submitting}>
+              <Button type="submit" disabled={!isMetaSubmitValid || submitting}>
                 {submitting ? 'Saving...' : 'Save assignment'}
               </Button>
             )}
             {hasItems && (
-              <Button type="button" onClick={handleAdvanceToItems}>
+              <Button type="button" onClick={handleAdvanceToItems} disabled={!isNextValid}>
                 Next: {config!.nextLabel} →
               </Button>
             )}
@@ -455,7 +529,7 @@ export default function AssignmentFormModal({ initial, onSubmit, lessonId, onFil
             <Button type="button" variant="secondary" onClick={onClose} disabled={submitting}>
               Cancel
             </Button>
-            <Button type="button" onClick={handleSubmit} disabled={submitting}>
+            <Button type="button" onClick={handleSubmit} disabled={!isItemsSubmitValid || submitting}>
               {submitting ? 'Saving...' : 'Save assignment'}
             </Button>
           </div>

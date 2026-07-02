@@ -49,7 +49,7 @@ describe('builderService.getOutline', () => {
   });
 
   it('returns null unit and lesson assessments when absent', async () => {
-    const lesson = { id: LESSON_ID, title: 'Lesson 1', order: 1, assignments: [], assessment: null };
+    const lesson = { id: LESSON_ID, title: 'Lesson 1', order: 1, objective: '', planContent: {}, assignments: [], assessment: null };
     const unit = { id: UNIT_ID, title: 'Unit 1', description: 'Desc', order: 1, lessons: [lesson], assessment: null };
     prismaMock.course.findFirst.mockResolvedValue(makeDbCourse({ units: [unit] }));
     const result = await builderService.getOutline(COURSE_ID);
@@ -60,12 +60,36 @@ describe('builderService.getOutline', () => {
   it('maps unit and lesson assessments when both present', async () => {
     const unitAssessment = { id: 'ua1', type: 'unit_quiz', _count: { questions: 3 } };
     const lessonAssessment = { id: 'la1', type: 'lesson_quiz', _count: { questions: 2 } };
-    const lesson = { id: LESSON_ID, title: 'Lesson 1', order: 1, assignments: [], assessment: lessonAssessment };
+    const lesson = { id: LESSON_ID, title: 'Lesson 1', order: 1, objective: '', planContent: {}, assignments: [], assessment: lessonAssessment };
     const unit = { id: UNIT_ID, title: 'Unit 1', description: 'Desc', order: 1, lessons: [lesson], assessment: unitAssessment };
     prismaMock.course.findFirst.mockResolvedValue(makeDbCourse({ units: [unit] }));
     const result = await builderService.getOutline(COURSE_ID);
     expect(result.units[0].assessment).toEqual({ id: 'ua1', type: 'unit_quiz', questionCount: 3 });
     expect(result.units[0].lessons[0].assessment).toEqual({ id: 'la1', type: 'lesson_quiz', questionCount: 2 });
+  });
+
+  it('sets hasLessonPlan false when objective is empty and planContent is empty', async () => {
+    const lesson = { id: LESSON_ID, title: 'Lesson 1', order: 1, objective: '', planContent: {}, assignments: [], assessment: null };
+    const unit = { id: UNIT_ID, title: 'Unit 1', description: 'Desc', order: 1, lessons: [lesson], assessment: null };
+    prismaMock.course.findFirst.mockResolvedValue(makeDbCourse({ units: [unit] }));
+    const result = await builderService.getOutline(COURSE_ID);
+    expect(result.units[0].lessons[0].hasLessonPlan).toBe(false);
+  });
+
+  it('sets hasLessonPlan true when objective is non-empty', async () => {
+    const lesson = { id: LESSON_ID, title: 'Lesson 1', order: 1, objective: 'Students will learn X', planContent: {}, assignments: [], assessment: null };
+    const unit = { id: UNIT_ID, title: 'Unit 1', description: 'Desc', order: 1, lessons: [lesson], assessment: null };
+    prismaMock.course.findFirst.mockResolvedValue(makeDbCourse({ units: [unit] }));
+    const result = await builderService.getOutline(COURSE_ID);
+    expect(result.units[0].lessons[0].hasLessonPlan).toBe(true);
+  });
+
+  it('sets hasLessonPlan true when planContent is non-empty', async () => {
+    const lesson = { id: LESSON_ID, title: 'Lesson 1', order: 1, objective: '', planContent: { type: 'doc', content: [] }, assignments: [], assessment: null };
+    const unit = { id: UNIT_ID, title: 'Unit 1', description: 'Desc', order: 1, lessons: [lesson], assessment: null };
+    prismaMock.course.findFirst.mockResolvedValue(makeDbCourse({ units: [unit] }));
+    const result = await builderService.getOutline(COURSE_ID);
+    expect(result.units[0].lessons[0].hasLessonPlan).toBe(true);
   });
 });
 

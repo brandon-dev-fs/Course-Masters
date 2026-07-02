@@ -117,7 +117,7 @@ describe('useBuilderOutline', () => {
   });
 
   it('addActivity adds an activity to the correct lesson', async () => {
-    const lesson = { id: 'l1', title: 'Lesson 1', order: 1, assignments: [], assessment: null };
+    const lesson = { id: 'l1', title: 'Lesson 1', order: 1, hasLessonPlan: false, assignments: [], assessment: null };
     const unit = makeUnit({ lessons: [lesson] });
     apiClientMock.get.mockResolvedValue({ ...baseOutline, units: [unit] });
     const newAssignment = { id: 'a1', title: 'Act 1', type: 'note', order: 1 };
@@ -151,7 +151,7 @@ describe('useBuilderOutline', () => {
   });
 
   it('renameLesson updates lesson title in outline', async () => {
-    const lesson = { id: 'l1', title: 'Old Lesson', order: 1, assignments: [], assessment: null };
+    const lesson = { id: 'l1', title: 'Old Lesson', order: 1, hasLessonPlan: false, assignments: [], assessment: null };
     const unit = makeUnit({ lessons: [lesson] });
     apiClientMock.get.mockResolvedValue({ ...baseOutline, units: [unit] });
     apiClientMock.put.mockResolvedValue({ ...lesson, title: 'New Lesson' });
@@ -199,7 +199,7 @@ describe('useBuilderOutline', () => {
   });
 
   it('deleteLesson removes the lesson from the unit', async () => {
-    const lesson = { id: 'l1', title: 'Lesson 1', order: 1, assignments: [], assessment: null };
+    const lesson = { id: 'l1', title: 'Lesson 1', order: 1, hasLessonPlan: false, assignments: [], assessment: null };
     const unit = makeUnit({ lessons: [lesson] });
     apiClientMock.get.mockResolvedValue({ ...baseOutline, units: [unit] });
     apiClientMock.delete.mockResolvedValue(undefined);
@@ -216,7 +216,7 @@ describe('useBuilderOutline', () => {
 
   it('deleteActivity removes the activity from the lesson', async () => {
     const activity = { id: 'a1', title: 'Activity', type: 'note' as const, order: 1 };
-    const lesson = { id: 'l1', title: 'Lesson 1', order: 1, assignments: [activity], assessment: null };
+    const lesson = { id: 'l1', title: 'Lesson 1', order: 1, hasLessonPlan: false, assignments: [activity], assessment: null };
     const unit = makeUnit({ lessons: [lesson] });
     apiClientMock.get.mockResolvedValue({ ...baseOutline, units: [unit] });
     apiClientMock.delete.mockResolvedValue(undefined);
@@ -252,8 +252,8 @@ describe('useBuilderOutline', () => {
   });
 
   it('reorderLessons updates lessons in the correct unit', async () => {
-    const l1 = { id: 'l1', title: 'L1', order: 1, assignments: [], assessment: null };
-    const l2 = { id: 'l2', title: 'L2', order: 2, assignments: [], assessment: null };
+    const l1 = { id: 'l1', title: 'L1', order: 1, hasLessonPlan: false, assignments: [], assessment: null };
+    const l2 = { id: 'l2', title: 'L2', order: 2, hasLessonPlan: false, assignments: [], assessment: null };
     const unit = makeUnit({ lessons: [l1, l2] });
     apiClientMock.get.mockResolvedValue({ ...baseOutline, units: [unit] });
     apiClientMock.put.mockResolvedValue(undefined);
@@ -274,7 +274,7 @@ describe('useBuilderOutline', () => {
   it('reorderActivities updates activities in the correct lesson', async () => {
     const a1 = { id: 'a1', title: 'A1', type: 'note' as const, order: 1 };
     const a2 = { id: 'a2', title: 'A2', type: 'vocab' as const, order: 2 };
-    const lesson = { id: 'l1', title: 'Lesson', order: 1, assignments: [a1, a2], assessment: null };
+    const lesson = { id: 'l1', title: 'Lesson', order: 1, hasLessonPlan: false, assignments: [a1, a2], assessment: null };
     const unit = makeUnit({ lessons: [lesson] });
     apiClientMock.get.mockResolvedValue({ ...baseOutline, units: [unit] });
     apiClientMock.put.mockResolvedValue(undefined);

@@ -79,6 +79,13 @@ vi.mock('../../../features/builder/DropdownMenu.js', () => ({
     </div>
   ),
 }));
+vi.mock('../../../features/builder/LessonPlanRow.js', () => ({
+  default: ({ hasLessonPlan, onClick }: { hasLessonPlan: boolean; onClick: () => void }) => (
+    <button data-testid="lesson-plan-row" onClick={onClick}>
+      {hasLessonPlan ? 'plan-set' : 'plan-not-set'}
+    </button>
+  ),
+}));
 vi.mock('../../../features/builder/hooks/useDragReorder.js', () => ({
   useDragReorder: () => ({
     sensors: [],
@@ -93,6 +100,7 @@ const makeLesson = (overrides?: Partial<BuilderLesson>): BuilderLesson => ({
   id: 'lesson-1',
   title: 'Test Lesson',
   order: 1,
+  hasLessonPlan: false,
   assignments: [],
   assessment: null,
   ...overrides,
@@ -110,10 +118,12 @@ const defaultProps = {
   onCancelRename: vi.fn(),
   onDelete: vi.fn(),
   onDeleteActivity: vi.fn(),
+  onEditActivity: vi.fn(),
   onAddActivity: vi.fn(),
   onReorderActivities: vi.fn().mockResolvedValue(undefined),
   onMoveLesson: vi.fn(),
   onMoveActivity: vi.fn(),
+  onEditPlan: vi.fn(),
   announce: vi.fn(),
 };
 

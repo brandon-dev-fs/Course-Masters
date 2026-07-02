@@ -172,6 +172,9 @@ export const assignmentsApi = {
   getAll: (lessonId: string): Promise<Assignment[]> =>
     apiClient.get<Assignment[]>(`/lessons/${lessonId}/assignments`),
 
+  getOne: (assignmentId: string): Promise<Assignment> =>
+    apiClient.get<Assignment>(`/assignments/${assignmentId}`),
+
   create: (lessonId: string, data: CreateAssignmentPayload): Promise<Assignment> =>
     apiClient.post<Assignment>(`/lessons/${lessonId}/assignments`, toApiBody(data)),
 

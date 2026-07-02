@@ -80,6 +80,7 @@ export function useBuilderOutline(courseId: string): UseBuilderOutlineResult {
       id: newLesson.id,
       title: newLesson.title,
       order: newLesson.order,
+      hasLessonPlan: false,
       assignments: [],
       assessment: null,
     };

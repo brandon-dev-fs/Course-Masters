@@ -14,9 +14,9 @@ describe('ActivityTypePill', () => {
     expect(screen.getByText('Video')).toBeInTheDocument();
   });
 
-  it('renders "Reading" for type reading', () => {
+  it('renders "Link" for type reading', () => {
     render(<ActivityTypePill type="reading" />);
-    expect(screen.getByText('Reading')).toBeInTheDocument();
+    expect(screen.getByText('Link')).toBeInTheDocument();
   });
 
   it('renders "Vocab" for type vocab', () => {

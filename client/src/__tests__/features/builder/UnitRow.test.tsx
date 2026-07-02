@@ -113,6 +113,7 @@ const defaultProps = {
   onDelete: vi.fn(),
   onDeleteLesson: vi.fn(),
   onDeleteActivity: vi.fn(),
+  onEditActivity: vi.fn(),
   onAddLesson: vi.fn(),
   onAddActivity: vi.fn(),
   onReorderLessons: vi.fn().mockResolvedValue(undefined),
@@ -121,6 +122,7 @@ const defaultProps = {
   onMoveLesson: vi.fn(),
   onMoveActivity: vi.fn(),
   onEditUnit: vi.fn(),
+  onEditPlanLesson: vi.fn(),
   announce: vi.fn(),
 };
 
@@ -142,8 +144,8 @@ describe('UnitRow', () => {
   it('shows lesson count', () => {
     const unit = makeUnit({
       lessons: [
-        { id: 'l1', title: 'Lesson 1', order: 1, assignments: [], assessment: null },
-        { id: 'l2', title: 'Lesson 2', order: 2, assignments: [], assessment: null },
+        { id: 'l1', title: 'Lesson 1', order: 1, hasLessonPlan: false, assignments: [], assessment: null },
+        { id: 'l2', title: 'Lesson 2', order: 2, hasLessonPlan: false, assignments: [], assessment: null },
       ],
     });
     render(<UnitRow unit={unit} {...defaultProps} />);
@@ -175,7 +177,7 @@ describe('UnitRow', () => {
 
   it('renders lesson rows when expanded with lessons', () => {
     const unit = makeUnit({
-      lessons: [{ id: 'l1', title: 'Lesson 1', order: 1, assignments: [], assessment: null }],
+      lessons: [{ id: 'l1', title: 'Lesson 1', order: 1, hasLessonPlan: false, assignments: [], assessment: null }],
     });
     render(<UnitRow unit={unit} {...defaultProps} isExpanded={true} />);
     expect(screen.getByTestId('lesson-row')).toBeInTheDocument();

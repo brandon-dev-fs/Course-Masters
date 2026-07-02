@@ -339,6 +339,7 @@ export interface BuilderLesson {
   id: string;
   title: string;
   order: number;
+  hasLessonPlan: boolean;
   assignments: BuilderActivity[];
   assessment: BuilderAssessment | null;
 }

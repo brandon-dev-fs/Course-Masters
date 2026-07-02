@@ -3,6 +3,8 @@ import {
   ChevronRight,
   MoreVertical,
   Pencil,
+  BookOpen,
+  BookMarked,
   Trash2,
   ChevronUp,
   ChevronDown,
@@ -19,6 +21,7 @@ import type { BuilderLesson, BuilderActivity, ReorderItem } from '../../api/type
 
 import ActivityRow from './ActivityRow.js';
 import AssessmentRow from './AssessmentRow.js';
+import LessonPlanRow from './LessonPlanRow.js';
 import AddItemButton from './AddItemButton.js';
 import InlineRenameInput from './InlineRenameInput.js';
 import DropdownMenu from './DropdownMenu.js';
@@ -30,6 +33,7 @@ interface SortableActivityRowProps {
   isFirst: boolean;
   isLast: boolean;
   onDelete: () => void;
+  onEdit: () => void;
   onMoveActivity: (direction: 'up' | 'down') => void;
 }
 
@@ -38,6 +42,7 @@ function SortableActivityRow({
   isFirst,
   isLast,
   onDelete,
+  onEdit,
   onMoveActivity,
 }: SortableActivityRowProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -56,6 +61,7 @@ function SortableActivityRow({
         isFirst={isFirst}
         isLast={isLast}
         onDelete={onDelete}
+        onEdit={onEdit}
         onMoveActivity={onMoveActivity}
         dragHandleProps={{ ...attributes, ...listeners }}
         isDragging={isDragging}
@@ -77,10 +83,12 @@ interface LessonRowProps {
   onCancelRename: () => void;
   onDelete: () => void;
   onDeleteActivity: (assignmentId: string) => void;
+  onEditActivity: (assignmentId: string) => void;
   onAddActivity: () => void;
   onReorderActivities: (reordered: BuilderActivity[], assignmentIds: string[]) => Promise<void>;
   onMoveLesson: (direction: 'up' | 'down') => void;
   onMoveActivity: (assignmentId: string, direction: 'up' | 'down') => void;
+  onEditPlan: () => void;
   announce: (message: string) => void;
   dragHandleProps?: Record<string, unknown>;
   isDragging?: boolean;
@@ -99,10 +107,12 @@ export default function LessonRow({
   onCancelRename,
   onDelete,
   onDeleteActivity,
+  onEditActivity,
   onAddActivity,
   onReorderActivities,
   onMoveLesson,
   onMoveActivity,
+  onEditPlan,
   announce,
   dragHandleProps,
   isDragging = false,
@@ -131,6 +141,11 @@ export default function LessonRow({
       label: 'Rename',
       icon: <Pencil className="w-4 h-4" />,
       onClick: () => onStartRename(lesson.id),
+    },
+    {
+      label: 'Edit plan',
+      icon: <BookOpen className="w-4 h-4" />,
+      onClick: onEditPlan,
     },
     {
       label: 'Move up',
@@ -213,9 +228,22 @@ export default function LessonRow({
               ariaLabel="Rename lesson"
             />
           ) : (
-            <span className="text-sm font-medium text-text-primary truncate">
-              {lesson.title}
-            </span>
+            <>
+              <span className="text-sm font-medium text-text-primary truncate">
+                {lesson.title}
+              </span>
+              {lesson.hasLessonPlan ? (
+                <BookMarked
+                  className="w-3.5 h-3.5 shrink-0 text-primary"
+                  aria-label="Lesson plan set"
+                />
+              ) : (
+                <BookOpen
+                  className="w-3.5 h-3.5 shrink-0 text-muted-foreground opacity-40"
+                  aria-label="No lesson plan"
+                />
+              )}
+            </>
           )}
         </button>
 
@@ -252,6 +280,9 @@ export default function LessonRow({
       {/* Children */}
       {isExpanded && (
         <div id={childGroupId} role="group" className="ml-4 md:ml-8">
+          {/* Lesson plan row — always shown at top */}
+          <LessonPlanRow hasLessonPlan={lesson.hasLessonPlan} onClick={onEditPlan} />
+
           {sortedActivities.length === 0 && (
             <p className="text-sm text-muted-foreground italic px-3 py-1.5 ml-8 md:ml-16">
               No activities in this lesson.
@@ -275,6 +306,7 @@ export default function LessonRow({
                   isFirst={i === 0}
                   isLast={i === sortedActivities.length - 1}
                   onDelete={() => onDeleteActivity(activity.id)}
+                  onEdit={() => onEditActivity(activity.id)}
                   onMoveActivity={(dir) => handleMoveActivity(activity.id, dir)}
                 />
               ))}
