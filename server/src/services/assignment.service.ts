@@ -177,15 +177,13 @@ export const assignmentService = {
         });
       } else if (data.type === 'video') {
         await tx.videoAssignment.create({
-          // displayTitle maps to VideoAssignment.title — separate from the shared assignment title
-          data: { assignmentId: assignment.id, url: data.url, title: data.displayTitle ?? null },
+          data: { assignmentId: assignment.id, url: data.url },
         });
       } else if (data.type === 'reading') {
         await tx.readingAssignment.create({
           data: {
             assignmentId: assignment.id,
             url: data.url,
-            description: data.description ?? null,
             estimatedMinutes: data.estimatedMinutes ?? null,
           },
         });
@@ -252,17 +250,14 @@ export const assignmentService = {
           data: { content: data.content },
         });
       } else if (assignment.type === AssignmentType.video) {
-        const videoUpdates: { url?: string; title?: string } = {};
+        const videoUpdates: { url?: string } = {};
         if (data.url !== undefined) videoUpdates.url = data.url;
-        // displayTitle maps to VideoAssignment.title — separate from the shared assignment title
-        if (data.displayTitle !== undefined) videoUpdates.title = data.displayTitle;
         if (Object.keys(videoUpdates).length > 0) {
           await tx.videoAssignment.update({ where: { assignmentId }, data: videoUpdates });
         }
       } else if (assignment.type === AssignmentType.reading) {
-        const readingUpdates: { url?: string; description?: string | null; estimatedMinutes?: number | null } = {};
+        const readingUpdates: { url?: string; estimatedMinutes?: number | null } = {};
         if (data.url !== undefined) readingUpdates.url = data.url;
-        if (data.description !== undefined) readingUpdates.description = data.description;
         if (data.estimatedMinutes !== undefined) readingUpdates.estimatedMinutes = data.estimatedMinutes;
         if (Object.keys(readingUpdates).length > 0) {
           await tx.readingAssignment.update({ where: { assignmentId }, data: readingUpdates });

@@ -2,6 +2,12 @@ vi.mock('../../../components/RichTextEditor.js', () => ({
   default: () => <div data-testid="rich-text-editor" />,
 }));
 
+vi.mock('../../../api/link.js', () => ({
+  linkApi: {
+    checkEmbed: vi.fn().mockResolvedValue({ canEmbed: true }),
+  },
+}));
+
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import LessonAssignmentContent from '../../../features/lessons/LessonAssignmentContent.js';
@@ -47,21 +53,22 @@ describe('LessonAssignmentContent', () => {
   it('renders video assignment view', () => {
     const assignment: Assignment = {
       ...baseAssignment,
+      title: 'My Video Title',
       type: 'video',
-      videoAssignment: { id: 'va1', url: 'https://www.youtube.com/watch?v=abc', title: 'Test Video' },
+      videoAssignment: { id: 'va1', url: 'https://www.youtube.com/watch?v=abc' },
     };
     render(<LessonAssignmentContent assignment={assignment} onToggleAssignmentCompletion={onToggle} onBookmarkChange={onBookmarkChange} isStudent={false} />);
-    expect(screen.getByText('Test Video')).toBeInTheDocument();
+    expect(screen.getByText('My Video Title')).toBeInTheDocument();
   });
 
   it('renders reading assignment view', () => {
     const assignment: Assignment = {
       ...baseAssignment,
       type: 'reading',
-      readingAssignment: { id: 'ra1', url: 'https://example.com', description: 'Read this article', estimatedMinutes: 10 },
+      readingAssignment: { id: 'ra1', url: 'https://example.com', estimatedMinutes: 10 },
     };
     render(<LessonAssignmentContent assignment={assignment} onToggleAssignmentCompletion={onToggle} onBookmarkChange={onBookmarkChange} isStudent={false} />);
-    expect(screen.getByText('Read this article')).toBeInTheDocument();
+    expect(screen.getByText('External Link')).toBeInTheDocument();
   });
 
   it('renders vocab assignment view', () => {

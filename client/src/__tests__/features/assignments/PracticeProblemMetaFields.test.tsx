@@ -4,16 +4,14 @@ import PracticeProblemMetaFields from '../../../features/assignments/PracticePro
 
 const defaultProps = {
   url: '',
-  displayTitle: '',
-  description: '',
   estimatedMinutes: '',
   passingPercentage: '',
   entries: [],
   noteContent: null,
   questions: [],
+  fetchingVideoTitle: false,
+  handleVideoUrlBlur: vi.fn(),
   onUrlChange: vi.fn(),
-  onDisplayTitleChange: vi.fn(),
-  onDescriptionChange: vi.fn(),
   onEstimatedMinutesChange: vi.fn(),
   onPassingPercentageChange: vi.fn(),
   onEntriesChange: vi.fn(),

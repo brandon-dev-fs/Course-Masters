@@ -26,14 +26,13 @@ export default function LessonAssignmentContent({
     content = (
       <VideoAssignmentView
         url={assignment.videoAssignment.url}
-        title={assignment.videoAssignment.title}
+        title={assignment.title}
       />
     );
   } else if (assignment.type === 'reading' && assignment.readingAssignment) {
     content = (
       <ExternalLinkAssignmentView
         url={assignment.readingAssignment.url}
-        description={assignment.readingAssignment.description}
         estimatedMinutes={assignment.readingAssignment.estimatedMinutes}
       />
     );

@@ -1,52 +1,36 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { ExternalLink, AlertTriangle } from 'lucide-react';
 
-import Button from '../../components/Button.js';
 import LoadingSpinner from '../../components/LoadingSpinner.js';
+import { linkApi } from '../../api/link.js';
 
 interface ExternalLinkAssignmentViewProps {
   url: string;
-  description?: string | null;
   estimatedMinutes?: number | null;
 }
 
-type IframeStatus = 'loading' | 'loaded' | 'failed';
+type EmbedCheckStatus = 'checking' | 'can' | 'cannot';
 
 export default function ExternalLinkAssignmentView({
   url,
-  description,
   estimatedMinutes,
 }: ExternalLinkAssignmentViewProps) {
-  const [iframeStatus, setIframeStatus] = useState<IframeStatus>('loading');
-  const [showEmbed, setShowEmbed] = useState(false);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  // One-time read on mount — no reactive listener needed (Vite SPA, no SSR)
-  const [isMobile] = useState(() => !window.matchMedia('(min-width: 1024px)').matches);
+  const [embedStatus, setEmbedStatus] = useState<EmbedCheckStatus>('checking');
 
   useEffect(() => {
-    if (isMobile) {
-      setIframeStatus('failed');
-      return;
-    }
-    // 5-second timeout — if iframe onLoad hasn't fired, assume it's blocked
-    timeoutRef.current = setTimeout(() => {
-      setIframeStatus('failed');
-    }, 5000);
+    let cancelled = false;
+    linkApi.checkEmbed(url)
+      .then(({ canEmbed }) => {
+        if (!cancelled) setEmbedStatus(canEmbed ? 'can' : 'cannot');
+      })
+      .catch(() => {
+        if (!cancelled) setEmbedStatus('can'); // optimistic fallback
+      });
+    return () => { cancelled = true; };
+  }, [url]);
 
-    return () => {
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    };
-  }, [isMobile]);
-
-  function handleLoad() {
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    setIframeStatus('loaded');
-  }
-
-  function handleError() {
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    setIframeStatus('failed');
+  function handleIframeError() {
+    setEmbedStatus('cannot');
   }
 
   return (
@@ -58,7 +42,7 @@ export default function ExternalLinkAssignmentView({
         {estimatedMinutes != null && (
           <span className="text-xs text-muted-foreground">~ {estimatedMinutes} min</span>
         )}
-        {iframeStatus !== 'failed' && (
+        {embedStatus === 'can' && (
           <>
             <div className="flex-1" />
             <a
@@ -75,85 +59,54 @@ export default function ExternalLinkAssignmentView({
         )}
       </div>
 
-      {/* Iframe embed area */}
-      {!isMobile && iframeStatus !== 'failed' ? (
+      {/* Embed area */}
+      {embedStatus === 'checking' && (
+        <div className="flex items-center justify-center py-10">
+          <LoadingSpinner />
+        </div>
+      )}
+
+      {embedStatus === 'can' && (
         <div
           role="region"
           aria-label="External link content"
-          aria-busy={iframeStatus === 'loading'}
           className="relative w-full rounded-lg overflow-hidden border border-border bg-surface"
           style={{ minHeight: '400px' }}
         >
-          {iframeStatus === 'loading' && (
-            <div className="absolute inset-0 flex items-center justify-center bg-surface">
-              <LoadingSpinner />
-            </div>
-          )}
           <iframe
             src={url}
             title="External link content"
             sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
             loading="lazy"
-            onLoad={handleLoad}
-            onError={handleError}
+            onError={handleIframeError}
             className="w-full border-0"
-            style={{ minHeight: '400px', display: iframeStatus === 'loading' ? 'none' : 'block' }}
+            style={{ minHeight: '400px' }}
           />
-        </div>
-      ) : (
-        /* Fallback block — shown on mobile or when iframe fails */
-        <div className="flex flex-col gap-3">
-          <div className="bg-orange-surface rounded-lg p-4 flex flex-col gap-3">
-            <div className="flex items-start gap-2">
-              <AlertTriangle className="w-5 h-5 text-orange-accent shrink-0 mt-0.5" />
-              <div className="flex flex-col gap-1 flex-1">
-                <p className="text-sm text-orange-surface-text font-medium">
-                  {isMobile ? 'Embedded view not available on mobile' : 'This page cannot be embedded'}
-                </p>
-                <p className="text-xs text-orange-surface-text truncate">{url}</p>
-              </div>
-            </div>
-            <a
-              href={url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="self-start flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-lg bg-accent text-accent-foreground hover:opacity-90 transition-opacity"
-            >
-              <ExternalLink className="w-3.5 h-3.5" />
-              Open in new tab
-              <span className="sr-only">(opens in new tab)</span>
-            </a>
-          </div>
-
-          {/* Mobile "Try to embed" toggle */}
-          {isMobile && (
-            <div className="flex flex-col gap-2">
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => setShowEmbed(prev => !prev)}
-              >
-                {showEmbed ? 'Hide embed' : 'Try to embed'}
-              </Button>
-              {showEmbed && (
-                <div className="w-full rounded-lg overflow-hidden border border-border">
-                  <iframe
-                    src={url}
-                    title="External link content"
-                    sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
-                    loading="lazy"
-                    className="w-full border-0"
-                    style={{ minHeight: '300px' }}
-                  />
-                </div>
-              )}
-            </div>
-          )}
         </div>
       )}
 
-      {description && (
-        <p className="text-sm text-muted-foreground">{description}</p>
+      {embedStatus === 'cannot' && (
+        <div className="bg-orange-surface rounded-lg p-4 flex flex-col gap-3">
+          <div className="flex items-start gap-2">
+            <AlertTriangle className="w-5 h-5 text-orange-accent shrink-0 mt-0.5" />
+            <div className="flex flex-col gap-1 flex-1">
+              <p className="text-sm text-orange-surface-text font-medium">
+                This page cannot be embedded
+              </p>
+              <p className="text-xs text-orange-surface-text truncate">{url}</p>
+            </div>
+          </div>
+          <a
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="self-start flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-lg bg-accent text-accent-foreground hover:opacity-90 transition-opacity"
+          >
+            <ExternalLink className="w-3.5 h-3.5" />
+            Open in new tab
+            <span className="sr-only">(opens in new tab)</span>
+          </a>
+        </div>
       )}
     </div>
   );

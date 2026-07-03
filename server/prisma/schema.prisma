@@ -309,10 +309,9 @@ model NoteAssignment {
 }
 
 model VideoAssignment {
-  id           String  @id @default(uuid())
-  assignmentId String  @unique
+  id           String @id @default(uuid())
+  assignmentId String @unique
   url          String
-  title        String?
 
   assignment Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
 
@@ -323,7 +322,6 @@ model ReadingAssignment {
   id               String  @id @default(uuid())
   assignmentId     String  @unique
   url              String
-  description      String?
   estimatedMinutes Int?
 
   assignment Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)

@@ -239,13 +239,11 @@ export interface NoteAssignmentData {
 export interface VideoAssignmentData {
   id: string;
   url: string;
-  title: string | null;
 }
 
 export interface ReadingAssignmentData {
   id: string;
   url: string;
-  description: string | null;
   estimatedMinutes: number | null;
 }
 

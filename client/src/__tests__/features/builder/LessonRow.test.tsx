@@ -162,7 +162,7 @@ describe('LessonRow', () => {
   });
 
   it('shows children when isExpanded is true', () => {
-    render(<LessonRow lesson={makeLesson()} {...defaultProps} isExpanded={true} />);
+    render(<LessonRow lesson={makeLesson({ hasLessonPlan: true })} {...defaultProps} isExpanded={true} />);
     expect(screen.getByRole('button', { name: /add activity/i })).toBeInTheDocument();
   });
 
@@ -187,7 +187,7 @@ describe('LessonRow', () => {
   it('calls onAddActivity when Add activity button is clicked', () => {
     const onAddActivity = vi.fn();
     render(
-      <LessonRow lesson={makeLesson()} {...defaultProps} isExpanded={true} onAddActivity={onAddActivity} />,
+      <LessonRow lesson={makeLesson({ hasLessonPlan: true })} {...defaultProps} isExpanded={true} onAddActivity={onAddActivity} />,
     );
     fireEvent.click(screen.getByRole('button', { name: /add activity/i }));
     expect(onAddActivity).toHaveBeenCalledTimes(1);

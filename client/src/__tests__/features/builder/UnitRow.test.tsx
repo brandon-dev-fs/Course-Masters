@@ -220,12 +220,12 @@ describe('UnitRow', () => {
     expect(onDelete).toHaveBeenCalledTimes(1);
   });
 
-  it('opens context menu and calls onStartRename', () => {
-    const onStartRename = vi.fn();
-    render(<UnitRow unit={makeUnit()} {...defaultProps} onStartRename={onStartRename} />);
+  it('opens context menu and calls onEditUnit via Edit details', () => {
+    const onEditUnit = vi.fn();
+    render(<UnitRow unit={makeUnit()} {...defaultProps} onEditUnit={onEditUnit} />);
     fireEvent.click(screen.getByRole('button', { name: /actions for unit/i }));
-    fireEvent.click(screen.getByRole('button', { name: 'Rename' }));
-    expect(onStartRename).toHaveBeenCalledWith('unit-1');
+    fireEvent.click(screen.getByRole('button', { name: 'Edit details' }));
+    expect(onEditUnit).toHaveBeenCalledTimes(1);
   });
 
   it('opens context menu and calls onEditUnit', () => {

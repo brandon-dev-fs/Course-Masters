@@ -19,10 +19,11 @@ import PracticeProblemAssignmentForm, {
 } from '../../../features/assignments/PracticeProblemAssignmentForm.js';
 
 const baseSubFormProps = {
-  noteContent: null, url: '', displayTitle: '', description: '',
+  noteContent: null, url: '',
   estimatedMinutes: '', passingPercentage: '', entries: [],
-  onNoteContentChange: () => {}, onUrlChange: () => {}, onDisplayTitleChange: () => {},
-  onDescriptionChange: () => {}, onEstimatedMinutesChange: () => {},
+  fetchingVideoTitle: false, handleVideoUrlBlur: async () => {},
+  onNoteContentChange: () => {}, onUrlChange: () => {},
+  onEstimatedMinutesChange: () => {},
   onPassingPercentageChange: () => {}, onEntriesChange: () => {},
 };
 
