@@ -79,13 +79,30 @@ describe('VocabAssignmentForm', () => {
     expect(defaultProps.onEntriesChange).toHaveBeenCalledWith([sampleEntries[1], sampleEntries[0]]);
   });
 
-  it('shows error when no valid entry exists', () => {
+  it('does not show error before user interacts', () => {
     render(<VocabAssignmentForm {...defaultProps} entries={[{ term: '', definition: '' }]} />);
+    expect(screen.queryByText(/at least one term/i)).not.toBeInTheDocument();
+  });
+
+  it('shows error after interaction when no valid entry exists', () => {
+    render(<VocabAssignmentForm {...defaultProps} entries={[{ term: '', definition: '' }]} />);
+    fireEvent.change(screen.getByLabelText('Term 1'), { target: { value: 'x' } });
     expect(screen.getByText(/at least one term/i)).toBeInTheDocument();
   });
 
   it('does not show error when valid entries exist', () => {
     render(<VocabAssignmentForm {...defaultProps} />);
     expect(screen.queryByText(/at least one term/i)).not.toBeInTheDocument();
+  });
+
+  it('disables Add term button when any entry is incomplete', () => {
+    const incomplete = [{ term: 'Variable', definition: '' }];
+    render(<VocabAssignmentForm {...defaultProps} entries={incomplete} />);
+    expect(screen.getByLabelText('Add term')).toBeDisabled();
+  });
+
+  it('enables Add term button when all entries are complete', () => {
+    render(<VocabAssignmentForm {...defaultProps} />);
+    expect(screen.getByLabelText('Add term')).not.toBeDisabled();
   });
 });
