@@ -100,92 +100,12 @@ describe('AssignmentSection', () => {
       expect(screen.getByRole('heading', { name: 'My Note' })).toBeTruthy();
     });
 
-    it('shows file type label for PDF when assignmentType is file and mimeType is set', () => {
-      renderSection({ item: makeItem({ title: 'Upload', assignmentType: 'file', mimeType: 'application/pdf' }) });
-      expect(screen.getByRole('heading', { name: 'PDF Document' })).toBeTruthy();
+    it('shows item.title for file assignments regardless of mimeType', () => {
+      renderSection({ item: makeItem({ title: 'Course Syllabus', assignmentType: 'file', mimeType: 'application/pdf' }) });
+      expect(screen.getByRole('heading', { name: 'Course Syllabus' })).toBeTruthy();
     });
 
-    it('shows "Text File" label for text/plain mimeType', () => {
-      renderSection({ item: makeItem({ title: 'Upload', assignmentType: 'file', mimeType: 'text/plain' }) });
-      expect(screen.getByRole('heading', { name: 'Text File' })).toBeTruthy();
-    });
-
-    it('shows "Word Document" label for docx mimeType', () => {
-      renderSection({ item: makeItem({ title: 'Upload', assignmentType: 'file', mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' }) });
-      expect(screen.getByRole('heading', { name: 'Word Document' })).toBeTruthy();
-    });
-
-    it('shows "Word Document" label for doc mimeType', () => {
-      renderSection({ item: makeItem({ title: 'Upload', assignmentType: 'file', mimeType: 'application/msword' }) });
-      expect(screen.getByRole('heading', { name: 'Word Document' })).toBeTruthy();
-    });
-
-    it('shows "PowerPoint" label for pptx mimeType', () => {
-      renderSection({ item: makeItem({ title: 'Upload', assignmentType: 'file', mimeType: 'application/vnd.openxmlformats-officedocument.presentationml.presentation' }) });
-      expect(screen.getByRole('heading', { name: 'PowerPoint' })).toBeTruthy();
-    });
-
-    it('shows "PowerPoint" label for ppt mimeType', () => {
-      renderSection({ item: makeItem({ title: 'Upload', assignmentType: 'file', mimeType: 'application/vnd.ms-powerpoint' }) });
-      expect(screen.getByRole('heading', { name: 'PowerPoint' })).toBeTruthy();
-    });
-
-    it('shows "Excel Spreadsheet" label for xlsx mimeType', () => {
-      renderSection({ item: makeItem({ title: 'Upload', assignmentType: 'file', mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }) });
-      expect(screen.getByRole('heading', { name: 'Excel Spreadsheet' })).toBeTruthy();
-    });
-
-    it('shows "Excel Spreadsheet" label for xls mimeType', () => {
-      renderSection({ item: makeItem({ title: 'Upload', assignmentType: 'file', mimeType: 'application/vnd.ms-excel' }) });
-      expect(screen.getByRole('heading', { name: 'Excel Spreadsheet' })).toBeTruthy();
-    });
-
-    it('shows "PNG Image" label for image/png mimeType', () => {
-      renderSection({ item: makeItem({ title: 'Upload', assignmentType: 'file', mimeType: 'image/png' }) });
-      expect(screen.getByRole('heading', { name: 'PNG Image' })).toBeTruthy();
-    });
-
-    it('shows "JPEG Image" label for image/jpeg mimeType', () => {
-      renderSection({ item: makeItem({ title: 'Upload', assignmentType: 'file', mimeType: 'image/jpeg' }) });
-      expect(screen.getByRole('heading', { name: 'JPEG Image' })).toBeTruthy();
-    });
-
-    it('shows "GIF Image" label for image/gif mimeType', () => {
-      renderSection({ item: makeItem({ title: 'Upload', assignmentType: 'file', mimeType: 'image/gif' }) });
-      expect(screen.getByRole('heading', { name: 'GIF Image' })).toBeTruthy();
-    });
-
-    it('shows "WebP Image" label for image/webp mimeType', () => {
-      renderSection({ item: makeItem({ title: 'Upload', assignmentType: 'file', mimeType: 'image/webp' }) });
-      expect(screen.getByRole('heading', { name: 'WebP Image' })).toBeTruthy();
-    });
-
-    it('shows "SVG Image" label for image/svg+xml mimeType', () => {
-      renderSection({ item: makeItem({ title: 'Upload', assignmentType: 'file', mimeType: 'image/svg+xml' }) });
-      expect(screen.getByRole('heading', { name: 'SVG Image' })).toBeTruthy();
-    });
-
-    it('shows "Video File" label for video/* mimeType', () => {
-      renderSection({ item: makeItem({ title: 'Upload', assignmentType: 'file', mimeType: 'video/mp4' }) });
-      expect(screen.getByRole('heading', { name: 'Video File' })).toBeTruthy();
-    });
-
-    it('shows "Audio File" label for audio/* mimeType', () => {
-      renderSection({ item: makeItem({ title: 'Upload', assignmentType: 'file', mimeType: 'audio/mpeg' }) });
-      expect(screen.getByRole('heading', { name: 'Audio File' })).toBeTruthy();
-    });
-
-    it('shows "Image" label for generic image/* mimeType', () => {
-      renderSection({ item: makeItem({ title: 'Upload', assignmentType: 'file', mimeType: 'image/tiff' }) });
-      expect(screen.getByRole('heading', { name: 'Image' })).toBeTruthy();
-    });
-
-    it('shows "File" label for unknown mimeType', () => {
-      renderSection({ item: makeItem({ title: 'Upload', assignmentType: 'file', mimeType: 'application/octet-stream' }) });
-      expect(screen.getByRole('heading', { name: 'File' })).toBeTruthy();
-    });
-
-    it('uses item.title when assignmentType is file but no mimeType', () => {
+    it('shows item.title for file assignments with no mimeType', () => {
       renderSection({ item: makeItem({ title: 'My File', assignmentType: 'file' }) });
       expect(screen.getByRole('heading', { name: 'My File' })).toBeTruthy();
     });

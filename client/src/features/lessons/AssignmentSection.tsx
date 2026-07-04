@@ -67,29 +67,7 @@ export default function AssignmentSection({
     return 'Read';
   }
 
-  function getFileTypeLabel(mimeType: string): string {
-    if (mimeType === 'application/pdf') return 'PDF Document';
-    if (mimeType === 'text/plain') return 'Text File';
-    if (mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') return 'Word Document';
-    if (mimeType === 'application/msword') return 'Word Document';
-    if (mimeType === 'application/vnd.openxmlformats-officedocument.presentationml.presentation') return 'PowerPoint';
-    if (mimeType === 'application/vnd.ms-powerpoint') return 'PowerPoint';
-    if (mimeType === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') return 'Excel Spreadsheet';
-    if (mimeType === 'application/vnd.ms-excel') return 'Excel Spreadsheet';
-    if (mimeType === 'image/png') return 'PNG Image';
-    if (mimeType === 'image/jpeg') return 'JPEG Image';
-    if (mimeType === 'image/gif') return 'GIF Image';
-    if (mimeType === 'image/webp') return 'WebP Image';
-    if (mimeType === 'image/svg+xml') return 'SVG Image';
-    if (mimeType.startsWith('video/')) return 'Video File';
-    if (mimeType.startsWith('audio/')) return 'Audio File';
-    if (mimeType.startsWith('image/')) return 'Image';
-    return 'File';
-  }
-
-  const displayTitle = item.assignmentType === 'file' && item.mimeType
-    ? getFileTypeLabel(item.mimeType)
-    : item.title;
+  const displayTitle = item.title;
 
   return (
     <section
