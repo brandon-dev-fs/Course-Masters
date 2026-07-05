@@ -75,10 +75,11 @@ function isQuestionValid(q: PracticeQuestionDraft): boolean {
   const content = q.content;
   switch (q.type) {
     case 'multiple_choice': {
-      const question = (content.question as string) ?? '';
+      const questionText = (content.question as string) ?? '';
       const options = (content.options as string[]) ?? [];
-      const nonEmptyOptions = options.filter(o => o.trim().length > 0);
-      return question.trim().length > 0 && nonEmptyOptions.length >= 2;
+      const nonEmpty = options.filter(o => o.trim().length > 0);
+      const uniqueNonEmpty = new Set(nonEmpty);
+      return questionText.trim().length > 0 && nonEmpty.length >= 2 && uniqueNonEmpty.size === nonEmpty.length;
     }
     case 'true_false': {
       const question = (content.question as string) ?? '';

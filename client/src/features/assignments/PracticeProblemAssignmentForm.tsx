@@ -25,7 +25,7 @@ export interface PracticeQuestionDraft {
 function defaultContent(type: PracticeQuestionType): Record<string, unknown> {
   switch (type) {
     case 'multiple_choice':
-      return { question: '', options: ['', ''], correctIndex: 0 };
+      return { question: '', options: ['', '', '', ''], correctIndex: 0 };
     case 'true_false':
       return { question: '', correct: true };
     case 'matching':
