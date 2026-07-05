@@ -91,9 +91,15 @@ function isQuestionValid(q: PracticeQuestionDraft): boolean {
       return leftItems.some((l, i) => l.trim().length > 0 && (rightItems[i] ?? '').trim().length > 0);
     }
     case 'fill_in_blank': {
-      const question = (content.question as string) ?? '';
+      const questionText = (content.question as string) ?? '';
       const blanks = (content.blanks as Array<{ answer: string }>) ?? [];
-      return question.trim().length > 0 && blanks.some(b => b.answer.trim().length > 0);
+      const tokenCount = (questionText.match(/\{\{blank_\d+\}\}/g) ?? []).length;
+      return (
+        questionText.trim().length > 0 &&
+        tokenCount > 0 &&
+        blanks.length === tokenCount &&
+        blanks.every(b => b.answer.trim().length > 0)
+      );
     }
     default:
       return false;

@@ -31,7 +31,7 @@ function defaultContent(type: PracticeQuestionType): Record<string, unknown> {
     case 'matching':
       return { question: '', leftItems: ['', ''], rightItems: ['', ''], correctPairs: [[0, 0], [1, 1]] };
     case 'fill_in_blank':
-      return { question: '', blanks: [{ answer: '', alternatives: [] }] };
+      return { question: '', blanks: [] };
   }
 }
 
