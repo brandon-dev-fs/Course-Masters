@@ -1,4 +1,7 @@
-import { ArrowUp, ArrowDown, Trash2, Plus } from 'lucide-react';
+import { useState } from 'react';
+
+import { ArrowUp, ArrowDown, Trash2, Plus, ChevronDown } from 'lucide-react';
+
 import type { SubFormProps } from './AssignmentFormModal.js';
 import type { PracticeQuestionType } from '../../api/types.js';
 import ErrorMessage from '../../components/ErrorMessage.js';
@@ -52,13 +55,25 @@ interface QuestionCardProps {
   question: PracticeQuestionDraft;
   index: number;
   total: number;
+  isExpanded: boolean;
+  onToggle: () => void;
   onChange: (q: PracticeQuestionDraft) => void;
   onMoveUp: () => void;
   onMoveDown: () => void;
   onRemove: () => void;
 }
 
-function QuestionCard({ question, index, total, onChange, onMoveUp, onMoveDown, onRemove }: QuestionCardProps) {
+function QuestionCard({
+  question,
+  index,
+  total,
+  isExpanded,
+  onToggle,
+  onChange,
+  onMoveUp,
+  onMoveDown,
+  onRemove,
+}: QuestionCardProps) {
   function handleTypeChange(type: PracticeQuestionType) {
     onChange({ ...question, type, content: defaultContent(type) });
   }
@@ -67,13 +82,39 @@ function QuestionCard({ question, index, total, onChange, onMoveUp, onMoveDown, 
     onChange({ ...question, content });
   }
 
+  const questionText = question.content['question'] as string | undefined;
+  const hasPreview = questionText && questionText.trim().length > 0;
+
   return (
-    <div className="rounded-lg border border-border bg-surface p-4 flex flex-col gap-3">
-      <div className="flex items-center justify-between gap-2">
-        <span className="text-xs text-muted-foreground font-medium uppercase tracking-wide">
-          Question {index + 1}
-        </span>
-        <div className="flex items-center gap-1">
+    <div className="rounded-lg border border-border bg-surface">
+      {/* Header row — always visible */}
+      <div className="flex items-center gap-2 px-3 py-2">
+        {/* Accordion trigger */}
+        <button
+          type="button"
+          id={`question-${index}-header`}
+          aria-expanded={isExpanded}
+          aria-controls={`question-${index}-body`}
+          aria-label={`${isExpanded ? 'Collapse' : 'Expand'} question ${index + 1}: ${QUESTION_TYPE_LABELS[question.type]}`}
+          onClick={onToggle}
+          className="flex items-center gap-2 flex-1 min-w-0 text-left"
+        >
+          <span className="text-xs text-text-secondary font-medium shrink-0">
+            Q{index + 1}
+          </span>
+          <span className="bg-green-surface text-green-surface-text rounded-md px-2 py-0.5 text-xs font-medium shrink-0">
+            {QUESTION_TYPE_LABELS[question.type]}
+          </span>
+          <span className="text-sm text-text-secondary truncate flex-1">
+            {hasPreview ? questionText : <em>New question</em>}
+          </span>
+          <ChevronDown
+            className={`w-4 h-4 text-text-secondary shrink-0 transition-transform duration-200${isExpanded ? ' rotate-180' : ''}`}
+          />
+        </button>
+
+        {/* Action buttons — outside the accordion trigger */}
+        <div className="flex items-center gap-1 shrink-0">
           <button
             type="button"
             onClick={onMoveUp}
@@ -103,23 +144,33 @@ function QuestionCard({ question, index, total, onChange, onMoveUp, onMoveDown, 
         </div>
       </div>
 
-      <div>
-        <label className="text-sm font-semibold text-foreground mb-1 block">Question type</label>
-        <select
-          value={question.type}
-          onChange={e => handleTypeChange(e.target.value as PracticeQuestionType)}
-          className="w-full rounded-xl border-2 border-border bg-surface-raised px-3 py-2 text-foreground text-sm focus:outline-none focus:border-primary"
+      {/* Body — conditionally rendered */}
+      {isExpanded && (
+        <div
+          id={`question-${index}-body`}
+          role="region"
+          aria-labelledby={`question-${index}-header`}
+          className="border-t border-border-subtle px-4 py-4 flex flex-col gap-3"
         >
-          {(Object.keys(QUESTION_TYPE_LABELS) as PracticeQuestionType[]).map(t => (
-            <option key={t} value={t}>{QUESTION_TYPE_LABELS[t]}</option>
-          ))}
-        </select>
-      </div>
+          <div>
+            <label className="text-sm font-semibold text-foreground mb-1 block">Question type</label>
+            <select
+              value={question.type}
+              onChange={e => handleTypeChange(e.target.value as PracticeQuestionType)}
+              className="w-full rounded-xl border-2 border-border bg-surface-raised px-3 py-2 text-foreground text-sm focus:outline-none focus:border-primary"
+            >
+              {(Object.keys(QUESTION_TYPE_LABELS) as PracticeQuestionType[]).map(t => (
+                <option key={t} value={t}>{QUESTION_TYPE_LABELS[t]}</option>
+              ))}
+            </select>
+          </div>
 
-      {(() => {
-        const Editor = EDITORS[question.type];
-        return <Editor content={question.content} index={index} onChange={handleContentChange} />;
-      })()}
+          {(() => {
+            const Editor = EDITORS[question.type];
+            return <Editor content={question.content} index={index} onChange={handleContentChange} />;
+          })()}
+        </div>
+      )}
     </div>
   );
 }
@@ -127,13 +178,20 @@ function QuestionCard({ question, index, total, onChange, onMoveUp, onMoveDown, 
 // ─── Main Form ────────────────────────────────────────────────────────────────
 
 export default function PracticeProblemAssignmentForm({ questions, onQuestionsChange }: SubFormProps) {
+  const [expandedIndex, setExpandedIndex] = useState<number | null>(
+    questions.length > 0 ? 0 : null
+  );
+
   function addQuestion() {
     const newQ: PracticeQuestionDraft = {
+      id: crypto.randomUUID(),
       type: 'multiple_choice',
       order: questions.length + 1,
       content: defaultContent('multiple_choice'),
     };
-    onQuestionsChange([...questions, newQ]);
+    const newQuestions = [...questions, newQ];
+    onQuestionsChange(newQuestions);
+    setExpandedIndex(newQuestions.length - 1);
   }
 
   function updateQuestion(idx: number, q: PracticeQuestionDraft) {
@@ -143,6 +201,18 @@ export default function PracticeProblemAssignmentForm({ questions, onQuestionsCh
   function removeQuestion(idx: number) {
     const next = questions.filter((_, i) => i !== idx).map((q, i) => ({ ...q, order: i + 1 }));
     onQuestionsChange(next);
+
+    if (idx === expandedIndex) {
+      if (next.length === 0) {
+        setExpandedIndex(null);
+      } else if (idx > 0) {
+        setExpandedIndex(idx - 1);
+      } else {
+        setExpandedIndex(0);
+      }
+    } else if (expandedIndex !== null && idx < expandedIndex) {
+      setExpandedIndex(expandedIndex - 1);
+    }
   }
 
   function moveQuestion(idx: number, direction: 'up' | 'down') {
@@ -151,6 +221,12 @@ export default function PracticeProblemAssignmentForm({ questions, onQuestionsCh
     const next = [...questions];
     [next[idx], next[swapIdx]] = [next[swapIdx], next[idx]];
     onQuestionsChange(next.map((q, i) => ({ ...q, order: i + 1 })));
+
+    if (idx === expandedIndex) {
+      setExpandedIndex(swapIdx);
+    } else if (expandedIndex === swapIdx) {
+      setExpandedIndex(idx);
+    }
   }
 
   return (
@@ -161,10 +237,12 @@ export default function PracticeProblemAssignmentForm({ questions, onQuestionsCh
       </p>
       {questions.map((q, idx) => (
         <QuestionCard
-          key={idx}
+          key={q.id ?? String(idx)}
           question={q}
           index={idx}
           total={questions.length}
+          isExpanded={expandedIndex === idx}
+          onToggle={() => setExpandedIndex(expandedIndex === idx ? null : idx)}
           onChange={updated => updateQuestion(idx, updated)}
           onMoveUp={() => moveQuestion(idx, 'up')}
           onMoveDown={() => moveQuestion(idx, 'down')}
