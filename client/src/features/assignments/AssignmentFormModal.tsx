@@ -75,24 +75,37 @@ function isQuestionValid(q: PracticeQuestionDraft): boolean {
   const content = q.content;
   switch (q.type) {
     case 'multiple_choice': {
-      const question = (content.question as string) ?? '';
+      const questionText = (content.question as string) ?? '';
       const options = (content.options as string[]) ?? [];
-      const nonEmptyOptions = options.filter(o => o.trim().length > 0);
-      return question.trim().length > 0 && nonEmptyOptions.length >= 2;
+      const nonEmpty = options.filter(o => o.trim().length > 0);
+      const uniqueNonEmpty = new Set(nonEmpty);
+      return questionText.trim().length > 0 && nonEmpty.length >= 2 && uniqueNonEmpty.size === nonEmpty.length;
     }
     case 'true_false': {
       const question = (content.question as string) ?? '';
       return question.trim().length > 0;
     }
     case 'matching': {
-      const leftItems = (content.leftItems as string[]) ?? [];
-      const rightItems = (content.rightItems as string[]) ?? [];
+      // New shape
+      const pairs = content['pairs'] as Array<{ left: string; right: string }> | undefined;
+      if (pairs) {
+        return pairs.some(p => p.left.trim().length > 0 && p.right.trim().length > 0);
+      }
+      // Old shape fallback
+      const leftItems = (content['leftItems'] as string[]) ?? [];
+      const rightItems = (content['rightItems'] as string[]) ?? [];
       return leftItems.some((l, i) => l.trim().length > 0 && (rightItems[i] ?? '').trim().length > 0);
     }
     case 'fill_in_blank': {
-      const question = (content.question as string) ?? '';
+      const questionText = (content.question as string) ?? '';
       const blanks = (content.blanks as Array<{ answer: string }>) ?? [];
-      return question.trim().length > 0 && blanks.some(b => b.answer.trim().length > 0);
+      const tokenCount = (questionText.match(/\{\{blank_\d+\}\}/g) ?? []).length;
+      return (
+        questionText.trim().length > 0 &&
+        tokenCount > 0 &&
+        blanks.length === tokenCount &&
+        blanks.every(b => b.answer.trim().length > 0)
+      );
     }
     default:
       return false;
