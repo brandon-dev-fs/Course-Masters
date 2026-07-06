@@ -86,8 +86,14 @@ function isQuestionValid(q: PracticeQuestionDraft): boolean {
       return question.trim().length > 0;
     }
     case 'matching': {
-      const leftItems = (content.leftItems as string[]) ?? [];
-      const rightItems = (content.rightItems as string[]) ?? [];
+      // New shape
+      const pairs = content['pairs'] as Array<{ left: string; right: string }> | undefined;
+      if (pairs) {
+        return pairs.some(p => p.left.trim().length > 0 && p.right.trim().length > 0);
+      }
+      // Old shape fallback
+      const leftItems = (content['leftItems'] as string[]) ?? [];
+      const rightItems = (content['rightItems'] as string[]) ?? [];
       return leftItems.some((l, i) => l.trim().length > 0 && (rightItems[i] ?? '').trim().length > 0);
     }
     case 'fill_in_blank': {

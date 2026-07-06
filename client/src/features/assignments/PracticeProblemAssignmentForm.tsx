@@ -29,7 +29,7 @@ function defaultContent(type: PracticeQuestionType): Record<string, unknown> {
     case 'true_false':
       return { question: '', correct: true };
     case 'matching':
-      return { question: '', leftItems: ['', ''], rightItems: ['', ''], correctPairs: [[0, 0], [1, 1]] };
+      return { question: '', pairs: [{ left: '', right: '' }, { left: '', right: '' }] };
     case 'fill_in_blank':
       return { question: '', blanks: [] };
   }
