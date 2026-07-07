@@ -57,20 +57,20 @@ describe('PracticeProblemAssignmentForm', () => {
 
   it('renders a question card when questions exist', () => {
     render(<Wrapper initial={[baseQuestion]} />);
-    expect(screen.getByText('Question 1')).toBeInTheDocument();
+    expect(screen.getByText('Q1')).toBeInTheDocument();
   });
 
   it('adds a question when Add question is clicked', () => {
     render(<Wrapper initial={[baseQuestion]} />);
     fireEvent.click(screen.getByRole('button', { name: /add question/i }));
-    expect(screen.getByText('Question 2')).toBeInTheDocument();
+    expect(screen.getByText('Q2')).toBeInTheDocument();
   });
 
   it('removes a question when remove button is clicked', () => {
     render(<Wrapper initial={[baseQuestion, { ...baseQuestion, order: 2 }]} />);
-    expect(screen.getByText('Question 2')).toBeInTheDocument();
+    expect(screen.getByText('Q2')).toBeInTheDocument();
     fireEvent.click(screen.getAllByRole('button', { name: /remove question 1/i })[0]);
-    expect(screen.queryByText('Question 2')).not.toBeInTheDocument();
+    expect(screen.queryByText('Q2')).not.toBeInTheDocument();
   });
 
   it('disables move up for first question', () => {
@@ -87,14 +87,14 @@ describe('PracticeProblemAssignmentForm', () => {
     render(<Wrapper initial={[baseQuestion, { ...baseQuestion, order: 2 }]} />);
     fireEvent.click(screen.getByRole('button', { name: /move question 1 down/i }));
     // Both still exist — just reordered
-    expect(screen.getByText('Question 1')).toBeInTheDocument();
-    expect(screen.getByText('Question 2')).toBeInTheDocument();
+    expect(screen.getByText('Q1')).toBeInTheDocument();
+    expect(screen.getByText('Q2')).toBeInTheDocument();
   });
 
   it('moves question up when move up is clicked', () => {
     render(<Wrapper initial={[baseQuestion, { ...baseQuestion, order: 2 }]} />);
     fireEvent.click(screen.getByRole('button', { name: /move question 2 up/i }));
-    expect(screen.getByText('Question 1')).toBeInTheDocument();
+    expect(screen.getByText('Q1')).toBeInTheDocument();
   });
 
   it('shows multiple choice editor by default', () => {
@@ -140,7 +140,7 @@ describe('PracticeProblemAssignmentForm', () => {
   it('does not error after removing one of two questions', () => {
     render(<Wrapper initial={[baseQuestion, { ...baseQuestion, order: 2 }]} />);
     fireEvent.click(screen.getAllByRole('button', { name: /remove question/i })[1]);
-    expect(screen.getByText('Question 1')).toBeInTheDocument();
-    expect(screen.queryByText('Question 2')).not.toBeInTheDocument();
+    expect(screen.getByText('Q1')).toBeInTheDocument();
+    expect(screen.queryByText('Q2')).not.toBeInTheDocument();
   });
 });

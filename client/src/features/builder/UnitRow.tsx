@@ -44,6 +44,7 @@ interface SortableLessonRowProps {
   onMoveLesson: (direction: 'up' | 'down') => void;
   onMoveActivity: (assignmentId: string, direction: 'up' | 'down') => void;
   onEditPlan: () => void;
+  onManageLessonQuiz?: () => void;
   announce: (message: string) => void;
 }
 
@@ -66,6 +67,7 @@ function SortableLessonRow({
   onMoveLesson,
   onMoveActivity,
   onEditPlan,
+  onManageLessonQuiz,
   announce,
 }: SortableLessonRowProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -98,6 +100,7 @@ function SortableLessonRow({
         onMoveLesson={onMoveLesson}
         onMoveActivity={onMoveActivity}
         onEditPlan={onEditPlan}
+        onManageLessonQuiz={onManageLessonQuiz}
         announce={announce}
         dragHandleProps={{ ...attributes, ...listeners }}
         isDragging={isDragging}
@@ -133,6 +136,8 @@ interface UnitRowProps {
   onMoveActivity: (lessonId: string, assignmentId: string, direction: 'up' | 'down') => void;
   onEditUnit: () => void;
   onEditPlanLesson: (lessonId: string) => void;
+  onManageUnitTest?: () => void;
+  onManageLessonQuiz?: (lessonId: string) => void;
   announce: (message: string) => void;
   dragHandleProps?: Record<string, unknown>;
   isDragging?: boolean;
@@ -165,6 +170,8 @@ export default function UnitRow({
   onMoveActivity,
   onEditUnit,
   onEditPlanLesson,
+  onManageUnitTest,
+  onManageLessonQuiz,
   announce,
   dragHandleProps,
   isDragging = false,
@@ -357,6 +364,7 @@ export default function UnitRow({
                   onMoveLesson={(dir) => handleMoveLesson(lesson.id, dir)}
                   onMoveActivity={(assignmentId, dir) => onMoveActivity(lesson.id, assignmentId, dir)}
                   onEditPlan={() => onEditPlanLesson(lesson.id)}
+                  onManageLessonQuiz={onManageLessonQuiz ? () => onManageLessonQuiz(lesson.id) : undefined}
                   announce={announce}
                 />
               ))}
@@ -376,6 +384,7 @@ export default function UnitRow({
             label="Unit test"
             level={2}
             indentClass="ml-4 md:ml-8"
+            onManage={onManageUnitTest}
           />
         </div>
       )}

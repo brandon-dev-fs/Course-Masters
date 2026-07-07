@@ -26,8 +26,13 @@ function checkCorrect(question: PracticeQuestion, answer: unknown): boolean {
     }
     case 'matching': {
       // answer is Record<number, number> mapping leftIdx → rightIdx
-      const correctPairs = (c.correctPairs as [number, number][]) ?? [];
       const answerMap = answer as Record<number, number>;
+      const pairs = c.pairs as { id?: string; left: string; right: string }[] | undefined;
+      if (pairs) {
+        // New shape: pairs[i] is the correct match, rightItems shown in same order
+        return pairs.every((_, i) => answerMap[i] === i);
+      }
+      const correctPairs = (c.correctPairs as [number, number][]) ?? [];
       return correctPairs.every(([l, r]) => answerMap[l] === r);
     }
     case 'fill_in_blank': {
@@ -55,8 +60,9 @@ function isAnswerSelected(question: PracticeQuestion, answer: unknown): boolean 
     case 'matching': {
       const map = answer as Record<number, number> | null;
       if (!map) return false;
-      const leftItems = (question.content.leftItems as string[]) ?? [];
-      return leftItems.every((_, i) => map[i] !== undefined);
+      const pairs = question.content.pairs as unknown[] | undefined;
+      const count = pairs ? pairs.length : ((question.content.leftItems as string[]) ?? []).length;
+      return Array.from({ length: count }, (_, i) => i).every(i => map[i] !== undefined);
     }
     case 'fill_in_blank': {
       const arr = answer as string[] | null;
@@ -154,9 +160,13 @@ interface MatchingRunnerProps {
 }
 
 function MatchingRunner({ content, answer, submitted, onChange }: MatchingRunnerProps) {
-  const leftItems = (content.leftItems as string[]) ?? [];
-  const rightItems = (content.rightItems as string[]) ?? [];
-  const correctPairs = (content.correctPairs as [number, number][]) ?? [];
+  // Support both old shape (leftItems/rightItems/correctPairs) and new shape (pairs:[{id?,left,right}])
+  const rawPairs = content.pairs as { id?: string; left: string; right: string }[] | undefined;
+  const leftItems  = rawPairs ? rawPairs.map(p => p.left)  : (content.leftItems  as string[]) ?? [];
+  const rightItems = rawPairs ? rawPairs.map(p => p.right) : (content.rightItems as string[]) ?? [];
+  const correctPairs: [number, number][] = rawPairs
+    ? rawPairs.map((_, i) => [i, i])
+    : (content.correctPairs as [number, number][]) ?? [];
 
   function handleChange(leftIdx: number, rightIdx: number) {
     onChange({ ...(answer ?? {}), [leftIdx]: rightIdx });

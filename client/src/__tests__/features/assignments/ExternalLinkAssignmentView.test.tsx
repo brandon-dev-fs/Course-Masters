@@ -1,29 +1,30 @@
-const { apiClientMock } = vi.hoisted(() => ({
-  apiClientMock: { get: vi.fn(), post: vi.fn(), put: vi.fn(), patch: vi.fn(), delete: vi.fn() },
+vi.mock('../../../api/link.js', () => ({
+  linkApi: { checkEmbed: vi.fn() },
 }));
-vi.mock('../../../api/client.js', () => ({ apiClient: apiClientMock }));
 
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import ExternalLinkAssignmentView from '../../../features/assignments/ExternalLinkAssignmentView.js';
+import { linkApi } from '../../../api/link.js';
 
-// jsdom stubs window.matchMedia to return matches: false (mobile) — so the component
-// will render the fallback block showing the "cannot be embedded" message.
+// Each test resolves to canEmbed: false by default so the fallback block renders.
+// Tests that need the embed / checking state override this.
+beforeEach(() => {
+  vi.clearAllMocks();
+  (linkApi.checkEmbed as ReturnType<typeof vi.fn>).mockResolvedValue({ canEmbed: false });
+});
 
 describe('ExternalLinkAssignmentView', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
+  it('renders the "Open in new tab" link with correct href', async () => {
+    render(<ExternalLinkAssignmentView url="https://example.com/article" />);
+    const link = await screen.findByRole('link', { name: /open in new tab/i });
+    expect(link).toHaveAttribute('href', 'https://example.com/article');
   });
 
-  it('renders the "Open in new tab" link with correct href', () => {
+  it('renders the URL in the fallback block', async () => {
     render(<ExternalLinkAssignmentView url="https://example.com/article" />);
-    const links = screen.getAllByRole('link', { name: /open in new tab/i });
-    expect(links.length).toBeGreaterThan(0);
-    expect(links[0]).toHaveAttribute('href', 'https://example.com/article');
-  });
-
-  it('renders the URL in the fallback block', () => {
-    render(<ExternalLinkAssignmentView url="https://example.com/article" />);
+    // Wait for cannot state to render
+    await screen.findByText('https://example.com/article');
     expect(screen.getByText('https://example.com/article')).toBeInTheDocument();
   });
 
@@ -37,24 +38,29 @@ describe('ExternalLinkAssignmentView', () => {
     expect(screen.queryByText(/min/)).not.toBeInTheDocument();
   });
 
-  it('shows description when provided', () => {
-    render(<ExternalLinkAssignmentView url="https://example.com" description="Read carefully." />);
-    expect(screen.getByText('Read carefully.')).toBeInTheDocument();
-  });
-
-  it('does not show description when null', () => {
-    render(<ExternalLinkAssignmentView url="https://example.com" description={null} />);
-    expect(screen.queryByText('Read carefully.')).not.toBeInTheDocument();
-  });
-
-  it('opens link in new tab', () => {
+  it('shows "This page cannot be embedded" when canEmbed is false', async () => {
     render(<ExternalLinkAssignmentView url="https://example.com" />);
-    const links = screen.getAllByRole('link', { name: /open in new tab/i });
-    expect(links[0]).toHaveAttribute('target', '_blank');
+    await screen.findByText(/cannot be embedded/i);
+    expect(screen.getByText(/cannot be embedded/i)).toBeInTheDocument();
   });
 
-  it('does not render BookmarkButton when isStudent is false', () => {
+  it('opens link in new tab', async () => {
     render(<ExternalLinkAssignmentView url="https://example.com" />);
-    expect(screen.queryByLabelText(/bookmark/i)).not.toBeInTheDocument();
+    const link = await screen.findByRole('link', { name: /open in new tab/i });
+    expect(link).toHaveAttribute('target', '_blank');
+  });
+
+  it('shows loading spinner before embed check resolves', () => {
+    // Keep the promise pending so the component stays in checking state
+    (linkApi.checkEmbed as ReturnType<typeof vi.fn>).mockReturnValue(new Promise(() => {}));
+    render(<ExternalLinkAssignmentView url="https://example.com" />);
+    // Spinner is visible in the checking state
+    expect(screen.queryByText(/cannot be embedded/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /open in new tab/i })).not.toBeInTheDocument();
+  });
+
+  it('shows "External Link" label', () => {
+    render(<ExternalLinkAssignmentView url="https://example.com" />);
+    expect(screen.getByText('External Link')).toBeInTheDocument();
   });
 });

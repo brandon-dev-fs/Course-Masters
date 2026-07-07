@@ -20,9 +20,37 @@ import CourseForm from '../courses/CourseForm.js';
 import { lessonsApi } from '../../api/lessons.js';
 import { assignmentsApi } from '../../api/assignments.js';
 import { coursesApi } from '../../api/courses.js';
+import { assessmentsApi } from '../../api/assessments.js';
+import AssessmentSection from '../assessments/AssessmentSection.js';
 
-import type { Assignment, Lesson, ReorderItem, BuilderUnit, BuilderLesson, BuilderActivity } from '../../api/types.js';
+import type { Assignment, AssessmentType, Lesson, ReorderItem, BuilderUnit, BuilderLesson, BuilderActivity } from '../../api/types.js';
 import type { CreateAssignmentPayload, UpdateAssignmentPayload } from '../../api/assignments.js';
+
+// ── Stable assessment API adapters (module-level, not recreated per render) ──
+
+const quizApi = {
+  get: assessmentsApi.getLessonQuiz,
+  create: assessmentsApi.createLessonQuiz,
+  update: assessmentsApi.update,
+  submitAttempt: assessmentsApi.submitAttempt,
+  getAttempts: assessmentsApi.getAttempts,
+};
+
+const testApi = {
+  get: assessmentsApi.getUnitQuiz,
+  create: assessmentsApi.createUnitQuiz,
+  update: assessmentsApi.update,
+  submitAttempt: assessmentsApi.submitAttempt,
+  getAttempts: assessmentsApi.getAttempts,
+};
+
+const examApi = {
+  get: assessmentsApi.getCourseExam,
+  create: assessmentsApi.createCourseExam,
+  update: assessmentsApi.update,
+  submitAttempt: assessmentsApi.submitAttempt,
+  getAttempts: assessmentsApi.getAttempts,
+};
 
 interface DeleteTarget {
   id: string;
@@ -95,6 +123,12 @@ export default function CourseBuilderPage() {
 
   // ── Edit course modal state ────────────────────────────────────────────────
   const [editCourseOpen, setEditCourseOpen] = useState(false);
+
+  // ── Assessment management state ───────────────────────────────────────────
+  const [managingAssessment, setManagingAssessment] = useState<{
+    type: AssessmentType;
+    parentId: string;
+  } | null>(null);
 
   // ── Handlers ──────────────────────────────────────────────────────────────
 
@@ -227,6 +261,18 @@ export default function CourseBuilderPage() {
     setEditCourseOpen(false);
     setAnnouncement('Course updated');
   }, [resolvedCourseId, setOutline]);
+
+  const handleManageLessonQuiz = useCallback((lessonId: string) => {
+    setManagingAssessment({ type: 'lesson_quiz', parentId: lessonId });
+  }, []);
+
+  const handleManageUnitTest = useCallback((unitId: string) => {
+    setManagingAssessment({ type: 'unit_quiz', parentId: unitId });
+  }, []);
+
+  const handleManageCourseExam = useCallback(() => {
+    setManagingAssessment({ type: 'course_exam', parentId: resolvedCourseId });
+  }, [resolvedCourseId]);
 
   const handleAddUnit = useCallback(() => {
     setAddUnitModalOpen(true);
@@ -487,6 +533,9 @@ export default function CourseBuilderPage() {
             onMoveActivity={handleMoveActivity}
             onEditUnit={handleEditUnit}
             onEditPlanLesson={handleEditPlan}
+            onManageLessonQuiz={handleManageLessonQuiz}
+            onManageUnitTest={handleManageUnitTest}
+            onManageCourseExam={handleManageCourseExam}
             announce={setAnnouncement}
             onConfirmDeleteUnit={handleConfirmDeleteUnit}
             onConfirmDeleteLesson={handleConfirmDeleteLesson}
@@ -616,6 +665,48 @@ export default function CourseBuilderPage() {
             onCancel={() => setEditCourseOpen(false)}
           />
         </Modal>
+      )}
+
+      {/* Assessment management modal */}
+      {managingAssessment && (
+        <AssessmentSection
+          parentId={managingAssessment.parentId}
+          api={
+            managingAssessment.type === 'lesson_quiz'
+              ? quizApi
+              : managingAssessment.type === 'unit_quiz'
+                ? testApi
+                : examApi
+          }
+          label={
+            managingAssessment.type === 'lesson_quiz'
+              ? 'Lesson Quiz'
+              : managingAssessment.type === 'unit_quiz'
+                ? 'Unit Test'
+                : 'Course Exam'
+          }
+          createLabel={
+            managingAssessment.type === 'lesson_quiz'
+              ? 'Create Lesson Quiz'
+              : managingAssessment.type === 'unit_quiz'
+                ? 'Create Unit Test'
+                : 'Create Course Exam'
+          }
+          takeLabel="Take"
+          retakeLabel="Retake"
+          modalTitle={
+            managingAssessment.type === 'lesson_quiz'
+              ? 'Lesson Quiz'
+              : managingAssessment.type === 'unit_quiz'
+                ? 'Unit Test'
+                : 'Course Exam'
+          }
+          resultsTitle="Results"
+          displayMode="modal-only"
+          canEdit
+          open
+          onClose={() => setManagingAssessment(null)}
+        />
       )}
     </div>
   );

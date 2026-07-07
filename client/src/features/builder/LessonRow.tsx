@@ -89,6 +89,7 @@ interface LessonRowProps {
   onMoveLesson: (direction: 'up' | 'down') => void;
   onMoveActivity: (assignmentId: string, direction: 'up' | 'down') => void;
   onEditPlan: () => void;
+  onManageLessonQuiz?: () => void;
   announce: (message: string) => void;
   dragHandleProps?: Record<string, unknown>;
   isDragging?: boolean;
@@ -113,6 +114,7 @@ export default function LessonRow({
   onMoveLesson,
   onMoveActivity,
   onEditPlan,
+  onManageLessonQuiz,
   announce,
   dragHandleProps,
   isDragging = false,
@@ -329,6 +331,7 @@ export default function LessonRow({
             label="Lesson quiz"
             level={3}
             indentClass="ml-8 md:ml-16"
+            onManage={onManageLessonQuiz}
           />
         </div>
       )}
