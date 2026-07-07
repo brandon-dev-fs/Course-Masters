@@ -25,6 +25,9 @@ jobs:
             - name: Install dependencies
               run: npm ci
 
+            - name: Generate Prisma client
+              run: npx prisma generate --schema=server/prisma/schema.prisma
+
             - name: Type-check client
               run: npx tsc -p client/tsconfig.json --noEmit
 
