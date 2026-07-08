@@ -479,7 +479,7 @@ model TrustedSource {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  @@map("trusted_source")
+  @@map("trusted_sources")
 }
 
 model CourseSpec {
@@ -499,7 +499,7 @@ model CourseSpec {
   agentSession AgentSession?
 
   @@index([userId])
-  @@map("course_spec")
+  @@map("course_specs")
 }
 
 model AgentSession {
@@ -518,5 +518,5 @@ model AgentSession {
   courseSpec CourseSpec? @relation(fields: [courseSpecId], references: [id], onDelete: SetNull)
 
   @@index([userId])
-  @@map("agent_session")
+  @@map("agent_sessions")
 }

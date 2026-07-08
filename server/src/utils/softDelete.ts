@@ -146,6 +146,41 @@ export async function softDeleteLesson(tx: TransactionClient, lessonId: string):
 }
 
 /**
+ * Cascade soft-delete a CourseSpec and all of its AgentSession children.
+ * AgentSession uses hard deletes (no deletedAt); CourseSpec uses soft delete.
+ *
+ * Cascade order:
+ * 1. Hard-delete all AgentSession rows for this CourseSpec
+ * 2. Soft-delete the CourseSpec
+ *
+ * When called without a TransactionClient, wraps both operations in a new
+ * $transaction. When called with a tx, all operations run within that client.
+ */
+export async function softDeleteCourseSpec(id: string, tx?: TransactionClient): Promise<void> {
+  const run = async (client: TransactionClient) => {
+    const now = new Date();
+
+    // 1. Hard-delete AgentSession children (no soft delete on this model)
+    await client.agentSession.deleteMany({
+      where: { courseSpecId: id },
+    });
+
+    // 2. Soft-delete the CourseSpec
+    await client.courseSpec.update({
+      where: { id },
+      data: { deletedAt: now },
+    });
+  };
+
+  if (tx) {
+    await run(tx);
+  } else {
+    const { default: prisma } = await import('../lib/prisma.js');
+    await prisma.$transaction(run);
+  }
+}
+
+/**
  * Cascade soft-delete a User and all of their Courses (and transitively all
  * Units, Lessons, and Assessments belonging to those Courses).
  *

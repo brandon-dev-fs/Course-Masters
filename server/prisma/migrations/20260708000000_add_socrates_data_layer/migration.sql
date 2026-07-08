@@ -2,7 +2,7 @@
 CREATE TYPE "CourseSpecStatus" AS ENUM ('drafting', 'reviewing', 'approved', 'building', 'completed', 'failed');
 
 -- CreateTable
-CREATE TABLE "trusted_source" (
+CREATE TABLE "trusted_sources" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "domain" TEXT NOT NULL,
@@ -12,11 +12,11 @@ CREATE TABLE "trusted_source" (
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
-    CONSTRAINT "trusted_source_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "trusted_sources_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "course_spec" (
+CREATE TABLE "course_specs" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
     "courseId" TEXT,
@@ -28,11 +28,11 @@ CREATE TABLE "course_spec" (
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "deletedAt" TIMESTAMP(3),
 
-    CONSTRAINT "course_spec_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "course_specs_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "agent_session" (
+CREATE TABLE "agent_sessions" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
     "courseSpecId" TEXT,
@@ -44,32 +44,32 @@ CREATE TABLE "agent_session" (
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
-    CONSTRAINT "agent_session_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "agent_sessions_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex
-CREATE UNIQUE INDEX "trusted_source_domain_key" ON "trusted_source"("domain");
+CREATE UNIQUE INDEX "trusted_sources_domain_key" ON "trusted_sources"("domain");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "course_spec_courseId_key" ON "course_spec"("courseId");
+CREATE UNIQUE INDEX "course_specs_courseId_key" ON "course_specs"("courseId");
 
 -- CreateIndex
-CREATE INDEX "course_spec_userId_idx" ON "course_spec"("userId");
+CREATE INDEX "course_specs_userId_idx" ON "course_specs"("userId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "agent_session_courseSpecId_key" ON "agent_session"("courseSpecId");
+CREATE UNIQUE INDEX "agent_sessions_courseSpecId_key" ON "agent_sessions"("courseSpecId");
 
 -- CreateIndex
-CREATE INDEX "agent_session_userId_idx" ON "agent_session"("userId");
+CREATE INDEX "agent_sessions_userId_idx" ON "agent_sessions"("userId");
 
 -- AddForeignKey
-ALTER TABLE "course_spec" ADD CONSTRAINT "course_spec_userId_fkey" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "course_specs" ADD CONSTRAINT "course_specs_userId_fkey" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "course_spec" ADD CONSTRAINT "course_spec_courseId_fkey" FOREIGN KEY ("courseId") REFERENCES "course"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "course_specs" ADD CONSTRAINT "course_specs_courseId_fkey" FOREIGN KEY ("courseId") REFERENCES "course"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "agent_session" ADD CONSTRAINT "agent_session_userId_fkey" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "agent_sessions" ADD CONSTRAINT "agent_sessions_userId_fkey" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "agent_session" ADD CONSTRAINT "agent_session_courseSpecId_fkey" FOREIGN KEY ("courseSpecId") REFERENCES "course_spec"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "agent_sessions" ADD CONSTRAINT "agent_sessions_courseSpecId_fkey" FOREIGN KEY ("courseSpecId") REFERENCES "course_specs"("id") ON DELETE SET NULL ON UPDATE CASCADE;
