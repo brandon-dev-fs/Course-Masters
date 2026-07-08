@@ -145,6 +145,91 @@ async function main() {
 		`Seeded users: ${admin.email}, ${teacher.email}, ${student.email}`,
 	);
 
+	// ── Trusted Sources ──────────────────────────────────────────────────
+	const trustedSources = [
+		{
+			name: 'Khan Academy',
+			domain: 'khanacademy.org',
+			contentTypes: ['video', 'article', 'exercise'],
+			categories: ['math', 'science', 'programming', 'cs-fundamentals'],
+		},
+		{
+			name: 'freeCodeCamp',
+			domain: 'freecodecamp.org',
+			contentTypes: ['tutorial', 'article', 'exercise', 'course'],
+			categories: ['web', 'programming', 'cs-fundamentals', 'data-science'],
+		},
+		{
+			name: 'MDN Web Docs',
+			domain: 'developer.mozilla.org',
+			contentTypes: ['documentation', 'article', 'tutorial'],
+			categories: ['web', 'programming'],
+		},
+		{
+			name: 'Python.org',
+			domain: 'python.org',
+			contentTypes: ['documentation', 'tutorial'],
+			categories: ['programming'],
+		},
+		{
+			name: 'React Docs',
+			domain: 'react.dev',
+			contentTypes: ['documentation', 'tutorial'],
+			categories: ['web', 'programming'],
+		},
+		{
+			name: 'Node.js Docs',
+			domain: 'nodejs.org',
+			contentTypes: ['documentation', 'article'],
+			categories: ['web', 'programming', 'devops'],
+		},
+		{
+			name: 'TypeScript Docs',
+			domain: 'typescriptlang.org',
+			contentTypes: ['documentation', 'tutorial'],
+			categories: ['web', 'programming'],
+		},
+		{
+			name: 'W3Schools',
+			domain: 'w3schools.com',
+			contentTypes: ['tutorial', 'article', 'exercise'],
+			categories: ['web', 'programming'],
+		},
+		{
+			name: 'Codecademy',
+			domain: 'codecademy.com',
+			contentTypes: ['course', 'tutorial', 'exercise'],
+			categories: ['web', 'programming', 'data-science', 'cs-fundamentals'],
+		},
+		{
+			name: 'GitHub',
+			domain: 'github.com',
+			contentTypes: ['documentation', 'tutorial'],
+			categories: ['programming', 'devops', 'web'],
+		},
+	];
+
+	for (const source of trustedSources) {
+		await prisma.trustedSource.upsert({
+			where: { domain: source.domain },
+			update: {
+				name: source.name,
+				contentTypes: source.contentTypes,
+				categories: source.categories,
+				active: true,
+			},
+			create: {
+				name: source.name,
+				domain: source.domain,
+				contentTypes: source.contentTypes,
+				categories: source.categories,
+				active: true,
+			},
+		});
+	}
+
+	console.log(`Seeded ${trustedSources.length} trusted sources.`);
+
 	// ── Cleanup ───────────────────────────────────────────────────────────
 	await prisma.course.deleteMany({
 		where: {
