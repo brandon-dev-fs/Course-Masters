@@ -153,31 +153,19 @@ export async function softDeleteLesson(tx: TransactionClient, lessonId: string):
  * 1. Hard-delete all AgentSession rows for this CourseSpec
  * 2. Soft-delete the CourseSpec
  *
- * When called without a TransactionClient, wraps both operations in a new
- * $transaction. When called with a tx, all operations run within that client.
+ * All operations are performed within the provided transaction client.
  */
-export async function softDeleteCourseSpec(id: string, tx?: TransactionClient): Promise<void> {
-  const run = async (client: TransactionClient) => {
-    const now = new Date();
+export async function softDeleteCourseSpec(tx: TransactionClient, id: string): Promise<void> {
+  // 1. Hard-delete AgentSession children (no soft delete on this model)
+  await tx.agentSession.deleteMany({
+    where: { courseSpecId: id },
+  });
 
-    // 1. Hard-delete AgentSession children (no soft delete on this model)
-    await client.agentSession.deleteMany({
-      where: { courseSpecId: id },
-    });
-
-    // 2. Soft-delete the CourseSpec
-    await client.courseSpec.update({
-      where: { id },
-      data: { deletedAt: now },
-    });
-  };
-
-  if (tx) {
-    await run(tx);
-  } else {
-    const { default: prisma } = await import('../lib/prisma.js');
-    await prisma.$transaction(run);
-  }
+  // 2. Soft-delete the CourseSpec
+  await tx.courseSpec.update({
+    where: { id },
+    data: { deletedAt: new Date() },
+  });
 }
 
 /**
