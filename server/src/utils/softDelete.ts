@@ -146,6 +146,29 @@ export async function softDeleteLesson(tx: TransactionClient, lessonId: string):
 }
 
 /**
+ * Cascade soft-delete a CourseSpec and all of its AgentSession children.
+ * AgentSession uses hard deletes (no deletedAt); CourseSpec uses soft delete.
+ *
+ * Cascade order:
+ * 1. Hard-delete all AgentSession rows for this CourseSpec
+ * 2. Soft-delete the CourseSpec
+ *
+ * All operations are performed within the provided transaction client.
+ */
+export async function softDeleteCourseSpec(tx: TransactionClient, id: string): Promise<void> {
+  // 1. Hard-delete AgentSession children (no soft delete on this model)
+  await tx.agentSession.deleteMany({
+    where: { courseSpecId: id },
+  });
+
+  // 2. Soft-delete the CourseSpec
+  await tx.courseSpec.update({
+    where: { id },
+    data: { deletedAt: new Date() },
+  });
+}
+
+/**
  * Cascade soft-delete a User and all of their Courses (and transitively all
  * Units, Lessons, and Assessments belonging to those Courses).
  *
