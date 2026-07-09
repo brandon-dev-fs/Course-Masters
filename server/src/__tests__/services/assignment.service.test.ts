@@ -254,20 +254,10 @@ describe('assignmentService.create', () => {
   it('creates a video assignment', async () => {
     prismaMock.videoAssignment.create.mockResolvedValue({} as never);
     await assignmentService.create(LESSON_ID, {
-      type: 'video', title: 'Video', url: 'https://youtube.com/watch?v=1', displayTitle: 'My Video',
-    });
-    expect(prismaMock.videoAssignment.create).toHaveBeenCalledWith(
-      expect.objectContaining({ data: expect.objectContaining({ url: 'https://youtube.com/watch?v=1', title: 'My Video' }) }),
-    );
-  });
-
-  it('creates a video assignment with null displayTitle when not provided', async () => {
-    prismaMock.videoAssignment.create.mockResolvedValue({} as never);
-    await assignmentService.create(LESSON_ID, {
       type: 'video', title: 'Video', url: 'https://youtube.com/watch?v=1',
     });
     expect(prismaMock.videoAssignment.create).toHaveBeenCalledWith(
-      expect.objectContaining({ data: expect.objectContaining({ title: null }) }),
+      expect.objectContaining({ data: expect.objectContaining({ url: 'https://youtube.com/watch?v=1' }) }),
     );
   });
 
@@ -358,14 +348,14 @@ describe('assignmentService.update', () => {
     expect(prismaMock.assignment.update).not.toHaveBeenCalled();
   });
 
-  it('updates video assignment url and displayTitle', async () => {
+  it('updates video assignment url', async () => {
     prismaMock.assignment.findUnique.mockResolvedValue({ ...ASSIGNMENT_WITH_RELATIONS, type: 'video' });
     prismaMock.videoAssignment.update.mockResolvedValue({} as never);
 
-    await assignmentService.update(ASSIGNMENT_ID, { url: 'https://new.com', displayTitle: 'New Title' });
+    await assignmentService.update(ASSIGNMENT_ID, { url: 'https://new.com' });
 
     expect(prismaMock.videoAssignment.update).toHaveBeenCalledWith(
-      expect.objectContaining({ data: expect.objectContaining({ url: 'https://new.com', title: 'New Title' }) }),
+      expect.objectContaining({ data: expect.objectContaining({ url: 'https://new.com' }) }),
     );
   });
 

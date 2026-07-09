@@ -534,7 +534,7 @@ describe('assessmentService.create', () => {
 
   it('creates a unit_quiz using unitId in parentWhere', async () => {
     const data = {
-      questions: [{ type: 'true_false' as const, question: 'Q?', content: { correctAnswer: true }, order: 0, calculatorEnabled: false }],
+      questions: [{ type: 'true_false' as const, question: 'Q?', content: { correct: true }, order: 0, calculatorEnabled: false }],
     };
     await assessmentService.create('unit_quiz', 'unit-1', data);
     expect(prismaMock.assessment.create).toHaveBeenCalledWith(
@@ -544,7 +544,7 @@ describe('assessmentService.create', () => {
 
   it('creates a course_exam using courseId in parentWhere', async () => {
     const data = {
-      questions: [{ type: 'fill_in_blank' as const, question: 'Q?', content: { acceptedAnswers: ['A'] }, order: 0, calculatorEnabled: false }],
+      questions: [{ type: 'fill_in_blank' as const, question: 'Q?', content: { blanks: [{ answer: 'A', alternatives: [] }] }, order: 0, calculatorEnabled: false }],
     };
     await assessmentService.create('course_exam', 'course-1', data);
     expect(prismaMock.assessment.create).toHaveBeenCalledWith(
