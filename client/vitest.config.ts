@@ -6,13 +6,19 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'jsdom',
+    environmentMatchGlobs: [
+      // API and utility tests have no DOM dependencies — skip jsdom overhead
+      ['src/__tests__/api/**', 'node'],
+      ['src/__tests__/utils/**', 'node'],
+    ],
     clearMocks: true,
     setupFiles: ['./vitest.setup.ts'],
     include: ['src/**/*.test.{ts,tsx}'],
     testTimeout: 15000,
     hookTimeout: 10000,
-    maxWorkers: 2,
-    minWorkers: 1,
+    pool: 'threads',
+    maxWorkers: 8,
+    minWorkers: 4,
     coverage: {
       provider: 'v8',
       reporter: ['text', 'lcov'],

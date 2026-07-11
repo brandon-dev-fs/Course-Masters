@@ -7,7 +7,8 @@ const sampleDraft: QuestionDraft = {
   id: 'q1',
   type: 'multiple_choice',
   question: 'What is 2+2?',
-  content: { options: ['3', '4', '5', '6'], correctIndex: 1 },
+  // content.question required — MultipleChoiceEditor reads content['question'] for the textarea
+  content: { question: 'What is 2+2?', options: ['3', '4', '5', '6'], correctIndex: 1 },
   order: 1,
   calculatorEnabled: false,
 };
@@ -34,7 +35,10 @@ describe('QuestionEditor', () => {
   it('calls onChange when question text changes', () => {
     render(<QuestionEditor index={0} value={sampleDraft} onChange={onChange} onRemove={onRemove} />);
     fireEvent.change(screen.getByDisplayValue('What is 2+2?'), { target: { value: 'New question?' } });
-    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ question: 'New question?' }));
+    // QuestionEditor propagates content changes — question text lives in content.question
+    expect(onChange).toHaveBeenCalledWith(
+      expect.objectContaining({ content: expect.objectContaining({ question: 'New question?' }) }),
+    );
   });
 
   it('calls onChange when option text changes', () => {
@@ -71,9 +75,11 @@ describe('QuestionEditor', () => {
     );
   });
 
-  it('renders Question N label', () => {
+  it('renders question type selector with correct initial value', () => {
+    // QuestionEditor no longer owns its own "Question N" label — that lives in the accordion
+    // card header (QuestionCard in AssessmentForm). Verify the type selector reflects the draft.
     render(<QuestionEditor index={2} value={sampleDraft} onChange={onChange} onRemove={onRemove} />);
-    expect(screen.getByText('Question 3')).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: /question type/i })).toHaveValue('multiple_choice');
   });
 
   it('renders remove button for each option', () => {

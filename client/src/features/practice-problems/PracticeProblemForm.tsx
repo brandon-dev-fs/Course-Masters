@@ -45,7 +45,8 @@ export default function PracticeProblemForm({ initial, nextOrder = 1, onSubmit, 
     setSubmitting(true);
     setError('');
     try {
-      if (!draft.question.trim()) throw new Error('Question is required');
+      const questionText = ((draft.content['question'] as string | undefined) ?? draft.question).trim();
+      if (!questionText) throw new Error('Question is required');
       const options = draft.content['options'] as string[] | undefined;
       if (options?.some(o => !o.trim())) throw new Error('All options must have text');
       await onSubmit(draft);
