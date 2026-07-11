@@ -122,3 +122,155 @@ describe('AssessmentTaker', () => {
     await waitFor(() => expect(screen.getByText('Submission failed')).toBeInTheDocument());
   });
 });
+
+// ── True/False questions ──────────────────────────────────────────────────────
+
+describe('AssessmentTaker — true_false', () => {
+  const onSubmit = vi.fn().mockResolvedValue(undefined);
+  const onCancel = vi.fn();
+  const tfQuestion: AssessmentQuestion = {
+    id: 'q-tf',
+    type: 'true_false',
+    question: 'Is the sky blue?',
+    content: { correct: true },
+    order: 1,
+    calculatorEnabled: false,
+  };
+
+  beforeEach(() => vi.clearAllMocks());
+
+  it('renders True and False buttons', () => {
+    render(<AssessmentTaker questions={[tfQuestion]} onSubmit={onSubmit} onCancel={onCancel} />);
+    expect(screen.getByRole('button', { name: 'True' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'False' })).toBeInTheDocument();
+  });
+
+  it('submits after selecting True', async () => {
+    render(<AssessmentTaker questions={[tfQuestion]} onSubmit={onSubmit} onCancel={onCancel} />);
+    fireEvent.click(screen.getByRole('button', { name: 'True' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Submit' }));
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledWith([true]));
+  });
+
+  it('submits after selecting False', async () => {
+    render(<AssessmentTaker questions={[tfQuestion]} onSubmit={onSubmit} onCancel={onCancel} />);
+    fireEvent.click(screen.getByRole('button', { name: 'False' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Submit' }));
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledWith([false]));
+  });
+
+  it('shows error when submitting without answering', async () => {
+    render(<AssessmentTaker questions={[tfQuestion]} onSubmit={onSubmit} onCancel={onCancel} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Submit' }));
+    await waitFor(() =>
+      expect(screen.getByText(/please answer all questions/i)).toBeInTheDocument(),
+    );
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+});
+
+// ── Fill-in-blank questions ───────────────────────────────────────────────────
+
+describe('AssessmentTaker — fill_in_blank', () => {
+  const onSubmit = vi.fn().mockResolvedValue(undefined);
+  const onCancel = vi.fn();
+  const fibQuestion: AssessmentQuestion = {
+    id: 'q-fib',
+    type: 'fill_in_blank',
+    question: 'Complete: {{blank_1}} is the capital of France.',
+    content: { blanks: [{ answer: 'Paris', alternatives: [] }] },
+    order: 1,
+    calculatorEnabled: false,
+  };
+
+  beforeEach(() => vi.clearAllMocks());
+
+  it('renders blank input fields', () => {
+    render(<AssessmentTaker questions={[fibQuestion]} onSubmit={onSubmit} onCancel={onCancel} />);
+    expect(screen.getByLabelText(/blank 1/i)).toBeInTheDocument();
+  });
+
+  it('accepts text input for blanks', () => {
+    render(<AssessmentTaker questions={[fibQuestion]} onSubmit={onSubmit} onCancel={onCancel} />);
+    const input = screen.getByLabelText(/blank 1/i);
+    fireEvent.change(input, { target: { value: 'Paris' } });
+    expect(input).toHaveValue('Paris');
+  });
+
+  it('submits after filling all blanks', async () => {
+    render(<AssessmentTaker questions={[fibQuestion]} onSubmit={onSubmit} onCancel={onCancel} />);
+    fireEvent.change(screen.getByLabelText(/blank 1/i), { target: { value: 'Paris' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Submit' }));
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledWith([['Paris']]));
+  });
+
+  it('shows error when blank is left empty', async () => {
+    render(<AssessmentTaker questions={[fibQuestion]} onSubmit={onSubmit} onCancel={onCancel} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Submit' }));
+    await waitFor(() =>
+      expect(screen.getByText(/please answer all questions/i)).toBeInTheDocument(),
+    );
+  });
+
+  it('shows error when blank contains only whitespace', async () => {
+    render(<AssessmentTaker questions={[fibQuestion]} onSubmit={onSubmit} onCancel={onCancel} />);
+    fireEvent.change(screen.getByLabelText(/blank 1/i), { target: { value: '   ' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Submit' }));
+    await waitFor(() =>
+      expect(screen.getByText(/please answer all questions/i)).toBeInTheDocument(),
+    );
+  });
+});
+
+// ── Matching questions ────────────────────────────────────────────────────────
+
+describe('AssessmentTaker — matching', () => {
+  const onSubmit = vi.fn().mockResolvedValue(undefined);
+  const onCancel = vi.fn();
+  const matchQuestion: AssessmentQuestion = {
+    id: 'q-m',
+    type: 'matching',
+    question: 'Match countries to capitals.',
+    content: {
+      pairs: [
+        { id: 'p1', left: 'France', right: 'Paris' },
+        { id: 'p2', left: 'Germany', right: 'Berlin' },
+      ],
+    },
+    order: 1,
+    calculatorEnabled: false,
+  };
+
+  beforeEach(() => vi.clearAllMocks());
+
+  it('renders left-side terms', () => {
+    render(<AssessmentTaker questions={[matchQuestion]} onSubmit={onSubmit} onCancel={onCancel} />);
+    expect(screen.getByText('France')).toBeInTheDocument();
+    expect(screen.getByText('Germany')).toBeInTheDocument();
+  });
+
+  it('renders select dropdowns for each pair', () => {
+    render(<AssessmentTaker questions={[matchQuestion]} onSubmit={onSubmit} onCancel={onCancel} />);
+    expect(screen.getByLabelText(/match for: france/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/match for: germany/i)).toBeInTheDocument();
+  });
+
+  it('shows error when no pairs are matched', async () => {
+    render(<AssessmentTaker questions={[matchQuestion]} onSubmit={onSubmit} onCancel={onCancel} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Submit' }));
+    await waitFor(() =>
+      expect(screen.getByText(/please answer all questions/i)).toBeInTheDocument(),
+    );
+  });
+
+  it('submits once all pairs are selected', async () => {
+    render(<AssessmentTaker questions={[matchQuestion]} onSubmit={onSubmit} onCancel={onCancel} />);
+    const franceSelect = screen.getByLabelText(/match for: france/i);
+    const germanySelect = screen.getByLabelText(/match for: germany/i);
+    // Right-side options are shuffled, but the original values are always present as options
+    fireEvent.change(franceSelect, { target: { value: 'Paris' } });
+    fireEvent.change(germanySelect, { target: { value: 'Berlin' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Submit' }));
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledOnce());
+  });
+});
