@@ -84,9 +84,17 @@ export default function AssessmentSection({
   // modal-only: respond to external open prop
   useEffect(() => {
     if (displayMode === 'modal-only' && open) {
-      setView(assessment === null ? 'creating' : 'taking');
+      if (!assessment) {
+        setView('creating');
+      } else if (canEdit) {
+        // Teacher opening an existing assessment from the builder — show editor
+        setEditQuestions(assessment.questions.map(toQuestionDraft));
+        setView('creating');
+      } else {
+        setView('taking');
+      }
     }
-  }, [open, assessment, displayMode, setView]);
+  }, [open, assessment, displayMode, setView, canEdit]);
 
   function openEdit() {
     if (!assessment) return;

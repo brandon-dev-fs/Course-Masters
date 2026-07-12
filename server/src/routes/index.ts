@@ -10,6 +10,7 @@ import { courseProgressRouter, unitProgressRouter } from './progress.routes.js';
 import { lessonCompletionsRouter } from './resource-completion.routes.js';
 import { lessonCompleteRouter, unitCompleteRouter } from './completion.routes.js';
 import youtubeRouter from './youtube.routes.js';
+import linkRouter from './link.routes.js';
 import { lessonAssignmentsRouter, assignmentsRouter, vocabEntriesRouter } from './assignment.routes.js';
 import { lessonChecklistRouter, checklistItemsRouter } from './checklist.routes.js';
 import userRouter from './user.routes.js';
@@ -59,6 +60,7 @@ router.use('/users', userRouter);
 
 // Utilities
 router.use('/youtube', youtubeRouter);
+router.use('/link', linkRouter);
 
 // Progress
 router.use('/courses/:courseId/progress', courseProgressRouter);

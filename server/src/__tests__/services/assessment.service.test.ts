@@ -177,7 +177,7 @@ describe('assessmentService.submitAttempt', () => {
   describe('true_false grading', () => {
     it('counts correct when answer matches boolean correctAnswer', async () => {
       const questions = [
-        makeQuestion({ type: 'true_false', content: { correctAnswer: true } }),
+        makeQuestion({ type: 'true_false', content: { correct: true } }),
       ];
       prismaMock.assessment.findFirst.mockResolvedValue(makeAssessment({ questions }));
       prismaMock.assessmentAttempt.create.mockResolvedValue({
@@ -201,7 +201,7 @@ describe('assessmentService.submitAttempt', () => {
 
     it('counts incorrect when answer does not match correctAnswer', async () => {
       const questions = [
-        makeQuestion({ type: 'true_false', content: { correctAnswer: true } }),
+        makeQuestion({ type: 'true_false', content: { correct: true } }),
       ];
       prismaMock.assessment.findFirst.mockResolvedValue(makeAssessment({ questions }));
       prismaMock.assessmentAttempt.create.mockResolvedValue({
@@ -228,7 +228,7 @@ describe('assessmentService.submitAttempt', () => {
       const questions = [
         makeQuestion({
           type: 'fill_in_blank',
-          content: { acceptedAnswers: ['Paris', 'paris'] },
+          content: { blanks: [{ answer: 'Paris', alternatives: ['paris'] }] },
         }),
       ];
       prismaMock.assessment.findFirst.mockResolvedValue(makeAssessment({ questions }));
@@ -239,7 +239,7 @@ describe('assessmentService.submitAttempt', () => {
 
       const result = await assessmentService.submitAttempt(
         ASSESSMENT_ID,
-        { answers: ['PARIS'] },
+        { answers: [['PARIS']] },
         USER_ID,
       );
 
@@ -250,7 +250,7 @@ describe('assessmentService.submitAttempt', () => {
       const questions = [
         makeQuestion({
           type: 'fill_in_blank',
-          content: { acceptedAnswers: ['Paris'] },
+          content: { blanks: [{ answer: 'Paris' }] },
         }),
       ];
       prismaMock.assessment.findFirst.mockResolvedValue(makeAssessment({ questions }));
@@ -261,7 +261,7 @@ describe('assessmentService.submitAttempt', () => {
 
       const result = await assessmentService.submitAttempt(
         ASSESSMENT_ID,
-        { answers: ['London'] },
+        { answers: [['London']] },
         USER_ID,
       );
 
@@ -272,7 +272,7 @@ describe('assessmentService.submitAttempt', () => {
       const questions = [
         makeQuestion({
           type: 'fill_in_blank',
-          content: { acceptedAnswers: ['photosynthesis'] },
+          content: { blanks: [{ answer: 'photosynthesis' }] },
         }),
       ];
       prismaMock.assessment.findFirst.mockResolvedValue(makeAssessment({ questions }));
@@ -283,7 +283,7 @@ describe('assessmentService.submitAttempt', () => {
 
       const result = await assessmentService.submitAttempt(
         ASSESSMENT_ID,
-        { answers: ['Photosynthesis'] },
+        { answers: [['Photosynthesis']] },
         USER_ID,
       );
 
@@ -296,7 +296,7 @@ describe('assessmentService.submitAttempt', () => {
   // -------------------------------------------------------------------------
 
   describe('matching grading', () => {
-    it('counts correct when answer pairs match content pairs exactly (deep equality)', async () => {
+    it('counts correct when answer strings match each pair\'s right term', async () => {
       const pairs = [
         { left: 'A', right: '1' },
         { left: 'B', right: '2' },
@@ -312,21 +312,17 @@ describe('assessmentService.submitAttempt', () => {
 
       const result = await assessmentService.submitAttempt(
         ASSESSMENT_ID,
-        { answers: [pairs] },
+        { answers: [['1', '2']] },
         USER_ID,
       );
 
       expect(result.correctCount).toBe(1);
     });
 
-    it('counts incorrect when pairs are in different order', async () => {
+    it('counts incorrect when answer strings are in the wrong order', async () => {
       const correctPairs = [
         { left: 'A', right: '1' },
         { left: 'B', right: '2' },
-      ];
-      const wrongOrderPairs = [
-        { left: 'B', right: '2' },
-        { left: 'A', right: '1' },
       ];
       const questions = [
         makeQuestion({ type: 'matching', content: { pairs: correctPairs } }),
@@ -339,11 +335,10 @@ describe('assessmentService.submitAttempt', () => {
 
       const result = await assessmentService.submitAttempt(
         ASSESSMENT_ID,
-        { answers: [wrongOrderPairs] },
+        { answers: [['2', '1']] },
         USER_ID,
       );
 
-      // Grading uses JSON.stringify comparison which is order-sensitive
       expect(result.correctCount).toBe(0);
     });
   });
@@ -534,7 +529,7 @@ describe('assessmentService.create', () => {
 
   it('creates a unit_quiz using unitId in parentWhere', async () => {
     const data = {
-      questions: [{ type: 'true_false' as const, question: 'Q?', content: { correctAnswer: true }, order: 0, calculatorEnabled: false }],
+      questions: [{ type: 'true_false' as const, question: 'Q?', content: { correct: true }, order: 0, calculatorEnabled: false }],
     };
     await assessmentService.create('unit_quiz', 'unit-1', data);
     expect(prismaMock.assessment.create).toHaveBeenCalledWith(
@@ -544,7 +539,7 @@ describe('assessmentService.create', () => {
 
   it('creates a course_exam using courseId in parentWhere', async () => {
     const data = {
-      questions: [{ type: 'fill_in_blank' as const, question: 'Q?', content: { acceptedAnswers: ['A'] }, order: 0, calculatorEnabled: false }],
+      questions: [{ type: 'fill_in_blank' as const, question: 'Q?', content: { blanks: [{ answer: 'A', alternatives: [] }] }, order: 0, calculatorEnabled: false }],
     };
     await assessmentService.create('course_exam', 'course-1', data);
     expect(prismaMock.assessment.create).toHaveBeenCalledWith(

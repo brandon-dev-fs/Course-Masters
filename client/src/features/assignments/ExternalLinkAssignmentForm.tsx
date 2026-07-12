@@ -1,15 +1,32 @@
 import { useState } from 'react';
+import { CheckCircle, AlertTriangle, Loader2 } from 'lucide-react';
+
 import Input from '../../components/Input.js';
-import Textarea from '../../components/Textarea.js';
 import ErrorMessage from '../../components/ErrorMessage.js';
+import { linkApi } from '../../api/link.js';
 import type { SubFormProps } from './AssignmentFormModal.js';
 
+type EmbedStatus = 'idle' | 'loading' | 'can' | 'cannot';
+
 export default function ExternalLinkAssignmentForm({
-  url, description, estimatedMinutes,
-  onUrlChange, onDescriptionChange, onEstimatedMinutesChange,
+  url, estimatedMinutes,
+  onUrlChange, onEstimatedMinutesChange,
 }: SubFormProps) {
-  // Only show the URL error after the field has been touched (blurred at least once)
   const [urlTouched, setUrlTouched] = useState(false);
+  const [embedStatus, setEmbedStatus] = useState<EmbedStatus>('idle');
+
+  async function handleUrlBlur() {
+    setUrlTouched(true);
+    if (!url.trim()) return;
+
+    setEmbedStatus('loading');
+    try {
+      const { canEmbed } = await linkApi.checkEmbed(url.trim());
+      setEmbedStatus(canEmbed ? 'can' : 'cannot');
+    } catch {
+      setEmbedStatus('idle');
+    }
+  }
 
   return (
     <div className="flex flex-col gap-4">
@@ -19,23 +36,36 @@ export default function ExternalLinkAssignmentForm({
           label="URL"
           type="url"
           value={url}
-          onChange={e => onUrlChange(e.target.value)}
-          onBlur={() => setUrlTouched(true)}
+          onChange={e => {
+            onUrlChange(e.target.value);
+            setEmbedStatus('idle');
+          }}
+          onBlur={handleUrlBlur}
           placeholder="https://..."
           required
         />
         {urlTouched && !url.trim() && (
           <ErrorMessage variant="inline" message="URL is required" className="mt-1" />
         )}
+        {embedStatus === 'loading' && (
+          <p className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
+            <Loader2 className="w-3 h-3 animate-spin" />
+            Checking embeddability…
+          </p>
+        )}
+        {embedStatus === 'can' && (
+          <p className="mt-1 flex items-center gap-1.5 text-xs text-green-surface-text">
+            <CheckCircle className="w-3 h-3" />
+            Can be embedded
+          </p>
+        )}
+        {embedStatus === 'cannot' && (
+          <p className="mt-1 flex items-center gap-1.5 text-xs text-orange-surface-text">
+            <AlertTriangle className="w-3 h-3" />
+            Cannot embed — students will see an "Open in new tab" button
+          </p>
+        )}
       </div>
-      <Textarea
-        id="reading-description"
-        label="Description (optional)"
-        value={description}
-        onChange={e => onDescriptionChange(e.target.value)}
-        placeholder="Briefly describe what students should focus on..."
-        rows={3}
-      />
       <Input
         id="reading-minutes"
         label="Estimated reading time (minutes, optional)"

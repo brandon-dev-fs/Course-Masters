@@ -1,18 +1,48 @@
-import Input from '../../components/Input.js';
-import Textarea from '../../components/Textarea.js';
+import {
+  MultipleChoiceEditor,
+  TrueFalseEditor,
+  FillInBlankEditor,
+  MatchingEditor,
+} from '../assignments/question-editors/index.js';
+
+export type QuestionType = 'multiple_choice' | 'true_false' | 'fill_in_blank' | 'matching';
 
 export interface QuestionDraft {
   /** Persisted question ID — present only when editing an existing assessment. */
   id?: string;
-  type?: string;
+  type: QuestionType;
   question: string;
-  content: {
-    options: string[];
-    correctIndex: number;
-  };
+  content: Record<string, unknown>;
   order: number;
   /** Whether the calculator is enabled for this question. Defaults to false. */
   calculatorEnabled?: boolean;
+}
+
+const TYPE_LABELS: Record<QuestionType, string> = {
+  multiple_choice: 'Multiple choice',
+  true_false: 'True / False',
+  fill_in_blank: 'Fill in the blank',
+  matching: 'Matching',
+};
+
+/** Return a fresh default content object for the given type. */
+export function defaultContent(type: QuestionType): Record<string, unknown> {
+  switch (type) {
+    case 'multiple_choice':
+      return { question: '', options: ['', '', '', ''], correctIndex: 0 };
+    case 'true_false':
+      return { question: '', correct: true };
+    case 'fill_in_blank':
+      return { question: '', blanks: [{ answer: '', alternatives: [] }] };
+    case 'matching':
+      return {
+        question: '',
+        pairs: [
+          { id: crypto.randomUUID(), left: '', right: '' },
+          { id: crypto.randomUUID(), left: '', right: '' },
+        ],
+      };
+  }
 }
 
 interface QuestionEditorProps {
@@ -25,21 +55,13 @@ interface QuestionEditorProps {
 export default function QuestionEditor({ index, value, onChange, onRemove }: QuestionEditorProps) {
   const calculatorEnabled = value.calculatorEnabled ?? false;
 
-  function setOption(i: number, text: string) {
-    const opts = [...value.content.options];
-    opts[i] = text;
-    onChange({ ...value, content: { ...value.content, options: opts } });
+  function handleTypeChange(newType: QuestionType) {
+    if (newType === value.type) return;
+    onChange({ ...value, type: newType, content: defaultContent(newType) });
   }
 
-  function addOption() {
-    onChange({ ...value, content: { ...value.content, options: [...value.content.options, ''] } });
-  }
-
-  function removeOption(i: number) {
-    if (value.content.options.length <= 2) return;
-    const opts = value.content.options.filter((_, idx) => idx !== i);
-    const correctIndex = value.content.correctIndex >= opts.length ? opts.length - 1 : value.content.correctIndex;
-    onChange({ ...value, content: { options: opts, correctIndex } });
+  function handleContentChange(newContent: Record<string, unknown>) {
+    onChange({ ...value, content: newContent });
   }
 
   function toggleCalculator() {
@@ -50,9 +72,17 @@ export default function QuestionEditor({ index, value, onChange, onRemove }: Que
     <div className="rounded-lg border border-border bg-surface p-4 flex flex-col gap-3">
       {/* Header row */}
       <div className="flex items-start justify-between gap-2">
-        <span className="text-xs text-muted-foreground font-medium uppercase tracking-wide mt-1">
-          Question {index + 1}
-        </span>
+        {/* Type selector */}
+        <select
+          value={value.type}
+          onChange={e => handleTypeChange(e.target.value as QuestionType)}
+          className="text-xs font-medium rounded border border-border bg-surface-raised px-2 py-1 text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+          aria-label="Question type"
+        >
+          {(Object.keys(TYPE_LABELS) as QuestionType[]).map(t => (
+            <option key={t} value={t}>{TYPE_LABELS[t]}</option>
+          ))}
+        </select>
 
         <div className="flex items-center gap-3 flex-wrap justify-end">
           {/* Calculator toggle */}
@@ -92,57 +122,19 @@ export default function QuestionEditor({ index, value, onChange, onRemove }: Que
         </div>
       </div>
 
-      <Textarea
-        label="Question"
-        value={value.question}
-        onChange={e => onChange({ ...value, question: e.target.value })}
-        placeholder="What is...?"
-        rows={2}
-      />
-
-      <div>
-        <p className="text-sm font-medium text-foreground mb-2">Options</p>
-        <div className="flex flex-col gap-2">
-          {value.content.options.map((opt, i) => (
-            <div key={i} className="flex items-center gap-2">
-              <input
-                type="radio"
-                name={`correct-${index}`}
-                checked={value.content.correctIndex === i}
-                onChange={() => onChange({ ...value, content: { ...value.content, correctIndex: i } })}
-                className="accent-accent shrink-0"
-                title="Mark as correct"
-              />
-              <input
-                type="text"
-                value={opt}
-                onChange={e => setOption(i, e.target.value)}
-                placeholder={`Option ${i + 1}`}
-                className="flex-1 rounded-md border border-border bg-surface-raised px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-              />
-              {value.content.options.length > 2 && (
-                <button
-                  type="button"
-                  onClick={() => removeOption(i)}
-                  className="text-muted-foreground hover:text-destructive text-xs px-1"
-                >
-                  ✕
-                </button>
-              )}
-            </div>
-          ))}
-        </div>
-        <p className="text-xs text-muted-foreground mt-1">Select the radio button next to the correct answer.</p>
-        {value.content.options.length < 6 && (
-          <button
-            type="button"
-            onClick={addOption}
-            className="text-xs text-muted-foreground hover:text-foreground mt-2 underline"
-          >
-            + Add option
-          </button>
-        )}
-      </div>
+      {/* Type-specific editor */}
+      {value.type === 'multiple_choice' && (
+        <MultipleChoiceEditor content={value.content} index={index} onChange={handleContentChange} />
+      )}
+      {value.type === 'true_false' && (
+        <TrueFalseEditor content={value.content} index={index} onChange={handleContentChange} />
+      )}
+      {value.type === 'fill_in_blank' && (
+        <FillInBlankEditor content={value.content} index={index} onChange={handleContentChange} />
+      )}
+      {value.type === 'matching' && (
+        <MatchingEditor content={value.content} index={index} onChange={handleContentChange} />
+      )}
     </div>
   );
 }

@@ -2,7 +2,6 @@ import {
   GripVertical,
   ChevronRight,
   MoreVertical,
-  Pencil,
   FileEdit,
   Trash2,
   ChevronUp,
@@ -39,10 +38,13 @@ interface SortableLessonRowProps {
   onCancelRename: () => void;
   onDelete: () => void;
   onDeleteActivity: (assignmentId: string) => void;
+  onEditActivity: (assignmentId: string) => void;
   onAddActivity: () => void;
   onReorderActivities: (reordered: BuilderActivity[], assignmentIds: string[]) => Promise<void>;
   onMoveLesson: (direction: 'up' | 'down') => void;
   onMoveActivity: (assignmentId: string, direction: 'up' | 'down') => void;
+  onEditPlan: () => void;
+  onManageLessonQuiz?: () => void;
   announce: (message: string) => void;
 }
 
@@ -59,10 +61,13 @@ function SortableLessonRow({
   onCancelRename,
   onDelete,
   onDeleteActivity,
+  onEditActivity,
   onAddActivity,
   onReorderActivities,
   onMoveLesson,
   onMoveActivity,
+  onEditPlan,
+  onManageLessonQuiz,
   announce,
 }: SortableLessonRowProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -89,10 +94,13 @@ function SortableLessonRow({
         onCancelRename={onCancelRename}
         onDelete={onDelete}
         onDeleteActivity={onDeleteActivity}
+        onEditActivity={onEditActivity}
         onAddActivity={onAddActivity}
         onReorderActivities={onReorderActivities}
         onMoveLesson={onMoveLesson}
         onMoveActivity={onMoveActivity}
+        onEditPlan={onEditPlan}
+        onManageLessonQuiz={onManageLessonQuiz}
         announce={announce}
         dragHandleProps={{ ...attributes, ...listeners }}
         isDragging={isDragging}
@@ -118,6 +126,7 @@ interface UnitRowProps {
   onDelete: () => void;
   onDeleteLesson: (lessonId: string) => void;
   onDeleteActivity: (lessonId: string, assignmentId: string) => void;
+  onEditActivity: (assignmentId: string) => void;
   onAddLesson: () => void;
   onAddActivity: (lessonId: string) => void;
   onReorderLessons: (reordered: BuilderLesson[], items: ReorderItem[]) => Promise<void>;
@@ -126,6 +135,9 @@ interface UnitRowProps {
   onMoveLesson: (lessonId: string, direction: 'up' | 'down') => void;
   onMoveActivity: (lessonId: string, assignmentId: string, direction: 'up' | 'down') => void;
   onEditUnit: () => void;
+  onEditPlanLesson: (lessonId: string) => void;
+  onManageUnitTest?: () => void;
+  onManageLessonQuiz?: (lessonId: string) => void;
   announce: (message: string) => void;
   dragHandleProps?: Record<string, unknown>;
   isDragging?: boolean;
@@ -148,6 +160,7 @@ export default function UnitRow({
   onDelete,
   onDeleteLesson,
   onDeleteActivity,
+  onEditActivity,
   onAddLesson,
   onAddActivity,
   onReorderLessons,
@@ -156,6 +169,9 @@ export default function UnitRow({
   onMoveLesson,
   onMoveActivity,
   onEditUnit,
+  onEditPlanLesson,
+  onManageUnitTest,
+  onManageLessonQuiz,
   announce,
   dragHandleProps,
   isDragging = false,
@@ -179,11 +195,6 @@ export default function UnitRow({
   });
 
   const menuItems = [
-    {
-      label: 'Rename',
-      icon: <Pencil className="w-4 h-4" />,
-      onClick: () => onStartRename(unit.id),
-    },
     {
       label: 'Edit details',
       icon: <FileEdit className="w-4 h-4" />,
@@ -345,12 +356,15 @@ export default function UnitRow({
                   onCancelRename={onCancelRename}
                   onDelete={() => onDeleteLesson(lesson.id)}
                   onDeleteActivity={(assignmentId) => onDeleteActivity(lesson.id, assignmentId)}
+                  onEditActivity={onEditActivity}
                   onAddActivity={() => onAddActivity(lesson.id)}
                   onReorderActivities={(reordered, assignmentIds) =>
                     onReorderActivities(lesson.id, reordered, assignmentIds)
                   }
                   onMoveLesson={(dir) => handleMoveLesson(lesson.id, dir)}
                   onMoveActivity={(assignmentId, dir) => onMoveActivity(lesson.id, assignmentId, dir)}
+                  onEditPlan={() => onEditPlanLesson(lesson.id)}
+                  onManageLessonQuiz={onManageLessonQuiz ? () => onManageLessonQuiz(lesson.id) : undefined}
                   announce={announce}
                 />
               ))}
@@ -370,6 +384,7 @@ export default function UnitRow({
             label="Unit test"
             level={2}
             indentClass="ml-4 md:ml-8"
+            onManage={onManageUnitTest}
           />
         </div>
       )}

@@ -9,6 +9,7 @@ import { logger } from '../lib/logger.js';
 // ---------------------------------------------------------------------------
 
 export type ResourceOwnershipType =
+  | 'assignment'
   | 'course'
   | 'unit'
   | 'lesson'
@@ -62,6 +63,24 @@ async function resolveCourseOwner(
         select: { unit: { select: { course: { select: { authorId: true } } } } },
       });
       return row?.unit.course.authorId ?? null;
+    }
+
+    case 'assignment': {
+      const row = await prisma.assignment.findFirst({
+        where: { id: resourceId },
+        select: {
+          lesson: {
+            select: {
+              unit: {
+                select: {
+                  course: { select: { authorId: true } },
+                },
+              },
+            },
+          },
+        },
+      });
+      return row?.lesson.unit.course.authorId ?? null;
     }
 
     case 'assessment': {

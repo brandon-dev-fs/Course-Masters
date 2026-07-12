@@ -4,9 +4,10 @@ import MatchingEditor from '../../../../features/assignments/question-editors/Ma
 
 const defaultContent = {
   question: 'Match the following:',
-  leftItems: ['Cat', 'Dog'],
-  rightItems: ['Meows', 'Barks'],
-  correctPairs: [[0, 0], [1, 1]] as [number, number][],
+  pairs: [
+    { id: 'p1', left: 'Cat', right: 'Meows' },
+    { id: 'p2', left: 'Dog', right: 'Barks' },
+  ],
 };
 
 describe('MatchingEditor', () => {
@@ -41,7 +42,9 @@ describe('MatchingEditor', () => {
     render(<MatchingEditor content={defaultContent} onChange={onChange} />);
     fireEvent.change(screen.getByDisplayValue('Cat'), { target: { value: 'Lion' } });
     expect(onChange).toHaveBeenCalledWith(
-      expect.objectContaining({ leftItems: ['Lion', 'Dog'] }),
+      expect.objectContaining({
+        pairs: expect.arrayContaining([expect.objectContaining({ left: 'Lion' })]),
+      }),
     );
   });
 
@@ -50,7 +53,9 @@ describe('MatchingEditor', () => {
     render(<MatchingEditor content={defaultContent} onChange={onChange} />);
     fireEvent.change(screen.getByDisplayValue('Meows'), { target: { value: 'Roars' } });
     expect(onChange).toHaveBeenCalledWith(
-      expect.objectContaining({ rightItems: ['Roars', 'Barks'] }),
+      expect.objectContaining({
+        pairs: expect.arrayContaining([expect.objectContaining({ right: 'Roars' })]),
+      }),
     );
   });
 
@@ -60,35 +65,43 @@ describe('MatchingEditor', () => {
     fireEvent.click(screen.getByText('+ Add pair'));
     expect(onChange).toHaveBeenCalledWith(
       expect.objectContaining({
-        leftItems: ['Cat', 'Dog', ''],
-        rightItems: ['Meows', 'Barks', ''],
+        pairs: expect.arrayContaining([
+          expect.objectContaining({ left: 'Cat', right: 'Meows' }),
+          expect.objectContaining({ left: 'Dog', right: 'Barks' }),
+          expect.objectContaining({ left: '', right: '' }),
+        ]),
       }),
     );
   });
 
-  it('does not show remove buttons when 2 pairs', () => {
+  it('shows remove buttons disabled when at 2 pairs', () => {
     render(<MatchingEditor content={defaultContent} onChange={vi.fn()} />);
-    expect(screen.queryAllByRole('button', { name: /remove pair/i }).length).toBe(0);
+    const removeButtons = screen.getAllByRole('button', { name: /remove pair/i });
+    expect(removeButtons).toHaveLength(2);
+    removeButtons.forEach(btn => expect(btn).toBeDisabled());
   });
 
-  it('shows remove buttons when more than 2 pairs', () => {
+  it('shows enabled remove buttons when more than 2 pairs', () => {
     const content = {
       ...defaultContent,
-      leftItems: ['A', 'B', 'C'],
-      rightItems: ['X', 'Y', 'Z'],
-      correctPairs: [[0, 0], [1, 1], [2, 2]] as [number, number][],
+      pairs: [
+        { id: 'p1', left: 'A', right: 'X' },
+        { id: 'p2', left: 'B', right: 'Y' },
+        { id: 'p3', left: 'C', right: 'Z' },
+      ],
     };
     render(<MatchingEditor content={content} onChange={vi.fn()} />);
-    expect(screen.getAllByRole('button', { name: /remove pair/i }).length).toBe(3);
+    expect(screen.getAllByRole('button', { name: /remove pair/i })).toHaveLength(3);
   });
 
-  it('calls onChange when pair match select changes (covers updatePair)', () => {
+  it('calls onChange when second pair right item changes (covers updatePairRight)', () => {
     const onChange = vi.fn();
     render(<MatchingEditor content={defaultContent} onChange={onChange} />);
-    const selects = screen.getAllByRole('combobox');
-    fireEvent.change(selects[0], { target: { value: '1' } });
+    fireEvent.change(screen.getByDisplayValue('Barks'), { target: { value: 'Growls' } });
     expect(onChange).toHaveBeenCalledWith(
-      expect.objectContaining({ correctPairs: [[0, 1], [1, 1]] }),
+      expect.objectContaining({
+        pairs: expect.arrayContaining([expect.objectContaining({ right: 'Growls' })]),
+      }),
     );
   });
 
@@ -96,48 +109,59 @@ describe('MatchingEditor', () => {
     const onChange = vi.fn();
     const content = {
       ...defaultContent,
-      leftItems: ['Cat', 'Dog', 'Bird'],
-      rightItems: ['Meows', 'Barks', 'Chirps'],
-      correctPairs: [[0, 0], [1, 1], [2, 2]] as [number, number][],
+      pairs: [
+        { id: 'p1', left: 'Cat', right: 'Meows' },
+        { id: 'p2', left: 'Dog', right: 'Barks' },
+        { id: 'p3', left: 'Bird', right: 'Chirps' },
+      ],
     };
     render(<MatchingEditor content={content} onChange={onChange} />);
     fireEvent.click(screen.getAllByRole('button', { name: /remove pair/i })[0]);
     expect(onChange).toHaveBeenCalledWith(
       expect.objectContaining({
-        leftItems: ['Dog', 'Bird'],
-        rightItems: ['Barks', 'Chirps'],
+        pairs: [
+          expect.objectContaining({ left: 'Dog', right: 'Barks' }),
+          expect.objectContaining({ left: 'Bird', right: 'Chirps' }),
+        ],
       }),
     );
   });
 
   it('renders with missing content fields (covers ?? fallbacks)', () => {
     render(<MatchingEditor content={{}} onChange={vi.fn()} />);
-    expect(screen.getByText('Pairs')).toBeInTheDocument();
+    // derivePairs returns 2 default empty pairs; remove buttons are present but disabled
+    const removeButtons = screen.getAllByRole('button', { name: /remove pair/i });
+    expect(removeButtons).toHaveLength(2);
+    removeButtons.forEach(btn => expect(btn).toBeDisabled());
   });
 
-  it('covers l > i false branch by removing middle pair', () => {
+  it('covers removing middle pair correctly', () => {
     const onChange = vi.fn();
     const content = {
       ...defaultContent,
-      leftItems: ['Cat', 'Dog', 'Bird'],
-      rightItems: ['Meows', 'Barks', 'Chirps'],
-      correctPairs: [[0, 0], [1, 1], [2, 2]] as [number, number][],
+      pairs: [
+        { id: 'p1', left: 'Cat', right: 'Meows' },
+        { id: 'p2', left: 'Dog', right: 'Barks' },
+        { id: 'p3', left: 'Bird', right: 'Chirps' },
+      ],
     };
     render(<MatchingEditor content={content} onChange={onChange} />);
-    // Remove index 1 (middle) — item at index 2 has l=2 > 1 (true branch) and l=0 <= 1 (false branch)
     fireEvent.click(screen.getAllByRole('button', { name: /remove pair/i })[1]);
     expect(onChange).toHaveBeenCalledWith(
-      expect.objectContaining({ leftItems: ['Cat', 'Bird'] }),
+      expect.objectContaining({
+        pairs: [
+          expect.objectContaining({ left: 'Cat' }),
+          expect.objectContaining({ left: 'Bird' }),
+        ],
+      }),
     );
   });
 
   it('hides + Add pair when at 8 pairs', () => {
-    const leftItems = Array.from({ length: 8 }, (_, i) => `L${i}`);
-    const rightItems = Array.from({ length: 8 }, (_, i) => `R${i}`);
-    const correctPairs = leftItems.map((_, i) => [i, i] as [number, number]);
+    const pairs = Array.from({ length: 8 }, (_, i) => ({ id: `p${i}`, left: `L${i}`, right: `R${i}` }));
     render(
       <MatchingEditor
-        content={{ question: '', leftItems, rightItems, correctPairs }}
+        content={{ question: '', pairs }}
         onChange={vi.fn()}
       />,
     );

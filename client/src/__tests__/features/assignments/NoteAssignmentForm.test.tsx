@@ -10,16 +10,14 @@ import NoteAssignmentForm from '../../../features/assignments/NoteAssignmentForm
 
 const defaultProps = {
   url: '',
-  displayTitle: '',
-  description: '',
   estimatedMinutes: '',
   passingPercentage: '',
   entries: [],
   questions: [],
   noteContent: { type: 'doc', content: [] },
+  fetchingVideoTitle: false,
+  handleVideoUrlBlur: vi.fn(),
   onUrlChange: vi.fn(),
-  onDisplayTitleChange: vi.fn(),
-  onDescriptionChange: vi.fn(),
   onEstimatedMinutesChange: vi.fn(),
   onPassingPercentageChange: vi.fn(),
   onEntriesChange: vi.fn(),

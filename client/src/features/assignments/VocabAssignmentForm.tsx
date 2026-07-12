@@ -1,9 +1,12 @@
+import { useState } from 'react';
 import { ArrowUp, ArrowDown, Trash2, Plus } from 'lucide-react';
 import type { SubFormProps } from './AssignmentFormModal.js';
 import type { VocabEntry } from '../../api/types.js';
 import ErrorMessage from '../../components/ErrorMessage.js';
 
 export default function VocabAssignmentForm({ entries, onEntriesChange }: SubFormProps) {
+  const [touched, setTouched] = useState(false);
+
   function addEntry() {
     onEntriesChange([...entries, { term: '', definition: '', example: '' }]);
   }
@@ -21,11 +24,13 @@ export default function VocabAssignmentForm({ entries, onEntriesChange }: SubFor
   }
 
   function updateEntry(idx: number, field: 'term' | 'definition' | 'example', value: string) {
+    if (!touched) setTouched(true);
     const next = entries.map((e, i) => i === idx ? { ...e, [field]: value } : e);
     onEntriesChange(next);
   }
 
   const hasValidEntry = entries.some(e => e.term.trim() && e.definition.trim());
+  const allEntriesComplete = entries.every(e => e.term.trim() !== '' && e.definition.trim() !== '');
 
   return (
     <div className="flex flex-col gap-3">
@@ -96,13 +101,15 @@ export default function VocabAssignmentForm({ entries, onEntriesChange }: SubFor
       <button
         type="button"
         onClick={addEntry}
-        className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors self-start"
+        disabled={!allEntriesComplete}
+        aria-label="Add term"
+        className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors self-start disabled:opacity-40 disabled:cursor-not-allowed"
       >
         <Plus className="w-3.5 h-3.5" />
         Add term
       </button>
 
-      {!hasValidEntry && (
+      {touched && !hasValidEntry && (
         <ErrorMessage variant="inline" message="At least one term with a non-empty term and definition is required." />
       )}
     </div>

@@ -46,7 +46,7 @@ const practiceQuestionSchema = z.object({
 // ── Shared base fields ───────────────────────────────────────────────────────
 
 const baseAssignmentFields = {
-  title: z.string().min(1),
+  title: z.string().min(1).max(120),
   // min(1) prevents persisting an empty-string objective; use null to clear
   objective: z.string().min(1).optional(),
 };
@@ -67,15 +67,11 @@ export const createAssignmentSchema = z.discriminatedUnion('type', [
     ...baseAssignmentFields,
     type: z.literal('video'),
     url: urlField,
-    // displayTitle is the video's own display title — named distinctly from the shared
-    // assignment `title` to avoid a key collision in the flat request body
-    displayTitle: z.string().optional(),
   }),
   z.object({
     ...baseAssignmentFields,
     type: z.literal('reading'),
     url: urlField,
-    description: z.string().optional(),
     estimatedMinutes: z.number().int().min(1).optional(),
   }),
   z.object({
@@ -104,17 +100,14 @@ export const createAssignmentSchema = z.discriminatedUnion('type', [
 // ── Update schema (all type-specific fields optional, type is immutable) ────
 
 export const updateAssignmentSchema = z.object({
-  title: z.string().min(1).optional(),
+  title: z.string().min(1).max(120).optional(),
   // min(1) prevents persisting an empty-string objective; use null to clear
   objective: z.string().min(1).optional(),
   // note
   content: z.record(z.any()).optional(),
   // video / reading
   url: z.string().url().refine(u => /^https?:\/\//i.test(u), { message: 'URL must use http or https' }).optional(),
-  // displayTitle: video's own display title — distinct from the shared assignment `title`
-  displayTitle: z.string().optional(),
   // reading
-  description: z.string().optional(),
   estimatedMinutes: z.number().int().min(1).optional(),
   // vocab — id is optional: present for existing entries, absent for new ones
   entries: z

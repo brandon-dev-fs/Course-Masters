@@ -7,7 +7,7 @@ interface ActivityTypePillProps {
 const TYPE_LABEL: Record<AssignmentType, string> = {
   note: 'Note',
   video: 'Video',
-  reading: 'Reading',
+  reading: 'Link',
   vocab: 'Vocab',
   practice_problem: 'Practice',
   file: 'File',

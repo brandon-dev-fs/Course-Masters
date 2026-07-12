@@ -121,13 +121,29 @@ export const assessmentService = {
     assessment.questions.forEach((q, i) => {
       const content = q.content as Record<string, unknown>;
       const answer = answers[i];
-      if (q.type === 'multiple_choice' || q.type === 'true_false') {
-        if (answer === content['correctIndex'] || answer === content['correctAnswer']) correct++;
+      if (q.type === 'multiple_choice') {
+        if (answer === content['correctIndex']) correct++;
+      } else if (q.type === 'true_false') {
+        if (answer === content['correct']) correct++;
       } else if (q.type === 'fill_in_blank') {
-        const accepted = content['acceptedAnswers'] as string[];
-        if (Array.isArray(accepted) && accepted.some(a => a.toLowerCase() === String(answer).toLowerCase())) correct++;
+        const blanks = content['blanks'] as { answer: string; alternatives?: string[] }[] | undefined;
+        const answerArr = answer as string[] | null;
+        if (Array.isArray(blanks) && Array.isArray(answerArr)) {
+          if (blanks.every((blank, i) => {
+            const given = (answerArr[i] ?? '').trim().toLowerCase();
+            if (!given) return false;
+            if (given === blank.answer.toLowerCase()) return true;
+            return (blank.alternatives ?? []).some(alt => alt.toLowerCase() === given);
+          })) correct++;
+        }
       } else if (q.type === 'matching') {
-        if (JSON.stringify(answer) === JSON.stringify(content['pairs'])) correct++;
+        const pairs = content['pairs'] as { left: string; right: string }[] | undefined;
+        const matchingAnswers = answer as string[] | null;
+        if (Array.isArray(pairs) && Array.isArray(matchingAnswers)) {
+          if (pairs.every((pair, i) =>
+            (matchingAnswers[i] ?? '').trim().toLowerCase() === pair.right.trim().toLowerCase()
+          )) correct++;
+        }
       }
     });
 
@@ -242,20 +258,33 @@ export const assessmentService = {
 
     // 6. Create new AssessmentQuestion records from PracticeProblemQuestion data
     const newQuestions = await prisma.$transaction(
-      ppAssignment.questions.map((ppq) =>
-        prisma.assessmentQuestion.create({
+      ppAssignment.questions.map((ppq) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const rawContent = (ppq.content as any) ?? {};
+
+        // For matching questions, strip the client-only `id` field from each pair
+        // so the content conforms to the assessment matching schema {left, right}.
+        let content: typeof rawContent = rawContent;
+        if (ppq.type === 'matching' && Array.isArray(rawContent['pairs'])) {
+          content = {
+            ...rawContent,
+            pairs: (rawContent['pairs'] as { id?: string; left: string; right: string }[]).map(
+              ({ left, right }) => ({ left, right }),
+            ),
+          };
+        }
+
+        return prisma.assessmentQuestion.create({
           data: {
             assessmentId,
             type: ppq.type,
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            question: ((ppq.content as any)['question'] as string | undefined) ?? '',
-            content: ppq.content ?? Prisma.JsonNull,
+            question: (rawContent['question'] as string | undefined) ?? '',
+            content: content ?? Prisma.JsonNull,
             order: nextOrder++,
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            calculatorEnabled: ((ppq.content as any)['calculatorEnabled'] as boolean | undefined) ?? false,
+            calculatorEnabled: (rawContent['calculatorEnabled'] as boolean | undefined) ?? false,
           },
-        }),
-      ),
+        });
+      }),
     );
 
     return newQuestions;

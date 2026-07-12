@@ -423,4 +423,96 @@ describe('resolveCourseOwner — resource types', () => {
 
     expect(next).toHaveBeenCalledWith(expect.any(NotFoundError));
   });
+
+  it('calls next() when teacher owns an assignment', async () => {
+    prismaMock.assignment.findFirst.mockResolvedValue({
+      lesson: { unit: { course: { authorId: OWNER_ID } } },
+    });
+    const req = makeReq({
+      user: { id: OWNER_ID, role: 'teacher' },
+      params: { assignmentId: 'assignment-1' },
+    });
+
+    await flushMiddleware(
+      requireCourseOwnership('assignment', (r) => r.params['assignmentId'] as string),
+      req,
+    );
+
+    expect(next).toHaveBeenCalledOnce();
+    expect(next).toHaveBeenCalledWith();
+  });
+
+  it('throws FORBIDDEN when teacher does not own the assignment course', async () => {
+    prismaMock.assignment.findFirst.mockResolvedValue({
+      lesson: { unit: { course: { authorId: OTHER_USER_ID } } },
+    });
+    const req = makeReq({
+      user: { id: OWNER_ID, role: 'teacher' },
+      params: { assignmentId: 'assignment-1' },
+    });
+
+    await flushMiddleware(
+      requireCourseOwnership('assignment', (r) => r.params['assignmentId'] as string),
+      req,
+    );
+
+    expect(next).toHaveBeenCalledWith(
+      expect.objectContaining({ code: 'FORBIDDEN', statusCode: 403 }),
+    );
+  });
+
+  it('throws NotFoundError when assignment does not exist', async () => {
+    prismaMock.assignment.findFirst.mockResolvedValue(null);
+    const req = makeReq({
+      user: { id: OWNER_ID, role: 'teacher' },
+      params: { assignmentId: 'assignment-missing' },
+    });
+
+    await flushMiddleware(
+      requireCourseOwnership('assignment', (r) => r.params['assignmentId'] as string),
+      req,
+    );
+
+    expect(next).toHaveBeenCalledWith(expect.any(NotFoundError));
+  });
+
+  it('bypasses DB query and calls next() for admin on assignment', async () => {
+    const req = makeReq({
+      user: { id: ADMIN_ID, role: 'admin' },
+      params: { assignmentId: 'assignment-1' },
+    });
+
+    const middleware = requireCourseOwnership(
+      'assignment',
+      (r) => r.params['assignmentId'] as string,
+    );
+    await middleware(
+      req as Parameters<ReturnType<typeof requireCourseOwnership>>[0],
+      res as unknown as Parameters<ReturnType<typeof requireCourseOwnership>>[1],
+      next,
+    );
+
+    expect(prismaMock.assignment.findFirst).not.toHaveBeenCalled();
+    expect(next).toHaveBeenCalledWith();
+  });
+
+  it('bypasses ownership check and calls next() for student on assignment', async () => {
+    const req = makeReq({
+      user: { id: 'student-1', role: 'student' },
+      params: { assignmentId: 'assignment-1' },
+    });
+
+    const middleware = requireCourseOwnership(
+      'assignment',
+      (r) => r.params['assignmentId'] as string,
+    );
+    await middleware(
+      req as Parameters<ReturnType<typeof requireCourseOwnership>>[0],
+      res as unknown as Parameters<ReturnType<typeof requireCourseOwnership>>[1],
+      next,
+    );
+
+    expect(prismaMock.assignment.findFirst).not.toHaveBeenCalled();
+    expect(next).toHaveBeenCalledWith();
+  });
 });

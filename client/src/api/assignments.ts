@@ -17,9 +17,6 @@ interface NoteCreatePayload extends BaseCreatePayload {
 interface VideoCreatePayload extends BaseCreatePayload {
   type: 'video';
   url: string;
-  // displayTitle is the video's own display title — named distinctly from the shared `title`
-  // to avoid a key collision in the flat request body
-  displayTitle?: string;
 }
 
 interface ReadingCreatePayload extends BaseCreatePayload {
@@ -60,8 +57,6 @@ export interface UpdateAssignmentPayload {
   content?: Record<string, unknown>;
   // video / reading
   url?: string;
-  // displayTitle: video's own display title — distinct from the shared `title`
-  displayTitle?: string;
   // reading
   description?: string;
   estimatedMinutes?: number | null;
@@ -78,13 +73,6 @@ export interface ReorderPayload {
 
 // ─── API Module ───────────────────────────────────────────────────────────────
 
-/**
- * Maps a CreateAssignmentPayload or UpdateAssignmentPayload to the flat body
- * expected by the server. The `displayTitle` field is the video assignment's
- * own display title — named distinctly from the shared `title` to avoid a
- * key collision in the flat request body. The backend maps `displayTitle` →
- * `VideoAssignment.title`.
- */
 function toApiBody(payload: CreateAssignmentPayload | UpdateAssignmentPayload): Record<string, unknown> {
   // No transformation needed — the payload shape already matches the API contract.
   return payload as unknown as Record<string, unknown>;
@@ -171,6 +159,9 @@ export function getFileDownloadUrl(assignmentId: string): string {
 export const assignmentsApi = {
   getAll: (lessonId: string): Promise<Assignment[]> =>
     apiClient.get<Assignment[]>(`/lessons/${lessonId}/assignments`),
+
+  getOne: (assignmentId: string): Promise<Assignment> =>
+    apiClient.get<Assignment>(`/assignments/${assignmentId}`),
 
   create: (lessonId: string, data: CreateAssignmentPayload): Promise<Assignment> =>
     apiClient.post<Assignment>(`/lessons/${lessonId}/assignments`, toApiBody(data)),

@@ -4,6 +4,7 @@ interface AddItemButtonProps {
   label: string;
   onClick: () => void;
   loading?: boolean;
+  disabled?: boolean;
   indentClass?: string;
   ariaLabel?: string;
   ariaHasPopup?: boolean;
@@ -13,6 +14,7 @@ export default function AddItemButton({
   label,
   onClick,
   loading = false,
+  disabled = false,
   indentClass = '',
   ariaLabel,
   ariaHasPopup = false,
@@ -21,7 +23,7 @@ export default function AddItemButton({
     <button
       type="button"
       onClick={onClick}
-      disabled={loading}
+      disabled={loading || disabled}
       aria-label={ariaLabel ?? label}
       aria-haspopup={ariaHasPopup ? 'menu' : undefined}
       className={`flex items-center gap-1.5 w-full px-3 py-2 text-sm text-muted-foreground

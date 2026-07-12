@@ -30,6 +30,7 @@ interface SortableUnitRowProps {
   onDelete: () => void;
   onDeleteLesson: (lessonId: string) => void;
   onDeleteActivity: (lessonId: string, assignmentId: string) => void;
+  onEditActivity: (assignmentId: string) => void;
   onAddLesson: () => void;
   onAddActivity: (lessonId: string) => void;
   onReorderLessons: (reordered: BuilderLesson[], items: ReorderItem[]) => Promise<void>;
@@ -38,6 +39,9 @@ interface SortableUnitRowProps {
   onMoveLesson: (lessonId: string, direction: 'up' | 'down') => void;
   onMoveActivity: (lessonId: string, assignmentId: string, direction: 'up' | 'down') => void;
   onEditUnit: () => void;
+  onEditPlanLesson: (lessonId: string) => void;
+  onManageUnitTest?: () => void;
+  onManageLessonQuiz?: (lessonId: string) => void;
   announce: (message: string) => void;
 }
 
@@ -58,6 +62,7 @@ function SortableUnitRow({
   onDelete,
   onDeleteLesson,
   onDeleteActivity,
+  onEditActivity,
   onAddLesson,
   onAddActivity,
   onReorderLessons,
@@ -66,6 +71,9 @@ function SortableUnitRow({
   onMoveLesson,
   onMoveActivity,
   onEditUnit,
+  onEditPlanLesson,
+  onManageUnitTest,
+  onManageLessonQuiz,
   announce,
 }: SortableUnitRowProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -96,6 +104,7 @@ function SortableUnitRow({
         onDelete={onDelete}
         onDeleteLesson={onDeleteLesson}
         onDeleteActivity={onDeleteActivity}
+        onEditActivity={onEditActivity}
         onAddLesson={onAddLesson}
         onAddActivity={onAddActivity}
         onReorderLessons={onReorderLessons}
@@ -104,6 +113,9 @@ function SortableUnitRow({
         onMoveLesson={onMoveLesson}
         onMoveActivity={onMoveActivity}
         onEditUnit={onEditUnit}
+        onEditPlanLesson={onEditPlanLesson}
+        onManageUnitTest={onManageUnitTest}
+        onManageLessonQuiz={onManageLessonQuiz}
         announce={announce}
         dragHandleProps={{ ...attributes, ...listeners }}
         isDragging={isDragging}
@@ -128,6 +140,7 @@ interface OutlineTreeProps {
   onDeleteUnit: (unitId: string) => void;
   onDeleteLesson: (unitId: string, lessonId: string) => void;
   onDeleteActivity: (lessonId: string, assignmentId: string) => void;
+  onEditActivity: (assignmentId: string) => void;
   onAddUnit: () => void;
   onAddLesson: (unitId: string) => void;
   onAddActivity: (lessonId: string) => void;
@@ -138,6 +151,10 @@ interface OutlineTreeProps {
   onMoveLesson: (unitId: string, lessonId: string, direction: 'up' | 'down') => void;
   onMoveActivity: (lessonId: string, assignmentId: string, direction: 'up' | 'down') => void;
   onEditUnit: (unitId: string) => void;
+  onEditPlanLesson: (unitId: string, lessonId: string) => void;
+  onManageLessonQuiz?: (lessonId: string) => void;
+  onManageUnitTest?: (unitId: string) => void;
+  onManageCourseExam?: () => void;
   announce: (message: string) => void;
   onConfirmDeleteUnit: (unitId: string) => void;
   onConfirmDeleteLesson: (unitId: string, lessonId: string) => void;
@@ -160,6 +177,7 @@ export default function OutlineTree({
   onDeleteUnit,
   onDeleteLesson,
   onDeleteActivity,
+  onEditActivity,
   onAddUnit,
   onAddLesson,
   onAddActivity,
@@ -170,6 +188,10 @@ export default function OutlineTree({
   onMoveLesson,
   onMoveActivity,
   onEditUnit,
+  onEditPlanLesson,
+  onManageLessonQuiz,
+  onManageUnitTest,
+  onManageCourseExam,
   announce,
   onConfirmDeleteUnit,
   onConfirmDeleteLesson,
@@ -220,6 +242,7 @@ export default function OutlineTree({
               onDelete={() => onConfirmDeleteUnit(unit.id)}
               onDeleteLesson={(lessonId) => onConfirmDeleteLesson(unit.id, lessonId)}
               onDeleteActivity={onConfirmDeleteActivity}
+              onEditActivity={onEditActivity}
               onAddLesson={() => onAddLesson(unit.id)}
               onAddActivity={onAddActivity}
               onReorderLessons={(reordered, items) => onReorderLessons(unit.id, reordered, items)}
@@ -228,6 +251,9 @@ export default function OutlineTree({
               onMoveLesson={(lessonId, dir) => onMoveLesson(unit.id, lessonId, dir)}
               onMoveActivity={onMoveActivity}
               onEditUnit={() => onEditUnit(unit.id)}
+              onEditPlanLesson={(lessonId) => onEditPlanLesson(unit.id, lessonId)}
+              onManageUnitTest={onManageUnitTest ? () => onManageUnitTest(unit.id) : undefined}
+              onManageLessonQuiz={onManageLessonQuiz}
               announce={announce}
             />
           ))}
@@ -249,6 +275,7 @@ export default function OutlineTree({
           label="Course exam"
           level={1}
           indentClass="ml-0"
+          onManage={onManageCourseExam}
         />
       </div>
     </div>

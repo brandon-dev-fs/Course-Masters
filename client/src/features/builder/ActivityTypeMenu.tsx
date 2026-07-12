@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { FileText, Video, BookOpen, BookMarked, Dumbbell, Loader2 } from 'lucide-react';
+import { FileText, Video, ExternalLink, BookMarked, Dumbbell, Loader2 } from 'lucide-react';
 
 import type { AssignmentType } from '../../api/types.js';
 
@@ -17,7 +17,7 @@ interface ActivityTypeOption {
 const OPTIONS: ActivityTypeOption[] = [
   { type: 'note', label: 'Note', icon: <FileText className="w-4 h-4" /> },
   { type: 'video', label: 'Video', icon: <Video className="w-4 h-4" /> },
-  { type: 'reading', label: 'Reading', icon: <BookOpen className="w-4 h-4" /> },
+  { type: 'reading', label: 'External Link', icon: <ExternalLink className="w-4 h-4" /> },
   { type: 'vocab', label: 'Vocab', icon: <BookMarked className="w-4 h-4" /> },
   { type: 'practice_problem', label: 'Practice Problem', icon: <Dumbbell className="w-4 h-4" /> },
 ];

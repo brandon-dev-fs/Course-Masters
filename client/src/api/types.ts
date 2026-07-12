@@ -114,12 +114,26 @@ export interface MultipleChoiceContent {
 }
 
 export interface TrueFalseContent {
-  correctAnswer: boolean;
+  correct: boolean;
 }
 
-/** Matching and fill-in-blank content shapes are reserved for future use. */
-export type MatchingContent = Record<string, unknown>;
-export type FillInBlankContent = Record<string, unknown>;
+export interface MatchingPair {
+  left: string;
+  right: string;
+}
+
+export interface MatchingContent {
+  pairs: MatchingPair[];
+}
+
+export interface FillInBlankBlank {
+  answer: string;
+  alternatives?: string[];
+}
+
+export interface FillInBlankContent {
+  blanks: FillInBlankBlank[];
+}
 
 export interface MultipleChoiceQuestion {
   id: string;
@@ -239,13 +253,11 @@ export interface NoteAssignmentData {
 export interface VideoAssignmentData {
   id: string;
   url: string;
-  title: string | null;
 }
 
 export interface ReadingAssignmentData {
   id: string;
   url: string;
-  description: string | null;
   estimatedMinutes: number | null;
 }
 
@@ -339,6 +351,7 @@ export interface BuilderLesson {
   id: string;
   title: string;
   order: number;
+  hasLessonPlan: boolean;
   assignments: BuilderActivity[];
   assessment: BuilderAssessment | null;
 }

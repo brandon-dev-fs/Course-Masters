@@ -69,8 +69,11 @@ describe('PracticeProblemForm', () => {
     const onSubmit = vi.fn().mockResolvedValue(undefined);
     render(<PracticeProblemForm onSubmit={onSubmit} onCancel={vi.fn()} />);
     fireEvent.change(screen.getByPlaceholderText('What is...?'), { target: { value: 'Test question?' } });
+    // Form initializes with 4 option slots — all must be non-empty to pass validation
     fireEvent.change(screen.getByPlaceholderText('Option 1'), { target: { value: 'Option A' } });
     fireEvent.change(screen.getByPlaceholderText('Option 2'), { target: { value: 'Option B' } });
+    fireEvent.change(screen.getByPlaceholderText('Option 3'), { target: { value: 'Option C' } });
+    fireEvent.change(screen.getByPlaceholderText('Option 4'), { target: { value: 'Option D' } });
     fireEvent.click(screen.getByRole('button', { name: /add problem/i }));
     await waitFor(() => expect(onSubmit).toHaveBeenCalled());
   });

@@ -42,6 +42,8 @@ export const builderService = {
                 id: true,
                 title: true,
                 order: true,
+                objective: true,
+                planContent: true,
                 assignments: {
                   orderBy: { order: 'asc' },
                   select: {
@@ -78,6 +80,7 @@ export const builderService = {
         id: lesson.id,
         title: lesson.title,
         order: lesson.order,
+        hasLessonPlan: (lesson.objective ?? '') !== '' || Object.keys((lesson.planContent as object) ?? {}).length > 0,
         assignments: lesson.assignments.map((a) => ({
           id: a.id,
           title: a.title,

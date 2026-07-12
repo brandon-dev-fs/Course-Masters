@@ -36,6 +36,15 @@ enum AssignmentType {
   file
 }
 
+enum CourseSpecStatus {
+  drafting
+  reviewing
+  approved
+  building
+  completed
+  failed
+}
+
 model User {
   id            String    @id
   name          String
@@ -62,6 +71,8 @@ model User {
   vocabAssignmentFlashCards  StudentVocabAssignmentFlashCard[]
   activityBookmarks     ActivityBookmark[]
   checklistItems        LessonChecklistItem[]
+  courseSpecs           CourseSpec[]
+  agentSessions         AgentSession[]
 
   @@map("user")
 }
@@ -125,6 +136,7 @@ model Course {
   author     User        @relation(fields: [authorId], references: [id], onDelete: Cascade)
   units      Unit[]
   assessment Assessment?
+  courseSpec CourseSpec?
 
   @@index([authorId])
   @@map("course")
@@ -309,10 +321,9 @@ model NoteAssignment {
 }
 
 model VideoAssignment {
-  id           String  @id @default(uuid())
-  assignmentId String  @unique
+  id           String @id @default(uuid())
+  assignmentId String @unique
   url          String
-  title        String?
 
   assignment Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
 
@@ -323,7 +334,6 @@ model ReadingAssignment {
   id               String  @id @default(uuid())
   assignmentId     String  @unique
   url              String
-  description      String?
   estimatedMinutes Int?
 
   assignment Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
@@ -457,4 +467,56 @@ model LessonChecklistItem {
 
   @@index([userId, lessonId])
   @@map("lesson_checklist_item")
+}
+
+model TrustedSource {
+  id           String   @id @default(uuid())
+  name         String
+  domain       String   @unique
+  contentTypes Json
+  categories   Json
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("trusted_sources")
+}
+
+model CourseSpec {
+  id              String           @id @default(uuid())
+  userId          String
+  courseId        String?          @unique
+  status          CourseSpecStatus @default(drafting)
+  elicitationData Json?
+  outline         Json?
+  buildLog        Json?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  deletedAt       DateTime?
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course       Course?       @relation(fields: [courseId], references: [id], onDelete: SetNull)
+  agentSession AgentSession?
+
+  @@index([userId])
+  @@map("course_specs")
+}
+
+model AgentSession {
+  id               String    @id @default(uuid())
+  userId           String
+  courseSpecId     String?   @unique
+  phase            String
+  currentStep      String?
+  elicitationState Json?
+  conversationLog  Json?
+  expiresAt        DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseSpec CourseSpec? @relation(fields: [courseSpecId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@map("agent_sessions")
 }

@@ -13,7 +13,8 @@ const sampleQuestions: QuestionDraft[] = [
     id: 'q1',
     type: 'multiple_choice',
     question: 'What is 2+2?',
-    content: { options: ['3', '4', '5', '6'], correctIndex: 1 },
+    // content.question required by isComplete() and the QuestionEditor
+    content: { question: 'What is 2+2?', options: ['3', '4', '5', '6'], correctIndex: 1 },
     order: 1,
     calculatorEnabled: false,
   },
@@ -29,8 +30,8 @@ describe('AssessmentForm', () => {
 
   it('renders Question label with count', () => {
     render(<AssessmentForm initialQuestions={sampleQuestions} onSubmit={onSubmit} onCancel={onCancel} />);
-    // The progress label says "Question 1 of 1"
-    expect(screen.getAllByText(/question 1/i).length).toBeGreaterThan(0);
+    // Accordion shows Q1, Q2, ... labels in each card header
+    expect(screen.getByText('Q1')).toBeInTheDocument();
   });
 
   it('renders Cancel button', () => {
@@ -67,20 +68,22 @@ describe('AssessmentForm', () => {
     expect(screen.queryByLabelText('Enable calculator for all questions')).not.toBeInTheDocument();
   });
 
-  it('shows Add Question button on last question', () => {
+  it('shows Add Question button', () => {
     render(<AssessmentForm initialQuestions={sampleQuestions} onSubmit={onSubmit} onCancel={onCancel} />);
-    expect(screen.getByText('+ Add Question')).toBeInTheDocument();
+    // Use getByRole because the '+' is in a child <span>, splitting the text across elements
+    expect(screen.getByRole('button', { name: /add question/i })).toBeInTheDocument();
   });
 
-  it('shows Prev button disabled when on first question', () => {
+  it('disables move-up button on first question', () => {
     render(<AssessmentForm initialQuestions={sampleQuestions} onSubmit={onSubmit} onCancel={onCancel} />);
-    expect(screen.getByText('Prev')).toBeDisabled();
+    // Accordion replaces wizard Prev/Next with per-card move-up/move-down buttons
+    expect(screen.getByRole('button', { name: /move question 1 up/i })).toBeDisabled();
   });
 
   it('starts with one default question when no initial questions provided', () => {
     render(<AssessmentForm onSubmit={onSubmit} onCancel={onCancel} />);
-    expect(screen.getAllByText(/question 1/i).length).toBeGreaterThan(0);
-    expect(screen.getByText('of 1')).toBeInTheDocument();
+    expect(screen.getByText('Q1')).toBeInTheDocument();
+    expect(screen.queryByText('Q2')).not.toBeInTheDocument();
   });
 
   it('calls onSubmit when form is submitted', async () => {
@@ -91,41 +94,42 @@ describe('AssessmentForm', () => {
 
   it('adds a new question when Add Question is clicked', () => {
     render(<AssessmentForm initialQuestions={sampleQuestions} onSubmit={onSubmit} onCancel={onCancel} />);
-    fireEvent.click(screen.getByText('+ Add Question'));
-    expect(screen.getByText('of 2')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /add question/i }));
+    expect(screen.getByText('Q2')).toBeInTheDocument();
   });
 
-  it('shows Next button when there are multiple questions', () => {
+  it('shows all questions simultaneously in accordion', () => {
     const twoQs = [sampleQuestions[0], { ...sampleQuestions[0], id: 'q2', order: 2 }];
     render(<AssessmentForm initialQuestions={twoQs} onSubmit={onSubmit} onCancel={onCancel} />);
-    expect(screen.getByText('Next')).toBeInTheDocument();
+    // Accordion renders all question cards at once — no pagination
+    expect(screen.getByText('Q1')).toBeInTheDocument();
+    expect(screen.getByText('Q2')).toBeInTheDocument();
   });
 
-  it('navigates to next question when Next is clicked', () => {
+  it('expands a collapsed question when its accordion header is clicked', () => {
     const twoQs = [sampleQuestions[0], { ...sampleQuestions[0], id: 'q2', order: 2 }];
     render(<AssessmentForm initialQuestions={twoQs} onSubmit={onSubmit} onCancel={onCancel} />);
-    fireEvent.click(screen.getByText('Next'));
-    // On question 2 of 2: Prev is now enabled and + Add Question shows
-    expect(screen.getByText('Prev')).not.toBeDisabled();
-    expect(screen.getByText('+ Add Question')).toBeInTheDocument();
+    // Q1 is expanded by default (expandedIndex=0); Q2 header says "Expand"
+    const q2Toggle = screen.getByRole('button', { name: /expand question 2/i });
+    fireEvent.click(q2Toggle);
+    expect(screen.getByRole('button', { name: /collapse question 2/i })).toBeInTheDocument();
   });
 
-  it('navigates back to previous question when Prev is clicked', () => {
-    const twoQs = [sampleQuestions[0], { ...sampleQuestions[0], id: 'q2', order: 2 }];
-    render(<AssessmentForm initialQuestions={twoQs} onSubmit={onSubmit} onCancel={onCancel} />);
-    fireEvent.click(screen.getByText('Next'));
-    fireEvent.click(screen.getByText('Prev'));
-    // Back on question 1 of 2: Prev disabled again, Next visible
-    expect(screen.getByText('Prev')).toBeDisabled();
-    expect(screen.getByText('Next')).toBeInTheDocument();
+  it('collapses an expanded question when its accordion header is clicked again', () => {
+    render(<AssessmentForm initialQuestions={sampleQuestions} onSubmit={onSubmit} onCancel={onCancel} />);
+    // Q1 starts expanded
+    const q1Toggle = screen.getByRole('button', { name: /collapse question 1/i });
+    fireEvent.click(q1Toggle);
+    expect(screen.getByRole('button', { name: /expand question 1/i })).toBeInTheDocument();
   });
 
   it('shows error when submitting with incomplete question', async () => {
-    const incomplete = [{ ...sampleQuestions[0], question: '' }];
+    // isComplete() reads content.question — clear it to simulate an incomplete question
+    const incomplete = [{ ...sampleQuestions[0], content: { ...sampleQuestions[0].content, question: '' } }];
     render(<AssessmentForm initialQuestions={incomplete} onSubmit={onSubmit} onCancel={onCancel} />);
     fireEvent.submit(screen.getByRole('button', { name: /save assessment/i }).closest('form')!);
     await waitFor(() =>
-      expect(screen.getByText(/all questions and options must be filled in/i)).toBeInTheDocument()
+      expect(screen.getByText(/all questions must be fully filled in/i)).toBeInTheDocument()
     );
   });
 

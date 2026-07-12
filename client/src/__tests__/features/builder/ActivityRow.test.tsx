@@ -46,6 +46,7 @@ const makeActivity = (overrides?: Partial<BuilderActivity>): BuilderActivity => 
 
 describe('ActivityRow', () => {
   const onDelete = vi.fn();
+  const onEdit = vi.fn();
   const onMoveActivity = vi.fn();
 
   beforeEach(() => {
@@ -59,6 +60,7 @@ describe('ActivityRow', () => {
         isFirst={false}
         isLast={false}
         onDelete={onDelete}
+        onEdit={onEdit}
         onMoveActivity={onMoveActivity}
       />,
     );
@@ -72,6 +74,7 @@ describe('ActivityRow', () => {
         isFirst={false}
         isLast={false}
         onDelete={onDelete}
+        onEdit={onEdit}
         onMoveActivity={onMoveActivity}
       />,
     );
@@ -85,6 +88,7 @@ describe('ActivityRow', () => {
         isFirst={false}
         isLast={false}
         onDelete={onDelete}
+        onEdit={onEdit}
         onMoveActivity={onMoveActivity}
       />,
     );
@@ -98,6 +102,7 @@ describe('ActivityRow', () => {
         isFirst={false}
         isLast={false}
         onDelete={onDelete}
+        onEdit={onEdit}
         onMoveActivity={onMoveActivity}
       />,
     );
@@ -111,6 +116,7 @@ describe('ActivityRow', () => {
         isFirst={false}
         isLast={false}
         onDelete={onDelete}
+        onEdit={onEdit}
         onMoveActivity={onMoveActivity}
       />,
     );
@@ -126,6 +132,7 @@ describe('ActivityRow', () => {
         isFirst={false}
         isLast={false}
         onDelete={onDelete}
+        onEdit={onEdit}
         onMoveActivity={onMoveActivity}
       />,
     );
@@ -143,6 +150,7 @@ describe('ActivityRow', () => {
         isFirst={false}
         isLast={false}
         onDelete={onDelete}
+        onEdit={onEdit}
         onMoveActivity={onMoveActivity}
       />,
     );
@@ -158,6 +166,7 @@ describe('ActivityRow', () => {
         isFirst={false}
         isLast={false}
         onDelete={onDelete}
+        onEdit={onEdit}
         onMoveActivity={onMoveActivity}
       />,
     );
@@ -173,6 +182,7 @@ describe('ActivityRow', () => {
         isFirst={false}
         isLast={false}
         onDelete={onDelete}
+        onEdit={onEdit}
         onMoveActivity={onMoveActivity}
       />,
     );
@@ -188,6 +198,7 @@ describe('ActivityRow', () => {
         isFirst={true}
         isLast={false}
         onDelete={onDelete}
+        onEdit={onEdit}
         onMoveActivity={onMoveActivity}
       />,
     );
@@ -203,6 +214,7 @@ describe('ActivityRow', () => {
         isFirst={false}
         isLast={true}
         onDelete={onDelete}
+        onEdit={onEdit}
         onMoveActivity={onMoveActivity}
       />,
     );
@@ -218,6 +230,7 @@ describe('ActivityRow', () => {
         isFirst={false}
         isLast={false}
         onDelete={onDelete}
+        onEdit={onEdit}
         onMoveActivity={onMoveActivity}
         isDragging={true}
       />,
@@ -232,6 +245,7 @@ describe('ActivityRow', () => {
         isFirst={false}
         isLast={false}
         onDelete={onDelete}
+        onEdit={onEdit}
         onMoveActivity={onMoveActivity}
         isDragging={false}
       />,
@@ -247,6 +261,7 @@ describe('ActivityRow', () => {
         isFirst={false}
         isLast={false}
         onDelete={onDelete}
+        onEdit={onEdit}
         onMoveActivity={onMoveActivity}
         dragHandleProps={dragHandleProps}
       />,

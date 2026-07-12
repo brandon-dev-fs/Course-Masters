@@ -1,4 +1,4 @@
-import { GripVertical, MoreVertical, Trash2, ChevronUp, ChevronDown } from 'lucide-react';
+import { GripVertical, MoreVertical, Pencil, Trash2, ChevronUp, ChevronDown } from 'lucide-react';
 
 import type { BuilderActivity } from '../../api/types.js';
 
@@ -11,6 +11,7 @@ interface ActivityRowProps {
   isFirst: boolean;
   isLast: boolean;
   onDelete: () => void;
+  onEdit: () => void;
   onMoveActivity: (direction: 'up' | 'down') => void;
   dragHandleProps?: Record<string, unknown>;
   isDragging?: boolean;
@@ -21,6 +22,7 @@ export default function ActivityRow({
   isFirst,
   isLast,
   onDelete,
+  onEdit,
   onMoveActivity,
   dragHandleProps,
   isDragging = false,
@@ -76,6 +78,16 @@ export default function ActivityRow({
       <span className="flex-1 text-sm text-text-primary truncate min-w-0">
         {activity.title}
       </span>
+
+      {/* Edit button */}
+      <button
+        type="button"
+        aria-label={`Edit ${activity.title}`}
+        onClick={onEdit}
+        className="p-1 rounded-lg text-muted-foreground hover:text-text-primary hover:bg-surface transition-colors opacity-0 group-hover:opacity-100 shrink-0"
+      >
+        <Pencil className="w-4 h-4" aria-hidden="true" />
+      </button>
 
       {/* Context menu */}
       <div className="relative">

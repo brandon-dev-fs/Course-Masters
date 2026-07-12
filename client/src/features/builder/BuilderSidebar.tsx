@@ -17,11 +17,20 @@ export default function BuilderSidebar({ outline }: BuilderSidebarProps) {
   return (
     <aside className="hidden lg:block w-80 shrink-0">
       <div className="sticky top-24 flex flex-col gap-4">
-        {/* Course Details */}
+        {/* Course title */}
         <div className="bg-surface rounded-xl border border-border-subtle p-5 shadow-warm-sm">
-          <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">
-            Course Details
-          </h2>
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Course</p>
+          <p className="text-sm font-semibold text-text-primary">{outline.course.title}</p>
+          {outline.course.description && (
+            <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{outline.course.description}</p>
+          )}
+        </div>
+
+        {/* Structure stats */}
+        <div className="bg-surface rounded-xl border border-border-subtle p-5 shadow-warm-sm">
+          <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+            Structure
+          </h3>
 
           <dl className="flex flex-col gap-2 text-sm">
             <div className="flex justify-between">
@@ -48,7 +57,6 @@ export default function BuilderSidebar({ outline }: BuilderSidebarProps) {
             </div>
           </dl>
         </div>
-
       </div>
     </aside>
   );

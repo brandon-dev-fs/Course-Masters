@@ -27,9 +27,11 @@ interface PracticeProblemFormProps {
 export default function PracticeProblemForm({ initial, nextOrder = 1, onSubmit, onCancel }: PracticeProblemFormProps) {
   const isPracticeProblem = initial?.type === 'practice_problem';
   const [draft, setDraft] = useState<QuestionDraft>({
+    type: 'multiple_choice',
     question: isPracticeProblem ? (initial.content.question ?? '') : '',
     content: {
-      options: isPracticeProblem ? (initial.content.options ?? ['', '']) : ['', ''],
+      question: isPracticeProblem ? (initial.content.question ?? '') : '',
+      options: isPracticeProblem ? (initial.content.options ?? ['', '', '', '']) : ['', '', '', ''],
       correctIndex: isPracticeProblem ? (initial.content.correctIndex ?? 0) : 0,
     },
     order: initial?.order ?? nextOrder,
@@ -43,8 +45,10 @@ export default function PracticeProblemForm({ initial, nextOrder = 1, onSubmit, 
     setSubmitting(true);
     setError('');
     try {
-      if (!draft.question.trim()) throw new Error('Question is required');
-      if (draft.content.options.some(o => !o.trim())) throw new Error('All options must have text');
+      const questionText = ((draft.content['question'] as string | undefined) ?? draft.question).trim();
+      if (!questionText) throw new Error('Question is required');
+      const options = draft.content['options'] as string[] | undefined;
+      if (options?.some(o => !o.trim())) throw new Error('All options must have text');
       await onSubmit(draft);
     } catch (err: unknown) {
       setError(err instanceof ApiClientError ? classifyError(err) : err instanceof Error ? err.message : 'Something went wrong');

@@ -21,7 +21,7 @@ describe('ActivityTypeMenu', () => {
     render(<ActivityTypeMenu onSelect={vi.fn()} onClose={vi.fn()} />);
     expect(screen.getByRole('menuitem', { name: /Note/i })).toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: /Video/i })).toBeInTheDocument();
-    expect(screen.getByRole('menuitem', { name: /Reading/i })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: /External Link/i })).toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: /Vocab/i })).toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: /Practice Problem/i })).toBeInTheDocument();
   });

@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
 
 import CourseHeader from '../../../features/courses/CourseHeader.js';
-import type { Course } from '../../../api/types.js';
+import type { Course, Unit } from '../../../api/types.js';
 
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
@@ -99,5 +99,52 @@ describe('CourseHeader', () => {
     renderCourseHeader({ onOpenCalendar });
     fireEvent.click(screen.getByRole('button', { name: /open course calendar/i }));
     expect(onOpenCalendar).toHaveBeenCalledOnce();
+  });
+
+  it('uses _count.units when course.units is undefined', () => {
+    const courseWithCount: Course = {
+      ...mockCourse,
+      units: undefined as unknown as Course['units'],
+      _count: { units: 5 },
+    };
+    renderCourseHeader({ course: courseWithCount });
+    expect(screen.getByText('5 units')).toBeInTheDocument();
+  });
+
+  it('falls back to 0 units when both course.units and _count are absent', () => {
+    const courseNoUnits: Course = {
+      ...mockCourse,
+      units: undefined as unknown as Course['units'],
+      _count: undefined,
+    };
+    renderCourseHeader({ course: courseNoUnits });
+    expect(screen.getByText('0 units')).toBeInTheDocument();
+  });
+
+  it('uses unit._count.lessons when unit.lessons is undefined', () => {
+    const courseCountLessons: Course = {
+      ...mockCourse,
+      units: [
+        {
+          id: 'unit-1', title: 'Unit 1', description: '', order: 1, courseId: 'course-1',
+          lessons: undefined as unknown as Unit['lessons'],
+          _count: { lessons: 7 },
+        },
+      ],
+    };
+    renderCourseHeader({ course: courseCountLessons });
+    expect(screen.getByText('7 lessons')).toBeInTheDocument();
+  });
+
+  it('shows singular "lesson" when lesson count is 1', () => {
+    renderCourseHeader();
+    // mockCourse has 1 lesson across 2 units
+    expect(screen.getByText('1 lesson')).toBeInTheDocument();
+  });
+
+  it('does not show author row when course has no author', () => {
+    const courseNoAuthor: Course = { ...mockCourse, author: undefined };
+    renderCourseHeader({ course: courseNoAuthor });
+    expect(screen.queryByText('Teacher User')).not.toBeInTheDocument();
   });
 });

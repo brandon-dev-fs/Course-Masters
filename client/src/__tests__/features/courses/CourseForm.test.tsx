@@ -51,9 +51,21 @@ describe('CourseForm', () => {
     expect(onCancel).toHaveBeenCalledOnce();
   });
 
-  it('shows validation error when form submitted empty', async () => {
+  it('disables submit button when form is empty', () => {
     render(<CourseForm onSubmit={vi.fn()} onCancel={vi.fn()} />);
-    fireEvent.click(screen.getByRole('button', { name: /create course/i }));
-    expect(await screen.findByText(/title is required/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /create course/i })).toBeDisabled();
+  });
+
+  it('disables submit button when only title is filled', () => {
+    render(<CourseForm onSubmit={vi.fn()} onCancel={vi.fn()} />);
+    fireEvent.change(screen.getByLabelText(/title/i), { target: { value: 'My Course' } });
+    expect(screen.getByRole('button', { name: /create course/i })).toBeDisabled();
+  });
+
+  it('enables submit button when both fields are filled', () => {
+    render(<CourseForm onSubmit={vi.fn()} onCancel={vi.fn()} />);
+    fireEvent.change(screen.getByLabelText(/title/i), { target: { value: 'My Course' } });
+    fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'A description' } });
+    expect(screen.getByRole('button', { name: /create course/i })).toBeEnabled();
   });
 });

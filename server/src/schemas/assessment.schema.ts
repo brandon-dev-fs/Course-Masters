@@ -8,20 +8,25 @@ const multipleChoiceContentSchema = z.object({
 });
 
 const trueFalseContentSchema = z.object({
-  correctAnswer: z.boolean(),
+  correct: z.boolean(),
+});
+
+const fillInBlankBlankSchema = z.object({
+  answer: z.string().min(1, 'Blank answer is required'),
+  alternatives: z.array(z.string()).optional().default([]),
 });
 
 const fillInBlankContentSchema = z.object({
-  acceptedAnswers: z.array(z.string()).min(1, 'acceptedAnswers must be a non-empty array'),
+  blanks: z.array(fillInBlankBlankSchema).min(1, 'At least one blank required'),
 });
 
 const matchingPairSchema = z.object({
-  prompt: z.string().min(1),
-  answer: z.string().min(1),
+  left:  z.string().min(1, 'Left term is required'),
+  right: z.string().min(1, 'Right term is required'),
 });
 
 const matchingContentSchema = z.object({
-  pairs: z.array(matchingPairSchema).min(1, 'pairs must be a non-empty array'),
+  pairs: z.array(matchingPairSchema).min(2, 'At least 2 pairs required'),
 });
 
 // ── Discriminated union (drives validate middleware) ───────────────────────

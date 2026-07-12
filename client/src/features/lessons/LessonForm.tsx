@@ -16,7 +16,7 @@ interface LessonFormProps {
 export default function LessonForm({ initial, nextOrder = 1, onSubmit, onCancel }: LessonFormProps) {
   const [title, setTitle] = useState(initial?.title ?? '');
   const [description, setDescription] = useState(initial?.description ?? '');
-  const [order, setOrder] = useState(initial?.order ?? nextOrder);
+  const order = initial?.order ?? nextOrder;
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
@@ -37,13 +37,15 @@ export default function LessonForm({ initial, nextOrder = 1, onSubmit, onCancel 
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-      <Input id="title" label="Title" value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Introduction" autoFocus />
+      <div>
+        <Input id="title" label="Title" value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Introduction" maxLength={30} autoFocus />
+        <p className="text-xs text-muted-foreground text-right mt-1">{title.length}/30</p>
+      </div>
       <Textarea id="description" label="Description" value={description} onChange={e => setDescription(e.target.value)} placeholder="What will students learn in this lesson?" rows={3} />
-      <Input id="order" label="Order" type="number" value={order} onChange={e => setOrder(Number(e.target.value))} min={1} />
       {error && <ErrorMessage message={error} />}
       <div className="flex justify-end gap-3 pt-2">
         <Button type="button" variant="secondary" onClick={onCancel} disabled={submitting}>Cancel</Button>
-        <Button type="submit" disabled={submitting}>{submitting ? 'Saving...' : initial?.id ? 'Save Changes' : 'Add Lesson'}</Button>
+        <Button type="submit" disabled={!(title.trim().length > 0 && description.trim().length > 0) || submitting}>{submitting ? 'Saving...' : initial?.id ? 'Save Changes' : 'Add Lesson'}</Button>
       </div>
     </form>
   );

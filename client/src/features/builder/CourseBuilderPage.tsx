@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
+import { Pencil } from 'lucide-react';
 
 import { useBuilderOutline } from './hooks/useBuilderOutline.js';
 import OutlineTree from './OutlineTree.js';
@@ -13,10 +14,43 @@ import Modal from '../../components/Modal.js';
 import Button from '../../components/Button.js';
 import UnitForm from '../units/UnitForm.js';
 import LessonForm from '../lessons/LessonForm.js';
+import LessonPlanModal from '../lessons/LessonPlanModal.js';
 import AssignmentFormModal from '../assignments/AssignmentFormModal.js';
+import CourseForm from '../courses/CourseForm.js';
+import { lessonsApi } from '../../api/lessons.js';
+import { assignmentsApi } from '../../api/assignments.js';
+import { coursesApi } from '../../api/courses.js';
+import { assessmentsApi } from '../../api/assessments.js';
+import AssessmentSection from '../assessments/AssessmentSection.js';
 
-import type { Assignment, ReorderItem, BuilderUnit, BuilderLesson, BuilderActivity } from '../../api/types.js';
+import type { Assignment, AssessmentType, Lesson, ReorderItem, BuilderUnit, BuilderLesson, BuilderActivity } from '../../api/types.js';
 import type { CreateAssignmentPayload, UpdateAssignmentPayload } from '../../api/assignments.js';
+
+// ── Stable assessment API adapters (module-level, not recreated per render) ──
+
+const quizApi = {
+  get: assessmentsApi.getLessonQuiz,
+  create: assessmentsApi.createLessonQuiz,
+  update: assessmentsApi.update,
+  submitAttempt: assessmentsApi.submitAttempt,
+  getAttempts: assessmentsApi.getAttempts,
+};
+
+const testApi = {
+  get: assessmentsApi.getUnitQuiz,
+  create: assessmentsApi.createUnitQuiz,
+  update: assessmentsApi.update,
+  submitAttempt: assessmentsApi.submitAttempt,
+  getAttempts: assessmentsApi.getAttempts,
+};
+
+const examApi = {
+  get: assessmentsApi.getCourseExam,
+  create: assessmentsApi.createCourseExam,
+  update: assessmentsApi.update,
+  submitAttempt: assessmentsApi.submitAttempt,
+  getAttempts: assessmentsApi.getAttempts,
+};
 
 interface DeleteTarget {
   id: string;
@@ -79,6 +113,23 @@ export default function CourseBuilderPage() {
   // ── Add activity modal state ──────────────────────────────────────────────
   const [addActivityLessonId, setAddActivityLessonId] = useState<string | null>(null);
 
+  // ── Edit lesson plan modal state ──────────────────────────────────────────
+  const [editingPlanData, setEditingPlanData] = useState<{ unitId: string; lesson: Lesson } | null>(null);
+  const [planError, setPlanError] = useState('');
+
+  // ── Edit activity modal state ──────────────────────────────────────────────
+  const [editingAssignment, setEditingAssignment] = useState<Assignment | null>(null);
+  const [editActivityError, setEditActivityError] = useState('');
+
+  // ── Edit course modal state ────────────────────────────────────────────────
+  const [editCourseOpen, setEditCourseOpen] = useState(false);
+
+  // ── Assessment management state ───────────────────────────────────────────
+  const [managingAssessment, setManagingAssessment] = useState<{
+    type: AssessmentType;
+    parentId: string;
+  } | null>(null);
+
   // ── Handlers ──────────────────────────────────────────────────────────────
 
   const handleToggleUnit = useCallback((unitId: string) => {
@@ -124,6 +175,104 @@ export default function CourseBuilderPage() {
     setRenamingId(null);
     setAnnouncement(`Renamed to ${title}`);
   }, [renameLesson]);
+
+  const handleEditPlan = useCallback(async (unitId: string, lessonId: string) => {
+    setPlanError('');
+    try {
+      const lesson = await lessonsApi.getOne(unitId, lessonId);
+      setEditingPlanData({ unitId, lesson });
+    } catch {
+      setPlanError('Failed to load lesson plan. Please try again.');
+    }
+  }, []);
+
+  const handleSubmitLessonPlan = useCallback(async (data: {
+    title: string;
+    description?: string;
+    order: number;
+    objective?: string;
+    planContent?: Record<string, unknown>;
+  }) => {
+    if (!editingPlanData) return;
+    const { unitId, lesson } = editingPlanData;
+    await lessonsApi.update(unitId, lesson.id, data);
+    const newHasLessonPlan =
+      (data.objective ?? '').trim() !== '' ||
+      Object.keys(data.planContent ?? {}).length > 0;
+    setOutline((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        units: prev.units.map((u) =>
+          u.id !== unitId ? u : {
+            ...u,
+            lessons: u.lessons.map((l) =>
+              l.id !== lesson.id ? l : { ...l, hasLessonPlan: newHasLessonPlan },
+            ),
+          },
+        ),
+      };
+    });
+    setEditingPlanData(null);
+    setAnnouncement('Lesson plan saved');
+  }, [editingPlanData, setOutline]);
+
+  const handleEditActivity = useCallback(async (assignmentId: string) => {
+    setEditActivityError('');
+    try {
+      const assignment = await assignmentsApi.getOne(assignmentId);
+      setEditingAssignment(assignment);
+    } catch {
+      setEditActivityError('Failed to load activity. Please try again.');
+    }
+  }, []);
+
+  const handleSubmitEditActivity = useCallback(async (payload: CreateAssignmentPayload | UpdateAssignmentPayload) => {
+    if (!editingAssignment) return;
+    await assignmentsApi.update(editingAssignment.id, payload as UpdateAssignmentPayload);
+    const updated = payload as UpdateAssignmentPayload;
+    setOutline((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        units: prev.units.map((u) => ({
+          ...u,
+          lessons: u.lessons.map((l) => ({
+            ...l,
+            assignments: l.assignments.map((a) =>
+              a.id === editingAssignment.id
+                ? { ...a, title: updated.title ?? a.title }
+                : a,
+            ),
+          })),
+        })),
+      };
+    });
+    setEditingAssignment(null);
+    setAnnouncement('Activity updated');
+  }, [editingAssignment, setOutline]);
+
+  const handleSubmitEditCourse = useCallback(async (data: { title: string; description: string }) => {
+    await coursesApi.update(resolvedCourseId, data);
+    setOutline((prev) => {
+      if (!prev) return prev;
+      return { ...prev, course: { ...prev.course, title: data.title, description: data.description } };
+    });
+    setEditCourseOpen(false);
+    setAnnouncement('Course updated');
+  }, [resolvedCourseId, setOutline]);
+
+  const handleManageLessonQuiz = useCallback((lessonId: string) => {
+    setManagingAssessment({ type: 'lesson_quiz', parentId: lessonId });
+  }, []);
+
+  const handleManageUnitTest = useCallback((unitId: string) => {
+    setManagingAssessment({ type: 'unit_quiz', parentId: unitId });
+  }, []);
+
+  const handleManageCourseExam = useCallback(() => {
+    setManagingAssessment({ type: 'course_exam', parentId: resolvedCourseId });
+  }, [resolvedCourseId]);
 
   const handleAddUnit = useCallback(() => {
     setAddUnitModalOpen(true);
@@ -332,6 +481,27 @@ export default function CourseBuilderPage() {
         sidebarContent={sidebarContent}
       />
 
+      {/* Course header */}
+      <div className="flex items-start justify-between gap-4 pb-5 mb-2 border-b border-border-subtle">
+        <div className="min-w-0">
+          <h1 className="text-xl font-bold text-text-primary truncate">{outline.course.title}</h1>
+          {outline.course.description ? (
+            <p className="text-sm text-text-secondary mt-1 line-clamp-2">{outline.course.description}</p>
+          ) : (
+            <p className="text-sm text-muted-foreground italic mt-1">No description</p>
+          )}
+        </div>
+        <button
+          type="button"
+          aria-label="Edit course details"
+          onClick={() => setEditCourseOpen(true)}
+          className="shrink-0 flex items-center gap-1.5 text-sm text-muted-foreground hover:text-text-primary border border-border rounded-lg px-3 py-1.5 transition-colors hover:bg-surface"
+        >
+          <Pencil className="w-4 h-4" aria-hidden="true" />
+          Edit
+        </button>
+      </div>
+
       <div className="flex gap-8">
         {/* Main outline column */}
         <main className="flex-1 min-w-0">
@@ -351,6 +521,7 @@ export default function CourseBuilderPage() {
             onDeleteUnit={handleConfirmDeleteUnit}
             onDeleteLesson={handleConfirmDeleteLesson}
             onDeleteActivity={handleConfirmDeleteActivity}
+            onEditActivity={handleEditActivity}
             onAddUnit={handleAddUnit}
             onAddLesson={handleAddLesson}
             onAddActivity={handleAddActivity}
@@ -361,6 +532,10 @@ export default function CourseBuilderPage() {
             onMoveLesson={handleMoveLesson}
             onMoveActivity={handleMoveActivity}
             onEditUnit={handleEditUnit}
+            onEditPlanLesson={handleEditPlan}
+            onManageLessonQuiz={handleManageLessonQuiz}
+            onManageUnitTest={handleManageUnitTest}
+            onManageCourseExam={handleManageCourseExam}
             announce={setAnnouncement}
             onConfirmDeleteUnit={handleConfirmDeleteUnit}
             onConfirmDeleteLesson={handleConfirmDeleteLesson}
@@ -446,6 +621,91 @@ export default function CourseBuilderPage() {
           onSubmit={handleSubmitNewActivity}
           onFileCreate={handleFileCreate}
           onClose={() => setAddActivityLessonId(null)}
+        />
+      )}
+
+      {/* Edit lesson plan modal */}
+      {editingPlanData && (
+        <LessonPlanModal
+          lesson={editingPlanData.lesson}
+          onClose={() => setEditingPlanData(null)}
+          onUpdate={handleSubmitLessonPlan}
+        />
+      )}
+
+      {/* Plan fetch error toast */}
+      {planError && (
+        <div className="fixed bottom-4 right-4 z-50">
+          <ErrorMessage message={planError} />
+        </div>
+      )}
+
+      {/* Edit activity modal */}
+      {editingAssignment && (
+        <AssignmentFormModal
+          initial={editingAssignment}
+          onSubmit={handleSubmitEditActivity}
+          onClose={() => setEditingAssignment(null)}
+        />
+      )}
+
+      {/* Edit activity fetch error toast */}
+      {editActivityError && (
+        <div className="fixed bottom-4 right-4 z-50">
+          <ErrorMessage message={editActivityError} />
+        </div>
+      )}
+
+      {/* Edit course modal */}
+      {editCourseOpen && (
+        <Modal title="Edit Course" onClose={() => setEditCourseOpen(false)}>
+          <CourseForm
+            initial={{ id: resolvedCourseId, title: outline.course.title, description: outline.course.description }}
+            onSubmit={handleSubmitEditCourse}
+            onCancel={() => setEditCourseOpen(false)}
+          />
+        </Modal>
+      )}
+
+      {/* Assessment management modal */}
+      {managingAssessment && (
+        <AssessmentSection
+          parentId={managingAssessment.parentId}
+          api={
+            managingAssessment.type === 'lesson_quiz'
+              ? quizApi
+              : managingAssessment.type === 'unit_quiz'
+                ? testApi
+                : examApi
+          }
+          label={
+            managingAssessment.type === 'lesson_quiz'
+              ? 'Lesson Quiz'
+              : managingAssessment.type === 'unit_quiz'
+                ? 'Unit Test'
+                : 'Course Exam'
+          }
+          createLabel={
+            managingAssessment.type === 'lesson_quiz'
+              ? 'Create Lesson Quiz'
+              : managingAssessment.type === 'unit_quiz'
+                ? 'Create Unit Test'
+                : 'Create Course Exam'
+          }
+          takeLabel="Take"
+          retakeLabel="Retake"
+          modalTitle={
+            managingAssessment.type === 'lesson_quiz'
+              ? 'Lesson Quiz'
+              : managingAssessment.type === 'unit_quiz'
+                ? 'Unit Test'
+                : 'Course Exam'
+          }
+          resultsTitle="Results"
+          displayMode="modal-only"
+          canEdit
+          open
+          onClose={() => setManagingAssessment(null)}
         />
       )}
     </div>

@@ -51,17 +51,15 @@ describe('LessonForm', () => {
     expect(onCancel).toHaveBeenCalledOnce();
   });
 
-  it('shows validation error when submitted empty', async () => {
+  it('disables submit button when form is empty', () => {
     render(<LessonForm onSubmit={vi.fn()} onCancel={vi.fn()} />);
-    fireEvent.click(screen.getByRole('button', { name: /add lesson/i }));
-    expect(await screen.findByText(/title is required/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /add lesson/i })).toBeDisabled();
   });
 
-  it('shows description required error when title filled but description empty', async () => {
+  it('disables submit button when only title is filled', () => {
     render(<LessonForm onSubmit={vi.fn()} onCancel={vi.fn()} />);
     fireEvent.change(screen.getByLabelText(/title/i), { target: { value: 'My Lesson' } });
-    fireEvent.click(screen.getByRole('button', { name: /add lesson/i }));
-    expect(await screen.findByText(/description is required/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /add lesson/i })).toBeDisabled();
   });
 
   it('calls onSubmit with trimmed title and description', async () => {

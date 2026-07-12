@@ -79,6 +79,13 @@ vi.mock('../../../features/builder/DropdownMenu.js', () => ({
     </div>
   ),
 }));
+vi.mock('../../../features/builder/LessonPlanRow.js', () => ({
+  default: ({ hasLessonPlan, onClick }: { hasLessonPlan: boolean; onClick: () => void }) => (
+    <button data-testid="lesson-plan-row" onClick={onClick}>
+      {hasLessonPlan ? 'plan-set' : 'plan-not-set'}
+    </button>
+  ),
+}));
 vi.mock('../../../features/builder/hooks/useDragReorder.js', () => ({
   useDragReorder: () => ({
     sensors: [],
@@ -93,6 +100,7 @@ const makeLesson = (overrides?: Partial<BuilderLesson>): BuilderLesson => ({
   id: 'lesson-1',
   title: 'Test Lesson',
   order: 1,
+  hasLessonPlan: false,
   assignments: [],
   assessment: null,
   ...overrides,
@@ -110,10 +118,12 @@ const defaultProps = {
   onCancelRename: vi.fn(),
   onDelete: vi.fn(),
   onDeleteActivity: vi.fn(),
+  onEditActivity: vi.fn(),
   onAddActivity: vi.fn(),
   onReorderActivities: vi.fn().mockResolvedValue(undefined),
   onMoveLesson: vi.fn(),
   onMoveActivity: vi.fn(),
+  onEditPlan: vi.fn(),
   announce: vi.fn(),
 };
 
@@ -152,7 +162,7 @@ describe('LessonRow', () => {
   });
 
   it('shows children when isExpanded is true', () => {
-    render(<LessonRow lesson={makeLesson()} {...defaultProps} isExpanded={true} />);
+    render(<LessonRow lesson={makeLesson({ hasLessonPlan: true })} {...defaultProps} isExpanded={true} />);
     expect(screen.getByRole('button', { name: /add activity/i })).toBeInTheDocument();
   });
 
@@ -177,7 +187,7 @@ describe('LessonRow', () => {
   it('calls onAddActivity when Add activity button is clicked', () => {
     const onAddActivity = vi.fn();
     render(
-      <LessonRow lesson={makeLesson()} {...defaultProps} isExpanded={true} onAddActivity={onAddActivity} />,
+      <LessonRow lesson={makeLesson({ hasLessonPlan: true })} {...defaultProps} isExpanded={true} onAddActivity={onAddActivity} />,
     );
     fireEvent.click(screen.getByRole('button', { name: /add activity/i }));
     expect(onAddActivity).toHaveBeenCalledTimes(1);

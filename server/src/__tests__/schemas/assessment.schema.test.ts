@@ -70,17 +70,17 @@ describe('questionSchema — true_false', () => {
     const result = questionSchema.safeParse({
       type: 'true_false',
       question: 'Is the sky blue?',
-      content: { correctAnswer: true },
+      content: { correct: true },
       order: 1,
     });
     expect(result.success).toBe(true);
   });
 
-  it('rejects non-boolean correctAnswer', () => {
+  it('rejects non-boolean correct field', () => {
     const result = questionSchema.safeParse({
       type: 'true_false',
       question: 'Q?',
-      content: { correctAnswer: 'yes' },
+      content: { correct: 'yes' },
       order: 0,
     });
     expect(result.success).toBe(false);
@@ -92,17 +92,17 @@ describe('questionSchema — fill_in_blank', () => {
     const result = questionSchema.safeParse({
       type: 'fill_in_blank',
       question: 'The capital of France is ___.',
-      content: { acceptedAnswers: ['Paris', 'paris'] },
+      content: { blanks: [{ answer: 'Paris', alternatives: ['paris'] }] },
       order: 2,
     });
     expect(result.success).toBe(true);
   });
 
-  it('rejects empty acceptedAnswers array', () => {
+  it('rejects empty blanks array', () => {
     const result = questionSchema.safeParse({
       type: 'fill_in_blank',
       question: 'Q?',
-      content: { acceptedAnswers: [] },
+      content: { blanks: [] },
       order: 0,
     });
     expect(result.success).toBe(false);
@@ -114,7 +114,7 @@ describe('questionSchema — matching', () => {
     const result = questionSchema.safeParse({
       type: 'matching',
       question: 'Match each country to its capital.',
-      content: { pairs: [{ prompt: 'France', answer: 'Paris' }] },
+      content: { pairs: [{ left: 'France', right: 'Paris' }, { left: 'Germany', right: 'Berlin' }] },
       order: 3,
     });
     expect(result.success).toBe(true);
@@ -130,11 +130,11 @@ describe('questionSchema — matching', () => {
     expect(result.success).toBe(false);
   });
 
-  it('rejects pair with empty prompt', () => {
+  it('rejects pair with empty left term', () => {
     const result = questionSchema.safeParse({
       type: 'matching',
       question: 'Q?',
-      content: { pairs: [{ prompt: '', answer: 'Answer' }] },
+      content: { pairs: [{ left: '', right: 'Answer' }] },
       order: 0,
     });
     expect(result.success).toBe(false);
@@ -165,13 +165,13 @@ describe('createAssessmentSchema', () => {
         {
           type: 'true_false',
           question: 'True or false?',
-          content: { correctAnswer: true },
+          content: { correct: true },
           order: 0,
         },
         {
           type: 'fill_in_blank',
           question: '___ is the capital.',
-          content: { acceptedAnswers: ['Paris'] },
+          content: { blanks: [{ answer: 'Paris' }] },
           order: 1,
         },
       ],

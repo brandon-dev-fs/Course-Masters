@@ -91,4 +91,27 @@ describe('Tooltip', () => {
     const tooltipEl = container.querySelector('[style*="position: fixed"]');
     expect(tooltipEl).toBeInTheDocument();
   });
+
+  it('positions the tooltip above the trigger when near the bottom of the viewport', () => {
+    // Make getBoundingClientRect report an element near the bottom so `above` becomes true
+    vi.spyOn(Element.prototype, 'getBoundingClientRect').mockReturnValue({
+      bottom: 700, top: 680, left: 50, right: 150, width: 100, height: 20,
+      x: 50, y: 680, toJSON: () => ({}),
+    } as DOMRect);
+
+    const { container } = render(
+      <Tooltip content="Above tooltip">
+        <button>Hover me</button>
+      </Tooltip>,
+    );
+    const trigger = screen.getByText('Hover me').closest('div')!;
+    fireEvent.mouseEnter(trigger);
+
+    // When above=true the tooltip gets a translateY transform
+    const tooltipEl = container.querySelector('[style*="translateY"]');
+    expect(tooltipEl).toBeInTheDocument();
+    expect(screen.getByText('Above tooltip')).toBeInTheDocument();
+
+    vi.restoreAllMocks();
+  });
 });

@@ -26,6 +26,7 @@ const outlineWithData: BuilderOutline = {
           id: 'l1',
           title: 'Lesson 1',
           order: 1,
+          hasLessonPlan: false,
           assignments: [
             { id: 'act1', title: 'Activity 1', type: 'note', order: 1 },
             { id: 'act2', title: 'Activity 2', type: 'video', order: 2 },
@@ -36,6 +37,7 @@ const outlineWithData: BuilderOutline = {
           id: 'l2',
           title: 'Lesson 2',
           order: 2,
+          hasLessonPlan: false,
           assignments: [],
           assessment: null,
         },
@@ -54,9 +56,10 @@ const outlineWithData: BuilderOutline = {
 };
 
 describe('BuilderSidebar', () => {
-  it('renders the Course Details heading', () => {
+  it('renders the course title and Structure heading', () => {
     render(<BuilderSidebar outline={makeOutline()} />);
-    expect(screen.getByText('Course Details')).toBeInTheDocument();
+    expect(screen.getByText('Test Course')).toBeInTheDocument();
+    expect(screen.getByText('Structure')).toBeInTheDocument();
   });
 
   it('shows 0 units when outline has no units', () => {

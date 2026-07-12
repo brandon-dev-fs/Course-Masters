@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { FileText, Video, ExternalLink, BookMarked, Brain, ChevronLeft, FileUp } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import Modal from '../../components/Modal.js';
+import Tooltip from '../../components/Tooltip.js';
 import Input from '../../components/Input.js';
 import Textarea from '../../components/Textarea.js';
 import Button from '../../components/Button.js';
@@ -18,6 +19,7 @@ import type { PracticeQuestionDraft } from './PracticeProblemAssignmentForm.js';
 import type { Assignment, AssignmentType, VocabEntry } from '../../api/types.js';
 import type { CreateAssignmentPayload, UpdateAssignmentPayload } from '../../api/assignments.js';
 import { uploadFileAssignment } from '../../api/assignments.js';
+import useYouTubeTitle from '../../hooks/useYouTubeTitle.js';
 import { ApiClientError, classifyError } from '../../api/client.js';
 
 // ─── Shared state + handler types ─────────────────────────────────────────────
@@ -25,19 +27,18 @@ import { ApiClientError, classifyError } from '../../api/client.js';
 export interface TypeFormState {
   noteContent: Record<string, unknown> | null;
   url: string;               // video + reading
-  displayTitle: string;      // video
-  description: string;       // reading
   estimatedMinutes: string;  // reading
   passingPercentage: string; // practice_problem
   entries: VocabEntry[];     // vocab
   questions: PracticeQuestionDraft[]; // practice_problem
+  // video: YouTube auto-fetch state (lifted here so title can be set on the shared field)
+  fetchingVideoTitle: boolean;
+  handleVideoUrlBlur: () => Promise<void>;
 }
 
 export interface TypeFormHandlers {
   onNoteContentChange: (v: Record<string, unknown>) => void;
   onUrlChange: (v: string) => void;
-  onDisplayTitleChange: (v: string) => void;
-  onDescriptionChange: (v: string) => void;
   onEstimatedMinutesChange: (v: string) => void;
   onPassingPercentageChange: (v: string) => void;
   onEntriesChange: (entries: VocabEntry[]) => void;
@@ -68,13 +69,54 @@ export const TYPE_CONFIG: Record<AssignmentType, TypeConfig> = {
   file:             { label: 'File',              icon: FileUp },
 };
 
+// ─── Question validity helper ─────────────────────────────────────────────────
+
+function isQuestionValid(q: PracticeQuestionDraft): boolean {
+  const content = q.content;
+  switch (q.type) {
+    case 'multiple_choice': {
+      const questionText = (content.question as string) ?? '';
+      const options = (content.options as string[]) ?? [];
+      const nonEmpty = options.filter(o => o.trim().length > 0);
+      const uniqueNonEmpty = new Set(nonEmpty);
+      return questionText.trim().length > 0 && nonEmpty.length >= 2 && uniqueNonEmpty.size === nonEmpty.length;
+    }
+    case 'true_false': {
+      const question = (content.question as string) ?? '';
+      return question.trim().length > 0;
+    }
+    case 'matching': {
+      // New shape
+      const pairs = content['pairs'] as Array<{ left: string; right: string }> | undefined;
+      if (pairs) {
+        return pairs.some(p => p.left.trim().length > 0 && p.right.trim().length > 0);
+      }
+      // Old shape fallback
+      const leftItems = (content['leftItems'] as string[]) ?? [];
+      const rightItems = (content['rightItems'] as string[]) ?? [];
+      return leftItems.some((l, i) => l.trim().length > 0 && (rightItems[i] ?? '').trim().length > 0);
+    }
+    case 'fill_in_blank': {
+      const questionText = (content.question as string) ?? '';
+      const blanks = (content.blanks as Array<{ answer: string }>) ?? [];
+      const tokenCount = (questionText.match(/\{\{blank_\d+\}\}/g) ?? []).length;
+      return (
+        questionText.trim().length > 0 &&
+        tokenCount > 0 &&
+        blanks.length === tokenCount &&
+        blanks.every(b => b.answer.trim().length > 0)
+      );
+    }
+    default:
+      return false;
+  }
+}
+
 // ─── Empty state constant ─────────────────────────────────────────────────────
 
-const EMPTY_TYPE_STATE: TypeFormState = {
+const EMPTY_TYPE_STATE: Omit<TypeFormState, 'fetchingVideoTitle' | 'handleVideoUrlBlur'> = {
   noteContent: null,
   url: '',
-  displayTitle: '',
-  description: '',
   estimatedMinutes: '',
   passingPercentage: '',
   entries: [],
@@ -115,41 +157,40 @@ export default function AssignmentFormModal({ initial, onSubmit, lessonId, onFil
   const [objective, setObjective] = useState(initial?.objective ?? '');
   const [titleError, setTitleError] = useState('');
 
+  // Tracks whether the user has manually typed a title — prevents YouTube auto-fetch from overwriting it
+  const videoTitleTouched = useRef(isEdit);
+
   // Flat type-form state — all fields initialised from initial if present
-  const [typeState, setTypeState] = useState<TypeFormState>({
+  const [typeState, setTypeState] = useState<Omit<TypeFormState, 'fetchingVideoTitle' | 'handleVideoUrlBlur'>>({
     noteContent: initial?.noteAssignment?.content ?? null,
     url: initial?.videoAssignment?.url ?? initial?.readingAssignment?.url ?? '',
-    displayTitle: initial?.videoAssignment?.title ?? '',
-    description: initial?.readingAssignment?.description ?? '',
     estimatedMinutes: String(initial?.readingAssignment?.estimatedMinutes ?? ''),
     passingPercentage: String(initial?.practiceProblemAssignment?.passingPercentage ?? ''),
     entries: initial?.vocabAssignment?.entries ?? [],
     questions: (initial?.practiceProblemAssignment?.questions ?? []).map(q => ({ ...q })),
   });
 
+  // YouTube title auto-fetch — populates the shared assignment title field
+  const { fetchingTitle: fetchingVideoTitle, handleUrlBlur: handleVideoUrlBlur } = useYouTubeTitle({
+    url: typeState.url,
+    titleTouched: videoTitleTouched,
+    onTitleFetched: setAssignmentTitle,
+  });
+
   const typeHandlers: TypeFormHandlers = {
     onNoteContentChange:       v => setTypeState(s => ({ ...s, noteContent: v })),
     onUrlChange:               v => setTypeState(s => ({ ...s, url: v })),
-    onDisplayTitleChange:      v => setTypeState(s => ({ ...s, displayTitle: v })),
-    onDescriptionChange:       v => setTypeState(s => ({ ...s, description: v })),
     onEstimatedMinutesChange:  v => setTypeState(s => ({ ...s, estimatedMinutes: v })),
     onPassingPercentageChange: v => setTypeState(s => ({ ...s, passingPercentage: v })),
     onEntriesChange:           v => setTypeState(s => ({ ...s, entries: v })),
     onQuestionsChange:         v => setTypeState(s => ({ ...s, questions: v })),
   };
 
-  const subFormProps: SubFormProps = { ...typeState, ...typeHandlers };
+  const subFormProps: SubFormProps = { ...typeState, ...typeHandlers, fetchingVideoTitle, handleVideoUrlBlur };
 
   // Registry-driven derived state
   const config = selectedType ? TYPE_CONFIG[selectedType] : null;
   const hasItems = !!config?.ItemsForm;
-
-  // Modal title
-  const modalTitle = step === 'pick'
-    ? 'Add Assignment'
-    : isEdit
-      ? `Edit ${config!.label}`
-      : `Add ${config!.label}`;
 
   // File assignment state (create mode only — file cannot be replaced in edit mode)
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -159,6 +200,53 @@ export default function AssignmentFormModal({ initial, onSubmit, lessonId, onFil
   // Submission state
   const [apiError, setApiError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  // ── Validity derived from typeState ──────────────────────────────────────────
+  const titleValid = assignmentTitle.trim().length > 0 && assignmentTitle.length <= 120;
+  // Disable title field for new video assignments until a URL is entered so the auto-fetch fires first
+  const isTitleDisabledForVideo = selectedType === 'video' && !isEdit && !typeState.url.trim();
+
+  const isMetaTypeValid: boolean = (() => {
+    if (!selectedType) return false;
+    switch (selectedType) {
+      case 'note':
+        return typeState.noteContent != null && JSON.stringify(typeState.noteContent).includes('"text"');
+      case 'video':
+        return typeState.url.trim().length > 0;
+      case 'reading':
+        return typeState.url.trim().length > 0;
+      case 'file':
+        return isEdit ? true : selectedFile !== null;
+      case 'vocab':
+      case 'practice_problem':
+        return true;
+      default:
+        return true;
+    }
+  })();
+
+  const isItemsValid: boolean = (() => {
+    if (!selectedType) return false;
+    switch (selectedType) {
+      case 'vocab':
+        return typeState.entries.some(e => e.term.trim() && e.definition.trim());
+      case 'practice_problem':
+        return typeState.questions.length > 0 && typeState.questions.every(isQuestionValid);
+      default:
+        return true;
+    }
+  })();
+
+  const isMetaSubmitValid = titleValid && isMetaTypeValid;
+  const isNextValid = titleValid;
+  const isItemsSubmitValid = isItemsValid;
+
+  // Modal title
+  const modalTitle = step === 'pick'
+    ? 'Add Assignment'
+    : isEdit
+      ? `Edit ${config!.label}`
+      : `Add ${config!.label}`;
 
   // Navigation handlers
   function handleTypeSelected(type: AssignmentType) {
@@ -177,7 +265,8 @@ export default function AssignmentFormModal({ initial, onSubmit, lessonId, onFil
     setAssignmentTitle('');
     setObjective('');
     setTitleError('');
-    setTypeState(EMPTY_TYPE_STATE);
+    setTypeState({ ...EMPTY_TYPE_STATE });
+    videoTitleTouched.current = false;
     setSelectedFile(null);
     setUploadProgress(null);
     setFileError('');
@@ -186,6 +275,10 @@ export default function AssignmentFormModal({ initial, onSubmit, lessonId, onFil
   function handleAdvanceToItems() {
     if (!assignmentTitle.trim()) {
       setTitleError('Title is required');
+      return;
+    }
+    if (assignmentTitle.length > 120) {
+      setTitleError('Title must be 120 characters or fewer');
       return;
     }
     setTitleError('');
@@ -201,6 +294,10 @@ export default function AssignmentFormModal({ initial, onSubmit, lessonId, onFil
       if (!assignmentTitle.trim()) {
         setTitleError('Title is required');
         throw new Error('Title is required');
+      }
+      if (assignmentTitle.length > 120) {
+        setTitleError('Title must be 120 characters or fewer');
+        throw new Error('Title must be 120 characters or fewer');
       }
       setTitleError('');
 
@@ -239,11 +336,9 @@ export default function AssignmentFormModal({ initial, onSubmit, lessonId, onFil
         } else if (type === 'video') {
           if (!typeState.url.trim()) throw new Error('URL is required');
           updatePayload.url = typeState.url.trim();
-          if (typeState.displayTitle.trim()) updatePayload.displayTitle = typeState.displayTitle.trim();
         } else if (type === 'reading') {
           if (!typeState.url.trim()) throw new Error('URL is required');
           updatePayload.url = typeState.url.trim();
-          if (typeState.description.trim()) updatePayload.description = typeState.description.trim();
           if (typeState.estimatedMinutes.trim()) {
             const mins = parseInt(typeState.estimatedMinutes, 10);
             if (isNaN(mins) || mins < 1) throw new Error('Estimated minutes must be at least 1');
@@ -286,7 +381,6 @@ export default function AssignmentFormModal({ initial, onSubmit, lessonId, onFil
             objective: objective.trim() || undefined,
             type: 'video',
             url: typeState.url.trim(),
-            displayTitle: typeState.displayTitle.trim() || undefined,
           };
         } else if (type === 'reading') {
           if (!typeState.url.trim()) throw new Error('URL is required');
@@ -301,7 +395,6 @@ export default function AssignmentFormModal({ initial, onSubmit, lessonId, onFil
             objective: objective.trim() || undefined,
             type: 'reading',
             url: typeState.url.trim(),
-            description: typeState.description.trim() || undefined,
             estimatedMinutes,
           };
         } else if (type === 'vocab') {
@@ -376,15 +469,46 @@ export default function AssignmentFormModal({ initial, onSubmit, lessonId, onFil
           {/* Scrollable content */}
           <div className="flex-1 overflow-y-auto min-h-0 flex flex-col gap-4 pr-1">
             <div>
-              <Input
-                id="assignment-title"
-                label="Title"
-                value={assignmentTitle}
-                onChange={e => { setAssignmentTitle(e.target.value); if (e.target.value.trim()) setTitleError(''); }}
-                placeholder="e.g. Read the Introduction"
-                required
-              />
-              {titleError && <ErrorMessage variant="inline" message={titleError} className="mt-1" />}
+              {isTitleDisabledForVideo ? (
+                <Tooltip content="Title will auto-populate from YouTube once you enter a URL. You can edit it after.">
+                  <Input
+                    id="assignment-title"
+                    label="Title"
+                    value={assignmentTitle}
+                    onChange={e => {
+                      const val = e.target.value;
+                      setAssignmentTitle(val);
+                      videoTitleTouched.current = true;
+                      setTitleError(val.length > 120 ? 'Title must be 120 characters or fewer' : '');
+                    }}
+                    placeholder="e.g. Read the Introduction"
+                    required
+                    disabled
+                  />
+                </Tooltip>
+              ) : (
+                <Input
+                  id="assignment-title"
+                  label="Title"
+                  value={assignmentTitle}
+                  onChange={e => {
+                    const val = e.target.value;
+                    setAssignmentTitle(val);
+                    videoTitleTouched.current = true;
+                    setTitleError(val.length > 120 ? 'Title must be 120 characters or fewer' : '');
+                  }}
+                  placeholder="e.g. Read the Introduction"
+                  required
+                />
+              )}
+              <div className="flex justify-between mt-1">
+                {titleError
+                  ? <ErrorMessage variant="inline" message={titleError} />
+                  : <span />}
+                <p className={`text-xs ${assignmentTitle.length > 120 ? 'text-destructive font-medium' : 'text-muted-foreground'}`}>
+                  {assignmentTitle.length}/120
+                </p>
+              </div>
             </div>
             <Textarea
               id="assignment-objective"
@@ -415,12 +539,12 @@ export default function AssignmentFormModal({ initial, onSubmit, lessonId, onFil
               Cancel
             </Button>
             {!hasItems && (
-              <Button type="submit" disabled={submitting}>
+              <Button type="submit" disabled={!isMetaSubmitValid || submitting}>
                 {submitting ? 'Saving...' : 'Save assignment'}
               </Button>
             )}
             {hasItems && (
-              <Button type="button" onClick={handleAdvanceToItems}>
+              <Button type="button" onClick={handleAdvanceToItems} disabled={!isNextValid}>
                 Next: {config!.nextLabel} →
               </Button>
             )}
@@ -455,7 +579,7 @@ export default function AssignmentFormModal({ initial, onSubmit, lessonId, onFil
             <Button type="button" variant="secondary" onClick={onClose} disabled={submitting}>
               Cancel
             </Button>
-            <Button type="button" onClick={handleSubmit} disabled={submitting}>
+            <Button type="button" onClick={handleSubmit} disabled={!isItemsSubmitValid || submitting}>
               {submitting ? 'Saving...' : 'Save assignment'}
             </Button>
           </div>
