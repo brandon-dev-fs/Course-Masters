@@ -14,6 +14,7 @@ import linkRouter from './link.routes.js';
 import { lessonAssignmentsRouter, assignmentsRouter, vocabEntriesRouter } from './assignment.routes.js';
 import { lessonChecklistRouter, checklistItemsRouter } from './checklist.routes.js';
 import userRouter from './user.routes.js';
+import trustedSourceRouter from './trusted-source.routes.js';
 import { authenticate } from '../middleware/authenticate.js';
 
 const router = Router();
@@ -57,6 +58,9 @@ router.use('/checklist-items', checklistItemsRouter);
 
 // Users (admin-only soft-delete)
 router.use('/users', userRouter);
+
+// Admin
+router.use('/admin/trusted-sources', trustedSourceRouter);
 
 // Utilities
 router.use('/youtube', youtubeRouter);
