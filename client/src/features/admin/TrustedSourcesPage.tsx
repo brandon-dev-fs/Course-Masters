@@ -134,19 +134,19 @@ export default function TrustedSourcesPage() {
       {loading ? (
         <LoadingSpinner />
       ) : (
-        <section
-          aria-live="polite"
-          className="bg-surface rounded-2xl shadow-warm-sm border border-border overflow-hidden"
-        >
+        <section className="bg-surface rounded-2xl shadow-warm-sm border border-border overflow-hidden">
+          <p aria-live="polite" className="sr-only">
+            {sources.length} {sources.length === 1 ? 'source' : 'sources'} loaded
+          </p>
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border bg-surface-raised">
-                <th className="text-left px-4 py-3 font-semibold text-foreground">Name</th>
-                <th className="text-left px-4 py-3 font-semibold text-foreground">Domain</th>
-                <th className="text-left px-4 py-3 font-semibold text-foreground hidden md:table-cell">Content Types</th>
-                <th className="text-left px-4 py-3 font-semibold text-foreground hidden md:table-cell">Categories</th>
-                <th className="text-left px-4 py-3 font-semibold text-foreground">Status</th>
-                <th className="text-left px-4 py-3 font-semibold text-foreground">Actions</th>
+                <th scope="col" className="text-left px-4 py-3 font-semibold text-foreground">Name</th>
+                <th scope="col" className="text-left px-4 py-3 font-semibold text-foreground">Domain</th>
+                <th scope="col" className="text-left px-4 py-3 font-semibold text-foreground hidden md:table-cell">Content Types</th>
+                <th scope="col" className="text-left px-4 py-3 font-semibold text-foreground hidden md:table-cell">Categories</th>
+                <th scope="col" className="text-left px-4 py-3 font-semibold text-foreground">Status</th>
+                <th scope="col" className="text-left px-4 py-3 font-semibold text-foreground">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -181,6 +181,7 @@ export default function TrustedSourcesPage() {
                         size="sm"
                         onClick={() => setEditing(source)}
                         disabled={togglingId === source.id}
+                        aria-label={`Edit ${source.name}`}
                       >
                         Edit
                       </Button>

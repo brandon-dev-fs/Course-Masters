@@ -133,7 +133,7 @@ export default function TrustedSourceForm({ source, onSuccess, onCancel }: Trust
         </Button>
         <Button type="submit" variant="primary" disabled={submitting}>
           {submitting && (
-            <span className="w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
+            <span aria-hidden="true" className="w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
           )}
           {source ? 'Save Changes' : 'Add Source'}
         </Button>

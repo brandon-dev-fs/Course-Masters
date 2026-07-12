@@ -2,14 +2,14 @@ import { apiClient } from './client.js';
 
 import type { TrustedSource } from './types.js';
 
-interface CreateTrustedSourceInput {
+export interface CreateTrustedSourceInput {
   name: string;
   domain: string;
   contentTypes: string[];
   categories: string[];
 }
 
-interface UpdateTrustedSourceInput {
+export interface UpdateTrustedSourceInput {
   name?: string;
   domain?: string;
   contentTypes?: string[];
