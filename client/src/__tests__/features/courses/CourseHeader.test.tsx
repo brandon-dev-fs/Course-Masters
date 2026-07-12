@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
 
 import CourseHeader from '../../../features/courses/CourseHeader.js';
-import type { Course } from '../../../api/types.js';
+import type { Course, Unit } from '../../../api/types.js';
 
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
@@ -127,7 +127,7 @@ describe('CourseHeader', () => {
       units: [
         {
           id: 'unit-1', title: 'Unit 1', description: '', order: 1, courseId: 'course-1',
-          lessons: undefined as unknown as Course['units'][0]['lessons'],
+          lessons: undefined as unknown as Unit['lessons'],
           _count: { lessons: 7 },
         },
       ],

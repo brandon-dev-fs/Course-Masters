@@ -233,8 +233,8 @@ describe('AssessmentTaker — matching', () => {
     question: 'Match countries to capitals.',
     content: {
       pairs: [
-        { id: 'p1', left: 'France', right: 'Paris' },
-        { id: 'p2', left: 'Germany', right: 'Berlin' },
+        { left: 'France', right: 'Paris' },
+        { left: 'Germany', right: 'Berlin' },
       ],
     },
     order: 1,
