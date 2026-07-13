@@ -8,6 +8,7 @@ import {
 	UserCircle,
 	LogOut,
 	ShieldCheck,
+	Globe,
 } from 'lucide-react';
 import Button from './Button.js';
 import Footer from './Footer.js';
@@ -95,16 +96,28 @@ export default function Layout() {
 					{user && (
 						<>
 							{user.role === 'admin' && (
-								<Link
-									to="/admin/users"
-									className="flex items-center gap-1.5 px-3 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors rounded-xl hover:bg-surface"
-									aria-label="Admin"
-								>
-									<ShieldCheck className="w-5 h-5" />
-									<span className="hidden sm:inline font-medium">
-										Admin
-									</span>
-								</Link>
+								<>
+									<Link
+										to="/admin/users"
+										className="flex items-center gap-1.5 px-3 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors rounded-xl hover:bg-surface"
+										aria-label="Admin Users"
+									>
+										<ShieldCheck className="w-5 h-5" />
+										<span className="hidden sm:inline font-medium">
+											Admin
+										</span>
+									</Link>
+									<Link
+										to="/admin/trusted-sources"
+										className="flex items-center gap-1.5 px-3 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors rounded-xl hover:bg-surface"
+										aria-label="Trusted Sources"
+									>
+										<Globe className="w-5 h-5" />
+										<span className="hidden sm:inline font-medium">
+											Sources
+										</span>
+									</Link>
+								</>
 							)}
 							<Link
 								to="/profile"
