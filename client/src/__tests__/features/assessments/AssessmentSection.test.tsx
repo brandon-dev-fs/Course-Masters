@@ -160,4 +160,57 @@ describe('AssessmentSection', () => {
     fireEvent.click(screen.getByRole('button', { name: /cancel form/i }));
     expect(screen.queryByTestId('assessment-form')).not.toBeInTheDocument();
   });
+
+  it('disables take button when unlocked is false and canEdit is false', async () => {
+    mockApi.get.mockResolvedValue(mockAssessment);
+    render(<AssessmentSection {...baseProps} unlocked={false} canEdit={false} />);
+    const takeBtn = await screen.findByRole('button', { name: /take quiz/i });
+    expect(takeBtn).toBeDisabled();
+  });
+
+  it('shows locked message when unlocked=false and lockedMessage is provided', async () => {
+    mockApi.get.mockResolvedValue(mockAssessment);
+    render(
+      <AssessmentSection
+        {...baseProps}
+        unlocked={false}
+        canEdit={false}
+        lockedMessage="Complete all assignments first"
+      />,
+    );
+    expect(await screen.findByText('Complete all assignments first')).toBeInTheDocument();
+  });
+
+  it('shows retake label when previous attempts exist', async () => {
+    mockApi.get.mockResolvedValue(mockAssessment);
+    mockApi.getAttempts.mockResolvedValue({
+      data: [{ id: 'at1', score: 0.8, passed: true, createdAt: '2024-01-01T00:00:00Z', answers: [] }],
+    });
+    render(<AssessmentSection {...baseProps} />);
+    expect(await screen.findByRole('button', { name: /retake quiz/i })).toBeInTheDocument();
+  });
+
+  it('renders previous attempts list with score and pass status', async () => {
+    mockApi.get.mockResolvedValue(mockAssessment);
+    mockApi.getAttempts.mockResolvedValue({
+      data: [{ id: 'at1', score: 0.8, passed: true, createdAt: '2024-01-01T00:00:00Z', answers: [] }],
+    });
+    render(<AssessmentSection {...baseProps} />);
+    expect(await screen.findByText('80%')).toBeInTheDocument();
+    expect(screen.getByText('Passed')).toBeInTheDocument();
+  });
+
+  it('shows question count when assessment exists', async () => {
+    mockApi.get.mockResolvedValue(mockAssessment);
+    render(<AssessmentSection {...baseProps} />);
+    expect(await screen.findByText('1 questions')).toBeInTheDocument();
+  });
+
+  it('shows import button when lessonId and canEdit are provided with existing assessment', async () => {
+    mockApi.get.mockResolvedValue(mockAssessment);
+    render(<AssessmentSection {...baseProps} canEdit={true} lessonId="l1" />);
+    expect(
+      await screen.findByRole('button', { name: /import from practice problems/i }),
+    ).toBeInTheDocument();
+  });
 });

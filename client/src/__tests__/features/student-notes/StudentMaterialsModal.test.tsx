@@ -27,6 +27,7 @@ import { screen, fireEvent } from '@testing-library/react';
 import { renderWithProviders } from '../../setup/renderWithProviders.js';
 import StudentMaterialsModal from '../../../features/student-notes/StudentMaterialsModal.js';
 import type { StudentToolType } from '../../../features/student-notes/StudentToolsBar.js';
+import type { Assignment, Bookmark } from '../../../api/types.js';
 
 describe('StudentMaterialsModal', () => {
   beforeEach(() => {
@@ -128,5 +129,94 @@ describe('StudentMaterialsModal', () => {
     await screen.findByText('Student Materials');
     fireEvent.click(screen.getByText('Flash Cards'));
     expect(onSwitchTool).toHaveBeenCalledWith('flashcards');
+  });
+
+  it('does not render tool switcher tabs when only one tool is available', async () => {
+    renderWithProviders(
+      <StudentMaterialsModal
+        lessonId="l1"
+        isOpen={true}
+        activeTool="notes"
+        availableTools={['notes']}
+        onSwitchTool={vi.fn()}
+        onClose={vi.fn()}
+      />,
+    );
+    await screen.findByText('Student Materials');
+    // With a single tool there is no tab row — "Notes" label should not appear as a switch button
+    expect(screen.queryByRole('button', { name: /^notes$/i })).not.toBeInTheDocument();
+  });
+
+  it('renders bookmarked assignment title when activeTool is bookmarks', async () => {
+    const bookmark: Bookmark = { id: 'bm-1', note: 'My note', updatedAt: '2024-01-01T00:00:00Z' };
+    const assignment: Assignment = {
+      id: 'a-1',
+      lessonId: 'l1',
+      order: 1,
+      title: 'Chapter 3 Reading',
+      objective: null,
+      type: 'note',
+      createdAt: '2024-01-01T00:00:00Z',
+      updatedAt: '2024-01-01T00:00:00Z',
+      completed: false,
+      bookmark,
+      noteAssignment: null,
+      videoAssignment: null,
+      readingAssignment: null,
+      vocabAssignment: null,
+      practiceProblemAssignment: null,
+      fileAssignment: null,
+    };
+    renderWithProviders(
+      <StudentMaterialsModal
+        lessonId="l1"
+        isOpen={true}
+        activeTool="bookmarks"
+        availableTools={['bookmarks']}
+        onSwitchTool={vi.fn()}
+        onClose={vi.fn()}
+        assignments={[assignment]}
+      />,
+    );
+    expect(await screen.findByText('Chapter 3 Reading')).toBeInTheDocument();
+  });
+
+  it('calls onNavigateToAssignment and onClose when a bookmark item is clicked', async () => {
+    const onNavigateToAssignment = vi.fn();
+    const onClose = vi.fn();
+    const bookmark: Bookmark = { id: 'bm-1', note: '', updatedAt: '2024-01-01T00:00:00Z' };
+    const assignment: Assignment = {
+      id: 'a-1',
+      lessonId: 'l1',
+      order: 1,
+      title: 'Chapter 3 Reading',
+      objective: null,
+      type: 'note',
+      createdAt: '2024-01-01T00:00:00Z',
+      updatedAt: '2024-01-01T00:00:00Z',
+      completed: false,
+      bookmark,
+      noteAssignment: null,
+      videoAssignment: null,
+      readingAssignment: null,
+      vocabAssignment: null,
+      practiceProblemAssignment: null,
+      fileAssignment: null,
+    };
+    renderWithProviders(
+      <StudentMaterialsModal
+        lessonId="l1"
+        isOpen={true}
+        activeTool="bookmarks"
+        availableTools={['bookmarks']}
+        onSwitchTool={vi.fn()}
+        onClose={onClose}
+        assignments={[assignment]}
+        onNavigateToAssignment={onNavigateToAssignment}
+      />,
+    );
+    fireEvent.click(await screen.findByText('Chapter 3 Reading'));
+    expect(onNavigateToAssignment).toHaveBeenCalledWith('a-1');
+    expect(onClose).toHaveBeenCalled();
   });
 });

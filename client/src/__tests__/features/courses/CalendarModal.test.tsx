@@ -86,4 +86,40 @@ describe('CalendarModal', () => {
     fireEvent.click(screen.getByLabelText(/close/i));
     expect(onClose).toHaveBeenCalledOnce();
   });
+
+  it('navigates to next month', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2024, 4, 15)); // May 2024
+
+    render(
+      <MemoryRouter>
+        <CalendarModal course={mockCourse} progress={null} onClose={onClose} />
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByLabelText('Next month'));
+    expect(screen.getByText(/june/i)).toBeInTheDocument();
+
+    vi.useRealTimers();
+  });
+
+  it('shows "Due dates coming soon" disclaimer text', () => {
+    render(
+      <MemoryRouter>
+        <CalendarModal course={mockCourse} progress={null} onClose={onClose} />
+      </MemoryRouter>,
+    );
+    expect(screen.getByText(/due dates coming soon/i)).toBeInTheDocument();
+  });
+
+  it('hides unit legend when course has no units', () => {
+    const noUnitCourse = { ...mockCourse, units: [] };
+    render(
+      <MemoryRouter>
+        <CalendarModal course={noUnitCourse} progress={null} onClose={onClose} />
+      </MemoryRouter>,
+    );
+    expect(screen.queryByText('1. Unit 1')).not.toBeInTheDocument();
+    expect(screen.queryByText('2. Unit 2')).not.toBeInTheDocument();
+  });
 });
