@@ -15,6 +15,8 @@ import { lessonAssignmentsRouter, assignmentsRouter, vocabEntriesRouter } from '
 import { lessonChecklistRouter, checklistItemsRouter } from './checklist.routes.js';
 import userRouter from './user.routes.js';
 import trustedSourceRouter from './trusted-source.routes.js';
+import agentSessionRouter from './agent-session.routes.js';
+
 import { authenticate } from '../middleware/authenticate.js';
 
 const router = Router();
@@ -61,6 +63,9 @@ router.use('/users', userRouter);
 
 // Admin
 router.use('/admin/trusted-sources', trustedSourceRouter);
+
+// Agent
+router.use('/agent/sessions', agentSessionRouter);
 
 // Utilities
 router.use('/youtube', youtubeRouter);
