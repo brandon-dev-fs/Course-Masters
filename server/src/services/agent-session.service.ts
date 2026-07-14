@@ -30,9 +30,6 @@ export const agentSessionService = {
           userId,
           courseSpecId: spec.id,
           phase: 'elicitation',
-          currentStep: null,
-          elicitationState: null,
-          conversationLog: null,
           expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
         },
         include: {

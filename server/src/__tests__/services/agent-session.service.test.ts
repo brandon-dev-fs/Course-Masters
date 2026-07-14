@@ -84,9 +84,6 @@ describe('agentSessionService.create', () => {
         userId: USER_ID,
         courseSpecId: spec.id,
         phase: 'elicitation',
-        currentStep: null,
-        elicitationState: null,
-        conversationLog: null,
         expiresAt: expect.any(Date),
       },
       include: {
