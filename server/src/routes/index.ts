@@ -16,6 +16,7 @@ import { lessonChecklistRouter, checklistItemsRouter } from './checklist.routes.
 import userRouter from './user.routes.js';
 import trustedSourceRouter from './trusted-source.routes.js';
 import agentSessionRouter from './agent-session.routes.js';
+
 import { authenticate } from '../middleware/authenticate.js';
 
 const router = Router();

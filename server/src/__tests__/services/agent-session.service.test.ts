@@ -73,9 +73,11 @@ describe('agentSessionService.create', () => {
         userId: USER_ID,
         OR: [{ expiresAt: null }, { expiresAt: { gt: expect.any(Date) } }],
       },
+      select: { id: true },
     });
     expect(prismaMock.courseSpec.create).toHaveBeenCalledWith({
       data: { userId: USER_ID, status: 'drafting' },
+      select: { id: true },
     });
     expect(prismaMock.agentSession.create).toHaveBeenCalledWith({
       data: {

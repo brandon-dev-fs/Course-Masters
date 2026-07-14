@@ -1,7 +1,6 @@
 import prisma from '../lib/prisma.js';
 
-import { AppError } from '../errors/AppError.js';
-import { NotFoundError } from '../errors/index.js';
+import { ConflictError, NotFoundError } from '../errors/index.js';
 
 export const agentSessionService = {
   async create(userId: string) {
@@ -10,19 +9,20 @@ export const agentSessionService = {
         userId,
         OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
       },
+      select: { id: true },
     });
 
     if (activeSession) {
-      throw new AppError(
-        'AGENT_SESSION_CONFLICT',
+      throw new ConflictError(
         'An active agent session already exists. Abandon it before creating a new one.',
-        409,
+        'AGENT_SESSION_CONFLICT',
       );
     }
 
     return prisma.$transaction(async (tx) => {
       const spec = await tx.courseSpec.create({
         data: { userId, status: 'drafting' },
+        select: { id: true },
       });
 
       return tx.agentSession.create({
