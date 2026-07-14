@@ -20,10 +20,24 @@ vi.mock('../../../api/client.js', () => ({
 vi.mock('../../../components/RichTextEditor.js', () => ({ default: () => null }));
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
+import { MemoryRouter, Routes, Route } from 'react-router-dom';
+import { AuthProvider } from '../../../context/AuthContext.js';
 import { renderWithProviders } from '../../setup/renderWithProviders.js';
-import { makeTeacherUser, makeStudentUser } from '../../mocks/authContext.mock.js';
+import { makeTeacherUser, makeStudentUser, makeAdminUser } from '../../mocks/authContext.mock.js';
 import CourseDetailPage from '../../../features/courses/CourseDetailPage.js';
+
+function renderWithRoute(courseId = 'course-1') {
+  return render(
+    <MemoryRouter initialEntries={[`/courses/${courseId}`]}>
+      <AuthProvider>
+        <Routes>
+          <Route path="/courses/:courseId" element={<CourseDetailPage />} />
+        </Routes>
+      </AuthProvider>
+    </MemoryRouter>,
+  );
+}
 
 const mockCourse = {
   id: 'course-1',
@@ -136,5 +150,50 @@ describe('CourseDetailPage', () => {
 
     renderWithProviders(<CourseDetailPage />, { initialRoute: '/courses/course-1' });
     expect(await screen.findByRole('button', { name: /view syllabus/i })).toBeInTheDocument();
+  });
+
+  it('shows teacher preview banner for teachers', async () => {
+    authClientMock.getSession.mockResolvedValue({ data: { user: makeTeacherUser() }, error: null });
+    apiClientMock.get
+      .mockResolvedValueOnce(mockCourse)
+      .mockResolvedValueOnce([mockCourse])
+      .mockResolvedValueOnce(mockProgress);
+
+    renderWithRoute();
+    expect(await screen.findByText(/teacher preview/i)).toBeInTheDocument();
+  });
+
+  it('shows Back to Builder link for teachers', async () => {
+    authClientMock.getSession.mockResolvedValue({ data: { user: makeTeacherUser() }, error: null });
+    apiClientMock.get
+      .mockResolvedValueOnce(mockCourse)
+      .mockResolvedValueOnce([mockCourse])
+      .mockResolvedValueOnce(mockProgress);
+
+    renderWithRoute();
+    expect(await screen.findByRole('link', { name: /back to builder/i })).toBeInTheDocument();
+  });
+
+  it('does not show teacher preview banner for students', async () => {
+    authClientMock.getSession.mockResolvedValue({ data: { user: makeStudentUser() }, error: null });
+    apiClientMock.get
+      .mockResolvedValueOnce({ ...mockCourse, authorId: 'other-user' })
+      .mockResolvedValueOnce([mockCourse])
+      .mockResolvedValueOnce(mockProgress);
+
+    renderWithRoute();
+    await screen.findByText('Test Course');
+    expect(screen.queryByText(/teacher preview/i)).not.toBeInTheDocument();
+  });
+
+  it('shows admin preview banner for admins', async () => {
+    authClientMock.getSession.mockResolvedValue({ data: { user: makeAdminUser() }, error: null });
+    apiClientMock.get
+      .mockResolvedValueOnce(mockCourse)
+      .mockResolvedValueOnce([mockCourse])
+      .mockResolvedValueOnce(mockProgress);
+
+    renderWithRoute();
+    expect(await screen.findByText(/teacher preview/i)).toBeInTheDocument();
   });
 });

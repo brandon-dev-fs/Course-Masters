@@ -11,6 +11,7 @@ vi.mock('../../api/auth.js', () => ({ authClient: authClientMock }));
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { screen } from '@testing-library/react';
 import { renderWithProviders } from '../setup/renderWithProviders.js';
+import { makeStudentUser, makeAdminUser } from '../mocks/authContext.mock.js';
 import Layout from '../../components/Layout.js';
 
 describe('Layout', () => {
@@ -33,5 +34,37 @@ describe('Layout', () => {
   it('renders the footer', async () => {
     renderWithProviders(<Layout />);
     expect(await screen.findByRole('contentinfo')).toBeInTheDocument();
+  });
+
+  it('shows user name when a student is logged in', async () => {
+    authClientMock.getSession.mockResolvedValue({
+      data: { user: makeStudentUser() },
+      error: null,
+    });
+    renderWithProviders(<Layout />);
+    expect(await screen.findByText('Student')).toBeInTheDocument();
+  });
+
+  it('shows sign out button when user is logged in', async () => {
+    authClientMock.getSession.mockResolvedValue({
+      data: { user: makeStudentUser() },
+      error: null,
+    });
+    renderWithProviders(<Layout />);
+    expect(await screen.findByRole('button', { name: /sign out/i })).toBeInTheDocument();
+  });
+
+  it('shows admin links when user has admin role', async () => {
+    authClientMock.getSession.mockResolvedValue({
+      data: { user: makeAdminUser() },
+      error: null,
+    });
+    renderWithProviders(<Layout />);
+    expect(await screen.findByRole('link', { name: /admin users/i })).toBeInTheDocument();
+  });
+
+  it('renders the hamburger menu button', () => {
+    renderWithProviders(<Layout />);
+    expect(screen.getByRole('button', { name: /open navigation menu/i })).toBeInTheDocument();
   });
 });

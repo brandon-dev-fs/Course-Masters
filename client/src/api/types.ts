@@ -387,3 +387,16 @@ export interface ChecklistItem {
   createdAt: string;
   updatedAt: string;
 }
+
+// --- Trusted Sources ---
+
+export interface TrustedSource {
+  id: string;
+  name: string;
+  domain: string;
+  contentTypes: string[];
+  categories: string[];
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+}

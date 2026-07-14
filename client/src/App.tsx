@@ -11,6 +11,7 @@ import ProfilePage from './features/auth/ProfilePage.js';
 import RequireAuth from './features/auth/RequireAuth.js';
 import RequireRole from './features/auth/RequireRole.js';
 import AdminUsersPage from './features/auth/AdminUsersPage.js';
+import TrustedSourcesPage from './features/admin/TrustedSourcesPage.js';
 import CourseBuilderPage from './features/builder/CourseBuilderPage.js';
 import ErrorBoundary from './components/ErrorBoundary.js';
 
@@ -65,6 +66,16 @@ export default function App() {
 								<RequireAuth>
 									<RequireRole roles={['admin']}>
 										<AdminUsersPage />
+									</RequireRole>
+								</RequireAuth>
+							}
+						/>
+						<Route
+							path="/admin/trusted-sources"
+							element={
+								<RequireAuth>
+									<RequireRole roles={['admin']}>
+										<TrustedSourcesPage />
 									</RequireRole>
 								</RequireAuth>
 							}

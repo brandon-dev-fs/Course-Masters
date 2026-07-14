@@ -1,0 +1,18 @@
+# GarageHQ local development configuration.
+# Generate rpc_secret with: openssl rand -hex 32
+# Then paste the output below (must be exactly 64 hex characters).
+
+metadata_dir = "/var/lib/garage/meta"
+data_dir     = "/var/lib/garage/data"
+replication_factor = 1
+
+rpc_bind_addr = "[::]:3901"
+rpc_secret    = "a4da75e9ac99e8ef20c39349112525efe30ba687047599f2f7b60fc076aead7c"
+
+[s3_api]
+s3_region    = "garage"
+api_bind_addr = "[::]:3900"
+
+[admin]
+api_bind_addr = "[::]:3902"
+admin_token   = "garage-dev-admin-token"

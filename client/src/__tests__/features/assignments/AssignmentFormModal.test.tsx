@@ -164,4 +164,19 @@ describe('AssignmentFormModal', () => {
     // Should still be on step 1 of 2, showing title error
     expect(screen.queryByText('2 of 2')).not.toBeInTheDocument();
   });
+
+  it('shows File type option in the type picker', () => {
+    renderModal();
+    expect(screen.getByText('File')).toBeInTheDocument();
+  });
+
+  it('shows all six assignment types in the picker', () => {
+    renderModal();
+    expect(screen.getByText('Note')).toBeInTheDocument();
+    expect(screen.getByText('Video')).toBeInTheDocument();
+    expect(screen.getByText('External Link')).toBeInTheDocument();
+    expect(screen.getByText('Vocab')).toBeInTheDocument();
+    expect(screen.getByText('Practice Problem')).toBeInTheDocument();
+    expect(screen.getByText('File')).toBeInTheDocument();
+  });
 });

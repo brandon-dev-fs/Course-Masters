@@ -1,6 +1,6 @@
 import { useRef, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { X, UserCircle, ShieldCheck, LogOut } from 'lucide-react';
+import { X, UserCircle, ShieldCheck, LogOut, Globe } from 'lucide-react';
 
 import { useAuth } from '../context/AuthContext.js';
 
@@ -156,15 +156,26 @@ export default function MobileDrawer({ isOpen, onClose, focusReturnRef }: Mobile
                 {user.name}
               </Link>
               {user.role === 'admin' && (
-                <Link
-                  to="/admin/users"
-                  onClick={onClose}
-                  aria-current={isActive('/admin/users') ? 'page' : undefined}
-                  className={drawerLinkClass(isActive('/admin/users'))}
-                >
-                  <ShieldCheck className="w-4 h-4 shrink-0" />
-                  Admin
-                </Link>
+                <>
+                  <Link
+                    to="/admin/users"
+                    onClick={onClose}
+                    aria-current={isActive('/admin/users') ? 'page' : undefined}
+                    className={drawerLinkClass(isActive('/admin/users'))}
+                  >
+                    <ShieldCheck className="w-4 h-4 shrink-0" />
+                    Admin
+                  </Link>
+                  <Link
+                    to="/admin/trusted-sources"
+                    onClick={onClose}
+                    aria-current={isActive('/admin/trusted-sources') ? 'page' : undefined}
+                    className={drawerLinkClass(isActive('/admin/trusted-sources'))}
+                  >
+                    <Globe className="w-4 h-4 shrink-0" />
+                    Sources
+                  </Link>
+                </>
               )}
             </>
           )}
