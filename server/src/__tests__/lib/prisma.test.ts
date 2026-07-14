@@ -16,8 +16,8 @@ const { mockDisconnect, registeredHandlers } = vi.hoisted(() => {
   // Intercept process.on to capture the beforeExit handler registration.
   // Must be done here (before modules are imported) so it fires when prisma.ts loads.
   vi.spyOn(process, 'on').mockImplementation(
-    (event: string, handler: (...args: unknown[]) => void) => {
-      registeredHandlers.push({ event, handler });
+    (event: string | symbol, handler: (...args: unknown[]) => void) => {
+      registeredHandlers.push({ event: String(event), handler });
       return process;
     },
   );

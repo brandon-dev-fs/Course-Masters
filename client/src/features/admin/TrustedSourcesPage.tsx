@@ -103,7 +103,7 @@ export default function TrustedSourcesPage() {
   ];
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="container mx-auto px-4 md:px-6 py-6 flex flex-col gap-6">
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <h1 className="text-3xl font-bold text-foreground">Trusted Sources</h1>
         <Button variant="primary" onClick={() => setShowAdd(true)}>

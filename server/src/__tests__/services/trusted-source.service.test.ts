@@ -92,6 +92,7 @@ describe('trustedSourceService.create', () => {
       domain: 'khanacademy.org',
       contentTypes: ['video', 'reading'],
       categories: ['math', 'science'],
+      active: true,
     };
 
     const result = await trustedSourceService.create(input);
@@ -102,7 +103,7 @@ describe('trustedSourceService.create', () => {
         domain: input.domain,
         contentTypes: input.contentTypes,
         categories: input.categories,
-        active: undefined,
+        active: true,
       },
     });
     expect(result).toEqual(source);

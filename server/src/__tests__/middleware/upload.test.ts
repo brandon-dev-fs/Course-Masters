@@ -142,7 +142,7 @@ describe('upload middleware', () => {
     it('MulterError for rejected files has LIMIT_UNEXPECTED_FILE code', () => {
       const cb = vi.fn();
       capturedFileFilterRef.current(null, { mimetype: 'video/mp4', fieldname: 'myfield' }, cb);
-      const err = cb.mock.calls[0][0] as MockMulterError;
+      const err = cb.mock.calls[0][0] as InstanceType<typeof MockMulterError>;
       expect(err.code).toBe('LIMIT_UNEXPECTED_FILE');
     });
   });
