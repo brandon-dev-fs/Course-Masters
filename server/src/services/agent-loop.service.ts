@@ -12,7 +12,7 @@ import type { AgentPhase } from '../types/agent.js';
 export async function runAgentTurn(
   sessionId: string,
   userMessage: string,
-): Promise<ReadableStream<string>> {
+): Promise<ReturnType<typeof streamText>> {
   // 1. Load session from DB
   const session = await prisma.agentSession.findFirst({
     where: { id: sessionId },
@@ -70,6 +70,6 @@ export async function runAgentTurn(
     },
   });
 
-  // 7. Return the text stream for SSE piping
-  return result.textStream;
+  // 7. Return the full StreamTextResult for SSE piping via pipeTextStreamToResponse
+  return result;
 }

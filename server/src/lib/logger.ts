@@ -24,6 +24,10 @@ export const logger = pino({
       'req.body.secret',
       'req.body.authorization',
       'req.session.token',
+      // Anthropic SDK may include API keys in error objects
+      'apiKey',
+      '*.apiKey',
+      'err.requestOptions.headers.authorization',
     ],
     censor: '[REDACTED]',
   },

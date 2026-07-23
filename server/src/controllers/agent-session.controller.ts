@@ -4,7 +4,6 @@ import { agentSessionService } from '../services/agent-session.service.js';
 import { runAgentTurn } from '../services/agent-loop.service.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { AppError } from '../errors/index.js';
-import { logger } from '../lib/logger.js';
 import { MESSAGE_ACCEPTING_PHASES } from '../types/agent.js';
 import type { SendMessageInput } from '../schemas/agent-session.schema.js';
 
@@ -48,11 +47,6 @@ export const agentSessionController = {
       throw new AppError('SESSION_EXPIRED', 'This agent session has expired', 400);
     }
 
-    // Guard: abandoned
-    if (session.abandonedAt !== null) {
-      throw new AppError('SESSION_ABANDONED', 'This agent session has been abandoned', 400);
-    }
-
     // Guard: phase doesn't accept messages
     if (!(MESSAGE_ACCEPTING_PHASES as readonly string[]).includes(session.phase)) {
       throw new AppError(
@@ -62,32 +56,13 @@ export const agentSessionController = {
       );
     }
 
-    // Set SSE headers BEFORE writing
-    res.setHeader('Content-Type', 'text/event-stream');
-    res.setHeader('Cache-Control', 'no-cache');
-    res.setHeader('Connection', 'keep-alive');
+    // Disable nginx proxy buffering for SSE
     res.setHeader('X-Accel-Buffering', 'no');
 
-    // Run agent loop — returns AsyncIterableStream<string>
-    const stream = await runAgentTurn(sessionId, message);
+    // Run agent loop — returns StreamTextResult
+    const result = await runAgentTurn(sessionId, message);
 
-    // Pipe ReadableStream to Express response
-    const reader = stream.getReader();
-
-    try {
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        res.write(value);
-      }
-      res.end();
-    } catch (err) {
-      logger.error({ err, sessionId }, 'Stream error during agent turn');
-      if (!res.headersSent) {
-        throw err;
-      } else {
-        res.end();
-      }
-    }
+    // SDK handles SSE headers (Content-Type, Cache-Control), streaming, and lifecycle
+    await result.pipeTextStreamToResponse(res);
   }),
 };

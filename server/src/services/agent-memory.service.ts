@@ -7,7 +7,12 @@ import type { ConversationLog, ConversationMessage } from '../types/agent.js';
 import { MAX_CONVERSATION_WINDOW } from '../types/agent.js';
 
 export function parseConversationLog(raw: unknown): ConversationLog {
-  if (raw && typeof raw === 'object' && 'messages' in raw) {
+  if (
+    raw !== null &&
+    typeof raw === 'object' &&
+    'messages' in raw &&
+    Array.isArray((raw as Record<string, unknown>)['messages'])
+  ) {
     return raw as ConversationLog;
   }
   return { messages: [], summary: '' };
