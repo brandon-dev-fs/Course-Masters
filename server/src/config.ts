@@ -16,6 +16,7 @@ const envSchema = z.object({
 	S3_ACCESS_KEY_ID: z.string().optional().transform(v => v || undefined),
 	S3_SECRET_ACCESS_KEY: z.string().optional().transform(v => v || undefined),
 	S3_REGION: z.string().min(1).default('garage'),
+	ANTHROPIC_API_KEY: z.string().min(1),
 });
 
 const parsed = envSchema.safeParse(process.env);
