@@ -69,7 +69,7 @@ describe('updateElicitationState tool', () => {
   beforeEach(() => vi.clearAllMocks());
 
   function getUpdateTool() {
-    return getTools('elicitation')['updateElicitationState'] as {
+    return getTools('elicitation')['updateElicitationState'] as unknown as {
       execute: (args: { updates: Record<string, unknown> }) => Promise<unknown>;
     };
   }
@@ -132,7 +132,7 @@ describe('transitionPhase tool', () => {
   beforeEach(() => vi.clearAllMocks());
 
   function getTransitionTool(phase: AgentPhase = 'elicitation') {
-    return getTools(phase)['transitionPhase'] as {
+    return getTools(phase)['transitionPhase'] as unknown as {
       execute: (args: { targetPhase: string }) => Promise<unknown>;
     };
   }
