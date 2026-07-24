@@ -18,6 +18,7 @@ import trustedSourceRouter from './trusted-source.routes.js';
 import agentSessionRouter from './agent-session.routes.js';
 
 import { authenticate } from '../middleware/authenticate.js';
+import { config } from '../config.js';
 
 const router = Router();
 
@@ -64,8 +65,10 @@ router.use('/users', userRouter);
 // Admin
 router.use('/admin/trusted-sources', trustedSourceRouter);
 
-// Agent
-router.use('/agent/sessions', agentSessionRouter);
+// Agent (only mounted when ENABLE_AI_AGENT=true)
+if (config.ENABLE_AI_AGENT) {
+  router.use('/agent/sessions', agentSessionRouter);
+}
 
 // Utilities
 router.use('/youtube', youtubeRouter);

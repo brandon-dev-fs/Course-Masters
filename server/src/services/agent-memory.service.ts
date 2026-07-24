@@ -31,6 +31,10 @@ async function generateSummary(
   }
   prompt += `\n\nConversation:\n${formattedMessages}`;
 
+  if (!anthropicProvider) {
+    throw new Error('AI agent is not enabled. Set ENABLE_AI_AGENT=true and ANTHROPIC_API_KEY.');
+  }
+
   const result = await generateText({
     model: anthropicProvider(DEFAULT_MODEL),
     prompt,
