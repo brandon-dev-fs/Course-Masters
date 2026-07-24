@@ -63,6 +63,6 @@ export const agentSessionController = {
     const result = await runAgentTurn(sessionId, message);
 
     // SDK handles SSE headers (Content-Type, Cache-Control), streaming, and lifecycle
-    await result.pipeTextStreamToResponse(res);
+    await result.pipeUIMessageStreamToResponse(res);
   }),
 };
