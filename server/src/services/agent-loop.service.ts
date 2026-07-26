@@ -19,6 +19,7 @@ export async function runAgentTurn(
     select: {
       id: true,
       phase: true,
+      userId: true,
       elicitationState: true,
       conversationLog: true,
     },
@@ -41,7 +42,7 @@ export async function runAgentTurn(
   messages.push({ role: 'user', content: userMessage });
 
   // 4. Get phase-appropriate tools
-  const tools = getToolsForPhase(session.phase as AgentPhase, sessionId, summarizePhase);
+  const tools = getToolsForPhase(session.phase as AgentPhase, sessionId, summarizePhase, session.userId);
   const hasTools = Object.keys(tools).length > 0;
 
   // 5. Build system prompt with summary context if available

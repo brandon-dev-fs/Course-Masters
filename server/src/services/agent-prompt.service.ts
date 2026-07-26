@@ -1,10 +1,10 @@
 import type { AgentPhase } from '../types/agent.js';
+import { ELICITATION_SYSTEM_PROMPT } from '../agent/prompts/elicitation.js';
 
 const PHASE_INSTRUCTIONS: Record<AgentPhase, string> = {
   pre_load:
-    'You are in the pre-load phase. Gather initial context about the course the teacher wants to create.',
-  elicitation:
-    'You are in the elicitation phase. Ask questions to understand the course topic, scope, target audience, and learning goals.',
+    'You are in the pre-load phase. Call getUserProfile immediately to load the learner\'s profile, then call transitionPhase to move to the elicitation phase. Do not wait for a user message.',
+  elicitation: ELICITATION_SYSTEM_PROMPT,
   outline:
     'You are in the outline phase. Help the teacher structure their course into units and lessons with clear learning objectives.',
   curation:

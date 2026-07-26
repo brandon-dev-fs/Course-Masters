@@ -34,6 +34,13 @@ export const agentSessionController = {
     res.status(204).send();
   }),
 
+  approvePhase: asyncHandler(async (req: Request, res: Response) => {
+    const userId = req.user!.id;
+    const sessionId = req.params['sessionId'] as string;
+    const result = await agentSessionService.approveElicitation(sessionId, userId);
+    res.json(result);
+  }),
+
   sendMessage: asyncHandler(async (req: Request, res: Response) => {
     const userId = req.user!.id;
     const sessionId = req.params['sessionId'] as string;

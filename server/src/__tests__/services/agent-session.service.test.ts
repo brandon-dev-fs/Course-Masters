@@ -2,6 +2,9 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { prismaMock } from '../mocks/prisma.js';
 
 vi.mock('../../lib/prisma.js', () => ({ default: prismaMock }));
+vi.mock('../../lib/logger.js', () => ({
+  logger: { info: vi.fn(), error: vi.fn(), warn: vi.fn(), debug: vi.fn() },
+}));
 
 import { agentSessionService } from '../../services/agent-session.service.js';
 import { AppError } from '../../errors/AppError.js';
@@ -83,7 +86,7 @@ describe('agentSessionService.create', () => {
       data: {
         userId: USER_ID,
         courseSpecId: spec.id,
-        phase: 'elicitation',
+        phase: 'pre_load',
         expiresAt: expect.any(Date),
       },
       include: {
