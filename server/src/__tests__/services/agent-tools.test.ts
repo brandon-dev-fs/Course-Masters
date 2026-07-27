@@ -20,10 +20,11 @@ import type { AgentPhase } from '../../types/agent.js';
 // ---------------------------------------------------------------------------
 
 const SESSION_ID = 'session-1';
+const USER_ID = 'user-1';
 const mockSummarizePhase = vi.fn().mockResolvedValue(undefined);
 
 function getTools(phase: AgentPhase) {
-  return getToolsForPhase(phase, SESSION_ID, mockSummarizePhase);
+  return getToolsForPhase(phase, SESSION_ID, mockSummarizePhase, USER_ID);
 }
 
 // ---------------------------------------------------------------------------
@@ -31,8 +32,11 @@ function getTools(phase: AgentPhase) {
 // ---------------------------------------------------------------------------
 
 describe('getToolsForPhase — tool registration', () => {
-  it('returns no tools for pre_load phase', () => {
-    expect(Object.keys(getTools('pre_load'))).toHaveLength(0);
+  it('returns getUserProfile and transitionPhase for pre_load phase', () => {
+    const tools = getTools('pre_load');
+    expect(Object.keys(tools)).toContain('getUserProfile');
+    expect(Object.keys(tools)).toContain('transitionPhase');
+    expect(Object.keys(tools)).toHaveLength(2);
   });
 
   it('returns no tools for build phase', () => {
@@ -43,11 +47,12 @@ describe('getToolsForPhase — tool registration', () => {
     expect(Object.keys(getTools('summary'))).toHaveLength(0);
   });
 
-  it('returns updateElicitationState and transitionPhase for elicitation', () => {
+  it('returns updateElicitationState, transitionPhase, and checkSourceCoverage for elicitation', () => {
     const tools = getTools('elicitation');
     expect(Object.keys(tools)).toContain('updateElicitationState');
     expect(Object.keys(tools)).toContain('transitionPhase');
-    expect(Object.keys(tools)).toHaveLength(2);
+    expect(Object.keys(tools)).toContain('checkSourceCoverage');
+    expect(Object.keys(tools)).toHaveLength(3);
   });
 
   it('returns only transitionPhase for outline', () => {

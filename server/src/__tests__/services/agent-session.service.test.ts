@@ -2,10 +2,13 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { prismaMock } from '../mocks/prisma.js';
 
 vi.mock('../../lib/prisma.js', () => ({ default: prismaMock }));
+vi.mock('../../lib/logger.js', () => ({
+  logger: { info: vi.fn(), error: vi.fn(), warn: vi.fn(), debug: vi.fn() },
+}));
 
 import { agentSessionService } from '../../services/agent-session.service.js';
 import { AppError } from '../../errors/AppError.js';
-import { NotFoundError } from '../../errors/index.js';
+import { NotFoundError, ValidationError } from '../../errors/index.js';
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -83,7 +86,7 @@ describe('agentSessionService.create', () => {
       data: {
         userId: USER_ID,
         courseSpecId: spec.id,
-        phase: 'elicitation',
+        phase: 'pre_load',
         expiresAt: expect.any(Date),
       },
       include: {
@@ -194,6 +197,159 @@ describe('agentSessionService.getById', () => {
     prismaMock.agentSession.findFirst.mockResolvedValue(null);
 
     await expect(agentSessionService.getById(SESSION_ID, USER_ID)).rejects.toThrow(NotFoundError);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// approveElicitation
+// ---------------------------------------------------------------------------
+
+const ALL_STAGES = ['topic', 'scope', 'source_coverage', 'prior_knowledge', 'preferences', 'goals'];
+
+function makeElicitationState(stagesCompleted: string[] = ALL_STAGES) {
+  return {
+    stagesCompleted,
+    topic: 'Web Development',
+    scope: 'Beginner to intermediate',
+    depth: 'moderate',
+    sourceCoverage: 'broad',
+    priorKnowledge: 'none',
+    contentPreferences: 'video',
+    pace: 'self-paced',
+    accessibilityNeeds: null,
+    goals: 'Build a portfolio',
+  };
+}
+
+describe('agentSessionService.approveElicitation', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('throws NotFoundError when session not found', async () => {
+    prismaMock.agentSession.findFirst.mockResolvedValue(null);
+
+    await expect(
+      agentSessionService.approveElicitation(SESSION_ID, USER_ID),
+    ).rejects.toThrow(NotFoundError);
+    expect(prismaMock.$transaction).not.toHaveBeenCalled();
+  });
+
+  it('throws NotFoundError when userId does not match session', async () => {
+    prismaMock.agentSession.findFirst.mockResolvedValue(null);
+
+    await expect(
+      agentSessionService.approveElicitation(SESSION_ID, 'other-user'),
+    ).rejects.toThrow(NotFoundError);
+  });
+
+  it('throws AppError SESSION_EXPIRED when expiresAt is in the past', async () => {
+    const session = {
+      ...makeSession({
+        phase: 'elicitation',
+        expiresAt: new Date(Date.now() - 1_000_000),
+        elicitationState: makeElicitationState(),
+      }),
+      courseSpec: { id: SPEC_ID, status: 'drafting' },
+    };
+    prismaMock.agentSession.findFirst.mockResolvedValue(session);
+
+    await expect(
+      agentSessionService.approveElicitation(SESSION_ID, USER_ID),
+    ).rejects.toMatchObject({ code: 'SESSION_EXPIRED', statusCode: 400 });
+  });
+
+  it('throws AppError INVALID_PHASE when session phase is pre_load', async () => {
+    const session = {
+      ...makeSession({
+        phase: 'pre_load',
+        elicitationState: makeElicitationState(),
+      }),
+      courseSpec: { id: SPEC_ID, status: 'drafting' },
+    };
+    prismaMock.agentSession.findFirst.mockResolvedValue(session);
+
+    await expect(
+      agentSessionService.approveElicitation(SESSION_ID, USER_ID),
+    ).rejects.toMatchObject({ code: 'INVALID_PHASE', statusCode: 400 });
+  });
+
+  it('throws ValidationError with missingStages when elicitation is incomplete', async () => {
+    const session = {
+      ...makeSession({
+        phase: 'elicitation',
+        elicitationState: makeElicitationState(['topic', 'scope']),
+      }),
+      courseSpec: { id: SPEC_ID, status: 'drafting' },
+    };
+    prismaMock.agentSession.findFirst.mockResolvedValue(session);
+
+    await expect(
+      agentSessionService.approveElicitation(SESSION_ID, USER_ID),
+    ).rejects.toThrow(ValidationError);
+
+    await expect(
+      agentSessionService.approveElicitation(SESSION_ID, USER_ID),
+    ).rejects.toMatchObject({
+      code: 'VALIDATION_ERROR',
+      details: {
+        missingStages: expect.arrayContaining(['source_coverage', 'prior_knowledge', 'preferences', 'goals']),
+      },
+    });
+  });
+
+  it('updates existing CourseSpec, advances phase to outline, returns courseSpecId', async () => {
+    const spec = makeCourseSpec({ status: 'drafting' });
+    const session = {
+      ...makeSession({
+        phase: 'elicitation',
+        elicitationState: makeElicitationState(),
+      }),
+      courseSpec: { id: spec.id, status: spec.status },
+    };
+    prismaMock.agentSession.findFirst.mockResolvedValue(session);
+    prismaMock.$transaction.mockImplementation(async (fn) => fn(prismaMock));
+    prismaMock.courseSpec.update.mockResolvedValue(spec);
+    prismaMock.agentSession.update.mockResolvedValue({ ...makeSession({ phase: 'outline' }), courseSpec: null });
+
+    const result = await agentSessionService.approveElicitation(SESSION_ID, USER_ID);
+
+    expect(prismaMock.courseSpec.update).toHaveBeenCalledWith({
+      where: { id: spec.id },
+      data: { status: 'reviewing', elicitationData: expect.objectContaining({ topic: 'Web Development' }) },
+    });
+    expect(prismaMock.agentSession.update).toHaveBeenCalledWith({
+      where: { id: SESSION_ID },
+      data: { phase: 'outline' },
+    });
+    expect(result).toEqual({ phase: 'outline', courseSpecId: SPEC_ID });
+  });
+
+  it('creates new CourseSpec when session has no courseSpecId, links it to session (FR-19)', async () => {
+    const newSpecId = 'new-spec-id';
+    const newSpec = { id: newSpecId };
+    const session = {
+      ...makeSession({
+        phase: 'elicitation',
+        courseSpecId: null,
+        elicitationState: makeElicitationState(),
+      }),
+      courseSpec: null,
+    };
+    prismaMock.agentSession.findFirst.mockResolvedValue(session);
+    prismaMock.$transaction.mockImplementation(async (fn) => fn(prismaMock));
+    prismaMock.courseSpec.create.mockResolvedValue(newSpec);
+    prismaMock.agentSession.update.mockResolvedValue({ ...makeSession({ phase: 'outline', courseSpecId: newSpecId }), courseSpec: null });
+
+    const result = await agentSessionService.approveElicitation(SESSION_ID, USER_ID);
+
+    expect(prismaMock.courseSpec.create).toHaveBeenCalledWith({
+      data: { userId: USER_ID, status: 'reviewing', elicitationData: expect.objectContaining({ topic: 'Web Development' }) },
+      select: { id: true },
+    });
+    expect(prismaMock.agentSession.update).toHaveBeenCalledWith({
+      where: { id: SESSION_ID },
+      data: { phase: 'outline', courseSpecId: newSpecId },
+    });
+    expect(result).toEqual({ phase: 'outline', courseSpecId: newSpecId });
   });
 });
 

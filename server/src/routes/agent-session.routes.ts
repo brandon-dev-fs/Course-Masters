@@ -11,5 +11,6 @@ router.get('/', agentSessionController.list);
 router.get('/:sessionId', agentSessionController.getById);
 router.delete('/:sessionId', agentSessionController.abandon);
 router.post('/:sessionId/message', validate(sendMessageSchema), agentSessionController.sendMessage);
+router.post('/:sessionId/approve', agentSessionController.approvePhase);
 
 export default router;
