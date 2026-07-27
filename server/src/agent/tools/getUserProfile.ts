@@ -16,7 +16,13 @@ export function makeGetUserProfileTool(userId: string) {
           where: { userId },
           select: {
             lessonId: true,
-            lesson: { select: { unit: { select: { courseId: true } } } },
+            lesson: {
+              select: {
+                unit: {
+                  select: { courseId: true, deletedAt: true },
+                },
+              },
+            },
           },
         }),
         prisma.assessmentAttempt.findMany({
@@ -43,9 +49,13 @@ export function makeGetUserProfileTool(userId: string) {
         }),
       ]);
 
-      // Deduplicate course IDs from lesson completions
+      // Deduplicate course IDs from lesson completions, skipping soft-deleted units
       const courseIds = [
-        ...new Set(lessonCompletions.map((c) => c.lesson.unit.courseId)),
+        ...new Set(
+          lessonCompletions
+            .filter((c) => c.lesson.unit !== null && c.lesson.unit.deletedAt === null)
+            .map((c) => c.lesson.unit!.courseId),
+        ),
       ];
 
       // Fetch course data for those course IDs

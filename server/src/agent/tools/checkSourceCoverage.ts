@@ -9,9 +9,10 @@ export function makeCheckSourceCoverageTool() {
     description:
       'Check whether the trusted source library covers a given course topic or set of content categories.',
     inputSchema: z.object({
-      topic: z.string().describe('The proposed course topic to check coverage for'),
+      topic: z.string().max(500).describe('The proposed course topic to check coverage for'),
       categories: z
-        .array(z.string())
+        .array(z.string().max(100))
+        .max(20)
         .optional()
         .describe(
           'Specific content categories to check. If omitted, the topic string is used for matching.',
@@ -27,7 +28,7 @@ export function makeCheckSourceCoverageTool() {
 
       // Application-level substring matching (TrustedSource is a small reference table)
       const matchedSources = activeSources.filter((source) => {
-        const sourceCats = source.categories as string[];
+        const sourceCats = Array.isArray(source.categories) ? (source.categories as string[]) : [];
         return searchTerms.some((term) =>
           sourceCats.some(
             (cat) =>
@@ -39,7 +40,7 @@ export function makeCheckSourceCoverageTool() {
 
       const coveredTerms = searchTerms.filter((term) =>
         matchedSources.some((s) =>
-          (s.categories as string[]).some(
+          (Array.isArray(s.categories) ? (s.categories as string[]) : []).some(
             (cat) =>
               cat.toLowerCase().includes(term.toLowerCase()) ||
               term.toLowerCase().includes(cat.toLowerCase()),
@@ -60,8 +61,8 @@ export function makeCheckSourceCoverageTool() {
         matchedSources: matchedSources.map((s) => ({
           name: s.name,
           domain: s.domain,
-          categories: s.categories as string[],
-          contentTypes: s.contentTypes as string[],
+          categories: Array.isArray(s.categories) ? (s.categories as string[]) : [],
+          contentTypes: Array.isArray(s.contentTypes) ? (s.contentTypes as string[]) : [],
         })),
         uncoveredCategories,
       };

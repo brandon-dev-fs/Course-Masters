@@ -1,3 +1,5 @@
+import { Prisma } from '@prisma/client';
+
 import prisma from '../lib/prisma.js';
 import { logger } from '../lib/logger.js';
 
@@ -125,10 +127,9 @@ export const agentSessionService = {
       );
     }
 
-    // Cast to object — Prisma accepts Json columns as plain objects. Values come from
-    // the agent's elicitationState which is itself Json, so the cast is safe here.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const elicitationData: Record<string, any> = {
+    // Prisma accepts Json columns as plain objects. Values come from the agent's
+    // elicitationState which is itself Json, so Record<string, unknown> is safe here.
+    const elicitationData: Record<string, unknown> = {
       topic: state['topic'],
       scope: state['scope'],
       depth: state['depth'],
@@ -140,24 +141,37 @@ export const agentSessionService = {
       goals: state['goals'],
     };
 
-    const courseSpecId = session.courseSpec?.id ?? null;
+    let resolvedSpecId = session.courseSpec?.id ?? null;
 
     await prisma.$transaction(async (tx) => {
-      if (courseSpecId) {
+      // Cast to InputJsonValue: elicitationData values come from the agent's Json
+      // elicitationState column and are safe to pass directly to Prisma.
+      const jsonData = elicitationData as Prisma.InputJsonValue;
+      if (resolvedSpecId) {
         await tx.courseSpec.update({
-          where: { id: courseSpecId },
-          data: { status: 'reviewing', elicitationData },
+          where: { id: resolvedSpecId },
+          data: { status: 'reviewing', elicitationData: jsonData },
         });
+      } else {
+        const newSpec = await tx.courseSpec.create({
+          data: { userId, status: 'reviewing', elicitationData: jsonData },
+          select: { id: true },
+        });
+        resolvedSpecId = newSpec.id;
       }
+
       await tx.agentSession.update({
         where: { id: sessionId },
-        data: { phase: 'outline' },
+        data: {
+          phase: 'outline',
+          ...(session.courseSpec?.id == null ? { courseSpecId: resolvedSpecId } : {}),
+        },
       });
     });
 
-    logger.info({ sessionId, userId, courseSpecId }, 'Elicitation approved, session advanced to outline phase');
+    logger.info({ sessionId, userId, courseSpecId: resolvedSpecId }, 'Elicitation approved, session advanced to outline phase');
 
-    return { phase: 'outline', courseSpecId };
+    return { phase: 'outline', courseSpecId: resolvedSpecId };
   },
 
   async abandon(sessionId: string, userId: string): Promise<void> {
