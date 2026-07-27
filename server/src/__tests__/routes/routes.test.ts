@@ -94,11 +94,22 @@ vi.mock('../../middleware/authorize-resource.js', () => ({
   logAuthFailure: vi.fn(),
 }));
 
-// ── Auth / Prisma / Logger (pulled in transitively) ────────────────────────
+// ── Auth / Prisma / Logger / Config (pulled in transitively) ───────────────
 
 vi.mock('../../lib/prisma.js', () => ({ default: {} }));
 vi.mock('../../lib/auth.js', () => ({ auth: { api: { getSession: vi.fn() } } }));
 vi.mock('../../lib/logger.js', () => ({ logger: { info: vi.fn(), error: vi.fn(), warn: vi.fn(), debug: vi.fn() } }));
+vi.mock('../../config.js', () => ({
+  config: {
+    NODE_ENV: 'test',
+    SERVER_PORT: 5002,
+    DATABASE_URL: 'postgresql://test',
+    BETTER_AUTH_SECRET: 'test-secret-that-is-long-enough-32chars',
+    CLIENT_URL: 'http://localhost:5000',
+    LOG_LEVEL: 'silent',
+    ENABLE_AI_AGENT: false,
+  },
+}));
 
 // ── Import router after all mocks are registered ──────────────────────────
 
