@@ -48,10 +48,13 @@ const mockSummarizePhase = summarizePhase as ReturnType<typeof vi.fn>;
 const SESSION_ID = 'session-1';
 const USER_MESSAGE = 'What should I teach?';
 
+const USER_ID = 'user-1';
+
 function makeDbSession(overrides: Record<string, unknown> = {}) {
   return {
     id: SESSION_ID,
     phase: 'elicitation',
+    userId: USER_ID,
     elicitationState: null,
     conversationLog: null,
     ...overrides,
@@ -99,7 +102,7 @@ describe('runAgentTurn', () => {
     expect(mockParseConversationLog).toHaveBeenCalledWith(log);
   });
 
-  it('calls getToolsForPhase with phase, sessionId, and summarizePhase', async () => {
+  it('calls getToolsForPhase with phase, sessionId, summarizePhase, and userId', async () => {
     prismaMock.agentSession.findFirst.mockResolvedValue(makeDbSession({ phase: 'elicitation' }));
 
     await runAgentTurn(SESSION_ID, USER_MESSAGE);
@@ -108,6 +111,7 @@ describe('runAgentTurn', () => {
       'elicitation',
       SESSION_ID,
       mockSummarizePhase,
+      USER_ID,
     );
   });
 

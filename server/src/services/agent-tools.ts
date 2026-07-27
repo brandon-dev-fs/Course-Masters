@@ -7,12 +7,14 @@ import prisma from '../lib/prisma.js';
 import { logger } from '../lib/logger.js';
 import { ValidationError } from '../errors/index.js';
 import { PHASE_SEQUENCE } from '../types/agent.js';
+import { makeGetUserProfileTool } from '../agent/tools/getUserProfile.js';
+import { makeCheckSourceCoverageTool } from '../agent/tools/checkSourceCoverage.js';
 import type { AgentPhase } from '../types/agent.js';
 
 // Phase-to-tool mapping
 const PHASE_TOOL_NAMES: Record<AgentPhase, string[]> = {
-  pre_load: [],
-  elicitation: ['updateElicitationState', 'transitionPhase'],
+  pre_load: ['getUserProfile', 'transitionPhase'],
+  elicitation: ['updateElicitationState', 'transitionPhase', 'checkSourceCoverage'],
   outline: ['transitionPhase'],
   curation: ['transitionPhase'],
   build: [],
@@ -100,6 +102,7 @@ export function getToolsForPhase(
   phase: AgentPhase,
   sessionId: string,
   summarizePhase: (sessionId: string) => Promise<void>,
+  userId: string,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): Record<string, Tool<any, any, any>> {
   const enabledNames = PHASE_TOOL_NAMES[phase];
@@ -108,6 +111,8 @@ export function getToolsForPhase(
   const allTools: Record<string, Tool<any, any, any>> = {
     updateElicitationState: makeUpdateElicitationStateTool(sessionId),
     transitionPhase: makeTransitionPhaseTool(sessionId, summarizePhase),
+    getUserProfile: makeGetUserProfileTool(userId),
+    checkSourceCoverage: makeCheckSourceCoverageTool(),
   };
 
   return Object.fromEntries(

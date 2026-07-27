@@ -72,7 +72,7 @@ vi.mock('../../controllers/checklist.controller.js', () => ({
   checklistController: makeController(['getAll', 'create', 'update', 'remove', 'reorder']),
 }));
 vi.mock('../../controllers/agent-session.controller.js', () => ({
-  agentSessionController: makeController(['create', 'list', 'getById', 'abandon', 'sendMessage']),
+  agentSessionController: makeController(['create', 'list', 'getById', 'abandon', 'sendMessage', 'approvePhase']),
 }));
 
 // ── Middleware ─────────────────────────────────────────────────────────────
